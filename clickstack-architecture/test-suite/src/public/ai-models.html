@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 모델 관리 - AIRIS-MON</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/components/common-layout.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --info: #06b6d4;
+        }
+
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+        .card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        .model-card {
+            border: 2px solid var(--gray-200);
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .model-card.active {
+            border-color: var(--success);
+            background: linear-gradient(135deg, var(--white) 0%, rgba(16, 185, 129, 0.05) 100%);
+        }
+
+        .model-card.loading {
+            border-color: var(--warning);
+            background: linear-gradient(135deg, var(--white) 0%, rgba(245, 158, 11, 0.05) 100%);
+        }
+
+        .model-card.error {
+            border-color: var(--error);
+            background: linear-gradient(135deg, var(--white) 0%, rgba(239, 68, 68, 0.05) 100%);
+        }
+
+        .model-status {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .model-status.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .model-status.loading {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .model-status.inactive {
+            background: rgba(156, 163, 175, 0.1);
+            color: var(--gray-500);
+        }
+
+        .model-status.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .model-info {
+            margin-bottom: 1rem;
+        }
+
+        .model-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .model-provider {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            background: var(--gray-100);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 0.75rem;
+        }
+
+        .model-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .metric-item {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .model-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1rem;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: none;
+            min-width: auto;
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: var(--white);
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border-color: var(--gray-200);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+        .performance-chart {
+            height: 300px;
+            margin: 1rem 0;
+        }
+
+        .deployment-pipeline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .pipeline-stage {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+        }
+
+        .pipeline-stage:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: -50%;
+            top: 50%;
+            width: 100%;
+            height: 2px;
+            background: var(--gray-300);
+            z-index: 1;
+        }
+
+        .pipeline-stage.active::after {
+            background: var(--success);
+        }
+
+        .stage-icon {
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background: var(--gray-300);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .stage-icon.active {
+            background: var(--success);
+        }
+
+        .stage-icon.current {
+            background: var(--warning);
+            animation: pulse 2s infinite;
+        }
+
+        .stage-name {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--gray-600);
+            text-align: center;
+        }
+
+        .provider-tabs {
+            display: flex;
+            background: var(--gray-100);
+            border-radius: 8px;
+            padding: 0.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            text-align: center;
+            border-radius: 6px;
+            background: transparent;
+            border: none;
+            font-weight: 500;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background: var(--white);
+            color: var(--primary);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .testing-interface {
+            background: var(--gray-50);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+        }
+
+        .input, .textarea, .select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+
+        .input:focus, .textarea:focus, .select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .comparison-matrix {
+            display: grid;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .matrix-header {
+            display: grid;
+            grid-template-columns: 1fr repeat(4, minmax(120px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--gray-100);
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .matrix-row {
+            display: grid;
+            grid-template-columns: 1fr repeat(4, minmax(120px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            align-items: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.warning {
+            background: var(--warning);
+        }
+
+        .status-dot.error {
+            background: var(--error);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .alert-warning {
+            background: #fffbeb;
+            color: #92400e;
+            border: 1px solid #fed7aa;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+
+        @media (max-width: 1024px) {
+            .grid-cols-3,
+            .grid-cols-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .matrix-header,
+            .matrix-row {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .grid-cols-2,
+            .grid-cols-3,
+            .grid-cols-4 {
+                grid-template-columns: 1fr;
+            }
+            
+            .dashboard-container {
+                padding: 1rem;
+            }
+            
+            .deployment-pipeline {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .pipeline-stage::after {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- 모델 관리 개요 -->
+        <div class="grid grid-cols-4 mb-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">전체 모델</h3>
+                    <div class="status-indicator">
+                        <div class="status-dot" id="models-status-dot"></div>
+                        <span id="models-status-text">로딩 중...</span>
+                    </div>
+                </div>
+                <div class="metric-value" id="total-models">--</div>
+                <div class="metric-label">등록된 AI 모델 수</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">활성 모델</h3>
+                </div>
+                <div class="metric-value" id="active-models">--</div>
+                <div class="metric-label">현재 실행 중인 모델</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">총 요청</h3>
+                </div>
+                <div class="metric-value" id="total-requests">--</div>
+                <div class="metric-label">오늘 처리된 요청 수</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">평균 응답시간</h3>
+                </div>
+                <div class="metric-value" id="avg-response-time">--</div>
+                <div class="metric-label">전체 평균 (ms)</div>
+            </div>
+        </div>
+
+        <!-- 제공자별 탭 -->
+        <div class="provider-tabs">
+            <button class="tab active" onclick="switchProvider('all')" data-provider="all">전체 모델</button>
+            <button class="tab" onclick="switchProvider('ollama')" data-provider="ollama">🦙 Ollama (로컬)</button>
+            <button class="tab" onclick="switchProvider('gemini')" data-provider="gemini">🔮 Gemini (클라우드)</button>
+            <button class="tab" onclick="switchProvider('custom')" data-provider="custom">⚙️ 커스텀 모델</button>
+        </div>
+
+        <!-- AI 모델 카드 그리드 -->
+        <div id="models-grid" class="grid grid-cols-3 mb-6">
+            <!-- 모델 카드들이 동적으로 생성됩니다 -->
+        </div>
+
+        <!-- 모델 성능 비교 매트릭스 -->
+        <div class="card mb-6">
+            <div class="card-header">
+                <h3 class="card-title">📊 모델 성능 비교</h3>
+                <button class="btn btn-secondary" onclick="refreshComparison()">새로고침</button>
+            </div>
+            <div class="comparison-matrix">
+                <div class="matrix-header">
+                    <div>모델명</div>
+                    <div>응답속도</div>
+                    <div>정확도</div>
+                    <div>리소스 사용률</div>
+                    <div>가용성</div>
+                </div>
+                <div id="comparison-rows">
+                    <!-- 비교 데이터가 동적으로 생성됩니다 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 성능 모니터링 차트 -->
+        <div class="grid grid-cols-2 mb-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📈 응답 시간 추이</h3>
+                </div>
+                <canvas id="responseTimeChart" class="performance-chart"></canvas>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📊 처리량 분석</h3>
+                </div>
+                <canvas id="throughputChart" class="performance-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- 모델 테스트 인터페이스 -->
+        <div class="card mb-6">
+            <div class="card-header">
+                <h3 class="card-title">🧪 모델 테스트 & 검증</h3>
+                <button class="btn btn-primary" onclick="runBatchTest()">배치 테스트 실행</button>
+            </div>
+            <div class="testing-interface">
+                <div class="grid grid-cols-2">
+                    <div>
+                        <div class="input-group">
+                            <label class="label" for="test-model">테스트할 모델</label>
+                            <select class="select" id="test-model">
+                                <option value="">모델 선택...</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label class="label" for="test-prompt">테스트 프롬프트</label>
+                            <textarea class="textarea" id="test-prompt" placeholder="모델을 테스트할 프롬프트를 입력하세요...">한국의 수도는 어디인가요?</textarea>
+                        </div>
+                        <div class="input-group">
+                            <label class="label" for="test-params">테스트 매개변수</label>
+                            <textarea class="textarea" id="test-params" placeholder='{"temperature": 0.7, "max_tokens": 100}'>{"temperature": 0.7, "max_tokens": 100}</textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="testModel()">모델 테스트</button>
+                    </div>
+                    <div>
+                        <h4 class="model-name">테스트 결과</h4>
+                        <div id="test-results" class="testing-interface" style="min-height: 200px;">
+                            <p class="metric-label">테스트를 실행하면 결과가 여기에 표시됩니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 배포 파이프라인 관리 -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">🚀 배포 파이프라인</h3>
+                <div>
+                    <button class="btn btn-success btn-sm" onclick="deployModel()">새 배포</button>
+                    <button class="btn btn-warning btn-sm" onclick="rollbackModel()">롤백</button>
+                </div>
+            </div>
+            <div class="deployment-pipeline">
+                <div class="pipeline-stage active">
+                    <div class="stage-icon active">📝</div>
+                    <div class="stage-name">검증</div>
+                </div>
+                <div class="pipeline-stage active">
+                    <div class="stage-icon active">🔧</div>
+                    <div class="stage-name">빌드</div>
+                </div>
+                <div class="pipeline-stage current">
+                    <div class="stage-icon current">🧪</div>
+                    <div class="stage-name">테스트</div>
+                </div>
+                <div class="pipeline-stage">
+                    <div class="stage-icon">🚀</div>
+                    <div class="stage-name">배포</div>
+                </div>
+                <div class="pipeline-stage">
+                    <div class="stage-icon">✅</div>
+                    <div class="stage-name">완료</div>
+                </div>
+            </div>
+            <div id="deployment-status" class="alert alert-info">
+                현재 'llama2-korean' 모델이 테스트 단계에 있습니다. 약 5분 후 자동으로 배포됩니다.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // AI 모델 관리 API 기본 URL
+        const AI_MODELS_API = '/api/v1/ai-models';
+        const PROVIDERS_API = '/api/v1/providers';
+        
+        // 현재 선택된 제공자
+        let currentProvider = 'all';
+        
+        // 성능 차트 인스턴스
+        let responseTimeChart = null;
+        let throughputChart = null;
+        
+        // 모델 데이터 캐시
+        let modelsData = [];
+        
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePage();
+            loadModelsData();
+            initializeCharts();
+            
+            // 정기적으로 데이터 업데이트 (30초마다)
+            setInterval(loadModelsData, 30000);
+            setInterval(updateCharts, 60000);
+        });
+
+        // 페이지 초기화
+        function initializePage() {
+            updateOverviewMetrics();
+            populateTestModelSelect();
+        }
+
+        // 모델 데이터 로드
+        async function loadModelsData() {
+            try {
+                const response = await fetch(`${AI_MODELS_API}/list`);
+                if (response.ok) {
+                    modelsData = await response.json();
+                    updateModelsGrid();
+                    updateOverviewMetrics();
+                    updateComparisonMatrix();
+                    populateTestModelSelect();
+                } else {
+                    // 오류 시 샘플 데이터 사용
+                    modelsData = getSampleModelsData();
+                    updateModelsGrid();
+                    updateOverviewMetrics();
+                    updateComparisonMatrix();
+                    populateTestModelSelect();
+                }
+            } catch (error) {
+                console.error('Failed to load models data:', error);
+                // 연결 실패 시 샘플 데이터 사용
+                modelsData = getSampleModelsData();
+                updateModelsGrid();
+                updateOverviewMetrics();
+                updateComparisonMatrix();
+                populateTestModelSelect();
+            }
+        }
+
+        // 샘플 모델 데이터
+        function getSampleModelsData() {
+            return [
+                {
+                    id: 'llama2-korean',
+                    name: 'Llama 2 Korean',
+                    provider: 'ollama',
+                    status: 'active',
+                    version: '13B',
+                    accuracy: 92.5,
+                    responseTime: 245,
+                    throughput: 156,
+                    resourceUsage: 67,
+                    availability: 99.2,
+                    requests24h: 2847,
+                    lastUpdated: new Date().toISOString()
+                },
+                {
+                    id: 'gemini-pro',
+                    name: 'Gemini Pro',
+                    provider: 'gemini',
+                    status: 'active',
+                    version: '1.0',
+                    accuracy: 95.8,
+                    responseTime: 128,
+                    throughput: 342,
+                    resourceUsage: 23,
+                    availability: 99.9,
+                    requests24h: 5432,
+                    lastUpdated: new Date().toISOString()
+                },
+                {
+                    id: 'mistral-7b',
+                    name: 'Mistral 7B',
+                    provider: 'ollama',
+                    status: 'loading',
+                    version: '7B',
+                    accuracy: 89.3,
+                    responseTime: 189,
+                    throughput: 198,
+                    resourceUsage: 45,
+                    availability: 98.5,
+                    requests24h: 1623,
+                    lastUpdated: new Date().toISOString()
+                },
+                {
+                    id: 'custom-bert',
+                    name: 'Custom BERT Korean',
+                    provider: 'custom',
+                    status: 'inactive',
+                    version: 'v2.1',
+                    accuracy: 87.2,
+                    responseTime: 95,
+                    throughput: 89,
+                    resourceUsage: 78,
+                    availability: 95.3,
+                    requests24h: 456,
+                    lastUpdated: new Date().toISOString()
+                }
+            ];
+        }
+
+        // 제공자 탭 전환
+        function switchProvider(provider) {
+            currentProvider = provider;
+            
+            // 탭 활성화 상태 업데이트
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.provider === provider) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            updateModelsGrid();
+        }
+
+        // 모델 그리드 업데이트
+        function updateModelsGrid() {
+            const grid = document.getElementById('models-grid');
+            const filteredModels = currentProvider === 'all' 
+                ? modelsData 
+                : modelsData.filter(model => model.provider === currentProvider);
+
+            grid.innerHTML = filteredModels.map(model => createModelCard(model)).join('');
+        }
+
+        // 모델 카드 생성
+        function createModelCard(model) {
+            const statusClass = model.status;
+            const providerIcon = getProviderIcon(model.provider);
+            
+            return `
+                <div class="card model-card ${statusClass}">
+                    <div class="model-status ${statusClass}">${getStatusText(model.status)}</div>
+                    <div class="model-info">
+                        <div class="model-name">${model.name}</div>
+                        <div class="model-provider">
+                            ${providerIcon} ${getProviderName(model.provider)} ${model.version}
+                        </div>
+                    </div>
+                    <div class="model-metrics">
+                        <div class="metric-item">
+                            <div class="metric-value">${model.accuracy}%</div>
+                            <div class="metric-label">정확도</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${model.responseTime}ms</div>
+                            <div class="metric-label">응답시간</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">${model.throughput}</div>
+                            <div class="metric-label">처리량/분</div>
+                        </div>
+                    </div>
+                    <div class="model-actions">
+                        ${model.status === 'active' ? 
+                            `<button class="btn btn-warning btn-sm" onclick="stopModel('${model.id}')">중지</button>` :
+                            `<button class="btn btn-success btn-sm" onclick="startModel('${model.id}')">시작</button>`
+                        }
+                        <button class="btn btn-secondary btn-sm" onclick="showModelDetails('${model.id}')">상세</button>
+                        <button class="btn btn-secondary btn-sm" onclick="testSpecificModel('${model.id}')">테스트</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 제공자 아이콘 반환
+        function getProviderIcon(provider) {
+            const icons = {
+                'ollama': '🦙',
+                'gemini': '🔮',
+                'custom': '⚙️'
+            };
+            return icons[provider] || '🤖';
+        }
+
+        // 제공자 이름 반환
+        function getProviderName(provider) {
+            const names = {
+                'ollama': 'Ollama',
+                'gemini': 'Google Gemini',
+                'custom': 'Custom Model'
+            };
+            return names[provider] || 'Unknown';
+        }
+
+        // 상태 텍스트 반환
+        function getStatusText(status) {
+            const texts = {
+                'active': '활성',
+                'loading': '로딩',
+                'inactive': '비활성',
+                'error': '오류'
+            };
+            return texts[status] || '알 수 없음';
+        }
+
+        // 개요 메트릭 업데이트
+        function updateOverviewMetrics() {
+            const totalModels = modelsData.length;
+            const activeModels = modelsData.filter(m => m.status === 'active').length;
+            const totalRequests = modelsData.reduce((sum, m) => sum + m.requests24h, 0);
+            const avgResponseTime = Math.round(
+                modelsData.reduce((sum, m) => sum + m.responseTime, 0) / totalModels
+            );
+
+            document.getElementById('total-models').textContent = totalModels;
+            document.getElementById('active-models').textContent = activeModels;
+            document.getElementById('total-requests').textContent = totalRequests.toLocaleString();
+            document.getElementById('avg-response-time').textContent = `${avgResponseTime}ms`;
+
+            // 상태 표시기 업데이트
+            const statusDot = document.getElementById('models-status-dot');
+            const statusText = document.getElementById('models-status-text');
+            
+            if (activeModels > 0) {
+                statusDot.className = 'status-dot';
+                statusText.textContent = '정상 운영';
+            } else {
+                statusDot.className = 'status-dot warning';
+                statusText.textContent = '일부 모델 비활성';
+            }
+        }
+
+        // 성능 비교 매트릭스 업데이트
+        function updateComparisonMatrix() {
+            const rowsContainer = document.getElementById('comparison-rows');
+            rowsContainer.innerHTML = modelsData.map(model => `
+                <div class="matrix-row">
+                    <div>
+                        <strong>${model.name}</strong>
+                        <br><small class="metric-label">${getProviderName(model.provider)}</small>
+                    </div>
+                    <div>
+                        <span class="metric-value" style="font-size: 1rem;">${model.responseTime}ms</span>
+                        <br><small class="metric-label">${getPerformanceRating(model.responseTime, 'speed')}</small>
+                    </div>
+                    <div>
+                        <span class="metric-value" style="font-size: 1rem;">${model.accuracy}%</span>
+                        <br><small class="metric-label">${getPerformanceRating(model.accuracy, 'accuracy')}</small>
+                    </div>
+                    <div>
+                        <span class="metric-value" style="font-size: 1rem;">${model.resourceUsage}%</span>
+                        <br><small class="metric-label">${getPerformanceRating(model.resourceUsage, 'resource')}</small>
+                    </div>
+                    <div>
+                        <div class="status-indicator">
+                            <div class="status-dot ${model.availability > 99 ? '' : 'warning'}"></div>
+                            ${model.availability}%
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 성능 등급 반환
+        function getPerformanceRating(value, type) {
+            if (type === 'speed') {
+                return value < 150 ? '매우 빠름' : value < 300 ? '빠름' : '느림';
+            } else if (type === 'accuracy') {
+                return value > 95 ? '우수' : value > 90 ? '양호' : '보통';
+            } else if (type === 'resource') {
+                return value < 30 ? '매우 효율적' : value < 70 ? '효율적' : '비효율적';
+            }
+            return '알 수 없음';
+        }
+
+        // 차트 초기화
+        function initializeCharts() {
+            initResponseTimeChart();
+            initThroughputChart();
+        }
+
+        // 응답 시간 차트 초기화
+        function initResponseTimeChart() {
+            const ctx = document.getElementById('responseTimeChart').getContext('2d');
+            responseTimeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['10분전', '8분전', '6분전', '4분전', '2분전', '현재'],
+                    datasets: modelsData.filter(m => m.status === 'active').map((model, index) => ({
+                        label: model.name,
+                        data: generateRandomData(6, model.responseTime),
+                        borderColor: getChartColor(index),
+                        backgroundColor: getChartColor(index, 0.1),
+                        tension: 0.4
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '응답 시간 (ms)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        // 처리량 차트 초기화
+        function initThroughputChart() {
+            const ctx = document.getElementById('throughputChart').getContext('2d');
+            throughputChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: modelsData.map(m => m.name),
+                    datasets: [{
+                        label: '처리량 (요청/분)',
+                        data: modelsData.map(m => m.throughput),
+                        backgroundColor: modelsData.map((_, index) => getChartColor(index, 0.7))
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '처리량 (요청/분)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // 차트 색상 반환
+        function getChartColor(index, alpha = 1) {
+            const colors = [
+                `rgba(37, 99, 235, ${alpha})`,
+                `rgba(16, 185, 129, ${alpha})`,
+                `rgba(245, 158, 11, ${alpha})`,
+                `rgba(239, 68, 68, ${alpha})`,
+                `rgba(6, 182, 212, ${alpha})`,
+                `rgba(147, 51, 234, ${alpha})`
+            ];
+            return colors[index % colors.length];
+        }
+
+        // 랜덤 데이터 생성
+        function generateRandomData(count, baseValue) {
+            return Array.from({length: count}, () => 
+                Math.max(0, baseValue + Math.random() * 100 - 50)
+            );
+        }
+
+        // 차트 업데이트
+        function updateCharts() {
+            if (responseTimeChart) {
+                responseTimeChart.data.datasets = modelsData.filter(m => m.status === 'active').map((model, index) => ({
+                    label: model.name,
+                    data: generateRandomData(6, model.responseTime),
+                    borderColor: getChartColor(index),
+                    backgroundColor: getChartColor(index, 0.1),
+                    tension: 0.4
+                }));
+                responseTimeChart.update();
+            }
+
+            if (throughputChart) {
+                throughputChart.data.labels = modelsData.map(m => m.name);
+                throughputChart.data.datasets[0].data = modelsData.map(m => m.throughput);
+                throughputChart.update();
+            }
+        }
+
+        // 테스트 모델 선택 목록 채우기
+        function populateTestModelSelect() {
+            const select = document.getElementById('test-model');
+            select.innerHTML = '<option value="">모델 선택...</option>' +
+                modelsData.filter(m => m.status === 'active').map(model => 
+                    `<option value="${model.id}">${model.name} (${getProviderName(model.provider)})</option>`
+                ).join('');
+        }
+
+        // 모델 테스트 실행
+        async function testModel() {
+            const modelId = document.getElementById('test-model').value;
+            const prompt = document.getElementById('test-prompt').value;
+            const paramsText = document.getElementById('test-params').value;
+            const resultsDiv = document.getElementById('test-results');
+
+            if (!modelId || !prompt) {
+                showAlert(resultsDiv, 'error', '모델과 프롬프트를 모두 입력해주세요.');
+                return;
+            }
+
+            let params = {};
+            try {
+                params = JSON.parse(paramsText);
+            } catch (e) {
+                showAlert(resultsDiv, 'warning', '매개변수 JSON 형식이 잘못되었습니다. 기본값을 사용합니다.');
+                params = { temperature: 0.7, max_tokens: 100 };
+            }
+
+            resultsDiv.innerHTML = '<div class="alert alert-info">테스트 실행 중...</div>';
+
+            try {
+                const response = await fetch(`${AI_MODELS_API}/${modelId}/test`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        parameters: params
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultsDiv.innerHTML = `
+                        <div class="alert alert-success">✅ 테스트 완료</div>
+                        <div class="testing-interface">
+                            <h5>응답:</h5>
+                            <p>${data.response}</p>
+                            <hr>
+                            <div class="grid grid-cols-3">
+                                <div class="metric-item">
+                                    <div class="metric-value">${data.responseTime}ms</div>
+                                    <div class="metric-label">응답 시간</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-value">${data.tokens}</div>
+                                    <div class="metric-label">생성 토큰</div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-value">${data.confidence}%</div>
+                                    <div class="metric-label">신뢰도</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    showAlert(resultsDiv, 'error', `❌ 테스트 실패: ${data.error}`);
+                }
+            } catch (error) {
+                showAlert(resultsDiv, 'error', `❌ 연결 오류: ${error.message}`);
+            }
+        }
+
+        // 배치 테스트 실행
+        async function runBatchTest() {
+            const activeModels = modelsData.filter(m => m.status === 'active');
+            if (activeModels.length === 0) {
+                alert('테스트할 활성 모델이 없습니다.');
+                return;
+            }
+
+            if (confirm(`${activeModels.length}개의 활성 모델에 대해 배치 테스트를 실행하시겠습니까?`)) {
+                // 배치 테스트 로직 구현
+                alert('배치 테스트가 시작되었습니다. 결과는 별도 알림으로 제공됩니다.');
+            }
+        }
+
+        // 모델 시작
+        async function startModel(modelId) {
+            try {
+                const response = await fetch(`${AI_MODELS_API}/${modelId}/start`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    loadModelsData(); // 데이터 새로고침
+                    alert('모델이 시작되었습니다.');
+                } else {
+                    alert('모델 시작에 실패했습니다.');
+                }
+            } catch (error) {
+                console.error('Failed to start model:', error);
+                alert('모델 시작 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 모델 중지
+        async function stopModel(modelId) {
+            if (confirm('모델을 중지하시겠습니까?')) {
+                try {
+                    const response = await fetch(`${AI_MODELS_API}/${modelId}/stop`, {
+                        method: 'POST'
+                    });
+
+                    if (response.ok) {
+                        loadModelsData(); // 데이터 새로고침
+                        alert('모델이 중지되었습니다.');
+                    } else {
+                        alert('모델 중지에 실패했습니다.');
+                    }
+                } catch (error) {
+                    console.error('Failed to stop model:', error);
+                    alert('모델 중지 중 오류가 발생했습니다.');
+                }
+            }
+        }
+
+        // 모델 상세 정보 표시
+        function showModelDetails(modelId) {
+            const model = modelsData.find(m => m.id === modelId);
+            if (model) {
+                alert(`모델 상세 정보:\n\n이름: ${model.name}\n제공자: ${getProviderName(model.provider)}\n상태: ${getStatusText(model.status)}\n정확도: ${model.accuracy}%\n응답시간: ${model.responseTime}ms\n가용성: ${model.availability}%`);
+            }
+        }
+
+        // 특정 모델 테스트
+        function testSpecificModel(modelId) {
+            document.getElementById('test-model').value = modelId;
+            document.getElementById('test-prompt').focus();
+        }
+
+        // 모델 배포
+        function deployModel() {
+            alert('새 모델 배포 프로세스를 시작합니다.');
+        }
+
+        // 모델 롤백
+        function rollbackModel() {
+            if (confirm('이전 버전으로 롤백하시겠습니까?')) {
+                alert('롤백 프로세스를 시작합니다.');
+            }
+        }
+
+        // 비교 새로고침
+        function refreshComparison() {
+            loadModelsData();
+        }
+
+        // 알림 메시지 표시
+        function showAlert(container, type, message) {
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
+    </script>
+</body>
+</html>

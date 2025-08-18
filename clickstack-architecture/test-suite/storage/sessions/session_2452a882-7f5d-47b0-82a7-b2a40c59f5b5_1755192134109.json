@@ -1,0 +1,40 @@
+{
+  "id": "2452a882-7f5d-47b0-82a7-b2a40c59f5b5",
+  "scenario": "bug_payment",
+  "startTime": "2025-08-14T17:22:13.914Z",
+  "lastActivity": "2025-08-14T17:22:13.914Z",
+  "userAgent": "curl/8.5.0",
+  "ipAddress": "::1",
+  "events": [],
+  "status": "completed",
+  "metadata": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "userAgent": "curl/8.5.0",
+    "device": {
+      "type": "desktop",
+      "browser": "unknown",
+      "os": "unknown"
+    }
+  },
+  "endTime": "2025-08-14T17:22:14.109Z",
+  "duration": 195,
+  "endReason": "user_ended",
+  "statistics": {
+    "totalEvents": 0,
+    "eventTypes": {},
+    "clicks": 0,
+    "formInputs": 0,
+    "pageViews": 0,
+    "errors": 0,
+    "scrollEvents": 0,
+    "userBehavior": {
+      "avgTimeBetweenEvents": 0,
+      "hasErrors": false,
+      "hasFormInteraction": false,
+      "hasNavigation": false
+    }
+  }
+}

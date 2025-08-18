@@ -1,0 +1,155 @@
+{
+  "id": "e16e0bfc-046a-45e5-ac8f-56fce33613c6",
+  "scenario": "journey_blog",
+  "startTime": "2025-08-14T16:12:09.808Z",
+  "lastActivity": "2025-08-14T16:12:10.143Z",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+  "ipAddress": "::1",
+  "events": [
+    {
+      "id": "7d899b1c-cacb-4188-a2b8-9f20ea58b37e",
+      "sessionId": "e16e0bfc-046a-45e5-ac8f-56fce33613c6",
+      "timestamp": 1755187929810,
+      "recordedAt": "2025-08-14T16:12:09.855Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187929810,
+        "page_url": "/",
+        "title": "home",
+        "referrer": null,
+        "load_time": 732
+      }
+    },
+    {
+      "id": "2b85749c-a912-446b-9209-886fac086b8f",
+      "sessionId": "e16e0bfc-046a-45e5-ac8f-56fce33613c6",
+      "timestamp": 1755187930858,
+      "recordedAt": "2025-08-14T16:12:09.903Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187930858,
+        "page_url": "/blog",
+        "title": "blog",
+        "referrer": "/",
+        "load_time": 1977
+      }
+    },
+    {
+      "id": "c9e6dd5b-91e0-4a49-837b-18f0b2c171bc",
+      "sessionId": "e16e0bfc-046a-45e5-ac8f-56fce33613c6",
+      "timestamp": 1755187931907,
+      "recordedAt": "2025-08-14T16:12:09.952Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187931907,
+        "page_url": "/blog/post1",
+        "title": "post1",
+        "referrer": "/blog",
+        "load_time": 2318
+      }
+    },
+    {
+      "id": "5c96b6a8-77ac-44c5-ac45-2692c604f744",
+      "sessionId": "e16e0bfc-046a-45e5-ac8f-56fce33613c6",
+      "timestamp": 1755187932957,
+      "recordedAt": "2025-08-14T16:12:10.000Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187932957,
+        "page_url": "/blog/post2",
+        "title": "post2",
+        "referrer": "/blog/post1",
+        "load_time": 2482
+      }
+    },
+    {
+      "id": "d1354998-7872-4be6-bab4-ab8c94cbbda2",
+      "sessionId": "e16e0bfc-046a-45e5-ac8f-56fce33613c6",
+      "timestamp": 1755187934005,
+      "recordedAt": "2025-08-14T16:12:10.048Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187934005,
+        "page_url": "/about",
+        "title": "about",
+        "referrer": "/blog/post2",
+        "load_time": 511
+      }
+    },
+    {
+      "id": "398c879c-281b-4032-b059-74717fa1aea9",
+      "sessionId": "e16e0bfc-046a-45e5-ac8f-56fce33613c6",
+      "timestamp": 1755187935054,
+      "recordedAt": "2025-08-14T16:12:10.096Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187935054,
+        "page_url": "/contact",
+        "title": "contact",
+        "referrer": "/about",
+        "load_time": 706
+      }
+    },
+    {
+      "id": "565f48b6-8faf-4dcc-b6d0-c0eec645ccc7",
+      "sessionId": "e16e0bfc-046a-45e5-ac8f-56fce33613c6",
+      "timestamp": 1755187936101,
+      "recordedAt": "2025-08-14T16:12:10.143Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187936101,
+        "page_url": "/",
+        "title": "home",
+        "referrer": "/contact",
+        "load_time": 1357
+      }
+    }
+  ],
+  "status": "completed",
+  "metadata": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+    "device": {
+      "type": "desktop",
+      "browser": "Chrome",
+      "os": "Windows"
+    }
+  },
+  "endTime": "2025-08-14T16:12:10.187Z",
+  "duration": 379,
+  "endReason": "user_ended",
+  "statistics": {
+    "totalEvents": 7,
+    "eventTypes": {
+      "rrweb_event": 7
+    },
+    "clicks": 0,
+    "formInputs": 0,
+    "pageViews": 0,
+    "errors": 0,
+    "scrollEvents": 0,
+    "userBehavior": {
+      "avgTimeBetweenEvents": 898.7142857142857,
+      "hasErrors": false,
+      "hasFormInteraction": false,
+      "hasNavigation": false
+    }
+  }
+}

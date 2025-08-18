@@ -1,0 +1,6212 @@
+{
+  "name": "TypeScript",
+  "url": "https://github.com/microsoft/TypeScript",
+  "root_path": "/tmp/analysis_microsoft_TypeScript",
+  "frontend_framework": "vanilla",
+  "backend_framework": "node",
+  "components": [
+    {
+      "id": "javascript_unknown_.gulp",
+      "name": ".gulp",
+      "type": "unknown",
+      "language": "javascript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/.gulp.js",
+      "lines_of_code": 13,
+      "complexity": "low",
+      "dependencies": [
+        "child_process",
+        "path"
+      ],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - .gulp"
+    },
+    {
+      "id": "typescript_unknown_nodeTypingsInstaller",
+      "name": "nodeTypingsInstaller",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/typingsInstaller/nodeTypingsInstaller.ts",
+      "lines_of_code": 218,
+      "complexity": "high",
+      "dependencies": [
+        "child_process",
+        "path",
+        "fs"
+      ],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - nodeTypingsInstaller"
+    },
+    {
+      "id": "typescript_unknown_tsc",
+      "name": "tsc",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/tsc/tsc.ts",
+      "lines_of_code": 24,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - tsc"
+    },
+    {
+      "id": "typescript_service_common",
+      "name": "common",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/tsserver/common.ts",
+      "lines_of_code": 37,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - common"
+    },
+    {
+      "id": "typescript_service_nodeServer",
+      "name": "nodeServer",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/tsserver/nodeServer.ts",
+      "lines_of_code": 720,
+      "complexity": "very_high",
+      "dependencies": [
+        "child_process",
+        "fs",
+        "readline",
+        "net",
+        "os"
+      ],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - nodeServer"
+    },
+    {
+      "id": "typescript_service_server",
+      "name": "server",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/tsserver/server.ts",
+      "lines_of_code": 57,
+      "complexity": "low",
+      "dependencies": [
+        "os"
+      ],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - server"
+    },
+    {
+      "id": "typescript_unknown_deprecate",
+      "name": "deprecate",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/deprecatedCompat/deprecate.ts",
+      "lines_of_code": 73,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - deprecate"
+    },
+    {
+      "id": "typescript_unknown_deprecations",
+      "name": "deprecations",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/deprecatedCompat/deprecations.ts",
+      "lines_of_code": 152,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - deprecations"
+    },
+    {
+      "id": "typescript_unknown_typingsInstaller",
+      "name": "typingsInstaller",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/typingsInstallerCore/typingsInstaller.ts",
+      "lines_of_code": 546,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - typingsInstaller"
+    },
+    {
+      "id": "typescript_unknown_symbolDisplay",
+      "name": "symbolDisplay",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/symbolDisplay.ts",
+      "lines_of_code": 1064,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "redis": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - symbolDisplay"
+    },
+    {
+      "id": "typescript_unknown_outliningElementsCollector",
+      "name": "outliningElementsCollector",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/outliningElementsCollector.ts",
+      "lines_of_code": 423,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - outliningElementsCollector"
+    },
+    {
+      "id": "typescript_unknown_signatureHelp",
+      "name": "signatureHelp",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/signatureHelp.ts",
+      "lines_of_code": 807,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - signatureHelp"
+    },
+    {
+      "id": "typescript_service_completions",
+      "name": "completions",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/completions.ts",
+      "lines_of_code": 6160,
+      "complexity": "very_high",
+      "dependencies": [
+        "foo",
+        "${entry.source}",
+        "os",
+        "moduleName"
+      ],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - completions"
+    },
+    {
+      "id": "typescript_unknown_transpile",
+      "name": "transpile",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/transpile.ts",
+      "lines_of_code": 265,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - transpile"
+    },
+    {
+      "id": "typescript_unknown_suggestionDiagnostics",
+      "name": "suggestionDiagnostics",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/suggestionDiagnostics.ts",
+      "lines_of_code": 320,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - suggestionDiagnostics"
+    },
+    {
+      "id": "typescript_unknown_classifier",
+      "name": "classifier",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/classifier.ts",
+      "lines_of_code": 1230,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - classifier"
+    },
+    {
+      "id": "typescript_unknown_refactorProvider",
+      "name": "refactorProvider",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactorProvider.ts",
+      "lines_of_code": 37,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - refactorProvider"
+    },
+    {
+      "id": "typescript_service_stringCompletions",
+      "name": "stringCompletions",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/stringCompletions.ts",
+      "lines_of_code": 1430,
+      "complexity": "very_high",
+      "dependencies": [
+        "/*completion position*/",
+        "foo/|",
+        "some-package/|"
+      ],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - stringCompletions"
+    },
+    {
+      "id": "typescript_service_services",
+      "name": "services",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/services.ts",
+      "lines_of_code": 3624,
+      "complexity": "very_high",
+      "dependencies": [
+        "something",
+        "mod"
+      ],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - services"
+    },
+    {
+      "id": "typescript_unknown_navigationBar",
+      "name": "navigationBar",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/navigationBar.ts",
+      "lines_of_code": 1105,
+      "complexity": "very_high",
+      "dependencies": [
+        "mod"
+      ],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - navigationBar"
+    },
+    {
+      "id": "typescript_unknown_callHierarchy",
+      "name": "callHierarchy",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/callHierarchy.ts",
+      "lines_of_code": 693,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - callHierarchy"
+    },
+    {
+      "id": "typescript_service_pasteEdits",
+      "name": "pasteEdits",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/pasteEdits.ts",
+      "lines_of_code": 192,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - pasteEdits"
+    },
+    {
+      "id": "typescript_unknown_inlayHints",
+      "name": "inlayHints",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/inlayHints.ts",
+      "lines_of_code": 969,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - inlayHints"
+    },
+    {
+      "id": "typescript_service_getEditsForFileRename",
+      "name": "getEditsForFileRename",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/getEditsForFileRename.ts",
+      "lines_of_code": 316,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "비즈니스 로직 구현 - getEditsForFileRename"
+    },
+    {
+      "id": "typescript_unknown_transform",
+      "name": "transform",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/transform.ts",
+      "lines_of_code": 27,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - transform"
+    },
+    {
+      "id": "typescript_unknown_preProcess",
+      "name": "preProcess",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/preProcess.ts",
+      "lines_of_code": 452,
+      "complexity": "very_high",
+      "dependencies": [
+        "mod"
+      ],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - preProcess"
+    },
+    {
+      "id": "typescript_unknown_codeFixProvider",
+      "name": "codeFixProvider",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codeFixProvider.ts",
+      "lines_of_code": 139,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - codeFixProvider"
+    },
+    {
+      "id": "typescript_unknown_breakpoints",
+      "name": "breakpoints",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/breakpoints.ts",
+      "lines_of_code": 818,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - breakpoints"
+    },
+    {
+      "id": "typescript_unknown_smartSelection",
+      "name": "smartSelection",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/smartSelection.ts",
+      "lines_of_code": 371,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - smartSelection"
+    },
+    {
+      "id": "typescript_unknown_preparePasteEdits",
+      "name": "preparePasteEdits",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/preparePasteEdits.ts",
+      "lines_of_code": 46,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - preparePasteEdits"
+    },
+    {
+      "id": "typescript_unknown_sourcemaps",
+      "name": "sourcemaps",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/sourcemaps.ts",
+      "lines_of_code": 239,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - sourcemaps"
+    },
+    {
+      "id": "typescript_service_mapCode",
+      "name": "mapCode",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/mapCode.ts",
+      "lines_of_code": 324,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - mapCode"
+    },
+    {
+      "id": "typescript_service_utilities",
+      "name": "utilities",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/utilities.ts",
+      "lines_of_code": 4237,
+      "complexity": "very_high",
+      "dependencies": [
+        "[|module|]"
+      ],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - utilities"
+    },
+    {
+      "id": "typescript_service_exportInfoMap",
+      "name": "exportInfoMap",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/exportInfoMap.ts",
+      "lines_of_code": 669,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - exportInfoMap"
+    },
+    {
+      "id": "typescript_service_findAllReferences",
+      "name": "findAllReferences",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/findAllReferences.ts",
+      "lines_of_code": 2803,
+      "complexity": "very_high",
+      "dependencies": [
+        "a"
+      ],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - findAllReferences"
+    },
+    {
+      "id": "typescript_service_organizeImports",
+      "name": "organizeImports",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/organizeImports.ts",
+      "lines_of_code": 965,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - organizeImports"
+    },
+    {
+      "id": "typescript_unknown_patternMatcher",
+      "name": "patternMatcher",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/patternMatcher.ts",
+      "lines_of_code": 619,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - patternMatcher"
+    },
+    {
+      "id": "typescript_unknown_importTracker",
+      "name": "importTracker",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/importTracker.ts",
+      "lines_of_code": 807,
+      "complexity": "very_high",
+      "dependencies": [
+        "y"
+      ],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - importTracker"
+    },
+    {
+      "id": "typescript_unknown_rename",
+      "name": "rename",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/rename.ts",
+      "lines_of_code": 244,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - rename"
+    },
+    {
+      "id": "typescript_service_textChanges",
+      "name": "textChanges",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/textChanges.ts",
+      "lines_of_code": 1869,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - textChanges"
+    },
+    {
+      "id": "typescript_unknown_goToDefinition",
+      "name": "goToDefinition",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/goToDefinition.ts",
+      "lines_of_code": 787,
+      "complexity": "very_high",
+      "dependencies": [
+        "mod"
+      ],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - goToDefinition"
+    },
+    {
+      "id": "typescript_unknown_navigateTo",
+      "name": "navigateTo",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/navigateTo.ts",
+      "lines_of_code": 193,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - navigateTo"
+    },
+    {
+      "id": "typescript_unknown_classifier2020",
+      "name": "classifier2020",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/classifier2020.ts",
+      "lines_of_code": 315,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - classifier2020"
+    },
+    {
+      "id": "typescript_service_types",
+      "name": "types",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/types.ts",
+      "lines_of_code": 1962,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - types"
+    },
+    {
+      "id": "typescript_service_editorServices",
+      "name": "editorServices",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/server/editorServices.ts",
+      "lines_of_code": 5722,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - editorServices"
+    },
+    {
+      "id": "typescript_unknown_scriptVersionCache",
+      "name": "scriptVersionCache",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/server/scriptVersionCache.ts",
+      "lines_of_code": 861,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - scriptVersionCache"
+    },
+    {
+      "id": "typescript_service_typingInstallerAdapter",
+      "name": "typingInstallerAdapter",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/server/typingInstallerAdapter.ts",
+      "lines_of_code": 255,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - typingInstallerAdapter"
+    },
+    {
+      "id": "typescript_service_utilitiesPublic",
+      "name": "utilitiesPublic",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/server/utilitiesPublic.ts",
+      "lines_of_code": 141,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - utilitiesPublic"
+    },
+    {
+      "id": "typescript_service_project",
+      "name": "project",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/server/project.ts",
+      "lines_of_code": 3206,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "redis": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - project"
+    },
+    {
+      "id": "typescript_service_packageJsonCache",
+      "name": "packageJsonCache",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/server/packageJsonCache.ts",
+      "lines_of_code": 79,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - packageJsonCache"
+    },
+    {
+      "id": "typescript_utility_utilities",
+      "name": "utilities",
+      "type": "utility",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/server/utilities.ts",
+      "lines_of_code": 84,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "공통 유틸리티 함수 - utilities"
+    },
+    {
+      "id": "typescript_service_protocol",
+      "name": "protocol",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/server/protocol.ts",
+      "lines_of_code": 3313,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - protocol"
+    },
+    {
+      "id": "typescript_service_session",
+      "name": "session",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/server/session.ts",
+      "lines_of_code": 4083,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - session"
+    },
+    {
+      "id": "typescript_service_scriptInfo",
+      "name": "scriptInfo",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/server/scriptInfo.ts",
+      "lines_of_code": 756,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - scriptInfo"
+    },
+    {
+      "id": "typescript_service_types",
+      "name": "types",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/server/types.ts",
+      "lines_of_code": 58,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "비즈니스 로직 구현 - types"
+    },
+    {
+      "id": "typescript_unknown_es2019.string.d",
+      "name": "es2019.string.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2019.string.d.ts",
+      "lines_of_code": 19,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "Removes the trailing white space and line terminator characters from a string."
+    },
+    {
+      "id": "typescript_unknown_webworker.asynciterable.generated.d",
+      "name": "webworker.asynciterable.generated.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/webworker.asynciterable.generated.d.ts",
+      "lines_of_code": 23,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - webworker.asynciterable.generated.d"
+    },
+    {
+      "id": "typescript_unknown_es2015.symbol.wellknown.d",
+      "name": "es2015.symbol.wellknown.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2015.symbol.wellknown.d.ts",
+      "lines_of_code": 308,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "* A method that determines if a constructor object recognizes an object as one of the\n     * constru..."
+    },
+    {
+      "id": "typescript_unknown_es2019.object.d",
+      "name": "es2019.object.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2019.object.d.ts",
+      "lines_of_code": 15,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Returns an object created by key-value entries for properties and methods\n     * @param entries An..."
+    },
+    {
+      "id": "typescript_unknown_es2015.iterable.d",
+      "name": "es2015.iterable.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2015.iterable.d.ts",
+      "lines_of_code": 587,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* A method that returns the default iterator for an object. Called by the semantics of the\n     * fo..."
+    },
+    {
+      "id": "typescript_unknown_esnext.disposable.d",
+      "name": "esnext.disposable.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/esnext.disposable.d.ts",
+      "lines_of_code": 175,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "* A method that is used to release resources held by an object. Called by the semantics of the `usin..."
+    },
+    {
+      "id": "typescript_unknown_es2024.string.d",
+      "name": "es2024.string.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2024.string.d.ts",
+      "lines_of_code": 11,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Returns true if all leading surrogates and trailing surrogates appear paired and in order."
+    },
+    {
+      "id": "typescript_unknown_es2016.intl.d",
+      "name": "es2016.intl.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2016.intl.d.ts",
+      "lines_of_code": 13,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - es2016.intl.d"
+    },
+    {
+      "id": "typescript_unknown_es5.d",
+      "name": "es5.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es5.d.ts",
+      "lines_of_code": 4583,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "* Evaluates JavaScript code and executes it.\n * @param x A String value that contains valid JavaScri..."
+    },
+    {
+      "id": "typescript_unknown_scripthost.d",
+      "name": "scripthost.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/scripthost.d.ts",
+      "lines_of_code": 304,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "* The column number of the current character position in an input stream."
+    },
+    {
+      "id": "typescript_unknown_es2021.promise.d",
+      "name": "es2021.promise.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2021.promise.d.ts",
+      "lines_of_code": 30,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Represents the completion of an asynchronous operation"
+    },
+    {
+      "id": "typescript_unknown_es2024.arraybuffer.d",
+      "name": "es2024.arraybuffer.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2024.arraybuffer.d.ts",
+      "lines_of_code": 47,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "* If this ArrayBuffer is resizable, returns the maximum byte length given during construction; retur..."
+    },
+    {
+      "id": "typescript_unknown_decorators.d",
+      "name": "decorators.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/decorators.d.ts",
+      "lines_of_code": 366,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "* The decorator context types provided to class element decorators."
+    },
+    {
+      "id": "typescript_unknown_es2015.symbol.d",
+      "name": "es2015.symbol.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2015.symbol.d.ts",
+      "lines_of_code": 28,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* A reference to the prototype."
+    },
+    {
+      "id": "typescript_unknown_es2024.sharedmemory.d",
+      "name": "es2024.sharedmemory.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2024.sharedmemory.d.ts",
+      "lines_of_code": 50,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "* A non-blocking, asynchronous version of wait which is usable on the main thread.\n     * Waits asyn..."
+    },
+    {
+      "id": "typescript_service_webworker.iterable.generated.d",
+      "name": "webworker.iterable.generated.d",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/webworker.iterable.generated.d.ts",
+      "lines_of_code": 322,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - webworker.iterable.generated.d"
+    },
+    {
+      "id": "typescript_unknown_es2023.intl.d",
+      "name": "es2023.intl.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2023.intl.d.ts",
+      "lines_of_code": 38,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - es2023.intl.d"
+    },
+    {
+      "id": "typescript_unknown_es2017.sharedmemory.d",
+      "name": "es2017.sharedmemory.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2017.sharedmemory.d.ts",
+      "lines_of_code": 117,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "* Read-only. The length of the ArrayBuffer (in bytes)."
+    },
+    {
+      "id": "typescript_unknown_es2021.intl.d",
+      "name": "es2021.intl.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2021.intl.d.ts",
+      "lines_of_code": 148,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - es2021.intl.d"
+    },
+    {
+      "id": "typescript_unknown_esnext.d",
+      "name": "esnext.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/esnext.d.ts",
+      "lines_of_code": 11,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - esnext.d"
+    },
+    {
+      "id": "typescript_service_dom.iterable.generated.d",
+      "name": "dom.iterable.generated.d",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/dom.iterable.generated.d.ts",
+      "lines_of_code": 553,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "* The **`setValueCurveAtTime()`** method of the following a curve defined by a list of values.\n     ..."
+    },
+    {
+      "id": "typescript_unknown_es2024.collection.d",
+      "name": "es2024.collection.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2024.collection.d.ts",
+      "lines_of_code": 11,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Groups members of an iterable according to the return value of the passed callback.\n     * @param ..."
+    },
+    {
+      "id": "typescript_unknown_es2015.core.d",
+      "name": "es2015.core.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2015.core.d.ts",
+      "lines_of_code": 579,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - es2015.core.d"
+    },
+    {
+      "id": "typescript_unknown_es2020.string.d",
+      "name": "es2020.string.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2020.string.d.ts",
+      "lines_of_code": 26,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "* Matches a string with a regular expression, and returns an iterable of matches\n     * containing t..."
+    },
+    {
+      "id": "typescript_unknown_es2018.regexp.d",
+      "name": "es2018.regexp.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2018.regexp.d.ts",
+      "lines_of_code": 19,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Returns a Boolean value indicating the state of the dotAll flag (s) used with a regular expression..."
+    },
+    {
+      "id": "typescript_unknown_es2015.reflect.d",
+      "name": "es2015.reflect.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2015.reflect.d.ts",
+      "lines_of_code": 126,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "* Calls the function with the specified object as the this value\n     * and the elements of specifie..."
+    },
+    {
+      "id": "typescript_unknown_es2017.date.d",
+      "name": "es2017.date.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2017.date.d.ts",
+      "lines_of_code": 13,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - es2017.date.d"
+    },
+    {
+      "id": "typescript_unknown_es2015.promise.d",
+      "name": "es2015.promise.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2015.promise.d.ts",
+      "lines_of_code": 63,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* A reference to the prototype."
+    },
+    {
+      "id": "typescript_service_dom.generated.d",
+      "name": "dom.generated.d",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/dom.generated.d.ts",
+      "lines_of_code": 39411,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - dom.generated.d"
+    },
+    {
+      "id": "typescript_unknown_es2020.sharedmemory.d",
+      "name": "es2020.sharedmemory.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2020.sharedmemory.d.ts",
+      "lines_of_code": 81,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "* Adds a value to the value at the given position in the array, returning the original value.\n     *..."
+    },
+    {
+      "id": "typescript_unknown_esnext.promise.d",
+      "name": "esnext.promise.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/esnext.promise.d.ts",
+      "lines_of_code": 16,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - esnext.promise.d"
+    },
+    {
+      "id": "typescript_unknown_es2017.string.d",
+      "name": "es2017.string.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2017.string.d.ts",
+      "lines_of_code": 27,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - es2017.string.d"
+    },
+    {
+      "id": "typescript_unknown_es2018.asynciterable.d",
+      "name": "es2018.asynciterable.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2018.asynciterable.d.ts",
+      "lines_of_code": 35,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* A method that returns the default async iterator for an object. Called by the semantics of\n     * ..."
+    },
+    {
+      "id": "typescript_unknown_es2017.typedarrays.d",
+      "name": "es2017.typedarrays.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2017.typedarrays.d.ts",
+      "lines_of_code": 35,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - es2017.typedarrays.d"
+    },
+    {
+      "id": "typescript_unknown_es2022.array.d",
+      "name": "es2022.array.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2022.array.d.ts",
+      "lines_of_code": 103,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Returns the item located at the specified index.\n     * @param index The zero-based index of the d..."
+    },
+    {
+      "id": "typescript_unknown_es2018.asyncgenerator.d",
+      "name": "es2018.asyncgenerator.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2018.asyncgenerator.d.ts",
+      "lines_of_code": 59,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - es2018.asyncgenerator.d"
+    },
+    {
+      "id": "typescript_unknown_es2020.intl.d",
+      "name": "es2020.intl.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2020.intl.d.ts",
+      "lines_of_code": 456,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "* A string that is a valid [Unicode BCP 47 Locale Identifier](https://unicode.org/reports/tr35/#Unic..."
+    },
+    {
+      "id": "typescript_unknown_esnext.collection.d",
+      "name": "esnext.collection.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/esnext.collection.d.ts",
+      "lines_of_code": 78,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Despite its name, returns an iterator of the values in the set-like."
+    },
+    {
+      "id": "typescript_unknown_es2020.bigint.d",
+      "name": "es2020.bigint.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2020.bigint.d.ts",
+      "lines_of_code": 747,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "* The locale matching algorithm to use.The default is \"best fit\". For information about this option,..."
+    },
+    {
+      "id": "typescript_unknown_es2020.promise.d",
+      "name": "es2020.promise.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2020.promise.d.ts",
+      "lines_of_code": 29,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Creates a Promise that is resolved with an array of results when all\n     * of the provided Promis..."
+    },
+    {
+      "id": "typescript_unknown_dom.asynciterable.generated.d",
+      "name": "dom.asynciterable.generated.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/dom.asynciterable.generated.d.ts",
+      "lines_of_code": 23,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - dom.asynciterable.generated.d"
+    },
+    {
+      "id": "typescript_unknown_es2019.array.d",
+      "name": "es2019.array.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2019.array.d.ts",
+      "lines_of_code": 61,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - es2019.array.d"
+    },
+    {
+      "id": "typescript_unknown_es2022.error.d",
+      "name": "es2022.error.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2022.error.d.ts",
+      "lines_of_code": 57,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - es2022.error.d"
+    },
+    {
+      "id": "typescript_service_webworker.generated.d",
+      "name": "webworker.generated.d",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/webworker.generated.d.ts",
+      "lines_of_code": 13132,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - webworker.generated.d"
+    },
+    {
+      "id": "typescript_unknown_es2024.object.d",
+      "name": "es2024.object.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2024.object.d.ts",
+      "lines_of_code": 11,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Groups members of an iterable according to the return value of the passed callback.\n     * @param ..."
+    },
+    {
+      "id": "typescript_unknown_es2016.array.include.d",
+      "name": "es2016.array.include.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2016.array.include.d.ts",
+      "lines_of_code": 98,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Determines whether an array includes a certain element, returning true or false as appropriate.\n  ..."
+    },
+    {
+      "id": "typescript_unknown_es2021.weakref.d",
+      "name": "es2021.weakref.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2021.weakref.d.ts",
+      "lines_of_code": 60,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "* Returns the WeakRef instance's target value, or undefined if the target value has been\n     * recl..."
+    },
+    {
+      "id": "typescript_unknown_es2020.date.d",
+      "name": "es2020.date.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2020.date.d.ts",
+      "lines_of_code": 24,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - es2020.date.d"
+    },
+    {
+      "id": "typescript_unknown_es2021.string.d",
+      "name": "es2021.string.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2021.string.d.ts",
+      "lines_of_code": 15,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Replace all instances of a substring in a string, using a regular expression or search string.\n   ..."
+    },
+    {
+      "id": "typescript_unknown_esnext.float16.d",
+      "name": "esnext.float16.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/esnext.float16.d.ts",
+      "lines_of_code": 425,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "* A typed array of 16-bit float values. The contents are initialized to 0. If the requested number\n ..."
+    },
+    {
+      "id": "typescript_unknown_es2015.proxy.d",
+      "name": "es2015.proxy.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2015.proxy.d.ts",
+      "lines_of_code": 110,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "* A trap method for a function call.\n     * @param target The original callable object which is bein..."
+    },
+    {
+      "id": "typescript_unknown_es2022.intl.d",
+      "name": "es2022.intl.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2022.intl.d.ts",
+      "lines_of_code": 127,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "* An object with some or all properties of the `Intl.Segmenter` constructor `options` parameter.\n   ..."
+    },
+    {
+      "id": "typescript_unknown_es2017.object.d",
+      "name": "es2017.object.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2017.object.d.ts",
+      "lines_of_code": 31,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Returns an array of values of the enumerable own properties of an object\n     * @param o Object th..."
+    },
+    {
+      "id": "typescript_unknown_es2018.intl.d",
+      "name": "es2018.intl.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2018.intl.d.ts",
+      "lines_of_code": 65,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "TOC-Determining-Plural-Categories\n    type LDMLPluralRule = \"zero\" | \"one\" | \"two\" | \"few\" | \"many\" ..."
+    },
+    {
+      "id": "typescript_unknown_es2022.regexp.d",
+      "name": "es2022.regexp.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2022.regexp.d.ts",
+      "lines_of_code": 21,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Returns a Boolean value indicating the state of the hasIndices flag (d) used with a regular expres..."
+    },
+    {
+      "id": "typescript_unknown_es2017.intl.d",
+      "name": "es2017.intl.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2017.intl.d.ts",
+      "lines_of_code": 26,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - es2017.intl.d"
+    },
+    {
+      "id": "typescript_unknown_es2023.array.d",
+      "name": "es2023.array.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2023.array.d.ts",
+      "lines_of_code": 906,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - es2023.array.d"
+    },
+    {
+      "id": "typescript_unknown_esnext.iterator.d",
+      "name": "esnext.iterator.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/esnext.iterator.d.ts",
+      "lines_of_code": 130,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - esnext.iterator.d"
+    },
+    {
+      "id": "typescript_unknown_es2018.promise.d",
+      "name": "es2018.promise.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2018.promise.d.ts",
+      "lines_of_code": 12,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Represents the completion of an asynchronous operation"
+    },
+    {
+      "id": "typescript_unknown_es2015.collection.d",
+      "name": "es2015.collection.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2015.collection.d.ts",
+      "lines_of_code": 129,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "* @returns true if an element in the Map existed and has been removed, or false if the element does ..."
+    },
+    {
+      "id": "typescript_unknown_es2020.symbol.wellknown.d",
+      "name": "es2020.symbol.wellknown.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2020.symbol.wellknown.d.ts",
+      "lines_of_code": 23,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* A regular expression method that matches the regular expression against a string. Called\n     * by..."
+    },
+    {
+      "id": "typescript_unknown_es2015.generator.d",
+      "name": "es2015.generator.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2015.generator.d.ts",
+      "lines_of_code": 59,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - es2015.generator.d"
+    },
+    {
+      "id": "typescript_unknown_es2024.promise.d",
+      "name": "es2024.promise.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/es2024.promise.d.ts",
+      "lines_of_code": 17,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Creates a new Promise and returns it in an object, along with its resolve and reject functions.\n  ..."
+    },
+    {
+      "id": "typescript_unknown_esnext.array.d",
+      "name": "esnext.array.d",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/lib/esnext.array.d.ts",
+      "lines_of_code": 17,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Creates an array from an async iterator or iterable object.\n     * @param iterableOrArrayLike An a..."
+    },
+    {
+      "id": "typescript_unknown_typescript",
+      "name": "typescript",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/typescript/typescript.ts",
+      "lines_of_code": 25,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - typescript"
+    },
+    {
+      "id": "typescript_unknown_binder",
+      "name": "binder",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/binder.ts",
+      "lines_of_code": 4008,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - binder"
+    },
+    {
+      "id": "typescript_unknown_scanner",
+      "name": "scanner",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/scanner.ts",
+      "lines_of_code": 4101,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - scanner"
+    },
+    {
+      "id": "typescript_unknown_visitorPublic",
+      "name": "visitorPublic",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/visitorPublic.ts",
+      "lines_of_code": 1808,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - visitorPublic"
+    },
+    {
+      "id": "typescript_unknown_sys",
+      "name": "sys",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/sys.ts",
+      "lines_of_code": 1981,
+      "complexity": "very_high",
+      "dependencies": [
+        "crypto",
+        "path",
+        "source-map-support",
+        "fs",
+        "inspector",
+        "os"
+      ],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - sys"
+    },
+    {
+      "id": "typescript_service_commandLineParser",
+      "name": "commandLineParser",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/commandLineParser.ts",
+      "lines_of_code": 4266,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - commandLineParser"
+    },
+    {
+      "id": "typescript_unknown_builderStatePublic",
+      "name": "builderStatePublic",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/builderStatePublic.ts",
+      "lines_of_code": 17,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - builderStatePublic"
+    },
+    {
+      "id": "typescript_unknown_debug",
+      "name": "debug",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/debug.ts",
+      "lines_of_code": 1254,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - debug"
+    },
+    {
+      "id": "typescript_unknown_programDiagnostics",
+      "name": "programDiagnostics",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/programDiagnostics.ts",
+      "lines_of_code": 426,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - programDiagnostics"
+    },
+    {
+      "id": "typescript_utility_utilitiesPublic",
+      "name": "utilitiesPublic",
+      "type": "utility",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/utilitiesPublic.ts",
+      "lines_of_code": 2668,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "공통 유틸리티 함수 - utilitiesPublic"
+    },
+    {
+      "id": "typescript_unknown_core",
+      "name": "core",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/core.ts",
+      "lines_of_code": 2593,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - core"
+    },
+    {
+      "id": "typescript_unknown_builderPublic",
+      "name": "builderPublic",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/builderPublic.ts",
+      "lines_of_code": 273,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - builderPublic"
+    },
+    {
+      "id": "typescript_unknown_builderState",
+      "name": "builderState",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/builderState.ts",
+      "lines_of_code": 626,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - builderState"
+    },
+    {
+      "id": "typescript_unknown_watch",
+      "name": "watch",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/watch.ts",
+      "lines_of_code": 998,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - watch"
+    },
+    {
+      "id": "typescript_unknown_sourcemap",
+      "name": "sourcemap",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/sourcemap.ts",
+      "lines_of_code": 823,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - sourcemap"
+    },
+    {
+      "id": "typescript_unknown_watchPublic",
+      "name": "watchPublic",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/watchPublic.ts",
+      "lines_of_code": 1263,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - watchPublic"
+    },
+    {
+      "id": "typescript_unknown_emitter",
+      "name": "emitter",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/emitter.ts",
+      "lines_of_code": 6365,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - emitter"
+    },
+    {
+      "id": "typescript_unknown_executeCommandLine",
+      "name": "executeCommandLine",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/executeCommandLine.ts",
+      "lines_of_code": 1295,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - executeCommandLine"
+    },
+    {
+      "id": "typescript_unknown_moduleNameResolver",
+      "name": "moduleNameResolver",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/moduleNameResolver.ts",
+      "lines_of_code": 3418,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - moduleNameResolver"
+    },
+    {
+      "id": "typescript_utility_watchUtilities",
+      "name": "watchUtilities",
+      "type": "utility",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/watchUtilities.ts",
+      "lines_of_code": 847,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "공통 유틸리티 함수 - watchUtilities"
+    },
+    {
+      "id": "typescript_unknown_corePublic",
+      "name": "corePublic",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/corePublic.ts",
+      "lines_of_code": 47,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "The version of the TypeScript compiler release"
+    },
+    {
+      "id": "typescript_unknown_performance",
+      "name": "performance",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/performance.ts",
+      "lines_of_code": 210,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "Performance measurements for the compiler."
+    },
+    {
+      "id": "typescript_unknown_transformer",
+      "name": "transformer",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformer.ts",
+      "lines_of_code": 696,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - transformer"
+    },
+    {
+      "id": "typescript_unknown_performanceCore",
+      "name": "performanceCore",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/performanceCore.ts",
+      "lines_of_code": 102,
+      "complexity": "medium",
+      "dependencies": [
+        "perf_hooks"
+      ],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - performanceCore"
+    },
+    {
+      "id": "typescript_unknown_program",
+      "name": "program",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/program.ts",
+      "lines_of_code": 5168,
+      "complexity": "very_high",
+      "dependencies": [
+        "mod"
+      ],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - program"
+    },
+    {
+      "id": "typescript_unknown_builder",
+      "name": "builder",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/builder.ts",
+      "lines_of_code": 2480,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - builder"
+    },
+    {
+      "id": "typescript_unknown_tsbuild",
+      "name": "tsbuild",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/tsbuild.ts",
+      "lines_of_code": 183,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - tsbuild"
+    },
+    {
+      "id": "typescript_unknown_expressionToTypeNode",
+      "name": "expressionToTypeNode",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/expressionToTypeNode.ts",
+      "lines_of_code": 1330,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - expressionToTypeNode"
+    },
+    {
+      "id": "typescript_service_path",
+      "name": "path",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/path.ts",
+      "lines_of_code": 1115,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "비즈니스 로직 구현 - path"
+    },
+    {
+      "id": "typescript_service_utilities",
+      "name": "utilities",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/utilities.ts",
+      "lines_of_code": 12364,
+      "complexity": "very_high",
+      "dependencies": [
+        "name",
+        "module"
+      ],
+      "crud_operations": {
+        "mysql": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - utilities"
+    },
+    {
+      "id": "typescript_unknown_semver",
+      "name": "semver",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/semver.ts",
+      "lines_of_code": 451,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "spec-item-2\n// > A normal version number MUST take the form X.Y.Z where X, Y, and Z are non-negative..."
+    },
+    {
+      "id": "typescript_unknown_tracing",
+      "name": "tracing",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/tracing.ts",
+      "lines_of_code": 375,
+      "complexity": "high",
+      "dependencies": [
+        "fs"
+      ],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - tracing"
+    },
+    {
+      "id": "typescript_service_checker",
+      "name": "checker",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/checker.ts",
+      "lines_of_code": 53770,
+      "complexity": "very_high",
+      "dependencies": [
+        "foo",
+        "y",
+        "specifier",
+        "whatever",
+        "graphics"
+      ],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - checker"
+    },
+    {
+      "id": "typescript_unknown_resolutionCache",
+      "name": "resolutionCache",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/resolutionCache.ts",
+      "lines_of_code": 1702,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - resolutionCache"
+    },
+    {
+      "id": "typescript_unknown_tsbuildPublic",
+      "name": "tsbuildPublic",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/tsbuildPublic.ts",
+      "lines_of_code": 2493,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - tsbuildPublic"
+    },
+    {
+      "id": "typescript_unknown_symbolWalker",
+      "name": "symbolWalker",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/symbolWalker.ts",
+      "lines_of_code": 216,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - symbolWalker"
+    },
+    {
+      "id": "typescript_service_parser",
+      "name": "parser",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/parser.ts",
+      "lines_of_code": 10819,
+      "complexity": "very_high",
+      "dependencies": [
+        "mod",
+        "module-from-node\n                // We want this import to be a statement rather than import call expression\n                sourceFlags |= NodeFlags.PossiblyContainsDynamicImport;\n                expression = parseTokenNode<PrimaryExpression>();\n            }\n            else if (lookAhead(nextTokenIsDot)) {\n                // This is an "
+      ],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - parser"
+    },
+    {
+      "id": "typescript_service_types",
+      "name": "types",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/types.ts",
+      "lines_of_code": 10653,
+      "complexity": "very_high",
+      "dependencies": [
+        "mod",
+        "fs"
+      ],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - types"
+    },
+    {
+      "id": "typescript_unknown_watchGuard",
+      "name": "watchGuard",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/watchGuard/watchGuard.ts",
+      "lines_of_code": 17,
+      "complexity": "low",
+      "dependencies": [
+        "fs"
+      ],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - watchGuard"
+    },
+    {
+      "id": "typescript_unknown_jsTyping",
+      "name": "jsTyping",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/jsTyping/jsTyping.ts",
+      "lines_of_code": 414,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - jsTyping"
+    },
+    {
+      "id": "typescript_unknown_shared",
+      "name": "shared",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/jsTyping/shared.ts",
+      "lines_of_code": 81,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - shared"
+    },
+    {
+      "id": "typescript_unknown_types",
+      "name": "types",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/jsTyping/types.ts",
+      "lines_of_code": 122,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - types"
+    },
+    {
+      "id": "typescript_unknown_fourslashInterfaceImpl",
+      "name": "fourslashInterfaceImpl",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/fourslashInterfaceImpl.ts",
+      "lines_of_code": 2049,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - fourslashInterfaceImpl"
+    },
+    {
+      "id": "typescript_service_harnessLanguageService",
+      "name": "harnessLanguageService",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/harnessLanguageService.ts",
+      "lines_of_code": 711,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - harnessLanguageService"
+    },
+    {
+      "id": "typescript_utility_watchUtils",
+      "name": "watchUtils",
+      "type": "utility",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/watchUtils.ts",
+      "lines_of_code": 246,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "공통 유틸리티 함수 - watchUtils"
+    },
+    {
+      "id": "typescript_service_client",
+      "name": "client",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/client.ts",
+      "lines_of_code": 1109,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - client"
+    },
+    {
+      "id": "typescript_service_projectServiceStateLogger",
+      "name": "projectServiceStateLogger",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/projectServiceStateLogger.ts",
+      "lines_of_code": 483,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - projectServiceStateLogger"
+    },
+    {
+      "id": "typescript_unknown_harnessIO",
+      "name": "harnessIO",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/harnessIO.ts",
+      "lines_of_code": 1648,
+      "complexity": "very_high",
+      "dependencies": [
+        "diff",
+        "path",
+        "fs"
+      ],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - harnessIO"
+    },
+    {
+      "id": "typescript_unknown_sourceMapRecorder",
+      "name": "sourceMapRecorder",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/sourceMapRecorder.ts",
+      "lines_of_code": 368,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - sourceMapRecorder"
+    },
+    {
+      "id": "typescript_service_tsserverLogger",
+      "name": "tsserverLogger",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/tsserverLogger.ts",
+      "lines_of_code": 161,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - tsserverLogger"
+    },
+    {
+      "id": "typescript_unknown_fakesHosts",
+      "name": "fakesHosts",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/fakesHosts.ts",
+      "lines_of_code": 424,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "* Fake implementations of various compiler dependencies."
+    },
+    {
+      "id": "typescript_utility_vfsUtil",
+      "name": "vfsUtil",
+      "type": "utility",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/vfsUtil.ts",
+      "lines_of_code": 1666,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "* Posix-style path to the TypeScript compiler build outputs (including tsc.js, lib.d.ts, etc.)"
+    },
+    {
+      "id": "typescript_unknown_collectionsImpl",
+      "name": "collectionsImpl",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/collectionsImpl.ts",
+      "lines_of_code": 308,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - collectionsImpl"
+    },
+    {
+      "id": "typescript_service_fourslashImpl",
+      "name": "fourslashImpl",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/fourslashImpl.ts",
+      "lines_of_code": 5286,
+      "complexity": "very_high",
+      "dependencies": [
+        "source-map-support",
+        "fs"
+      ],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - fourslashImpl"
+    },
+    {
+      "id": "typescript_unknown_typeWriter",
+      "name": "typeWriter",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/typeWriter.ts",
+      "lines_of_code": 338,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - typeWriter"
+    },
+    {
+      "id": "typescript_unknown_findUpDir",
+      "name": "findUpDir",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/findUpDir.ts",
+      "lines_of_code": 22,
+      "complexity": "low",
+      "dependencies": [
+        "fs"
+      ],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - findUpDir"
+    },
+    {
+      "id": "typescript_unknown_evaluatorImpl",
+      "name": "evaluatorImpl",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/evaluatorImpl.ts",
+      "lines_of_code": 757,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - evaluatorImpl"
+    },
+    {
+      "id": "typescript_utility_vpathUtil",
+      "name": "vpathUtil",
+      "type": "utility",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/vpathUtil.ts",
+      "lines_of_code": 137,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "공통 유틸리티 함수 - vpathUtil"
+    },
+    {
+      "id": "typescript_service_incrementalUtils",
+      "name": "incrementalUtils",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/incrementalUtils.ts",
+      "lines_of_code": 663,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - incrementalUtils"
+    },
+    {
+      "id": "typescript_utility_util",
+      "name": "util",
+      "type": "utility",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/util.ts",
+      "lines_of_code": 130,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* Common utilities"
+    },
+    {
+      "id": "typescript_unknown_runnerbase",
+      "name": "runnerbase",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/runnerbase.ts",
+      "lines_of_code": 65,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - runnerbase"
+    },
+    {
+      "id": "typescript_unknown_compilerImpl",
+      "name": "compilerImpl",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/compilerImpl.ts",
+      "lines_of_code": 300,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "* Test harness compiler functionality."
+    },
+    {
+      "id": "typescript_utility_harnessUtils",
+      "name": "harnessUtils",
+      "type": "utility",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/harnessUtils.ts",
+      "lines_of_code": 391,
+      "complexity": "very_high",
+      "dependencies": [
+        "vm"
+      ],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "공통 유틸리티 함수 - harnessUtils"
+    },
+    {
+      "id": "typescript_unknown_harnessGlobals",
+      "name": "harnessGlobals",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/harnessGlobals.ts",
+      "lines_of_code": 43,
+      "complexity": "low",
+      "dependencies": [
+        "chai"
+      ],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - harnessGlobals"
+    },
+    {
+      "id": "typescript_unknown_addOrRemoveBracesToArrowFunction",
+      "name": "addOrRemoveBracesToArrowFunction",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactors/addOrRemoveBracesToArrowFunction.ts",
+      "lines_of_code": 157,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - addOrRemoveBracesToArrowFunction"
+    },
+    {
+      "id": "typescript_unknown_convertImport",
+      "name": "convertImport",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactors/convertImport.ts",
+      "lines_of_code": 294,
+      "complexity": "high",
+      "dependencies": [
+        "m"
+      ],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - convertImport"
+    },
+    {
+      "id": "typescript_service_convertParamsToDestructuredObject",
+      "name": "convertParamsToDestructuredObject",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactors/convertParamsToDestructuredObject.ts",
+      "lines_of_code": 792,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - convertParamsToDestructuredObject"
+    },
+    {
+      "id": "typescript_service_moveToFile",
+      "name": "moveToFile",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactors/moveToFile.ts",
+      "lines_of_code": 1154,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - moveToFile"
+    },
+    {
+      "id": "typescript_service_moveToNewFile",
+      "name": "moveToNewFile",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactors/moveToNewFile.ts",
+      "lines_of_code": 88,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "비즈니스 로직 구현 - moveToNewFile"
+    },
+    {
+      "id": "typescript_utility_helpers",
+      "name": "helpers",
+      "type": "utility",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactors/helpers.ts",
+      "lines_of_code": 93,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "공통 유틸리티 함수 - helpers"
+    },
+    {
+      "id": "typescript_unknown_convertArrowFunctionOrFunctionExpression",
+      "name": "convertArrowFunctionOrFunctionExpression",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactors/convertArrowFunctionOrFunctionExpression.ts",
+      "lines_of_code": 315,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - convertArrowFunctionOrFunctionExpression"
+    },
+    {
+      "id": "typescript_unknown_inferFunctionReturnType",
+      "name": "inferFunctionReturnType",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactors/inferFunctionReturnType.ts",
+      "lines_of_code": 161,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - inferFunctionReturnType"
+    },
+    {
+      "id": "typescript_unknown_convertStringOrTemplateLiteral",
+      "name": "convertStringOrTemplateLiteral",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactors/convertStringOrTemplateLiteral.ts",
+      "lines_of_code": 293,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - convertStringOrTemplateLiteral"
+    },
+    {
+      "id": "typescript_unknown_inlineVariable",
+      "name": "inlineVariable",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactors/inlineVariable.ts",
+      "lines_of_code": 283,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - inlineVariable"
+    },
+    {
+      "id": "typescript_unknown_convertOverloadListToSingleSignature",
+      "name": "convertOverloadListToSingleSignature",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactors/convertOverloadListToSingleSignature.ts",
+      "lines_of_code": 270,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - convertOverloadListToSingleSignature"
+    },
+    {
+      "id": "typescript_unknown_extractSymbol",
+      "name": "extractSymbol",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactors/extractSymbol.ts",
+      "lines_of_code": 2240,
+      "complexity": "very_high",
+      "dependencies": [
+        "y"
+      ],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - extractSymbol"
+    },
+    {
+      "id": "typescript_unknown_convertExport",
+      "name": "convertExport",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactors/convertExport.ts",
+      "lines_of_code": 336,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - convertExport"
+    },
+    {
+      "id": "typescript_unknown_convertToOptionalChainExpression",
+      "name": "convertToOptionalChainExpression",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactors/convertToOptionalChainExpression.ts",
+      "lines_of_code": 346,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - convertToOptionalChainExpression"
+    },
+    {
+      "id": "typescript_unknown_extractType",
+      "name": "extractType",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactors/extractType.ts",
+      "lines_of_code": 436,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - extractType"
+    },
+    {
+      "id": "typescript_unknown_generateGetAccessorAndSetAccessor",
+      "name": "generateGetAccessorAndSetAccessor",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/refactors/generateGetAccessorAndSetAccessor.ts",
+      "lines_of_code": 65,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - generateGetAccessorAndSetAccessor"
+    },
+    {
+      "id": "typescript_unknown_rules",
+      "name": "rules",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/formatting/rules.ts",
+      "lines_of_code": 993,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - rules"
+    },
+    {
+      "id": "typescript_unknown_formatting",
+      "name": "formatting",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/formatting/formatting.ts",
+      "lines_of_code": 1532,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - formatting"
+    },
+    {
+      "id": "typescript_unknown_smartIndenter",
+      "name": "smartIndenter",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/formatting/smartIndenter.ts",
+      "lines_of_code": 769,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - smartIndenter"
+    },
+    {
+      "id": "typescript_unknown_rulesMap",
+      "name": "rulesMap",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/formatting/rulesMap.ts",
+      "lines_of_code": 156,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - rulesMap"
+    },
+    {
+      "id": "typescript_unknown_rule",
+      "name": "rule",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/formatting/rule.ts",
+      "lines_of_code": 48,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - rule"
+    },
+    {
+      "id": "typescript_unknown_formattingScanner",
+      "name": "formattingScanner",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/formatting/formattingScanner.ts",
+      "lines_of_code": 335,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - formattingScanner"
+    },
+    {
+      "id": "typescript_unknown_formattingContext",
+      "name": "formattingContext",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/formatting/formattingContext.ts",
+      "lines_of_code": 111,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - formattingContext"
+    },
+    {
+      "id": "typescript_unknown_ts.refactor",
+      "name": "ts.refactor",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/_namespaces/ts.refactor.ts",
+      "lines_of_code": 26,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - ts.refactor"
+    },
+    {
+      "id": "typescript_service_ts",
+      "name": "ts",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/_namespaces/ts.ts",
+      "lines_of_code": 64,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - ts"
+    },
+    {
+      "id": "typescript_unknown_ts.codefix",
+      "name": "ts.codefix",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/_namespaces/ts.codefix.ts",
+      "lines_of_code": 76,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - ts.codefix"
+    },
+    {
+      "id": "typescript_unknown_convertTypedefToType",
+      "name": "convertTypedefToType",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/convertTypedefToType.ts",
+      "lines_of_code": 253,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - convertTypedefToType"
+    },
+    {
+      "id": "typescript_unknown_addMissingDeclareProperty",
+      "name": "addMissingDeclareProperty",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/addMissingDeclareProperty.ts",
+      "lines_of_code": 49,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - addMissingDeclareProperty"
+    },
+    {
+      "id": "typescript_unknown_fixReturnTypeInAsyncFunction",
+      "name": "fixReturnTypeInAsyncFunction",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixReturnTypeInAsyncFunction.ts",
+      "lines_of_code": 83,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixReturnTypeInAsyncFunction"
+    },
+    {
+      "id": "typescript_unknown_fixExpectedComma",
+      "name": "fixExpectedComma",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixExpectedComma.ts",
+      "lines_of_code": 63,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixExpectedComma"
+    },
+    {
+      "id": "typescript_unknown_addMissingInvocationForDecorator",
+      "name": "addMissingInvocationForDecorator",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/addMissingInvocationForDecorator.ts",
+      "lines_of_code": 35,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - addMissingInvocationForDecorator"
+    },
+    {
+      "id": "typescript_unknown_fixAddModuleReferTypeMissingTypeof",
+      "name": "fixAddModuleReferTypeMissingTypeof",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixAddModuleReferTypeMissingTypeof.ts",
+      "lines_of_code": 43,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixAddModuleReferTypeMissingTypeof"
+    },
+    {
+      "id": "typescript_unknown_fixInvalidJsxCharacters",
+      "name": "fixInvalidJsxCharacters",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixInvalidJsxCharacters.ts",
+      "lines_of_code": 59,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixInvalidJsxCharacters"
+    },
+    {
+      "id": "typescript_unknown_fixClassDoesntImplementInheritedAbstractMember",
+      "name": "fixClassDoesntImplementInheritedAbstractMember",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixClassDoesntImplementInheritedAbstractMember.ts",
+      "lines_of_code": 83,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixClassDoesntImplementInheritedAbstractMember"
+    },
+    {
+      "id": "typescript_unknown_fixImportNonExportedMember",
+      "name": "fixImportNonExportedMember",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixImportNonExportedMember.ts",
+      "lines_of_code": 207,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - fixImportNonExportedMember"
+    },
+    {
+      "id": "typescript_unknown_fixAddMissingNewOperator",
+      "name": "fixAddMissingNewOperator",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixAddMissingNewOperator.ts",
+      "lines_of_code": 46,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixAddMissingNewOperator"
+    },
+    {
+      "id": "typescript_service_fixAddMissingParam",
+      "name": "fixAddMissingParam",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixAddMissingParam.ts",
+      "lines_of_code": 357,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - fixAddMissingParam"
+    },
+    {
+      "id": "typescript_unknown_fixIncorrectNamedTupleSyntax",
+      "name": "fixIncorrectNamedTupleSyntax",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixIncorrectNamedTupleSyntax.ts",
+      "lines_of_code": 67,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixIncorrectNamedTupleSyntax"
+    },
+    {
+      "id": "typescript_unknown_fixExtendsInterfaceBecomesImplements",
+      "name": "fixExtendsInterfaceBecomesImplements",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixExtendsInterfaceBecomesImplements.ts",
+      "lines_of_code": 69,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - fixExtendsInterfaceBecomesImplements"
+    },
+    {
+      "id": "typescript_unknown_fixSpelling",
+      "name": "fixSpelling",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixSpelling.ts",
+      "lines_of_code": 187,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - fixSpelling"
+    },
+    {
+      "id": "typescript_unknown_convertConstToLet",
+      "name": "convertConstToLet",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/convertConstToLet.ts",
+      "lines_of_code": 77,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - convertConstToLet"
+    },
+    {
+      "id": "typescript_unknown_fixOverrideModifier",
+      "name": "fixOverrideModifier",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixOverrideModifier.ts",
+      "lines_of_code": 230,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixOverrideModifier"
+    },
+    {
+      "id": "typescript_unknown_convertLiteralTypeToMappedType",
+      "name": "convertLiteralTypeToMappedType",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/convertLiteralTypeToMappedType.ts",
+      "lines_of_code": 80,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - convertLiteralTypeToMappedType"
+    },
+    {
+      "id": "typescript_service_addMissingResolutionModeImportAttribute",
+      "name": "addMissingResolutionModeImportAttribute",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/addMissingResolutionModeImportAttribute.ts",
+      "lines_of_code": 109,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "비즈니스 로직 구현 - addMissingResolutionModeImportAttribute"
+    },
+    {
+      "id": "typescript_unknown_convertToAsyncFunction",
+      "name": "convertToAsyncFunction",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/convertToAsyncFunction.ts",
+      "lines_of_code": 938,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - convertToAsyncFunction"
+    },
+    {
+      "id": "typescript_unknown_fixUnreachableCode",
+      "name": "fixUnreachableCode",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixUnreachableCode.ts",
+      "lines_of_code": 89,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - fixUnreachableCode"
+    },
+    {
+      "id": "typescript_unknown_removeAccidentalCallParentheses",
+      "name": "removeAccidentalCallParentheses",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/removeAccidentalCallParentheses.ts",
+      "lines_of_code": 30,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - removeAccidentalCallParentheses"
+    },
+    {
+      "id": "typescript_unknown_disableJsDiagnostics",
+      "name": "disableJsDiagnostics",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/disableJsDiagnostics.ts",
+      "lines_of_code": 81,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - disableJsDiagnostics"
+    },
+    {
+      "id": "typescript_unknown_fixUnusedIdentifier",
+      "name": "fixUnusedIdentifier",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixUnusedIdentifier.ts",
+      "lines_of_code": 450,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - fixUnusedIdentifier"
+    },
+    {
+      "id": "typescript_unknown_fixClassIncorrectlyImplementsInterface",
+      "name": "fixClassIncorrectlyImplementsInterface",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixClassIncorrectlyImplementsInterface.ts",
+      "lines_of_code": 132,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixClassIncorrectlyImplementsInterface"
+    },
+    {
+      "id": "typescript_unknown_addNameToNamelessParameter",
+      "name": "addNameToNamelessParameter",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/addNameToNamelessParameter.ts",
+      "lines_of_code": 76,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - addNameToNamelessParameter"
+    },
+    {
+      "id": "typescript_unknown_fixModuleAndTargetOptions",
+      "name": "fixModuleAndTargetOptions",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixModuleAndTargetOptions.ts",
+      "lines_of_code": 64,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - fixModuleAndTargetOptions"
+    },
+    {
+      "id": "typescript_unknown_useBigintLiteral",
+      "name": "useBigintLiteral",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/useBigintLiteral.ts",
+      "lines_of_code": 46,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - useBigintLiteral"
+    },
+    {
+      "id": "typescript_unknown_fixMissingCallParentheses",
+      "name": "fixMissingCallParentheses",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixMissingCallParentheses.ts",
+      "lines_of_code": 60,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixMissingCallParentheses"
+    },
+    {
+      "id": "typescript_unknown_splitTypeOnlyImport",
+      "name": "splitTypeOnlyImport",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/splitTypeOnlyImport.ts",
+      "lines_of_code": 70,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - splitTypeOnlyImport"
+    },
+    {
+      "id": "typescript_service_importFixes",
+      "name": "importFixes",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/importFixes.ts",
+      "lines_of_code": 2144,
+      "complexity": "very_high",
+      "dependencies": [
+        "foo",
+        "fs"
+      ],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - importFixes"
+    },
+    {
+      "id": "typescript_unknown_fixConstructorForDerivedNeedSuperCall",
+      "name": "fixConstructorForDerivedNeedSuperCall",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixConstructorForDerivedNeedSuperCall.ts",
+      "lines_of_code": 41,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixConstructorForDerivedNeedSuperCall"
+    },
+    {
+      "id": "typescript_unknown_requireInTs",
+      "name": "requireInTs",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/requireInTs.ts",
+      "lines_of_code": 110,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - requireInTs"
+    },
+    {
+      "id": "typescript_service_helpers",
+      "name": "helpers",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/helpers.ts",
+      "lines_of_code": 1009,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - helpers"
+    },
+    {
+      "id": "typescript_unknown_correctQualifiedNameToIndexedAccessType",
+      "name": "correctQualifiedNameToIndexedAccessType",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/correctQualifiedNameToIndexedAccessType.ts",
+      "lines_of_code": 54,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - correctQualifiedNameToIndexedAccessType"
+    },
+    {
+      "id": "typescript_unknown_wrapJsxInFragment",
+      "name": "wrapJsxInFragment",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/wrapJsxInFragment.ts",
+      "lines_of_code": 85,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - wrapJsxInFragment"
+    },
+    {
+      "id": "typescript_unknown_convertToTypeOnlyExport",
+      "name": "convertToTypeOnlyExport",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/convertToTypeOnlyExport.ts",
+      "lines_of_code": 103,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - convertToTypeOnlyExport"
+    },
+    {
+      "id": "typescript_unknown_convertToMappedObjectType",
+      "name": "convertToMappedObjectType",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/convertToMappedObjectType.ts",
+      "lines_of_code": 92,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - convertToMappedObjectType"
+    },
+    {
+      "id": "typescript_unknown_fixAddMissingMember",
+      "name": "fixAddMissingMember",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixAddMissingMember.ts",
+      "lines_of_code": 814,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - fixAddMissingMember"
+    },
+    {
+      "id": "typescript_unknown_useDefaultImport",
+      "name": "useDefaultImport",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/useDefaultImport.ts",
+      "lines_of_code": 63,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - useDefaultImport"
+    },
+    {
+      "id": "typescript_unknown_fixForgottenThisPropertyAccess",
+      "name": "fixForgottenThisPropertyAccess",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixForgottenThisPropertyAccess.ts",
+      "lines_of_code": 62,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixForgottenThisPropertyAccess"
+    },
+    {
+      "id": "typescript_unknown_convertToEsModule",
+      "name": "convertToEsModule",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/convertToEsModule.ts",
+      "lines_of_code": 692,
+      "complexity": "very_high",
+      "dependencies": [
+        "moduleSpecifier",
+        "x",
+        "c",
+        "b"
+      ],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - convertToEsModule"
+    },
+    {
+      "id": "typescript_unknown_fixStrictClassInitialization",
+      "name": "fixStrictClassInitialization",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixStrictClassInitialization.ts",
+      "lines_of_code": 190,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixStrictClassInitialization"
+    },
+    {
+      "id": "typescript_unknown_fixImplicitThis",
+      "name": "fixImplicitThis",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixImplicitThis.ts",
+      "lines_of_code": 80,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - fixImplicitThis"
+    },
+    {
+      "id": "typescript_unknown_convertFunctionToEs6Class",
+      "name": "convertFunctionToEs6Class",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/convertFunctionToEs6Class.ts",
+      "lines_of_code": 340,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - convertFunctionToEs6Class"
+    },
+    {
+      "id": "typescript_unknown_generateAccessors",
+      "name": "generateAccessors",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/generateAccessors.ts",
+      "lines_of_code": 318,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - generateAccessors"
+    },
+    {
+      "id": "typescript_unknown_removeUnnecessaryAwait",
+      "name": "removeUnnecessaryAwait",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/removeUnnecessaryAwait.ts",
+      "lines_of_code": 62,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - removeUnnecessaryAwait"
+    },
+    {
+      "id": "typescript_unknown_fixUnmatchedParameter",
+      "name": "fixUnmatchedParameter",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixUnmatchedParameter.ts",
+      "lines_of_code": 132,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - fixUnmatchedParameter"
+    },
+    {
+      "id": "typescript_unknown_fixNoPropertyAccessFromIndexSignature",
+      "name": "fixNoPropertyAccessFromIndexSignature",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixNoPropertyAccessFromIndexSignature.ts",
+      "lines_of_code": 52,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixNoPropertyAccessFromIndexSignature"
+    },
+    {
+      "id": "typescript_service_fixAddMissingConstraint",
+      "name": "fixAddMissingConstraint",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixAddMissingConstraint.ts",
+      "lines_of_code": 145,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - fixAddMissingConstraint"
+    },
+    {
+      "id": "typescript_unknown_addMissingAwait",
+      "name": "addMissingAwait",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/addMissingAwait.ts",
+      "lines_of_code": 348,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - addMissingAwait"
+    },
+    {
+      "id": "typescript_unknown_fixAwaitInSyncFunction",
+      "name": "fixAwaitInSyncFunction",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixAwaitInSyncFunction.ts",
+      "lines_of_code": 111,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixAwaitInSyncFunction"
+    },
+    {
+      "id": "typescript_unknown_addMissingConst",
+      "name": "addMissingConst",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/addMissingConst.ts",
+      "lines_of_code": 131,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - addMissingConst"
+    },
+    {
+      "id": "typescript_unknown_fixPropertyOverrideAccessor",
+      "name": "fixPropertyOverrideAccessor",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixPropertyOverrideAccessor.ts",
+      "lines_of_code": 84,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixPropertyOverrideAccessor"
+    },
+    {
+      "id": "typescript_unknown_wrapDecoratorInParentheses",
+      "name": "wrapDecoratorInParentheses",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/wrapDecoratorInParentheses.ts",
+      "lines_of_code": 35,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - wrapDecoratorInParentheses"
+    },
+    {
+      "id": "typescript_unknown_addEmptyExportDeclaration",
+      "name": "addEmptyExportDeclaration",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/addEmptyExportDeclaration.ts",
+      "lines_of_code": 30,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - addEmptyExportDeclaration"
+    },
+    {
+      "id": "typescript_service_fixCannotFindModule",
+      "name": "fixCannotFindModule",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixCannotFindModule.ts",
+      "lines_of_code": 83,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "비즈니스 로직 구현 - fixCannotFindModule"
+    },
+    {
+      "id": "typescript_unknown_convertToTypeOnlyImport",
+      "name": "convertToTypeOnlyImport",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/convertToTypeOnlyImport.ts",
+      "lines_of_code": 151,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - convertToTypeOnlyImport"
+    },
+    {
+      "id": "typescript_unknown_fixClassSuperMustPrecedeThisAccess",
+      "name": "fixClassSuperMustPrecedeThisAccess",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixClassSuperMustPrecedeThisAccess.ts",
+      "lines_of_code": 74,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - fixClassSuperMustPrecedeThisAccess"
+    },
+    {
+      "id": "typescript_unknown_fixUnusedLabel",
+      "name": "fixUnusedLabel",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixUnusedLabel.ts",
+      "lines_of_code": 40,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - fixUnusedLabel"
+    },
+    {
+      "id": "typescript_unknown_fixEnableJsxFlag",
+      "name": "fixEnableJsxFlag",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixEnableJsxFlag.ts",
+      "lines_of_code": 43,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixEnableJsxFlag"
+    },
+    {
+      "id": "typescript_model_fixAddVoidToPromise",
+      "name": "fixAddVoidToPromise",
+      "type": "model",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixAddVoidToPromise.ts",
+      "lines_of_code": 113,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C"
+        ]
+      },
+      "apis": [],
+      "description": "데이터 모델 정의 - fixAddVoidToPromise"
+    },
+    {
+      "id": "typescript_unknown_fixPropertyAssignment",
+      "name": "fixPropertyAssignment",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixPropertyAssignment.ts",
+      "lines_of_code": 41,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixPropertyAssignment"
+    },
+    {
+      "id": "typescript_unknown_fixNaNEquality",
+      "name": "fixNaNEquality",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixNaNEquality.ts",
+      "lines_of_code": 92,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixNaNEquality"
+    },
+    {
+      "id": "typescript_unknown_fixUnreferenceableDecoratorMetadata",
+      "name": "fixUnreferenceableDecoratorMetadata",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixUnreferenceableDecoratorMetadata.ts",
+      "lines_of_code": 98,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixUnreferenceableDecoratorMetadata"
+    },
+    {
+      "id": "typescript_unknown_addConvertToUnknownForNonOverlappingTypes",
+      "name": "addConvertToUnknownForNonOverlappingTypes",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/addConvertToUnknownForNonOverlappingTypes.ts",
+      "lines_of_code": 51,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - addConvertToUnknownForNonOverlappingTypes"
+    },
+    {
+      "id": "typescript_service_inferFromUsage",
+      "name": "inferFromUsage",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/inferFromUsage.ts",
+      "lines_of_code": 1247,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - inferFromUsage"
+    },
+    {
+      "id": "typescript_unknown_fixMissingTypeAnnotationOnExports",
+      "name": "fixMissingTypeAnnotationOnExports",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixMissingTypeAnnotationOnExports.ts",
+      "lines_of_code": 1176,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - fixMissingTypeAnnotationOnExports"
+    },
+    {
+      "id": "typescript_unknown_fixInvalidImportSyntax",
+      "name": "fixInvalidImportSyntax",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/fixInvalidImportSyntax.ts",
+      "lines_of_code": 129,
+      "complexity": "low",
+      "dependencies": [
+        "bluebird"
+      ],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - fixInvalidImportSyntax"
+    },
+    {
+      "id": "typescript_unknown_addOptionalPropertyUndefined",
+      "name": "addOptionalPropertyUndefined",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/addOptionalPropertyUndefined.ts",
+      "lines_of_code": 129,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - addOptionalPropertyUndefined"
+    },
+    {
+      "id": "typescript_unknown_returnValueCorrect",
+      "name": "returnValueCorrect",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/returnValueCorrect.ts",
+      "lines_of_code": 293,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - returnValueCorrect"
+    },
+    {
+      "id": "typescript_unknown_addMissingAsync",
+      "name": "addMissingAsync",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/services/codefixes/addMissingAsync.ts",
+      "lines_of_code": 123,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - addMissingAsync"
+    },
+    {
+      "id": "typescript_service_ts.server",
+      "name": "ts.server",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/server/_namespaces/ts.server.ts",
+      "lines_of_code": 17,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "비즈니스 로직 구현 - ts.server"
+    },
+    {
+      "id": "typescript_unknown_ts",
+      "name": "ts",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/_namespaces/ts.ts",
+      "lines_of_code": 79,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - ts"
+    },
+    {
+      "id": "typescript_utility_emitHelpers",
+      "name": "emitHelpers",
+      "type": "utility",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/factory/emitHelpers.ts",
+      "lines_of_code": 1491,
+      "complexity": "very_high",
+      "dependencies": [
+        "foo"
+      ],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "공통 유틸리티 함수 - emitHelpers"
+    },
+    {
+      "id": "typescript_unknown_nodeConverters",
+      "name": "nodeConverters",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/factory/nodeConverters.ts",
+      "lines_of_code": 193,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - nodeConverters"
+    },
+    {
+      "id": "typescript_utility_utilitiesPublic",
+      "name": "utilitiesPublic",
+      "type": "utility",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/factory/utilitiesPublic.ts",
+      "lines_of_code": 52,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "공통 유틸리티 함수 - utilitiesPublic"
+    },
+    {
+      "id": "typescript_unknown_nodeChildren",
+      "name": "nodeChildren",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/factory/nodeChildren.ts",
+      "lines_of_code": 61,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - nodeChildren"
+    },
+    {
+      "id": "typescript_unknown_emitNode",
+      "name": "emitNode",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/factory/emitNode.ts",
+      "lines_of_code": 381,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - emitNode"
+    },
+    {
+      "id": "typescript_unknown_parenthesizerRules",
+      "name": "parenthesizerRules",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/factory/parenthesizerRules.ts",
+      "lines_of_code": 693,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - parenthesizerRules"
+    },
+    {
+      "id": "typescript_utility_utilities",
+      "name": "utilities",
+      "type": "utility",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/factory/utilities.ts",
+      "lines_of_code": 1757,
+      "complexity": "very_high",
+      "dependencies": [
+        "tslib"
+      ],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "공통 유틸리티 함수 - utilities"
+    },
+    {
+      "id": "typescript_unknown_baseNodeFactory",
+      "name": "baseNodeFactory",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/factory/baseNodeFactory.ts",
+      "lines_of_code": 60,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* A `BaseNodeFactory` is an abstraction over an `ObjectAllocator` that handles caching `Node` constr..."
+    },
+    {
+      "id": "typescript_unknown_nodeFactory",
+      "name": "nodeFactory",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/factory/nodeFactory.ts",
+      "lines_of_code": 7544,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - nodeFactory"
+    },
+    {
+      "id": "typescript_unknown_declarations",
+      "name": "declarations",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/declarations.ts",
+      "lines_of_code": 1974,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - declarations"
+    },
+    {
+      "id": "typescript_unknown_generators",
+      "name": "generators",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/generators.ts",
+      "lines_of_code": 3284,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - generators"
+    },
+    {
+      "id": "typescript_unknown_taggedTemplate",
+      "name": "taggedTemplate",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/taggedTemplate.ts",
+      "lines_of_code": 132,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - taggedTemplate"
+    },
+    {
+      "id": "typescript_unknown_classFields",
+      "name": "classFields",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/classFields.ts",
+      "lines_of_code": 3360,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - classFields"
+    },
+    {
+      "id": "typescript_unknown_es2021",
+      "name": "es2021",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/es2021.ts",
+      "lines_of_code": 106,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - es2021"
+    },
+    {
+      "id": "typescript_unknown_typeSerializer",
+      "name": "typeSerializer",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/typeSerializer.ts",
+      "lines_of_code": 633,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - typeSerializer"
+    },
+    {
+      "id": "typescript_unknown_es2019",
+      "name": "es2019",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/es2019.ts",
+      "lines_of_code": 51,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - es2019"
+    },
+    {
+      "id": "typescript_unknown_jsx",
+      "name": "jsx",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/jsx.ts",
+      "lines_of_code": 935,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - jsx"
+    },
+    {
+      "id": "typescript_unknown_es2020",
+      "name": "es2020",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/es2020.ts",
+      "lines_of_code": 267,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - es2020"
+    },
+    {
+      "id": "typescript_unknown_es2016",
+      "name": "es2016",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/es2016.ts",
+      "lines_of_code": 122,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - es2016"
+    },
+    {
+      "id": "typescript_unknown_namedEvaluation",
+      "name": "namedEvaluation",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/namedEvaluation.ts",
+      "lines_of_code": 489,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - namedEvaluation"
+    },
+    {
+      "id": "typescript_unknown_es2017",
+      "name": "es2017",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/es2017.ts",
+      "lines_of_code": 1154,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - es2017"
+    },
+    {
+      "id": "typescript_utility_utilities",
+      "name": "utilities",
+      "type": "utility",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/utilities.ts",
+      "lines_of_code": 886,
+      "complexity": "very_high",
+      "dependencies": [
+        "mod"
+      ],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "공통 유틸리티 함수 - utilities"
+    },
+    {
+      "id": "typescript_unknown_esnext",
+      "name": "esnext",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/esnext.ts",
+      "lines_of_code": 882,
+      "complexity": "very_high",
+      "dependencies": [
+        "mod"
+      ],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - esnext"
+    },
+    {
+      "id": "typescript_unknown_es2018",
+      "name": "es2018",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/es2018.ts",
+      "lines_of_code": 1486,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - es2018"
+    },
+    {
+      "id": "typescript_unknown_classThis",
+      "name": "classThis",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/classThis.ts",
+      "lines_of_code": 148,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - classThis"
+    },
+    {
+      "id": "typescript_unknown_ts",
+      "name": "ts",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/ts.ts",
+      "lines_of_code": 2746,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - ts"
+    },
+    {
+      "id": "typescript_unknown_esDecorators",
+      "name": "esDecorators",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/esDecorators.ts",
+      "lines_of_code": 2533,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - esDecorators"
+    },
+    {
+      "id": "typescript_unknown_legacyDecorators",
+      "name": "legacyDecorators",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/legacyDecorators.ts",
+      "lines_of_code": 846,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - legacyDecorators"
+    },
+    {
+      "id": "typescript_unknown_es2015",
+      "name": "es2015",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/es2015.ts",
+      "lines_of_code": 5065,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - es2015"
+    },
+    {
+      "id": "typescript_unknown_destructuring",
+      "name": "destructuring",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/destructuring.ts",
+      "lines_of_code": 626,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - destructuring"
+    },
+    {
+      "id": "typescript_unknown_diagnostics",
+      "name": "diagnostics",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/declarations/diagnostics.ts",
+      "lines_of_code": 812,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - diagnostics"
+    },
+    {
+      "id": "typescript_unknown_esnextAnd2015",
+      "name": "esnextAnd2015",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/module/esnextAnd2015.ts",
+      "lines_of_code": 439,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - esnextAnd2015"
+    },
+    {
+      "id": "typescript_unknown_module",
+      "name": "module",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/module/module.ts",
+      "lines_of_code": 2504,
+      "complexity": "very_high",
+      "dependencies": [
+        "mod",
+        "someLib"
+      ],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - module"
+    },
+    {
+      "id": "typescript_unknown_system",
+      "name": "system",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/module/system.ts",
+      "lines_of_code": 2050,
+      "complexity": "very_high",
+      "dependencies": [
+        "file1"
+      ],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - system"
+    },
+    {
+      "id": "typescript_unknown_impliedNodeFormatDependent",
+      "name": "impliedNodeFormatDependent",
+      "type": "unknown",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/compiler/transformers/module/impliedNodeFormatDependent.ts",
+      "lines_of_code": 99,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "코드 모듈 - impliedNodeFormatDependent"
+    },
+    {
+      "id": "typescript_service_ts",
+      "name": "ts",
+      "type": "service",
+      "language": "typescript",
+      "file_path": "/tmp/analysis_microsoft_TypeScript/src/harness/_namespaces/ts.ts",
+      "lines_of_code": 11,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "비즈니스 로직 구현 - ts"
+    }
+  ],
+  "datastores": [
+    {
+      "id": "redis",
+      "name": "Redis Cache",
+      "type": "Cache",
+      "engine": "Redis",
+      "connection_pattern": "감지된 연결: 1448개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "delete",
+        "create",
+        "read",
+        "update"
+      ]
+    },
+    {
+      "id": "mysql",
+      "name": "MySQL Database",
+      "type": "Relational Database",
+      "engine": "Mysql",
+      "connection_pattern": "감지된 연결: 11개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "delete",
+        "create",
+        "read",
+        "update"
+      ]
+    },
+    {
+      "id": "postgresql",
+      "name": "PostgreSQL Database",
+      "type": "Relational Database",
+      "engine": "Postgresql",
+      "connection_pattern": "감지된 연결: 2개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "read",
+        "update"
+      ]
+    },
+    {
+      "id": "mongodb",
+      "name": "MongoDB Database",
+      "type": "NoSQL Database",
+      "engine": "Mongodb",
+      "connection_pattern": "감지된 연결: 2개",
+      "estimated_size": "분석 불가",
+      "operations": []
+    },
+    {
+      "id": "elasticsearch",
+      "name": "Elasticsearch Index",
+      "type": "Search Engine",
+      "engine": "Elasticsearch",
+      "connection_pattern": "감지된 연결: 2개",
+      "estimated_size": "분석 불가",
+      "operations": []
+    }
+  ],
+  "crud_matrix": {
+    "javascript_unknown_.gulp": {},
+    "typescript_unknown_nodeTypingsInstaller": {},
+    "typescript_unknown_tsc": {},
+    "typescript_service_common": {},
+    "typescript_service_nodeServer": {},
+    "typescript_service_server": {},
+    "typescript_unknown_deprecate": {},
+    "typescript_unknown_deprecations": {},
+    "typescript_unknown_typingsInstaller": {
+      "redis": [
+        "C",
+        "R",
+        "D"
+      ]
+    },
+    "typescript_unknown_symbolDisplay": {
+      "redis": [
+        "C",
+        "R"
+      ]
+    },
+    "typescript_unknown_outliningElementsCollector": {},
+    "typescript_unknown_signatureHelp": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "typescript_service_completions": {
+      "redis": [
+        "C",
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_transpile": {
+      "redis": [
+        "U"
+      ]
+    },
+    "typescript_unknown_suggestionDiagnostics": {},
+    "typescript_unknown_classifier": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_unknown_refactorProvider": {},
+    "typescript_service_stringCompletions": {
+      "redis": [
+        "C",
+        "R"
+      ]
+    },
+    "typescript_service_services": {
+      "redis": [
+        "C",
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_navigationBar": {},
+    "typescript_unknown_callHierarchy": {},
+    "typescript_service_pasteEdits": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_inlayHints": {},
+    "typescript_service_getEditsForFileRename": {},
+    "typescript_unknown_transform": {},
+    "typescript_unknown_preProcess": {},
+    "typescript_unknown_codeFixProvider": {},
+    "typescript_unknown_breakpoints": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_unknown_smartSelection": {},
+    "typescript_unknown_preparePasteEdits": {},
+    "typescript_unknown_sourcemaps": {},
+    "typescript_service_mapCode": {},
+    "typescript_service_utilities": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ],
+      "mysql": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_service_exportInfoMap": {
+      "redis": [
+        "C",
+        "R"
+      ]
+    },
+    "typescript_service_findAllReferences": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_service_organizeImports": {
+      "redis": [
+        "D"
+      ]
+    },
+    "typescript_unknown_patternMatcher": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_unknown_importTracker": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_unknown_rename": {},
+    "typescript_service_textChanges": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_goToDefinition": {},
+    "typescript_unknown_navigateTo": {},
+    "typescript_unknown_classifier2020": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_service_types": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "typescript_service_editorServices": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_scriptVersionCache": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_service_typingInstallerAdapter": {},
+    "typescript_service_utilitiesPublic": {},
+    "typescript_service_project": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_service_packageJsonCache": {},
+    "typescript_utility_utilities": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_service_protocol": {
+      "redis": [
+        "C",
+        "R",
+        "U"
+      ]
+    },
+    "typescript_service_session": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_service_scriptInfo": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_es2019.string.d": {},
+    "typescript_unknown_webworker.asynciterable.generated.d": {},
+    "typescript_unknown_es2015.symbol.wellknown.d": {},
+    "typescript_unknown_es2019.object.d": {},
+    "typescript_unknown_es2015.iterable.d": {},
+    "typescript_unknown_esnext.disposable.d": {},
+    "typescript_unknown_es2024.string.d": {},
+    "typescript_unknown_es2016.intl.d": {},
+    "typescript_unknown_es5.d": {
+      "redis": [
+        "C",
+        "R"
+      ]
+    },
+    "typescript_unknown_scripthost.d": {
+      "redis": [
+        "U"
+      ]
+    },
+    "typescript_unknown_es2021.promise.d": {},
+    "typescript_unknown_es2024.arraybuffer.d": {},
+    "typescript_unknown_decorators.d": {},
+    "typescript_unknown_es2015.symbol.d": {},
+    "typescript_unknown_es2024.sharedmemory.d": {},
+    "typescript_service_webworker.iterable.generated.d": {
+      "redis": [
+        "U"
+      ]
+    },
+    "typescript_unknown_es2023.intl.d": {},
+    "typescript_unknown_es2017.sharedmemory.d": {},
+    "typescript_unknown_es2021.intl.d": {
+      "redis": [
+        "U"
+      ]
+    },
+    "typescript_unknown_esnext.d": {},
+    "typescript_service_dom.iterable.generated.d": {
+      "redis": [
+        "U"
+      ]
+    },
+    "typescript_unknown_es2024.collection.d": {},
+    "typescript_unknown_es2015.core.d": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_unknown_es2020.string.d": {},
+    "typescript_unknown_es2018.regexp.d": {},
+    "typescript_unknown_es2015.reflect.d": {},
+    "typescript_unknown_es2017.date.d": {},
+    "typescript_unknown_es2015.promise.d": {},
+    "typescript_service_dom.generated.d": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_es2020.sharedmemory.d": {},
+    "typescript_unknown_esnext.promise.d": {},
+    "typescript_unknown_es2017.string.d": {},
+    "typescript_unknown_es2018.asynciterable.d": {},
+    "typescript_unknown_es2017.typedarrays.d": {},
+    "typescript_unknown_es2022.array.d": {},
+    "typescript_unknown_es2018.asyncgenerator.d": {},
+    "typescript_unknown_es2020.intl.d": {
+      "redis": [
+        "U"
+      ]
+    },
+    "typescript_unknown_esnext.collection.d": {},
+    "typescript_unknown_es2020.bigint.d": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_unknown_es2020.promise.d": {},
+    "typescript_unknown_dom.asynciterable.generated.d": {},
+    "typescript_unknown_es2019.array.d": {},
+    "typescript_unknown_es2022.error.d": {},
+    "typescript_service_webworker.generated.d": {
+      "redis": [
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_es2024.object.d": {},
+    "typescript_unknown_es2016.array.include.d": {},
+    "typescript_unknown_es2021.weakref.d": {},
+    "typescript_unknown_es2020.date.d": {},
+    "typescript_unknown_es2021.string.d": {},
+    "typescript_unknown_esnext.float16.d": {
+      "redis": [
+        "C",
+        "R"
+      ]
+    },
+    "typescript_unknown_es2015.proxy.d": {},
+    "typescript_unknown_es2022.intl.d": {},
+    "typescript_unknown_es2017.object.d": {},
+    "typescript_unknown_es2018.intl.d": {},
+    "typescript_unknown_es2022.regexp.d": {},
+    "typescript_unknown_es2017.intl.d": {},
+    "typescript_unknown_es2023.array.d": {},
+    "typescript_unknown_esnext.iterator.d": {},
+    "typescript_unknown_es2018.promise.d": {},
+    "typescript_unknown_es2015.collection.d": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_unknown_es2020.symbol.wellknown.d": {},
+    "typescript_unknown_es2015.generator.d": {},
+    "typescript_unknown_es2024.promise.d": {},
+    "typescript_unknown_esnext.array.d": {},
+    "typescript_unknown_typescript": {},
+    "typescript_unknown_binder": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_scanner": {
+      "redis": [
+        "C",
+        "R"
+      ]
+    },
+    "typescript_unknown_visitorPublic": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_sys": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_service_commandLineParser": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_builderStatePublic": {},
+    "typescript_unknown_debug": {
+      "redis": [
+        "C",
+        "R",
+        "D"
+      ]
+    },
+    "typescript_unknown_programDiagnostics": {},
+    "typescript_utility_utilitiesPublic": {},
+    "typescript_unknown_core": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_builderPublic": {},
+    "typescript_unknown_builderState": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_watch": {},
+    "typescript_unknown_sourcemap": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_unknown_watchPublic": {
+      "redis": [
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_emitter": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_executeCommandLine": {},
+    "typescript_unknown_moduleNameResolver": {
+      "redis": [
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_utility_watchUtilities": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_corePublic": {},
+    "typescript_unknown_performance": {},
+    "typescript_unknown_transformer": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_performanceCore": {},
+    "typescript_unknown_program": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_builder": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_tsbuild": {},
+    "typescript_unknown_expressionToTypeNode": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "typescript_service_path": {},
+    "typescript_unknown_semver": {
+      "redis": [
+        "U"
+      ]
+    },
+    "typescript_unknown_tracing": {},
+    "typescript_service_checker": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_resolutionCache": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_tsbuildPublic": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_symbolWalker": {},
+    "typescript_service_parser": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_watchGuard": {},
+    "typescript_unknown_jsTyping": {},
+    "typescript_unknown_shared": {
+      "redis": [
+        "U"
+      ]
+    },
+    "typescript_unknown_types": {},
+    "typescript_unknown_fourslashInterfaceImpl": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_service_harnessLanguageService": {
+      "redis": [
+        "C",
+        "R",
+        "D"
+      ]
+    },
+    "typescript_utility_watchUtils": {},
+    "typescript_service_client": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "typescript_service_projectServiceStateLogger": {
+      "redis": [
+        "C",
+        "R",
+        "D"
+      ]
+    },
+    "typescript_unknown_harnessIO": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_sourceMapRecorder": {},
+    "typescript_service_tsserverLogger": {},
+    "typescript_unknown_fakesHosts": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_utility_vfsUtil": {
+      "redis": [
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_collectionsImpl": {},
+    "typescript_service_fourslashImpl": {
+      "redis": [
+        "C",
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_typeWriter": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_findUpDir": {},
+    "typescript_unknown_evaluatorImpl": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_utility_vpathUtil": {},
+    "typescript_service_incrementalUtils": {},
+    "typescript_utility_util": {},
+    "typescript_unknown_runnerbase": {
+      "redis": [
+        "U"
+      ]
+    },
+    "typescript_unknown_compilerImpl": {},
+    "typescript_utility_harnessUtils": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_harnessGlobals": {},
+    "typescript_unknown_addOrRemoveBracesToArrowFunction": {},
+    "typescript_unknown_convertImport": {},
+    "typescript_service_convertParamsToDestructuredObject": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_service_moveToFile": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_service_moveToNewFile": {},
+    "typescript_utility_helpers": {},
+    "typescript_unknown_convertArrowFunctionOrFunctionExpression": {},
+    "typescript_unknown_inferFunctionReturnType": {},
+    "typescript_unknown_convertStringOrTemplateLiteral": {},
+    "typescript_unknown_inlineVariable": {},
+    "typescript_unknown_convertOverloadListToSingleSignature": {},
+    "typescript_unknown_extractSymbol": {
+      "redis": [
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_convertExport": {},
+    "typescript_unknown_convertToOptionalChainExpression": {},
+    "typescript_unknown_extractType": {},
+    "typescript_unknown_generateGetAccessorAndSetAccessor": {},
+    "typescript_unknown_rules": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_unknown_formatting": {
+      "redis": [
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_smartIndenter": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_unknown_rulesMap": {},
+    "typescript_unknown_rule": {},
+    "typescript_unknown_formattingScanner": {},
+    "typescript_unknown_formattingContext": {},
+    "typescript_unknown_ts.refactor": {},
+    "typescript_service_ts": {},
+    "typescript_unknown_ts.codefix": {},
+    "typescript_unknown_convertTypedefToType": {},
+    "typescript_unknown_addMissingDeclareProperty": {},
+    "typescript_unknown_fixReturnTypeInAsyncFunction": {},
+    "typescript_unknown_fixExpectedComma": {},
+    "typescript_unknown_addMissingInvocationForDecorator": {},
+    "typescript_unknown_fixAddModuleReferTypeMissingTypeof": {},
+    "typescript_unknown_fixInvalidJsxCharacters": {},
+    "typescript_unknown_fixClassDoesntImplementInheritedAbstractMember": {},
+    "typescript_unknown_fixImportNonExportedMember": {},
+    "typescript_unknown_fixAddMissingNewOperator": {},
+    "typescript_service_fixAddMissingParam": {},
+    "typescript_unknown_fixIncorrectNamedTupleSyntax": {},
+    "typescript_unknown_fixExtendsInterfaceBecomesImplements": {},
+    "typescript_unknown_fixSpelling": {},
+    "typescript_unknown_convertConstToLet": {},
+    "typescript_unknown_fixOverrideModifier": {},
+    "typescript_unknown_convertLiteralTypeToMappedType": {},
+    "typescript_service_addMissingResolutionModeImportAttribute": {},
+    "typescript_unknown_convertToAsyncFunction": {},
+    "typescript_unknown_fixUnreachableCode": {},
+    "typescript_unknown_removeAccidentalCallParentheses": {},
+    "typescript_unknown_disableJsDiagnostics": {},
+    "typescript_unknown_fixUnusedIdentifier": {},
+    "typescript_unknown_fixClassIncorrectlyImplementsInterface": {},
+    "typescript_unknown_addNameToNamelessParameter": {},
+    "typescript_unknown_fixModuleAndTargetOptions": {},
+    "typescript_unknown_useBigintLiteral": {},
+    "typescript_unknown_fixMissingCallParentheses": {},
+    "typescript_unknown_splitTypeOnlyImport": {},
+    "typescript_service_importFixes": {},
+    "typescript_unknown_fixConstructorForDerivedNeedSuperCall": {},
+    "typescript_unknown_requireInTs": {},
+    "typescript_service_helpers": {},
+    "typescript_unknown_correctQualifiedNameToIndexedAccessType": {},
+    "typescript_unknown_wrapJsxInFragment": {},
+    "typescript_unknown_convertToTypeOnlyExport": {},
+    "typescript_unknown_convertToMappedObjectType": {},
+    "typescript_unknown_fixAddMissingMember": {},
+    "typescript_unknown_useDefaultImport": {},
+    "typescript_unknown_fixForgottenThisPropertyAccess": {},
+    "typescript_unknown_convertToEsModule": {},
+    "typescript_unknown_fixStrictClassInitialization": {},
+    "typescript_unknown_fixImplicitThis": {},
+    "typescript_unknown_convertFunctionToEs6Class": {
+      "redis": [
+        "R",
+        "D"
+      ]
+    },
+    "typescript_unknown_generateAccessors": {},
+    "typescript_unknown_removeUnnecessaryAwait": {},
+    "typescript_unknown_fixUnmatchedParameter": {
+      "redis": [
+        "C",
+        "R"
+      ]
+    },
+    "typescript_unknown_fixNoPropertyAccessFromIndexSignature": {},
+    "typescript_service_fixAddMissingConstraint": {},
+    "typescript_unknown_addMissingAwait": {},
+    "typescript_unknown_fixAwaitInSyncFunction": {},
+    "typescript_unknown_addMissingConst": {},
+    "typescript_unknown_fixPropertyOverrideAccessor": {},
+    "typescript_unknown_wrapDecoratorInParentheses": {},
+    "typescript_unknown_addEmptyExportDeclaration": {},
+    "typescript_service_fixCannotFindModule": {},
+    "typescript_unknown_convertToTypeOnlyImport": {},
+    "typescript_unknown_fixClassSuperMustPrecedeThisAccess": {},
+    "typescript_unknown_fixUnusedLabel": {},
+    "typescript_unknown_fixEnableJsxFlag": {},
+    "typescript_model_fixAddVoidToPromise": {},
+    "typescript_unknown_fixPropertyAssignment": {},
+    "typescript_unknown_fixNaNEquality": {},
+    "typescript_unknown_fixUnreferenceableDecoratorMetadata": {},
+    "typescript_unknown_addConvertToUnknownForNonOverlappingTypes": {},
+    "typescript_service_inferFromUsage": {
+      "redis": [
+        "C",
+        "R"
+      ]
+    },
+    "typescript_unknown_fixMissingTypeAnnotationOnExports": {},
+    "typescript_unknown_fixInvalidImportSyntax": {},
+    "typescript_unknown_addOptionalPropertyUndefined": {},
+    "typescript_unknown_returnValueCorrect": {},
+    "typescript_unknown_addMissingAsync": {},
+    "typescript_service_ts.server": {},
+    "typescript_unknown_ts": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "typescript_utility_emitHelpers": {
+      "redis": [
+        "C",
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_nodeConverters": {},
+    "typescript_unknown_nodeChildren": {
+      "redis": [
+        "R",
+        "D"
+      ]
+    },
+    "typescript_unknown_emitNode": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_unknown_parenthesizerRules": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_baseNodeFactory": {},
+    "typescript_unknown_nodeFactory": {
+      "redis": [
+        "C",
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_declarations": {
+      "redis": [
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_generators": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_taggedTemplate": {},
+    "typescript_unknown_classFields": {
+      "redis": [
+        "C",
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_es2021": {},
+    "typescript_unknown_typeSerializer": {},
+    "typescript_unknown_es2019": {},
+    "typescript_unknown_jsx": {
+      "redis": [
+        "R"
+      ]
+    },
+    "typescript_unknown_es2020": {},
+    "typescript_unknown_es2016": {},
+    "typescript_unknown_namedEvaluation": {},
+    "typescript_unknown_es2017": {
+      "redis": [
+        "C",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_esnext": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_es2018": {
+      "redis": [
+        "C",
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_classThis": {},
+    "typescript_unknown_esDecorators": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_legacyDecorators": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_es2015": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_destructuring": {},
+    "typescript_unknown_diagnostics": {},
+    "typescript_unknown_esnextAnd2015": {
+      "redis": [
+        "C",
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_module": {
+      "redis": [
+        "C",
+        "R",
+        "U"
+      ]
+    },
+    "typescript_unknown_system": {
+      "redis": [
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "typescript_unknown_impliedNodeFormatDependent": {}
+  },
+  "dependencies": {
+    "@dprint/formatter": 1,
+    "@dprint/typescript": 1,
+    "@esfx/canceltoken": 1,
+    "@eslint/js": 1,
+    "@octokit/rest": 1,
+    "@types/chai": 1,
+    "@types/minimist": 1,
+    "@types/mocha": 1,
+    "@types/ms": 1,
+    "@types/node": 1,
+    "@types/source-map-support": 1,
+    "@types/which": 1,
+    "@typescript-eslint/rule-tester": 1,
+    "@typescript-eslint/type-utils": 1,
+    "@typescript-eslint/utils": 1,
+    "azure-devops-node-api": 1,
+    "c8": 1,
+    "chai": 1,
+    "chokidar": 1,
+    "diff": 1,
+    "dprint": 1,
+    "esbuild": 1,
+    "eslint": 1,
+    "eslint-formatter-autolinkable-stylish": 1,
+    "eslint-plugin-regexp": 1,
+    "fast-xml-parser": 1,
+    "glob": 1,
+    "globals": 1,
+    "hereby": 1,
+    "jsonc-parser": 1,
+    "knip": 1,
+    "minimist": 1,
+    "mocha": 1,
+    "mocha-fivemat-progress-reporter": 1,
+    "monocart-coverage-reports": 1,
+    "ms": 1,
+    "picocolors": 1,
+    "playwright": 1,
+    "source-map-support": 1,
+    "tslib": 1,
+    "typescript": 1,
+    "typescript-eslint": 1,
+    "which": 1
+  },
+  "metrics": {
+    "total_files": 39466,
+    "total_lines": 4240813,
+    "avg_lines_per_file": 107.45484721025693,
+    "language_distribution": {
+      "javascript": {
+        "files": 16953,
+        "lines": 2548812
+      },
+      "json": {
+        "files": 1461,
+        "lines": 95674
+      },
+      "yaml": {
+        "files": 30,
+        "lines": 2337
+      },
+      "typescript": {
+        "files": 21022,
+        "lines": 1593990
+      }
+    },
+    "complexity_distribution": {
+      "low": 122,
+      "medium": 36,
+      "high": 41,
+      "very_high": 119
+    },
+    "type_distribution": {
+      "backend": {
+        "files": 411,
+        "lines": 356499
+      },
+      "config": {
+        "files": 57,
+        "lines": 20855
+      },
+      "docs": {
+        "files": 8,
+        "lines": 2219
+      },
+      "test": {
+        "files": 38990,
+        "lines": 3861240
+      }
+    },
+    "component_count": 318,
+    "estimated_effort_hours": 84816.26
+  }
+}

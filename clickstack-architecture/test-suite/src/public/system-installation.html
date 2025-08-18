@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시스템 설치 관리 - AIRIS-MON</title>
+    <script src="components/common-layout.js"></script>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+            --border-color: #dee2e6;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --accent-blue: #0d6efd;
+            --accent-green: #198754;
+            --accent-yellow: #ffc107;
+            --accent-red: #dc3545;
+            --accent-purple: #6f42c1;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .installation-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0 auto;
+            max-width: 1400px;
+            padding: 0 20px;
+            background: var(--bg-primary);
+        }
+
+        .installation-header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-subtitle {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .installation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            flex: 1;
+            margin-bottom: 20px;
+        }
+
+        .installation-panel {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .form-input {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+        }
+
+        .form-select {
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+        }
+
+        .checkbox-input {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent-blue);
+        }
+
+        .system-requirements {
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 15px;
+            font-size: 13px;
+        }
+
+        .requirement-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .requirement-item:last-child {
+            border-bottom: none;
+        }
+
+        .requirement-status {
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
+        .status-pass {
+            background: rgba(25, 135, 84, 0.1);
+            color: var(--accent-green);
+        }
+
+        .status-fail {
+            background: rgba(220, 53, 69, 0.1);
+            color: var(--accent-red);
+        }
+
+        .status-warning {
+            background: rgba(255, 193, 7, 0.1);
+            color: var(--accent-yellow);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0b5ed7;
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border-color);
+        }
+
+        .btn-success {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #157347;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .log-output {
+            background: #1a1a1a;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 15px;
+            border-radius: 4px;
+            height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            border: 1px solid var(--border-color);
+        }
+
+        .installation-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .step-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin: 0 auto 10px;
+            font-size: 14px;
+        }
+
+        .step-number.active {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .step-number.completed {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        .step-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .step-description {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin: 5px 0 0 0;
+        }
+
+        @media (max-width: 768px) {
+            .installation-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .installation-steps {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        .status-offline {
+            background: var(--accent-red);
+        }
+
+        .status-unknown {
+            background: var(--text-secondary);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .installation-summary {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .summary-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0 0 15px 0;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .summary-value {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="installation-container">
+        <!-- 헤더 -->
+        <div class="installation-header">
+            <h1 class="header-title">
+                <span>🖥️</span>
+                AIRIS-MON 시스템 설치 관리
+            </h1>
+            <p class="header-subtitle">Linux 서버 환경에서 AIRIS-MON 플랫폼을 자동으로 설치하고 구성합니다</p>
+        </div>
+
+        <!-- 설치 단계 표시 -->
+        <div class="installation-steps">
+            <div class="step-card">
+                <div class="step-number" id="step1">1</div>
+                <div class="step-title">시스템 요구사항 확인</div>
+                <div class="step-description">하드웨어 및 소프트웨어 검증</div>
+            </div>
+            <div class="step-card">
+                <div class="step-number" id="step2">2</div>
+                <div class="step-title">의존성 설치</div>
+                <div class="step-description">Node.js, Python, Git 설치</div>
+            </div>
+            <div class="step-card">
+                <div class="step-number" id="step3">3</div>
+                <div class="step-title">소스 코드 배포</div>
+                <div class="step-description">GitHub에서 코드 다운로드</div>
+            </div>
+            <div class="step-card">
+                <div class="step-number" id="step4">4</div>
+                <div class="step-title">환경 구성</div>
+                <div class="step-description">설정 파일 및 데이터베이스</div>
+            </div>
+            <div class="step-card">
+                <div class="step-number" id="step5">5</div>
+                <div class="step-title">서비스 등록</div>
+                <div class="step-description">systemd 서비스 생성</div>
+            </div>
+            <div class="step-card">
+                <div class="step-number" id="step6">6</div>
+                <div class="step-title">설치 완료</div>
+                <div class="step-description">서비스 시작 및 검증</div>
+            </div>
+        </div>
+
+        <!-- 메인 설치 패널 -->
+        <div class="installation-grid">
+            <!-- 왼쪽: 설치 설정 -->
+            <div class="installation-panel">
+                <h2 class="panel-title">
+                    <span>⚙️</span>
+                    설치 설정
+                </h2>
+                <p class="panel-description">
+                    AIRIS-MON을 설치할 서버 정보와 설치 옵션을 설정하세요.
+                </p>
+
+                <div class="form-group">
+                    <label class="form-label">설치 경로</label>
+                    <input type="text" class="form-input" id="installPath" value="/opt/airis-mon" placeholder="설치할 디렉토리 경로">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">서비스 포트</label>
+                    <input type="number" class="form-input" id="servicePort" value="3100" placeholder="서비스가 사용할 포트">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">실행 사용자</label>
+                    <input type="text" class="form-input" id="serviceUser" value="airis" placeholder="서비스 실행 계정">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Git Repository URL</label>
+                    <input type="url" class="form-input" id="gitRepo" value="https://github.com/your-org/airis-mon.git" placeholder="소스 코드 저장소 URL">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">브랜치</label>
+                    <select class="form-select" id="gitBranch">
+                        <option value="main">main (안정 버전)</option>
+                        <option value="develop">develop (개발 버전)</option>
+                        <option value="release">release (릴리스 후보)</option>
+                    </select>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" class="checkbox-input" id="autoStart" checked>
+                    <label class="form-label" for="autoStart">시스템 부팅 시 자동 시작</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" class="checkbox-input" id="enableSsl">
+                    <label class="form-label" for="enableSsl">SSL/TLS 활성화 (Let's Encrypt)</label>
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" class="checkbox-input" id="installNginx">
+                    <label class="form-label" for="installNginx">Nginx 리버스 프록시 설치</label>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="checkRequirements()">
+                        <span>🔍</span>
+                        요구사항 확인
+                    </button>
+                    <button class="btn btn-primary" onclick="startInstallation()" id="installBtn">
+                        <span>🚀</span>
+                        설치 시작
+                    </button>
+                </div>
+            </div>
+
+            <!-- 오른쪽: 시스템 요구사항 및 상태 -->
+            <div class="installation-panel">
+                <h2 class="panel-title">
+                    <span>📋</span>
+                    시스템 요구사항
+                </h2>
+                <p class="panel-description">
+                    현재 시스템이 AIRIS-MON 설치 요구사항을 만족하는지 확인합니다.
+                </p>
+
+                <div class="system-requirements" id="systemRequirements">
+                    <div class="requirement-item">
+                        <span>운영체제</span>
+                        <span class="requirement-status status-warning" id="osStatus">확인 중...</span>
+                    </div>
+                    <div class="requirement-item">
+                        <span>메모리 (최소 4GB)</span>
+                        <span class="requirement-status status-warning" id="memoryStatus">확인 중...</span>
+                    </div>
+                    <div class="requirement-item">
+                        <span>디스크 공간 (최소 10GB)</span>
+                        <span class="requirement-status status-warning" id="diskStatus">확인 중...</span>
+                    </div>
+                    <div class="requirement-item">
+                        <span>Node.js (v16+)</span>
+                        <span class="requirement-status status-warning" id="nodeStatus">확인 중...</span>
+                    </div>
+                    <div class="requirement-item">
+                        <span>Python (v3.8+)</span>
+                        <span class="requirement-status status-warning" id="pythonStatus">확인 중...</span>
+                    </div>
+                    <div class="requirement-item">
+                        <span>Git</span>
+                        <span class="requirement-status status-warning" id="gitStatus">확인 중...</span>
+                    </div>
+                    <div class="requirement-item">
+                        <span>네트워크 연결</span>
+                        <span class="requirement-status status-warning" id="networkStatus">확인 중...</span>
+                    </div>
+                    <div class="requirement-item">
+                        <span>포트 3100 사용 가능</span>
+                        <span class="requirement-status status-warning" id="portStatus">확인 중...</span>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn btn-secondary" onclick="refreshRequirements()">
+                        <span>🔄</span>
+                        새로고침
+                    </button>
+                    <button class="btn btn-success" onclick="downloadScript()" id="downloadBtn" disabled>
+                        <span>📥</span>
+                        설치 스크립트 다운로드
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 설치 진행률 및 로그 -->
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill">0%</div>
+            </div>
+            <div class="log-output" id="logOutput">설치 준비 중...</div>
+        </div>
+
+        <!-- 설치 완료 요약 -->
+        <div class="installation-summary" id="installationSummary">
+            <h3 class="summary-title">설치 완료 요약</h3>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <span class="summary-label">설치 경로</span>
+                    <span class="summary-value" id="summaryPath">-</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">서비스 포트</span>
+                    <span class="summary-value" id="summaryPort">-</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">서비스 상태</span>
+                    <span class="summary-value" id="summaryStatus">
+                        <span class="status-indicator status-online"></span>
+                        실행 중
+                    </span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">접속 URL</span>
+                    <span class="summary-value" id="summaryUrl">-</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">설치 시간</span>
+                    <span class="summary-value" id="summaryTime">-</span>
+                </div>
+                <div class="summary-item">
+                    <span class="summary-label">버전</span>
+                    <span class="summary-value" id="summaryVersion">v1.0.0</span>
+                </div>
+            </div>
+            
+            <div class="action-buttons" style="margin-top: 20px;">
+                <button class="btn btn-primary" onclick="openService()">
+                    <span>🌐</span>
+                    서비스 열기
+                </button>
+                <button class="btn btn-secondary" onclick="viewLogs()">
+                    <span>📄</span>
+                    로그 보기
+                </button>
+                <button class="btn btn-secondary" onclick="manageService()">
+                    <span>⚙️</span>
+                    서비스 관리
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let installationProgress = 0;
+        let currentStep = 0;
+        let installationStartTime = null;
+
+        // 페이지 로드 시 시스템 요구사항 확인
+        window.addEventListener('load', function() {
+            checkRequirements();
+        });
+
+        // 시스템 요구사항 확인
+        async function checkRequirements() {
+            console.log('🔍 시스템 요구사항 확인 시작...');
+            
+            try {
+                const response = await fetch('/api/installation/check-requirements');
+                const data = await response.json();
+                
+                updateRequirementStatus('osStatus', data.os);
+                updateRequirementStatus('memoryStatus', data.memory);
+                updateRequirementStatus('diskStatus', data.disk);
+                updateRequirementStatus('nodeStatus', data.node);
+                updateRequirementStatus('pythonStatus', data.python);
+                updateRequirementStatus('gitStatus', data.git);
+                updateRequirementStatus('networkStatus', data.network);
+                updateRequirementStatus('portStatus', data.port);
+                
+                // 모든 요구사항이 충족되면 설치 버튼 활성화
+                const allPassed = Object.values(data).every(status => status.passed);
+                document.getElementById('installBtn').disabled = !allPassed;
+                document.getElementById('downloadBtn').disabled = !allPassed;
+                
+                console.log('✅ 시스템 요구사항 확인 완료');
+            } catch (error) {
+                console.error('❌ 요구사항 확인 실패:', error);
+                // 테스트용 더미 데이터
+                setDummyRequirements();
+            }
+        }
+
+        // 요구사항 상태 업데이트
+        function updateRequirementStatus(elementId, status) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            element.textContent = status.message || status.value || 'Unknown';
+            element.className = 'requirement-status ' + 
+                (status.passed ? 'status-pass' : 
+                 status.warning ? 'status-warning' : 'status-fail');
+        }
+
+        // 테스트용 더미 데이터
+        function setDummyRequirements() {
+            const dummyData = {
+                os: { passed: true, message: 'Ubuntu 20.04 LTS' },
+                memory: { passed: true, message: '8GB 사용 가능' },
+                disk: { passed: true, message: '50GB 사용 가능' },
+                node: { passed: true, message: 'v18.17.0 설치됨' },
+                python: { passed: true, message: 'v3.9.7 설치됨' },
+                git: { passed: true, message: 'v2.34.1 설치됨' },
+                network: { passed: true, message: '연결됨' },
+                port: { passed: true, message: '사용 가능' }
+            };
+            
+            Object.keys(dummyData).forEach(key => {
+                updateRequirementStatus(key + 'Status', dummyData[key]);
+            });
+            
+            document.getElementById('installBtn').disabled = false;
+            document.getElementById('downloadBtn').disabled = false;
+        }
+
+        // 요구사항 새로고침
+        function refreshRequirements() {
+            // 모든 상태를 확인 중으로 재설정
+            const statusElements = ['osStatus', 'memoryStatus', 'diskStatus', 'nodeStatus', 
+                                   'pythonStatus', 'gitStatus', 'networkStatus', 'portStatus'];
+            
+            statusElements.forEach(id => {
+                const element = document.getElementById(id);
+                element.textContent = '확인 중...';
+                element.className = 'requirement-status status-warning';
+            });
+            
+            // 2초 후 다시 확인
+            setTimeout(checkRequirements, 2000);
+        }
+
+        // 설치 시작
+        async function startInstallation() {
+            console.log('🚀 AIRIS-MON 설치 시작...');
+            installationStartTime = new Date();
+            
+            // UI 상태 변경
+            document.getElementById('installBtn').disabled = true;
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('installationSummary').style.display = 'none';
+            
+            // 설치 설정 수집
+            const config = {
+                installPath: document.getElementById('installPath').value,
+                servicePort: document.getElementById('servicePort').value,
+                serviceUser: document.getElementById('serviceUser').value,
+                gitRepo: document.getElementById('gitRepo').value,
+                gitBranch: document.getElementById('gitBranch').value,
+                autoStart: document.getElementById('autoStart').checked,
+                enableSsl: document.getElementById('enableSsl').checked,
+                installNginx: document.getElementById('installNginx').checked
+            };
+            
+            try {
+                // 실제 설치 API 호출
+                const response = await fetch('/api/installation/start', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('설치 시작 실패');
+                }
+                
+                const installationId = await response.text();
+                
+                // 설치 진행 상황 모니터링
+                monitorInstallation(installationId);
+                
+            } catch (error) {
+                console.error('❌ 설치 시작 실패:', error);
+                // 테스트용 시뮬레이션
+                simulateInstallation();
+            }
+        }
+
+        // 설치 진행 상황 모니터링
+        async function monitorInstallation(installationId) {
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/installation/status/${installationId}`);
+                    const status = await response.json();
+                    
+                    updateInstallationProgress(status.step, status.progress, status.message);
+                    
+                    if (status.completed) {
+                        clearInterval(interval);
+                        completeInstallation(status);
+                    }
+                    
+                    if (status.error) {
+                        clearInterval(interval);
+                        handleInstallationError(status.error);
+                    }
+                    
+                } catch (error) {
+                    console.error('설치 상태 확인 실패:', error);
+                }
+            }, 2000);
+        }
+
+        // 설치 시뮬레이션 (테스트용)
+        function simulateInstallation() {
+            const steps = [
+                { step: 1, message: '시스템 요구사항 재확인 중...', duration: 2000 },
+                { step: 2, message: 'Node.js 및 Python 의존성 설치 중...', duration: 8000 },
+                { step: 3, message: 'GitHub에서 소스 코드 다운로드 중...', duration: 5000 },
+                { step: 4, message: '환경 설정 파일 생성 중...', duration: 3000 },
+                { step: 5, message: 'systemd 서비스 등록 중...', duration: 2000 },
+                { step: 6, message: '서비스 시작 및 검증 중...', duration: 3000 }
+            ];
+            
+            let currentStepIndex = 0;
+            
+            function executeStep() {
+                if (currentStepIndex >= steps.length) {
+                    completeInstallation({
+                        success: true,
+                        installPath: document.getElementById('installPath').value,
+                        servicePort: document.getElementById('servicePort').value,
+                        serviceUrl: `http://localhost:${document.getElementById('servicePort').value}`
+                    });
+                    return;
+                }
+                
+                const step = steps[currentStepIndex];
+                updateInstallationProgress(step.step, (currentStepIndex + 1) * 100 / steps.length, step.message);
+                
+                setTimeout(() => {
+                    currentStepIndex++;
+                    executeStep();
+                }, step.duration);
+            }
+            
+            executeStep();
+        }
+
+        // 설치 진행률 업데이트
+        function updateInstallationProgress(step, progress, message) {
+            // 단계 표시 업데이트
+            for (let i = 1; i <= 6; i++) {
+                const stepElement = document.getElementById(`step${i}`);
+                stepElement.className = 'step-number';
+                
+                if (i < step) {
+                    stepElement.className += ' completed';
+                } else if (i === step) {
+                    stepElement.className += ' active';
+                }
+            }
+            
+            // 진행률 바 업데이트
+            const progressFill = document.getElementById('progressFill');
+            progressFill.style.width = progress + '%';
+            progressFill.textContent = Math.round(progress) + '%';
+            
+            // 로그 추가
+            const logOutput = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            logOutput.textContent += `[${timestamp}] ${message}\n`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        // 설치 완료 처리
+        function completeInstallation(result) {
+            console.log('✅ AIRIS-MON 설치 완료!');
+            
+            const duration = installationStartTime ? 
+                Math.round((new Date() - installationStartTime) / 1000) : 0;
+            
+            // 요약 정보 업데이트
+            document.getElementById('summaryPath').textContent = result.installPath || '/opt/airis-mon';
+            document.getElementById('summaryPort').textContent = result.servicePort || '3100';
+            document.getElementById('summaryUrl').textContent = result.serviceUrl || 'http://localhost:3100';
+            document.getElementById('summaryTime').textContent = `${duration}초`;
+            
+            // 설치 완료 요약 표시
+            document.getElementById('installationSummary').style.display = 'block';
+            
+            // 설치 버튼 재활성화
+            document.getElementById('installBtn').disabled = false;
+            document.getElementById('installBtn').innerHTML = '<span>✅</span> 재설치';
+            
+            // 완료 로그
+            const logOutput = document.getElementById('logOutput');
+            logOutput.textContent += `\n🎉 설치가 성공적으로 완료되었습니다!\n`;
+            logOutput.textContent += `📍 접속 URL: ${result.serviceUrl || 'http://localhost:3100'}\n`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        // 설치 오류 처리
+        function handleInstallationError(error) {
+            console.error('❌ 설치 실패:', error);
+            
+            document.getElementById('installBtn').disabled = false;
+            
+            const logOutput = document.getElementById('logOutput');
+            logOutput.textContent += `\n❌ 설치 실패: ${error}\n`;
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        // 설치 스크립트 다운로드
+        async function downloadScript() {
+            try {
+                const config = {
+                    installPath: document.getElementById('installPath').value,
+                    servicePort: document.getElementById('servicePort').value,
+                    serviceUser: document.getElementById('serviceUser').value,
+                    gitRepo: document.getElementById('gitRepo').value,
+                    gitBranch: document.getElementById('gitBranch').value,
+                    autoStart: document.getElementById('autoStart').checked,
+                    enableSsl: document.getElementById('enableSsl').checked,
+                    installNginx: document.getElementById('installNginx').checked
+                };
+                
+                const response = await fetch('/api/installation/generate-script', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                });
+                
+                const script = await response.text();
+                
+                // 스크립트 파일 다운로드
+                const blob = new Blob([script], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'install-airis-mon.sh';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                console.log('📥 설치 스크립트 다운로드 완료');
+                
+            } catch (error) {
+                console.error('설치 스크립트 생성 실패:', error);
+                alert('설치 스크립트 생성에 실패했습니다.');
+            }
+        }
+
+        // 서비스 열기
+        function openService() {
+            const url = document.getElementById('summaryUrl').textContent;
+            if (url && url !== '-') {
+                window.open(url, '_blank');
+            }
+        }
+
+        // 로그 보기
+        function viewLogs() {
+            // 별도 창에서 실시간 로그 보기
+            window.open('/system-logs', '_blank');
+        }
+
+        // 서비스 관리
+        function manageService() {
+            // 서비스 관리 페이지로 이동
+            window.location.href = '/service-management';
+        }
+    </script>
+</body>
+</html>

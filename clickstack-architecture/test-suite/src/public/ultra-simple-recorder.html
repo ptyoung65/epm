@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초단순 DOM 녹화기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        
+        .panel {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 { 
+            color: #333; 
+            text-align: center;
+        }
+        
+        .status {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .btn {
+            font-size: 18px;
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .btn-green {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-red {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-blue {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .test-area {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px dashed #dee2e6;
+            margin: 20px 0;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 2px solid #ced4da;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .test-btn {
+            padding: 15px 25px;
+            background: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        
+        #debugArea {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h1>🎬 초단순 DOM 녹화기</h1>
+        
+        <div class="status" id="statusDisplay">
+            시스템 로딩 중...
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-green" onclick="startRecordingTest()">🔴 녹화 시작</button>
+            <button class="btn btn-red" onclick="stopRecordingTest()" disabled id="stopButton">⏹️ 녹화 중지</button>
+            <button class="btn btn-blue" onclick="playRecordingTest()" disabled id="playButton">▶️ 재생하기</button>
+        </div>
+    </div>
+    
+    <div class="panel test-area">
+        <h2>🧪 테스트 영역</h2>
+        
+        <input type="text" placeholder="이름을 입력하세요" id="nameField">
+        <input type="email" placeholder="이메일을 입력하세요" id="emailField">
+        <textarea placeholder="메시지를 입력하세요" rows="3" id="messageField"></textarea>
+        
+        <div style="margin: 20px 0;">
+            <button class="test-btn" onclick="testButtonClick('버튼A')">테스트 버튼 A</button>
+            <button class="test-btn" onclick="testButtonClick('버튼B')">테스트 버튼 B</button>
+            <button class="test-btn" onclick="changeColor()">색상 변경</button>
+        </div>
+        
+        <div style="background: #e3f2fd; padding: 20px; text-align: center; border-radius: 8px; cursor: pointer;" onclick="clickTestArea()">
+            <h3>🎯 클릭 테스트 영역</h3>
+            <p>여기를 클릭해보세요</p>
+        </div>
+    </div>
+    
+    <div class="panel">
+        <h3>🐛 디버그 로그</h3>
+        <div id="debugArea">시스템 시작...
+</div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let isRecording = false;
+        let recordedEvents = [];
+        let sessionId = null;
+        let startTime = null;
+        
+        // 디버그 로그 함수
+        function addDebugLog(message) {
+            const debugArea = document.getElementById('debugArea');
+            const timestamp = new Date().toLocaleTimeString();
+            debugArea.textContent += `[${timestamp}] ${message}\n`;
+            debugArea.scrollTop = debugArea.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        // 상태 업데이트 함수
+        function updateStatus(message) {
+            document.getElementById('statusDisplay').textContent = message;
+            addDebugLog(`상태 변경: ${message}`);
+        }
+        
+        // 녹화 시작 함수 (onclick으로 직접 호출)
+        function startRecordingTest() {
+            addDebugLog('=== startRecordingTest 함수 호출됨 ===');
+            
+            if (isRecording) {
+                alert('이미 녹화 중입니다!');
+                addDebugLog('이미 녹화 중 - 중단');
+                return;
+            }
+            
+            try {
+                // 기본 초기화
+                recordedEvents = [];
+                sessionId = 'session_' + Date.now();
+                startTime = Date.now();
+                isRecording = true;
+                
+                addDebugLog(`녹화 초기화 완료 - 세션: ${sessionId}`);
+                
+                // UI 업데이트
+                updateStatus(`🔴 녹화 중 - 세션: ${sessionId.substring(0, 20)}...`);
+                document.getElementById('stopButton').disabled = false;
+                document.getElementById('playButton').disabled = true;
+                
+                // 기본 이벤트 리스너 등록 (rrweb 없이)
+                setupEventListeners();
+                
+                addDebugLog('✅ 녹화 시작 성공');
+                alert('✅ 녹화가 시작되었습니다! 아래 테스트 영역에서 클릭이나 입력을 해보세요.');
+                
+            } catch (error) {
+                addDebugLog(`❌ 녹화 시작 실패: ${error.message}`);
+                alert('❌ 녹화 시작에 실패했습니다: ' + error.message);
+                resetRecording();
+            }
+        }
+        
+        // 녹화 중지 함수
+        function stopRecordingTest() {
+            addDebugLog('=== stopRecordingTest 함수 호출됨 ===');
+            
+            if (!isRecording) {
+                alert('녹화 중이 아닙니다!');
+                addDebugLog('녹화 중이 아님');
+                return;
+            }
+            
+            try {
+                isRecording = false;
+                
+                // UI 업데이트
+                updateStatus(`✅ 녹화 완료 - ${recordedEvents.length}개 이벤트 수집`);
+                document.getElementById('stopButton').disabled = true;
+                document.getElementById('playButton').disabled = false;
+                
+                // 세션 데이터 생성
+                const sessionData = {
+                    id: sessionId,
+                    startTime: startTime,
+                    endTime: Date.now(),
+                    duration: Date.now() - startTime,
+                    events: recordedEvents,
+                    eventCount: recordedEvents.length
+                };
+                
+                // 로컬 스토리지에 저장
+                localStorage.setItem(sessionId, JSON.stringify(sessionData));
+                
+                addDebugLog(`✅ 녹화 완료 - ${recordedEvents.length}개 이벤트 저장`);
+                alert(`✅ 녹화 완료! ${recordedEvents.length}개의 이벤트가 기록되었습니다.`);
+                
+            } catch (error) {
+                addDebugLog(`❌ 녹화 중지 실패: ${error.message}`);
+                alert('❌ 녹화 중지에 실패했습니다: ' + error.message);
+            }
+        }
+        
+        // 재생 함수
+        function playRecordingTest() {
+            addDebugLog('=== playRecordingTest 함수 호출됨 ===');
+            
+            if (!sessionId || recordedEvents.length === 0) {
+                alert('재생할 데이터가 없습니다!');
+                addDebugLog('재생할 데이터 없음');
+                return;
+            }
+            
+            // 플레이어 페이지로 이동
+            const playerUrl = `ultra-simple-player.html?sessionId=${sessionId}`;
+            addDebugLog(`플레이어 열기: ${playerUrl}`);
+            
+            // 새 창으로 플레이어 열기
+            const playerWindow = window.open(playerUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+            
+            if (!playerWindow) {
+                alert('⚠️ 팝업이 차단되었습니다. 브라우저에서 팝업을 허용해주세요.');
+                addDebugLog('❌ 팝업 차단됨');
+            } else {
+                addDebugLog('✅ 플레이어 창 열림');
+            }
+        }
+        
+        // 이벤트 리스너 설정 (rrweb 없이 기본 이벤트 수집)
+        function setupEventListeners() {
+            addDebugLog('이벤트 리스너 설정 시작');
+            
+            // 클릭 이벤트
+            document.addEventListener('click', function(e) {
+                if (isRecording) {
+                    recordEvent('click', e.target, e.target.textContent || e.target.value || '');
+                }
+            });
+            
+            // 입력 이벤트
+            document.addEventListener('input', function(e) {
+                if (isRecording) {
+                    recordEvent('input', e.target, e.target.value);
+                }
+            });
+            
+            // 변경 이벤트
+            document.addEventListener('change', function(e) {
+                if (isRecording) {
+                    recordEvent('change', e.target, e.target.value);
+                }
+            });
+            
+            addDebugLog('이벤트 리스너 설정 완료');
+        }
+        
+        // 이벤트 기록 함수
+        function recordEvent(type, target, value) {
+            const event = {
+                type: type,
+                timestamp: Date.now() - startTime,
+                target: target.tagName + (target.id ? '#' + target.id : '') + (target.className ? '.' + target.className : ''),
+                value: value ? value.substring(0, 50) : '',
+                x: 0, // 간단히 0으로 설정
+                y: 0
+            };
+            
+            recordedEvents.push(event);
+            addDebugLog(`이벤트 기록: ${type} on ${event.target} - "${event.value}"`);
+            updateStatus(`🔴 녹화 중 - ${recordedEvents.length}개 이벤트 수집됨`);
+        }
+        
+        // 녹화 리셋
+        function resetRecording() {
+            isRecording = false;
+            recordedEvents = [];
+            sessionId = null;
+            startTime = null;
+            document.getElementById('stopButton').disabled = true;
+            document.getElementById('playButton').disabled = true;
+            updateStatus('시스템 준비 완료');
+        }
+        
+        // 테스트 함수들
+        function testButtonClick(buttonName) {
+            addDebugLog(`${buttonName} 클릭됨`);
+        }
+        
+        function changeColor() {
+            document.body.style.backgroundColor = `hsl(${Math.random() * 360}, 50%, 95%)`;
+            addDebugLog('배경색 변경됨');
+        }
+        
+        function clickTestArea() {
+            const area = event.target;
+            area.style.backgroundColor = `hsl(${Math.random() * 360}, 30%, 85%)`;
+            addDebugLog('클릭 테스트 영역 클릭됨');
+        }
+        
+        // 페이지 로드 완료 후 초기화
+        window.addEventListener('load', function() {
+            addDebugLog('페이지 로드 완료');
+            updateStatus('✅ 시스템 준비 완료 - 녹화 시작 버튼을 클릭하세요');
+            addDebugLog('✅ 모든 시스템 준비 완료');
+        });
+        
+        // 즉시 로그 시작
+        addDebugLog('스크립트 로딩 완료');
+    </script>
+</body>
+</html>

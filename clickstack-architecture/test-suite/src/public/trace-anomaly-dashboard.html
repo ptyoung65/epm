@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenTelemetry 이상 징후 대시보드</title>
+    <script src="/components/common-layout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --border-color: #e2e8f0;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --anomaly-high: #dc2626;
+            --anomaly-medium: #d97706;
+            --anomaly-low: #059669;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .dashboard-header {
+            background: var(--card-background);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin: -32px -32px 32px -32px;
+        }
+
+        .dashboard-header h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 0;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success-color);
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.warning {
+            background-color: var(--warning-color);
+        }
+
+        .status-indicator.error {
+            background-color: var(--error-color);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .dashboard-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .time-range-selector {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            background: var(--card-background);
+            font-size: 0.875rem;
+        }
+
+        .refresh-btn {
+            padding: 0.5rem 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background-color 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .anomaly-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--card-background);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-change {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: 500;
+        }
+
+        .stat-change.positive {
+            background: #dcfce7;
+            color: var(--success-color);
+        }
+
+        .stat-change.negative {
+            background: #fef2f2;
+            color: var(--error-color);
+        }
+
+        .chart-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--card-background);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        .anomaly-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .anomaly-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+        }
+
+        .anomaly-item:hover {
+            background-color: #f1f5f9;
+        }
+
+        .anomaly-severity {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.75rem;
+        }
+
+        .anomaly-severity.high {
+            background-color: var(--anomaly-high);
+        }
+
+        .anomaly-severity.medium {
+            background-color: var(--anomaly-medium);
+        }
+
+        .anomaly-severity.low {
+            background-color: var(--anomaly-low);
+        }
+
+        .anomaly-details {
+            flex: 1;
+        }
+
+        .anomaly-service {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.875rem;
+        }
+
+        .anomaly-description {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        .anomaly-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .anomaly-score {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            background: #f1f5f9;
+            color: var(--text-primary);
+        }
+
+        .heatmap-section {
+            margin-bottom: 2rem;
+        }
+
+        .heatmap-container {
+            background: var(--card-background);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .heatmap-grid {
+            display: grid;
+            grid-template-columns: repeat(24, 1fr);
+            gap: 2px;
+            margin-top: 1rem;
+        }
+
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .heatmap-cell:hover {
+            transform: scale(1.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .heatmap-legend {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        .insights-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .insights-card {
+            background: var(--card-background);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .insight-item {
+            display: flex;
+            align-items: start;
+            padding: 1rem;
+            border-left: 4px solid var(--border-color);
+            margin-bottom: 1rem;
+            background: #f8fafc;
+            border-radius: 0 0.25rem 0.25rem 0;
+        }
+
+        .insight-item.critical {
+            border-left-color: var(--error-color);
+        }
+
+        .insight-item.warning {
+            border-left-color: var(--warning-color);
+        }
+
+        .insight-item.info {
+            border-left-color: var(--primary-color);
+        }
+
+        .insight-icon {
+            margin-right: 0.75rem;
+            margin-top: 0.125rem;
+        }
+
+        .insight-content h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .insight-content p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .model-performance {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .model-metric {
+            text-align: center;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 0.375rem;
+        }
+
+        .model-metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .model-metric-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .alert-panel {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .alert-item {
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .alert-close {
+            background: none;
+            border: none;
+            font-size: 1.125rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .alert-message {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .chart-section {
+                grid-template-columns: 1fr;
+            }
+
+            .insights-section {
+                grid-template-columns: 1fr;
+            }
+
+            .alert-panel {
+                position: relative;
+                width: 100%;
+                margin-bottom: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <h2>
+            <span class="status-indicator" id="systemStatus"></span>
+            OpenTelemetry 이상 징후 대시보드
+        </h2>
+        <div class="dashboard-controls">
+            <select class="time-range-selector" id="timeRange">
+                <option value="1h">최근 1시간</option>
+                <option value="6h">최근 6시간</option>
+                <option value="24h" selected>최근 24시간</option>
+                <option value="7d">최근 7일</option>
+                <option value="30d">최근 30일</option>
+            </select>
+            <button class="refresh-btn" id="refreshBtn">새로고침</button>
+        </div>
+    </div>
+
+    <div class="anomaly-content">
+        <!-- 통계 카드 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">감지된 이상 징후</span>
+                    <span class="stat-change negative" id="anomalyChange">+12%</span>
+                </div>
+                <div class="stat-value" id="totalAnomalies">47</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">ML 모델 정확도</span>
+                    <span class="stat-change positive" id="accuracyChange">+2.1%</span>
+                </div>
+                <div class="stat-value" id="modelAccuracy">94.7%</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">심각도 높음</span>
+                    <span class="stat-change negative" id="criticalChange">+8%</span>
+                </div>
+                <div class="stat-value" id="criticalAnomalies">8</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <span class="stat-title">평균 응답 시간</span>
+                    <span class="stat-change positive" id="responseChange">-15ms</span>
+                </div>
+                <div class="stat-value" id="avgResponseTime">245ms</div>
+            </div>
+        </div>
+
+        <!-- 차트 섹션 -->
+        <div class="chart-section">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">이상 징후 시간별 분포</h3>
+                    <select id="chartMetric">
+                        <option value="anomalies">이상 징후 수</option>
+                        <option value="severity">심각도 점수</option>
+                        <option value="services">영향받은 서비스</option>
+                    </select>
+                </div>
+                <div class="chart-container">
+                    <canvas id="anomalyTimeChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">최근 이상 징후</h3>
+                </div>
+                <div class="anomaly-list" id="anomalyList">
+                    <!-- 동적으로 생성됨 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 히트맵 섹션 -->
+        <div class="heatmap-section">
+            <div class="heatmap-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">서비스별 이상 징후 히트맵 (24시간)</h3>
+                </div>
+                <div class="heatmap-grid" id="heatmapGrid">
+                    <!-- 동적으로 생성됨 -->
+                </div>
+                <div class="heatmap-legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #dcfce7;"></div>
+                        <span>정상 (0-2)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #fed7aa;"></div>
+                        <span>주의 (3-5)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #fecaca;"></div>
+                        <span>경고 (6-8)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #dc2626;"></div>
+                        <span>심각 (9-10)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 인사이트 섹션 -->
+        <div class="insights-section">
+            <div class="insights-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">🔍 AI 분석 결과</h3>
+                </div>
+                <div id="aiInsights">
+                    <!-- 동적으로 생성됨 -->
+                </div>
+            </div>
+
+            <div class="insights-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">📊 모델 성능 지표</h3>
+                </div>
+                <div class="model-performance">
+                    <div class="model-metric">
+                        <div class="model-metric-value" id="precision">92.3%</div>
+                        <div class="model-metric-label">정밀도</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="model-metric-value" id="recall">89.7%</div>
+                        <div class="model-metric-label">재현율</div>
+                    </div>
+                    <div class="model-metric">
+                        <div class="model-metric-value" id="f1Score">91.0%</div>
+                        <div class="model-metric-label">F1 점수</div>
+                    </div>
+                </div>
+                <canvas id="modelPerformanceChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 실시간 알림 패널 -->
+    <div class="alert-panel" id="alertPanel">
+        <!-- 동적으로 생성됨 -->
+    </div>
+
+    <script>
+        // 전역 변수
+        let anomalyTimeChart = null;
+        let modelPerformanceChart = null;
+        let mlModel = null;
+        let realTimeData = [];
+        let anomalies = [];
+        let alertId = 0;
+
+        // 모의 데이터 생성
+        function generateMockData() {
+            const now = new Date();
+            const services = ['user-service', 'payment-service', 'inventory-service', 'notification-service', 'api-gateway'];
+            const operations = ['GET', 'POST', 'PUT', 'DELETE'];
+            
+            // 이상 징후 데이터 생성
+            anomalies = [];
+            for (let i = 0; i < 47; i++) {
+                const service = services[Math.floor(Math.random() * services.length)];
+                const operation = operations[Math.floor(Math.random() * operations.length)];
+                const severity = Math.random();
+                const timestamp = new Date(now.getTime() - Math.random() * 24 * 60 * 60 * 1000);
+                
+                anomalies.push({
+                    id: i + 1,
+                    service: service,
+                    operation: operation,
+                    severity: severity > 0.8 ? 'high' : severity > 0.4 ? 'medium' : 'low',
+                    score: Math.random() * 10,
+                    timestamp: timestamp,
+                    description: generateAnomalyDescription(service, operation, severity),
+                    resolved: Math.random() > 0.7
+                });
+            }
+
+            // 시간별 데이터 생성
+            realTimeData = [];
+            for (let i = 0; i < 24; i++) {
+                const hour = new Date(now.getTime() - (23 - i) * 60 * 60 * 1000);
+                realTimeData.push({
+                    time: hour,
+                    anomalies: Math.floor(Math.random() * 10) + 1,
+                    severity: Math.random() * 8 + 2,
+                    services: Math.floor(Math.random() * 5) + 1
+                });
+            }
+        }
+
+        function generateAnomalyDescription(service, operation, severity) {
+            const descriptions = [
+                `${service}에서 ${operation} 요청의 응답 시간이 비정상적으로 증가했습니다.`,
+                `${service}에서 오류율이 평균보다 높게 감지되었습니다.`,
+                `${service}의 ${operation} 작업에서 메모리 사용량이 급증했습니다.`,
+                `${service}에서 CPU 사용률이 임계값을 초과했습니다.`,
+                `${service}의 데이터베이스 연결에서 지연이 감지되었습니다.`
+            ];
+            return descriptions[Math.floor(Math.random() * descriptions.length)];
+        }
+
+        // ML 모델 초기화 (시뮬레이션)
+        async function initializeMLModel() {
+            try {
+                // TensorFlow.js를 사용한 간단한 이상 탐지 모델
+                mlModel = tf.sequential({
+                    layers: [
+                        tf.layers.dense({ inputShape: [4], units: 16, activation: 'relu' }),
+                        tf.layers.dropout({ rate: 0.2 }),
+                        tf.layers.dense({ units: 8, activation: 'relu' }),
+                        tf.layers.dense({ units: 1, activation: 'sigmoid' })
+                    ]
+                });
+
+                mlModel.compile({
+                    optimizer: 'adam',
+                    loss: 'binaryCrossentropy',
+                    metrics: ['accuracy']
+                });
+
+                console.log('ML 모델이 초기화되었습니다.');
+            } catch (error) {
+                console.error('ML 모델 초기화 실패:', error);
+            }
+        }
+
+        // 이상 징후 탐지 함수
+        async function detectAnomalies(traces) {
+            if (!mlModel) return [];
+
+            try {
+                const features = traces.map(trace => [
+                    trace.duration / 1000, // 정규화된 지속 시간
+                    trace.spanCount / 50,  // 정규화된 스팬 수
+                    trace.errorRate || 0,  // 오류율
+                    trace.latency / 5000   // 정규화된 지연 시간
+                ]);
+
+                const predictions = mlModel.predict(tf.tensor2d(features));
+                const scores = await predictions.data();
+                predictions.dispose();
+
+                return scores.map((score, index) => ({
+                    traceId: traces[index].traceId,
+                    score: score,
+                    isAnomaly: score > 0.7,
+                    confidence: Math.min(score * 100, 100)
+                }));
+            } catch (error) {
+                console.error('이상 탐지 실패:', error);
+                return [];
+            }
+        }
+
+        // 차트 초기화
+        function initializeCharts() {
+            // 이상 징후 시간별 분포 차트
+            const ctx1 = document.getElementById('anomalyTimeChart').getContext('2d');
+            anomalyTimeChart = new Chart(ctx1, {
+                type: 'line',
+                data: {
+                    labels: realTimeData.map(d => d.time.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })),
+                    datasets: [{
+                        label: '이상 징후 수',
+                        data: realTimeData.map(d => d.anomalies),
+                        borderColor: '#dc2626',
+                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: {
+                            grid: { display: false }
+                        }
+                    },
+                    elements: {
+                        point: { radius: 3, hoverRadius: 6 }
+                    }
+                }
+            });
+
+            // 모델 성능 차트
+            const ctx2 = document.getElementById('modelPerformanceChart').getContext('2d');
+            modelPerformanceChart = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['정확한 탐지', '오탐지', '미탐지'],
+                    datasets: [{
+                        data: [92, 5, 3],
+                        backgroundColor: ['#059669', '#d97706', '#dc2626'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { usePointStyle: true, padding: 20 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 이상 징후 목록 렌더링
+        function renderAnomalyList() {
+            const container = document.getElementById('anomalyList');
+            const recentAnomalies = anomalies
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                .slice(0, 10);
+
+            container.innerHTML = recentAnomalies.map(anomaly => `
+                <div class="anomaly-item" onclick="showAnomalyDetails('${anomaly.id}')">
+                    <div class="anomaly-severity ${anomaly.severity}"></div>
+                    <div class="anomaly-details">
+                        <div class="anomaly-service">${anomaly.service}</div>
+                        <div class="anomaly-description">${anomaly.description}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div class="anomaly-score">${anomaly.score.toFixed(1)}</div>
+                        <div class="anomaly-time">${formatTimeAgo(anomaly.timestamp)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 히트맵 렌더링
+        function renderHeatmap() {
+            const container = document.getElementById('heatmapGrid');
+            const services = ['user-service', 'payment-service', 'inventory-service', 'notification-service', 'api-gateway'];
+            
+            container.innerHTML = '';
+            
+            services.forEach(service => {
+                for (let hour = 0; hour < 24; hour++) {
+                    const anomalyCount = Math.floor(Math.random() * 10);
+                    const cell = document.createElement('div');
+                    cell.className = 'heatmap-cell';
+                    cell.style.backgroundColor = getHeatmapColor(anomalyCount);
+                    cell.title = `${service} - ${hour}:00\n이상 징후: ${anomalyCount}개`;
+                    cell.onclick = () => showHeatmapDetails(service, hour, anomalyCount);
+                    container.appendChild(cell);
+                }
+            });
+        }
+
+        function getHeatmapColor(count) {
+            if (count === 0) return '#dcfce7';
+            if (count <= 2) return '#bbf7d0';
+            if (count <= 5) return '#fed7aa';
+            if (count <= 8) return '#fecaca';
+            return '#dc2626';
+        }
+
+        // AI 인사이트 렌더링
+        function renderAIInsights() {
+            const container = document.getElementById('aiInsights');
+            const insights = [
+                {
+                    type: 'critical',
+                    icon: '🚨',
+                    title: '심각한 성능 저하 감지',
+                    content: 'payment-service에서 지난 2시간 동안 평균 응답 시간이 300% 증가했습니다. 데이터베이스 연결 풀 고갈이 원인으로 추정됩니다.'
+                },
+                {
+                    type: 'warning',
+                    icon: '⚠️',
+                    title: '메모리 사용량 급증',
+                    content: 'user-service의 메모리 사용량이 85%를 초과했습니다. 가비지 컬렉션 빈도가 증가하고 있어 성능에 영향을 줄 수 있습니다.'
+                },
+                {
+                    type: 'info',
+                    icon: '💡',
+                    title: '트래픽 패턴 변화',
+                    content: 'api-gateway에서 새로운 트래픽 패턴이 감지되었습니다. 새로운 클라이언트 애플리케이션의 배포가 원인으로 보입니다.'
+                }
+            ];
+
+            container.innerHTML = insights.map(insight => `
+                <div class="insight-item ${insight.type}">
+                    <div class="insight-icon">${insight.icon}</div>
+                    <div class="insight-content">
+                        <h4>${insight.title}</h4>
+                        <p>${insight.content}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 실시간 알림 시스템
+        function showAlert(message, type = 'info') {
+            const alertPanel = document.getElementById('alertPanel');
+            const alertId = Date.now();
+            
+            const alertElement = document.createElement('div');
+            alertElement.className = 'alert-item';
+            alertElement.id = `alert-${alertId}`;
+            
+            alertElement.innerHTML = `
+                <div class="alert-header">
+                    <span class="alert-title">${type === 'critical' ? '🚨 긴급' : type === 'warning' ? '⚠️ 경고' : '💡 정보'}</span>
+                    <button class="alert-close" onclick="closeAlert('${alertId}')">&times;</button>
+                </div>
+                <div class="alert-message">${message}</div>
+            `;
+            
+            alertPanel.appendChild(alertElement);
+            
+            // 5초 후 자동 제거
+            setTimeout(() => closeAlert(alertId), 5000);
+        }
+
+        function closeAlert(alertId) {
+            const alert = document.getElementById(`alert-${alertId}`);
+            if (alert) {
+                alert.style.animation = 'slideOut 0.3s ease-in';
+                setTimeout(() => alert.remove(), 300);
+            }
+        }
+
+        // 유틸리티 함수들
+        function formatTimeAgo(timestamp) {
+            const now = new Date();
+            const diff = now - timestamp;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(minutes / 60);
+            
+            if (hours > 0) return `${hours}시간 전`;
+            if (minutes > 0) return `${minutes}분 전`;
+            return '방금 전';
+        }
+
+        function showAnomalyDetails(anomalyId) {
+            const anomaly = anomalies.find(a => a.id == anomalyId);
+            if (anomaly) {
+                alert(`이상 징후 상세 정보:\n\n서비스: ${anomaly.service}\n설명: ${anomaly.description}\n심각도: ${anomaly.severity}\n점수: ${anomaly.score.toFixed(2)}\n시간: ${anomaly.timestamp.toLocaleString()}`);
+            }
+        }
+
+        function showHeatmapDetails(service, hour, count) {
+            alert(`히트맵 상세 정보:\n\n서비스: ${service}\n시간: ${hour}:00\n이상 징후 수: ${count}개`);
+        }
+
+        function updateSystemStatus() {
+            const indicator = document.getElementById('systemStatus');
+            const criticalAnomalies = anomalies.filter(a => a.severity === 'high' && !a.resolved).length;
+            
+            if (criticalAnomalies > 5) {
+                indicator.className = 'status-indicator error';
+            } else if (criticalAnomalies > 2) {
+                indicator.className = 'status-indicator warning';
+            } else {
+                indicator.className = 'status-indicator';
+            }
+        }
+
+        function updateMetrics() {
+            // 통계 업데이트
+            document.getElementById('totalAnomalies').textContent = anomalies.length;
+            document.getElementById('criticalAnomalies').textContent = anomalies.filter(a => a.severity === 'high').length;
+            document.getElementById('modelAccuracy').textContent = '94.7%';
+            document.getElementById('avgResponseTime').textContent = '245ms';
+        }
+
+        // 실시간 데이터 업데이트
+        function startRealTimeUpdates() {
+            setInterval(() => {
+                // 새로운 이상 징후 시뮬레이션
+                if (Math.random() > 0.8) {
+                    const services = ['user-service', 'payment-service', 'inventory-service', 'notification-service', 'api-gateway'];
+                    const newAnomaly = {
+                        id: anomalies.length + 1,
+                        service: services[Math.floor(Math.random() * services.length)],
+                        operation: 'GET',
+                        severity: Math.random() > 0.7 ? 'high' : 'medium',
+                        score: Math.random() * 10,
+                        timestamp: new Date(),
+                        description: '새로운 이상 징후가 감지되었습니다.',
+                        resolved: false
+                    };
+                    
+                    anomalies.unshift(newAnomaly);
+                    renderAnomalyList();
+                    updateMetrics();
+                    updateSystemStatus();
+                    
+                    if (newAnomaly.severity === 'high') {
+                        showAlert(`${newAnomaly.service}에서 심각한 이상 징후가 감지되었습니다!`, 'critical');
+                    }
+                }
+                
+                // 차트 데이터 업데이트
+                const now = new Date();
+                realTimeData.shift();
+                realTimeData.push({
+                    time: now,
+                    anomalies: Math.floor(Math.random() * 10) + 1,
+                    severity: Math.random() * 8 + 2,
+                    services: Math.floor(Math.random() * 5) + 1
+                });
+                
+                // 차트 업데이트
+                anomalyTimeChart.data.labels = realTimeData.map(d => d.time.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }));
+                anomalyTimeChart.data.datasets[0].data = realTimeData.map(d => d.anomalies);
+                anomalyTimeChart.update('none');
+                
+            }, 5000); // 5초마다 업데이트
+        }
+
+        // 이벤트 리스너
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            generateMockData();
+            renderAnomalyList();
+            renderHeatmap();
+            renderAIInsights();
+            updateMetrics();
+            updateSystemStatus();
+            showAlert('데이터가 새로고침되었습니다.', 'info');
+        });
+
+        document.getElementById('timeRange').addEventListener('change', (e) => {
+            // 시간 범위 변경 처리
+            showAlert(`시간 범위가 ${e.target.options[e.target.selectedIndex].text}로 변경되었습니다.`, 'info');
+        });
+
+        document.getElementById('chartMetric').addEventListener('change', (e) => {
+            const metric = e.target.value;
+            let data, label, color;
+            
+            switch (metric) {
+                case 'anomalies':
+                    data = realTimeData.map(d => d.anomalies);
+                    label = '이상 징후 수';
+                    color = '#dc2626';
+                    break;
+                case 'severity':
+                    data = realTimeData.map(d => d.severity);
+                    label = '심각도 점수';
+                    color = '#d97706';
+                    break;
+                case 'services':
+                    data = realTimeData.map(d => d.services);
+                    label = '영향받은 서비스';
+                    color = '#2563eb';
+                    break;
+            }
+            
+            anomalyTimeChart.data.datasets[0].data = data;
+            anomalyTimeChart.data.datasets[0].label = label;
+            anomalyTimeChart.data.datasets[0].borderColor = color;
+            anomalyTimeChart.data.datasets[0].backgroundColor = color.replace(')', ', 0.1)').replace('rgb', 'rgba');
+            anomalyTimeChart.update();
+        });
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', async () => {
+            generateMockData();
+            await initializeMLModel();
+            initializeCharts();
+            renderAnomalyList();
+            renderHeatmap();
+            renderAIInsights();
+            updateMetrics();
+            updateSystemStatus();
+            startRealTimeUpdates();
+            
+            // 환영 메시지
+            setTimeout(() => {
+                showAlert('OpenTelemetry 이상 징후 대시보드에 오신 것을 환영합니다!', 'info');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

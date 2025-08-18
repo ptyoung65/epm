@@ -1,0 +1,85 @@
+# Simplified OpenTelemetry Collector Configuration for AIRIS-MON
+
+receivers:
+  # OTLP Receiver
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  
+  # Host metrics
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+      memory:
+      disk:
+      network:
+
+processors:
+  # Batch processor
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+  
+  # Memory limiter
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 256
+  
+  # Simple resource processor
+  resource:
+    attributes:
+      - key: service.name
+        value: airis-mon
+        action: insert
+      - key: environment
+        value: production
+        action: insert
+
+exporters:
+  # ClickHouse exporter
+  clickhouse:
+    endpoint: tcp://clickhouse:9000
+    database: airis_mon
+    ttl_days: 30
+    logs_table_name: otel_logs
+    traces_table_name: otel_traces
+    metrics_table_name: otel_metrics
+    create_schema: true
+    timeout: 10s
+  
+  # Logging for debug
+  logging:
+    loglevel: info
+
+extensions:
+  # Health check
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      address: 0.0.0.0:8888
+  
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [clickhouse, logging]
+    
+    metrics:
+      receivers: [otlp, hostmetrics]
+      processors: [memory_limiter, resource, batch]
+      exporters: [clickhouse, logging]
+    
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, batch]
+      exporters: [clickhouse, logging]

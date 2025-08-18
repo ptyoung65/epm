@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>추적 상세 분석기 | AIRIS-MON</title>
+    <script src="/components/common-layout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --white: #ffffff;
+        }
+
+        .trace-detail-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1.5rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .trace-info {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .trace-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .trace-meta {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .trace-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary { background: var(--primary); color: var(--white); }
+        .btn-secondary { background: var(--gray-200); color: var(--gray-700); }
+        .btn-success { background: var(--success); color: var(--white); }
+
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .analysis-panel {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            background: var(--gray-50);
+        }
+
+        .panel-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .panel-content {
+            padding: 1.5rem;
+        }
+
+        .waterfall-container {
+            height: 600px;
+            overflow: auto;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+        }
+
+        .waterfall-chart {
+            min-width: 800px;
+            height: 100%;
+        }
+
+        .span-row {
+            display: flex;
+            align-items: center;
+            height: 40px;
+            border-bottom: 1px solid var(--gray-100);
+            padding: 0 1rem;
+            position: relative;
+        }
+
+        .span-row:hover {
+            background: var(--gray-50);
+        }
+
+        .span-name {
+            width: 250px;
+            font-weight: 500;
+            color: var(--gray-900);
+            font-size: 0.875rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .span-timeline {
+            flex: 1;
+            position: relative;
+            margin-left: 1rem;
+        }
+
+        .span-bar {
+            height: 20px;
+            border-radius: 4px;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--white);
+            cursor: pointer;
+        }
+
+        .span-bar.service-frontend { background: #3b82f6; }
+        .span-bar.service-api { background: #10b981; }
+        .span-bar.service-database { background: #f59e0b; }
+        .span-bar.service-cache { background: #8b5cf6; }
+        .span-bar.service-external { background: #ef4444; }
+        .span-bar.service-default { background: var(--gray-400); }
+
+        .span-bar:hover {
+            filter: brightness(1.1);
+        }
+
+        .timeline-ruler {
+            height: 30px;
+            border-bottom: 2px solid var(--gray-200);
+            position: relative;
+            margin: 0 1rem 0 251px;
+        }
+
+        .ruler-tick {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            border-left: 1px solid var(--gray-300);
+            font-size: 0.75rem;
+            color: var(--gray-500);
+            padding-left: 4px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.875rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .span-details {
+            margin-top: 2rem;
+        }
+
+        .span-details-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .span-header {
+            padding: 1rem 1.5rem;
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .span-header:hover {
+            background: var(--gray-100);
+        }
+
+        .span-info {
+            flex: 1;
+        }
+
+        .span-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+        }
+
+        .span-subtitle {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .span-duration {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .span-body {
+            padding: 1.5rem;
+            display: none;
+        }
+
+        .span-body.expanded {
+            display: block;
+        }
+
+        .attributes-table {
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+
+        .attributes-table th,
+        .attributes-table td {
+            padding: 0.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-100);
+            font-size: 0.875rem;
+        }
+
+        .attributes-table th {
+            font-weight: 600;
+            color: var(--gray-700);
+            background: var(--gray-50);
+        }
+
+        .events-list {
+            margin-top: 1rem;
+        }
+
+        .event-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.75rem;
+            background: var(--gray-50);
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .event-time {
+            font-weight: 600;
+            color: var(--primary);
+            font-family: monospace;
+        }
+
+        .event-name {
+            font-weight: 500;
+            color: var(--gray-900);
+        }
+
+        .event-attributes {
+            color: var(--gray-600);
+            font-size: 0.75rem;
+        }
+
+        .performance-insights {
+            grid-column: 1 / -1;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .insight-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .insight-card.warning {
+            border-left: 4px solid var(--warning);
+        }
+
+        .insight-card.error {
+            border-left: 4px solid var(--error);
+        }
+
+        .insight-card.info {
+            border-left: 4px solid var(--primary);
+        }
+
+        .insight-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .insight-content {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        .chart-container {
+            height: 300px;
+            margin: 1rem 0;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--gray-500);
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid var(--gray-200);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 모달 스타일 */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal-content {
+            background-color: var(--white);
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 1200px;
+            max-height: 80vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            color: var(--gray-900);
+        }
+        
+        .close {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--gray-400);
+            cursor: pointer;
+            line-height: 1;
+        }
+        
+        .close:hover {
+            color: var(--gray-600);
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .trace-filter {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .trace-filter input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+        
+        .trace-list-container {
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .trace-list-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .trace-list-table th {
+            background: var(--gray-50);
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--gray-700);
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        .trace-list-table td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        
+        .trace-list-table tbody tr:hover {
+            background: var(--gray-50);
+        }
+        
+        .trace-list-table .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .trace-list-table .status-badge.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .trace-list-table .status-badge.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-success { background: var(--success); }
+        .status-error { background: var(--error); }
+        .status-warning { background: var(--warning); }
+
+        .dependency-graph {
+            height: 400px;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            background: var(--white);
+        }
+
+        .legend {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+
+        @media (max-width: 1024px) {
+            .analysis-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .span-name {
+                width: 150px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Trace 선택 모달 -->
+    <div id="traceModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>ClickHouse Trace 선택</h2>
+                <span class="close" onclick="closeTraceModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="trace-filter">
+                    <input type="text" id="traceFilter" placeholder="Trace ID 또는 서비스명으로 검색..." onkeyup="filterTraces()">
+                    <button class="btn btn-primary" onclick="loadClickHouseTraces()">목록 새로고침</button>
+                </div>
+                <div class="trace-list-container">
+                    <table class="trace-list-table">
+                        <thead>
+                            <tr>
+                                <th>Trace ID</th>
+                                <th>서비스</th>
+                                <th>작업</th>
+                                <th>시작 시간</th>
+                                <th>지속시간</th>
+                                <th>상태</th>
+                                <th>액션</th>
+                            </tr>
+                        </thead>
+                        <tbody id="traceListBody">
+                            <tr><td colspan="7" style="text-align: center;">로딩 중...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="airis-content-wrapper">
+        <!-- 헤더 -->
+        <div class="trace-detail-header">
+            <div class="header-content">
+                <div class="trace-info">
+                    <h1 class="trace-title" id="traceTitle">추적 로딩 중...</h1>
+                    <div class="trace-meta" id="traceMeta">
+                        <span id="traceId">-</span>
+                        <span id="traceStatus">-</span>
+                        <span id="traceTime">-</span>
+                    </div>
+                </div>
+                <div class="trace-actions">
+                    <button class="btn btn-success" onclick="showTraceSelector()">🔍 추적 선택</button>
+                    <button class="btn btn-secondary" onclick="history.back()">⬅️ 돌아가기</button>
+                    <button class="btn btn-secondary" onclick="exportTrace()">📥 내보내기</button>
+                    <button class="btn btn-primary" onclick="refreshTrace()">🔄 새로고침</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 메트릭 개요 -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" style="color: var(--primary);" id="totalDuration">-</div>
+                <div class="metric-label">총 실행시간</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" style="color: var(--success);" id="spanCount">-</div>
+                <div class="metric-label">스팬 개수</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" style="color: var(--warning);" id="serviceCount">-</div>
+                <div class="metric-label">서비스 개수</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" style="color: var(--error);" id="errorCount">-</div>
+                <div class="metric-label">오류 개수</div>
+            </div>
+        </div>
+
+        <!-- 분석 그리드 -->
+        <div class="analysis-grid">
+            <!-- Waterfall 차트 -->
+            <div class="analysis-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">🌊 Waterfall 차트</h2>
+                </div>
+                <div class="panel-content">
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color service-frontend"></div>
+                            <span>프론트엔드</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color service-api"></div>
+                            <span>API</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color service-database"></div>
+                            <span>데이터베이스</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color service-cache"></div>
+                            <span>캐시</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color service-external"></div>
+                            <span>외부 API</span>
+                        </div>
+                    </div>
+                    
+                    <div class="waterfall-container" id="waterfallContainer">
+                        <div class="loading" id="waterfallLoading">
+                            <div class="spinner"></div>
+                            <span>Waterfall 차트 생성 중...</span>
+                        </div>
+                        <div class="waterfall-chart" id="waterfallChart" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 서비스 의존성 그래프 -->
+            <div class="analysis-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">🔗 서비스 의존성</h2>
+                </div>
+                <div class="panel-content">
+                    <div class="dependency-graph" id="dependencyGraph">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <span>의존성 그래프 생성 중...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 성능 인사이트 -->
+        <div class="analysis-panel performance-insights">
+            <div class="panel-header">
+                <h2 class="panel-title">💡 성능 인사이트</h2>
+            </div>
+            <div class="panel-content">
+                <div class="insights-grid" id="insightsGrid">
+                    <!-- 인사이트 카드들이 동적으로 생성됩니다 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 스팬 상세 정보 -->
+        <div class="analysis-panel">
+            <div class="panel-header">
+                <h2 class="panel-title">📋 스팬 상세 정보</h2>
+            </div>
+            <div class="panel-content">
+                <div class="span-details" id="spanDetails">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <span>스팬 정보 로딩 중...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let currentTrace = null;
+        let waterfallChart = null;
+        let dependencyChart = null;
+        let allTraces = [];
+        let filteredTraces = [];
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTraceAnalyzer();
+            
+            // URL에 trace 파라미터가 있으면 로드, 없으면 선택 모달 표시
+            const urlParams = new URLSearchParams(window.location.search);
+            const traceId = urlParams.get('trace');
+            
+            if (traceId) {
+                loadTraceData();
+            } else {
+                showTraceSelector();
+            }
+        });
+
+        // 추적 분석기 초기화
+        function initializeTraceAnalyzer() {
+            console.log('추적 상세 분석기 초기화 중...');
+            
+            // URL 파라미터에서 추적 ID 가져오기
+            const urlParams = new URLSearchParams(window.location.search);
+            const traceId = urlParams.get('trace');
+            
+            if (!traceId) {
+                showAlert('추적 ID가 제공되지 않았습니다.', 'error');
+                return;
+            }
+            
+            console.log('분석할 추적 ID:', traceId);
+        }
+
+        // 추적 데이터 로드
+        async function loadTraceData() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const traceId = urlParams.get('trace');
+            
+            if (!traceId) return;
+            
+            try {
+                // API에서 상세 추적 데이터 로드
+                const response = await fetch(`/api/opentelemetry/traces/${traceId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    currentTrace = data.trace;
+                    displayTraceOverview(currentTrace);
+                    generateWaterfallChart(currentTrace);
+                    generateDependencyGraph(currentTrace);
+                    generatePerformanceInsights(currentTrace);
+                    displaySpanDetails(currentTrace);
+                } else {
+                    throw new Error(data.error || '추적 데이터를 불러올 수 없습니다');
+                }
+            } catch (error) {
+                console.error('추적 데이터 로드 실패:', error);
+                // ClickHouse에서 데이터 로드 시도
+                if (traceId) {
+                    await loadClickHouseTraceData(traceId);
+                } else {
+                    generateSampleTraceData(traceId || 'trace_sample_' + Date.now());
+                }
+            }
+        }
+
+        // 샘플 추적 데이터 생성
+        function generateSampleTraceData(traceId) {
+            console.log('샘플 추적 데이터 생성:', traceId);
+            
+            currentTrace = {
+                traceId: traceId,
+                operationName: 'E-Commerce 결제 프로세스',
+                serviceName: 'payment-service',
+                status: 'success',
+                startTime: new Date(Date.now() - 5000).toISOString(),
+                duration: 1847,
+                spans: [
+                    {
+                        spanId: 'span_001',
+                        operationName: 'HTTP GET /checkout',
+                        serviceName: 'web-frontend',
+                        startTime: 0,
+                        duration: 45,
+                        status: 'success',
+                        tags: {
+                            'http.method': 'GET',
+                            'http.url': '/checkout',
+                            'http.status_code': 200,
+                            'user.id': 'user_12345'
+                        },
+                        events: [
+                            { name: 'request.start', timestamp: 0 },
+                            { name: 'validation.complete', timestamp: 15 },
+                            { name: 'response.sent', timestamp: 45 }
+                        ]
+                    },
+                    {
+                        spanId: 'span_002',
+                        operationName: 'API Gateway',
+                        serviceName: 'api-gateway',
+                        startTime: 45,
+                        duration: 25,
+                        status: 'success',
+                        tags: {
+                            'component': 'api-gateway',
+                            'version': 'v2.1.0'
+                        },
+                        events: []
+                    },
+                    {
+                        spanId: 'span_003',
+                        operationName: 'User Authentication',
+                        serviceName: 'auth-service',
+                        startTime: 70,
+                        duration: 180,
+                        status: 'success',
+                        tags: {
+                            'auth.method': 'jwt',
+                            'user.role': 'customer',
+                            'db.statement': 'SELECT * FROM users WHERE token = ?'
+                        },
+                        events: [
+                            { name: 'token.validation.start', timestamp: 70 },
+                            { name: 'db.query.start', timestamp: 85 },
+                            { name: 'db.query.complete', timestamp: 120 },
+                            { name: 'auth.complete', timestamp: 250 }
+                        ]
+                    },
+                    {
+                        spanId: 'span_004',
+                        operationName: 'Cart Validation',
+                        serviceName: 'cart-service',
+                        startTime: 250,
+                        duration: 220,
+                        status: 'success',
+                        tags: {
+                            'cart.items.count': 3,
+                            'db.statement': 'SELECT * FROM cart_items WHERE user_id = ?'
+                        },
+                        events: []
+                    },
+                    {
+                        spanId: 'span_005',
+                        operationName: 'Inventory Check',
+                        serviceName: 'inventory-service',
+                        startTime: 470,
+                        duration: 310,
+                        status: 'success',
+                        tags: {
+                            'inventory.reserved': true,
+                            'products.checked': 3
+                        },
+                        events: []
+                    },
+                    {
+                        spanId: 'span_006',
+                        operationName: 'Payment Processing',
+                        serviceName: 'payment-service',
+                        startTime: 780,
+                        duration: 450,
+                        status: 'success',
+                        tags: {
+                            'payment.method': 'credit_card',
+                            'payment.amount': 129.99,
+                            'payment.currency': 'USD',
+                            'external.gateway': 'stripe'
+                        },
+                        events: [
+                            { name: 'payment.validate', timestamp: 780 },
+                            { name: 'external.api.call', timestamp: 820 },
+                            { name: 'payment.confirmed', timestamp: 1200 },
+                            { name: 'receipt.generated', timestamp: 1230 }
+                        ]
+                    },
+                    {
+                        spanId: 'span_007',
+                        operationName: 'Order Creation',
+                        serviceName: 'order-service',
+                        startTime: 1230,
+                        duration: 180,
+                        status: 'success',
+                        tags: {
+                            'order.id': 'ORDER_789123',
+                            'order.total': 129.99
+                        },
+                        events: []
+                    },
+                    {
+                        spanId: 'span_008',
+                        operationName: 'Notification Send',
+                        serviceName: 'notification-service',
+                        startTime: 1410,
+                        duration: 85,
+                        status: 'success',
+                        tags: {
+                            'notification.type': 'email',
+                            'template': 'order_confirmation'
+                        },
+                        events: []
+                    },
+                    {
+                        spanId: 'span_009',
+                        operationName: 'Cache Update',
+                        serviceName: 'cache-service',
+                        startTime: 1495,
+                        duration: 65,
+                        status: 'success',
+                        tags: {
+                            'cache.key': 'user:12345:orders',
+                            'cache.ttl': 3600
+                        },
+                        events: []
+                    },
+                    {
+                        spanId: 'span_010',
+                        operationName: 'Response',
+                        serviceName: 'api-gateway',
+                        startTime: 1560,
+                        duration: 35,
+                        status: 'success',
+                        tags: {
+                            'http.status_code': 200,
+                            'response.size': 1024
+                        },
+                        events: []
+                    }
+                ]
+            };
+            
+            displayTraceOverview(currentTrace);
+            generateWaterfallChart(currentTrace);
+            generateDependencyGraph(currentTrace);
+            generatePerformanceInsights(currentTrace);
+            displaySpanDetails(currentTrace);
+        }
+
+        // 추적 개요 표시
+        function displayTraceOverview(trace) {
+            document.getElementById('traceTitle').textContent = trace.operationName;
+            document.getElementById('traceId').textContent = `ID: ${trace.traceId}`;
+            document.getElementById('traceStatus').innerHTML = `<span class="status-indicator status-${trace.status}"></span>${trace.status.toUpperCase()}`;
+            document.getElementById('traceTime').textContent = new Date(trace.startTime).toLocaleString();
+            
+            // 메트릭 업데이트
+            document.getElementById('totalDuration').textContent = `${trace.duration}ms`;
+            document.getElementById('spanCount').textContent = trace.spans.length;
+            
+            const uniqueServices = [...new Set(trace.spans.map(s => s.serviceName))];
+            document.getElementById('serviceCount').textContent = uniqueServices.length;
+            
+            const errorCount = trace.spans.filter(s => s.status === 'error').length;
+            document.getElementById('errorCount').textContent = errorCount;
+        }
+
+        // Waterfall 차트 생성
+        function generateWaterfallChart(trace) {
+            console.log('Waterfall 차트 생성 중...');
+            
+            const container = document.getElementById('waterfallChart');
+            const loading = document.getElementById('waterfallLoading');
+            
+            // 시간축 계산
+            const maxDuration = trace.duration;
+            const timelineWidth = 500;
+            
+            // 룰러 생성
+            const rulerHtml = generateTimelineRuler(maxDuration, timelineWidth);
+            
+            // 스팬 행들 생성
+            const spansHtml = trace.spans
+                .sort((a, b) => a.startTime - b.startTime)
+                .map(span => generateSpanRow(span, maxDuration, timelineWidth))
+                .join('');
+            
+            container.innerHTML = `
+                <div class="timeline-ruler">${rulerHtml}</div>
+                ${spansHtml}
+            `;
+            
+            // 로딩 숨기기, 차트 보이기
+            loading.style.display = 'none';
+            container.style.display = 'block';
+            
+            // 스팬 클릭 이벤트 추가
+            container.querySelectorAll('.span-bar').forEach(bar => {
+                bar.addEventListener('click', (e) => {
+                    const spanId = e.target.getAttribute('data-span-id');
+                    highlightSpan(spanId);
+                    showSpanTooltip(e, spanId);
+                });
+            });
+        }
+
+        // 타임라인 룰러 생성
+        function generateTimelineRuler(maxDuration, width) {
+            const ticks = [];
+            const tickCount = 10;
+            const interval = maxDuration / tickCount;
+            
+            for (let i = 0; i <= tickCount; i++) {
+                const time = i * interval;
+                const position = (time / maxDuration) * width;
+                ticks.push(`
+                    <div class="ruler-tick" style="left: ${position}px;">
+                        ${Math.round(time)}ms
+                    </div>
+                `);
+            }
+            
+            return ticks.join('');
+        }
+
+        // 스팬 행 생성
+        function generateSpanRow(span, maxDuration, timelineWidth) {
+            const startPercent = (span.startTime / maxDuration) * 100;
+            const widthPercent = (span.duration / maxDuration) * 100;
+            
+            // 서비스 타입별 클래스 결정
+            let serviceClass = 'service-default';
+            if (span.serviceName.includes('frontend') || span.serviceName.includes('web')) {
+                serviceClass = 'service-frontend';
+            } else if (span.serviceName.includes('api') || span.serviceName.includes('gateway')) {
+                serviceClass = 'service-api';
+            } else if (span.serviceName.includes('database') || span.serviceName.includes('db')) {
+                serviceClass = 'service-database';
+            } else if (span.serviceName.includes('cache')) {
+                serviceClass = 'service-cache';
+            } else if (span.serviceName.includes('payment') || span.serviceName.includes('external')) {
+                serviceClass = 'service-external';
+            }
+            
+            return `
+                <div class="span-row" data-span-id="${span.spanId}">
+                    <div class="span-name" title="${span.operationName} (${span.serviceName})">
+                        ${span.operationName}
+                    </div>
+                    <div class="span-timeline">
+                        <div class="span-bar ${serviceClass}" 
+                             data-span-id="${span.spanId}"
+                             style="left: ${startPercent}%; width: ${widthPercent}%;"
+                             title="${span.operationName} - ${span.duration}ms">
+                            ${span.duration}ms
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 서비스 의존성 그래프 생성
+        function generateDependencyGraph(trace) {
+            console.log('서비스 의존성 그래프 생성 중...');
+            
+            const container = d3.select('#dependencyGraph');
+            container.selectAll('*').remove();
+            
+            const width = container.node().clientWidth;
+            const height = 400;
+            
+            // 서비스 노드 생성
+            const services = [...new Set(trace.spans.map(s => s.serviceName))];
+            const nodes = services.map(service => ({
+                id: service,
+                name: service,
+                calls: trace.spans.filter(s => s.serviceName === service).length
+            }));
+            
+            // 서비스 간 연결 생성
+            const links = [];
+            for (let i = 0; i < trace.spans.length - 1; i++) {
+                const current = trace.spans[i];
+                const next = trace.spans[i + 1];
+                
+                if (current.serviceName !== next.serviceName) {
+                    const existing = links.find(l => 
+                        l.source === current.serviceName && l.target === next.serviceName);
+                    if (existing) {
+                        existing.value++;
+                    } else {
+                        links.push({
+                            source: current.serviceName,
+                            target: next.serviceName,
+                            value: 1
+                        });
+                    }
+                }
+            }
+            
+            // D3.js 포스 시뮬레이션
+            const svg = container.append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            
+            const simulation = d3.forceSimulation(nodes)
+                .force('link', d3.forceLink(links).id(d => d.id).distance(100))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2));
+            
+            // 링크 그리기
+            const link = svg.append('g')
+                .selectAll('line')
+                .data(links)
+                .enter().append('line')
+                .attr('stroke', '#999')
+                .attr('stroke-opacity', 0.6)
+                .attr('stroke-width', d => Math.sqrt(d.value) * 2);
+            
+            // 노드 그리기
+            const node = svg.append('g')
+                .selectAll('circle')
+                .data(nodes)
+                .enter().append('circle')
+                .attr('r', d => Math.sqrt(d.calls) * 5 + 10)
+                .attr('fill', d => getServiceColor(d.id))
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended));
+            
+            // 라벨 추가
+            const label = svg.append('g')
+                .selectAll('text')
+                .data(nodes)
+                .enter().append('text')
+                .text(d => d.name.split('-')[0])
+                .attr('font-size', '12px')
+                .attr('font-weight', 'bold')
+                .attr('text-anchor', 'middle')
+                .attr('fill', '#333');
+            
+            // 시뮬레이션 업데이트
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                
+                node
+                    .attr('cx', d => d.x)
+                    .attr('cy', d => d.y);
+                
+                label
+                    .attr('x', d => d.x)
+                    .attr('y', d => d.y + 5);
+            });
+            
+            // 드래그 함수들
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+        }
+
+        // 서비스별 색상 반환
+        function getServiceColor(serviceName) {
+            const colors = {
+                'web-frontend': '#3b82f6',
+                'api-gateway': '#10b981',
+                'auth-service': '#f59e0b',
+                'cart-service': '#8b5cf6',
+                'inventory-service': '#ef4444',
+                'payment-service': '#06b6d4',
+                'order-service': '#84cc16',
+                'notification-service': '#f97316',
+                'cache-service': '#ec4899'
+            };
+            
+            return colors[serviceName] || '#6b7280';
+        }
+
+        // 성능 인사이트 생성
+        function generatePerformanceInsights(trace) {
+            console.log('성능 인사이트 생성 중...');
+            
+            const insights = [];
+            
+            // 가장 느린 스팬 분석
+            const slowestSpan = trace.spans.reduce((prev, current) => 
+                (prev.duration > current.duration) ? prev : current);
+            
+            if (slowestSpan.duration > trace.duration * 0.3) {
+                insights.push({
+                    type: 'warning',
+                    title: '병목 지점 발견',
+                    content: `${slowestSpan.serviceName}의 ${slowestSpan.operationName} 작업이 전체 시간의 ${Math.round((slowestSpan.duration / trace.duration) * 100)}%를 차지합니다. 최적화를 고려해보세요.`
+                });
+            }
+            
+            // 오류 분석
+            const errorSpans = trace.spans.filter(s => s.status === 'error');
+            if (errorSpans.length > 0) {
+                insights.push({
+                    type: 'error',
+                    title: '오류 발생',
+                    content: `${errorSpans.length}개의 스팬에서 오류가 발생했습니다. 주요 오류: ${errorSpans.map(s => s.serviceName).join(', ')}`
+                });
+            }
+            
+            // 긴 실행시간 경고
+            if (trace.duration > 2000) {
+                insights.push({
+                    type: 'warning',
+                    title: '긴 응답시간',
+                    content: `총 실행시간 ${trace.duration}ms가 권장 임계값(2초)을 초과했습니다. 사용자 경험에 영향을 줄 수 있습니다.`
+                });
+            }
+            
+            // 많은 스팬 경고
+            if (trace.spans.length > 20) {
+                insights.push({
+                    type: 'info',
+                    title: '복잡한 트레이스',
+                    content: `${trace.spans.length}개의 스팬으로 구성된 복잡한 추적입니다. 불필요한 계측을 제거하여 오버헤드를 줄이는 것을 고려해보세요.`
+                });
+            }
+            
+            // 외부 API 호출 분석
+            const externalCalls = trace.spans.filter(s => 
+                s.tags && (s.tags['external.gateway'] || s.serviceName.includes('external')));
+            
+            if (externalCalls.length > 0) {
+                const totalExternalTime = externalCalls.reduce((sum, span) => sum + span.duration, 0);
+                insights.push({
+                    type: 'info',
+                    title: '외부 의존성',
+                    content: `${externalCalls.length}개의 외부 API 호출로 총 ${totalExternalTime}ms 소요. 타임아웃 및 재시도 정책을 확인하세요.`
+                });
+            }
+            
+            // 기본 성공 메시지
+            if (insights.length === 0 && trace.status === 'success' && trace.duration < 1000) {
+                insights.push({
+                    type: 'info',
+                    title: '좋은 성능',
+                    content: '이 추적은 좋은 성능을 보여줍니다. 응답시간이 빠르고 오류가 없습니다.'
+                });
+            }
+            
+            // 인사이트 카드 렌더링
+            const container = document.getElementById('insightsGrid');
+            container.innerHTML = insights.map(insight => `
+                <div class="insight-card ${insight.type}">
+                    <div class="insight-title">${insight.title}</div>
+                    <div class="insight-content">${insight.content}</div>
+                </div>
+            `).join('');
+        }
+
+        // 스팬 상세 정보 표시
+        function displaySpanDetails(trace) {
+            console.log('스팬 상세 정보 표시 중...');
+            
+            const container = document.getElementById('spanDetails');
+            const sortedSpans = trace.spans.sort((a, b) => a.startTime - b.startTime);
+            
+            container.innerHTML = sortedSpans.map(span => `
+                <div class="span-details-card">
+                    <div class="span-header" onclick="toggleSpanDetails('${span.spanId}')">
+                        <div class="span-info">
+                            <div class="span-title">${span.operationName}</div>
+                            <div class="span-subtitle">
+                                ${span.serviceName} • 시작: +${span.startTime}ms
+                                ${span.status !== 'success' ? `• <span style="color: var(--error);">${span.status.toUpperCase()}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="span-duration">${span.duration}ms</div>
+                    </div>
+                    <div class="span-body" id="span-body-${span.spanId}">
+                        ${generateSpanDetailsContent(span)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 스팬 상세 내용 생성
+        function generateSpanDetailsContent(span) {
+            const attributesHtml = span.tags ? Object.entries(span.tags).map(([key, value]) => `
+                <tr>
+                    <td>${key}</td>
+                    <td>${value}</td>
+                </tr>
+            `).join('') : '<tr><td colspan="2">속성 없음</td></tr>';
+            
+            const eventsHtml = span.events && span.events.length > 0 ? 
+                span.events.map(event => `
+                    <div class="event-item">
+                        <div class="event-time">+${event.timestamp}ms</div>
+                        <div class="event-name">${event.name}</div>
+                        <div class="event-attributes">${event.attributes || ''}</div>
+                    </div>
+                `).join('') : '<div style="color: var(--gray-500); text-align: center; padding: 1rem;">이벤트 없음</div>';
+            
+            return `
+                <div>
+                    <h4 style="margin-bottom: 1rem; color: var(--gray-900);">속성</h4>
+                    <table class="attributes-table">
+                        <thead>
+                            <tr>
+                                <th>키</th>
+                                <th>값</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${attributesHtml}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div>
+                    <h4 style="margin-bottom: 1rem; color: var(--gray-900);">이벤트</h4>
+                    <div class="events-list">
+                        ${eventsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 스팬 상세 토글
+        function toggleSpanDetails(spanId) {
+            console.log('toggleSpanDetails called with:', spanId);
+            const body = document.getElementById(`span-body-${spanId}`);
+            if (body) {
+                body.classList.toggle('expanded');
+                console.log('Toggled expanded class:', body.classList.contains('expanded'));
+            } else {
+                console.error('Element not found:', `span-body-${spanId}`);
+            }
+        }
+        
+        // 전역 스코프에 함수 노출
+        window.toggleSpanDetails = toggleSpanDetails;
+
+        // 스팬 하이라이트
+        function highlightSpan(spanId) {
+            // 모든 스팬에서 하이라이트 제거
+            document.querySelectorAll('.span-row').forEach(row => {
+                row.style.background = '';
+            });
+            
+            // 선택된 스팬 하이라이트
+            const selectedRow = document.querySelector(`[data-span-id="${spanId}"]`);
+            if (selectedRow) {
+                selectedRow.style.background = 'var(--gray-100)';
+            }
+        }
+
+        // 스팬 툴팁 표시
+        function showSpanTooltip(event, spanId) {
+            const span = currentTrace.spans.find(s => s.spanId === spanId);
+            if (!span) return;
+            
+            // 간단한 알림으로 스팬 정보 표시 (실제로는 툴팁 구현)
+            alert(`스팬: ${span.operationName}
+서비스: ${span.serviceName}
+지속시간: ${span.duration}ms
+상태: ${span.status}`);
+        }
+
+        // 추적 새로고침
+        function refreshTrace() {
+            loadTraceData();
+        }
+
+        // 추적 내보내기
+        function exportTrace() {
+            if (!currentTrace) return;
+            
+            const data = JSON.stringify(currentTrace, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `trace_${currentTrace.traceId}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Trace 선택 모달 표시
+        function showTraceSelector() {
+            document.getElementById('traceModal').style.display = 'block';
+            loadClickHouseTraces();
+        }
+        
+        // Trace 선택 모달 닫기
+        function closeTraceModal() {
+            document.getElementById('traceModal').style.display = 'none';
+        }
+        
+        // ClickHouse에서 trace 목록 로드
+        async function loadClickHouseTraces() {
+            try {
+                const response = await fetch('/api/clickhouse/traces');
+                const data = await response.json();
+                
+                if (data.success) {
+                    allTraces = data.traces;
+                    filteredTraces = allTraces;
+                    displayTraceList(filteredTraces);
+                } else {
+                    console.error('Trace 목록 로드 실패');
+                }
+            } catch (error) {
+                console.error('ClickHouse trace 로드 오류:', error);
+            }
+        }
+        
+        // Trace 목록 표시
+        function displayTraceList(traces) {
+            const tbody = document.getElementById('traceListBody');
+            
+            if (traces.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">추적 데이터가 없습니다.</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = traces.map(trace => `
+                <tr>
+                    <td style="font-family: monospace; font-size: 0.875rem;">${trace.traceId}</td>
+                    <td>${trace.serviceName}</td>
+                    <td>${trace.operationName}</td>
+                    <td>${new Date(trace.startTime).toLocaleString('ko-KR')}</td>
+                    <td>${trace.duration}ms</td>
+                    <td>
+                        <span class="status-badge ${trace.status}">
+                            ${trace.status === 'success' ? '성공' : '오류'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary" onclick="selectTrace('${trace.traceId}')">선택</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // Trace 필터링
+        function filterTraces() {
+            const filterValue = document.getElementById('traceFilter').value.toLowerCase();
+            
+            if (!filterValue) {
+                filteredTraces = allTraces;
+            } else {
+                filteredTraces = allTraces.filter(trace => 
+                    trace.traceId.toLowerCase().includes(filterValue) ||
+                    trace.serviceName.toLowerCase().includes(filterValue) ||
+                    trace.operationName.toLowerCase().includes(filterValue)
+                );
+            }
+            
+            displayTraceList(filteredTraces);
+        }
+        
+        // Trace 선택
+        function selectTrace(traceId) {
+            // URL 파라미터 업데이트
+            const url = new URL(window.location);
+            url.searchParams.set('trace', traceId);
+            window.history.pushState({}, '', url);
+            
+            // 모달 닫기
+            closeTraceModal();
+            
+            // 선택된 trace 로드
+            loadTraceData();
+        }
+        
+        // ClickHouse에서 특정 trace 데이터 로드
+        async function loadClickHouseTraceData(traceId) {
+            try {
+                console.log('ClickHouse에서 trace 로딩:', traceId);
+                const response = await fetch(`/api/clickhouse/trace/${traceId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    console.log('ClickHouse trace 로드 성공:', data.trace);
+                    currentTrace = data.trace;
+                    displayTraceData(currentTrace);
+                } else {
+                    console.error('Trace 데이터 로드 실패');
+                    generateSampleTraceData(traceId);
+                }
+            } catch (error) {
+                console.error('ClickHouse trace 로드 오류:', error);
+                generateSampleTraceData(traceId);
+            }
+        }
+
+        // 알림 표시
+        function showAlert(message, type = 'info') {
+            // 간단한 알림 (실제로는 토스트 구현)
+            alert(message);
+        }
+    </script>
+</body>
+</html>

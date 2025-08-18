@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>토글 기능 테스트</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-600: #4b5563;
+            --gray-900: #111827;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 2rem;
+            background: var(--gray-50);
+        }
+
+        .span-details-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .span-header {
+            padding: 1rem 1.5rem;
+            background: var(--gray-50);
+            border-bottom: 1px solid var(--gray-200);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .span-header:hover {
+            background: var(--gray-100);
+        }
+
+        .span-info {
+            flex: 1;
+        }
+
+        .span-title {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+        }
+
+        .span-subtitle {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .span-duration {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .span-body {
+            padding: 1.5rem;
+            display: none;
+            background: white;
+        }
+
+        .span-body.expanded {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>토글 기능 테스트 페이지</h1>
+    <p>아래 카드를 클릭하여 접기/펼치기 기능을 테스트하세요.</p>
+    
+    <div id="container"></div>
+
+    <script>
+        // 테스트 데이터
+        const testSpans = [
+            {
+                spanId: 'span_001',
+                operationName: 'GET /api/users',
+                serviceName: 'user-service',
+                startTime: 0,
+                duration: 125,
+                status: 'success'
+            },
+            {
+                spanId: 'span_002',
+                operationName: 'Database Query',
+                serviceName: 'postgres',
+                startTime: 15,
+                duration: 85,
+                status: 'success'
+            },
+            {
+                spanId: 'span_003',
+                operationName: 'Redis Cache',
+                serviceName: 'cache-service',
+                startTime: 105,
+                duration: 12,
+                status: 'error'
+            }
+        ];
+
+        // 토글 함수
+        function toggleSpanDetails(spanId) {
+            console.log('토글 함수 호출됨:', spanId);
+            const body = document.getElementById(`span-body-${spanId}`);
+            if (body) {
+                body.classList.toggle('expanded');
+                console.log('expanded 상태:', body.classList.contains('expanded'));
+            } else {
+                console.error('요소를 찾을 수 없음:', `span-body-${spanId}`);
+            }
+        }
+
+        // 페이지 로드 시 렌더링
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('container');
+            
+            container.innerHTML = testSpans.map(span => `
+                <div class="span-details-card">
+                    <div class="span-header" onclick="toggleSpanDetails('${span.spanId}')">
+                        <div class="span-info">
+                            <div class="span-title">${span.operationName}</div>
+                            <div class="span-subtitle">
+                                ${span.serviceName} • 시작: +${span.startTime}ms
+                                ${span.status !== 'success' ? `• <span style="color: red;">${span.status.toUpperCase()}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="span-duration">${span.duration}ms</div>
+                    </div>
+                    <div class="span-body" id="span-body-${span.spanId}">
+                        <h4>상세 정보</h4>
+                        <p>서비스: ${span.serviceName}</p>
+                        <p>작업: ${span.operationName}</p>
+                        <p>시작 시간: ${span.startTime}ms</p>
+                        <p>지속 시간: ${span.duration}ms</p>
+                        <p>상태: ${span.status}</p>
+                        <hr>
+                        <p>이 섹션은 토글 기능이 작동할 때 표시됩니다.</p>
+                    </div>
+                </div>
+            `).join('');
+            
+            console.log('테스트 페이지 로드 완료');
+        });
+    </script>
+</body>
+</html>

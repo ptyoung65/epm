@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS-MON 모바일 세션 녹화기</title>
+    <script src="/components/common-layout.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            touch-action: manipulation;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            color: #4c51bf;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 1rem auto;
+            padding: 0 1rem;
+        }
+
+        .controls {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            touch-action: manipulation;
+            user-select: none;
+        }
+
+        .btn:hover, .btn:active {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn.recording {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            animation: pulse 2s infinite;
+        }
+
+        .btn.success {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        .test-area {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .test-header {
+            background: #f9fafb;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .test-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .test-content {
+            padding: 1.5rem;
+        }
+
+        .mobile-elements {
+            display: grid;
+            gap: 1rem;
+            grid-template-columns: 1fr;
+        }
+
+        @media (min-width: 768px) {
+            .mobile-elements {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .mobile-card {
+            background: #f8fafc;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .mobile-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            margin-bottom: 0.5rem;
+        }
+
+        .mobile-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .touch-button {
+            width: 100%;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: all 0.2s ease;
+        }
+
+        .touch-button:active {
+            background: #5a67d8;
+            transform: scale(0.98);
+        }
+
+        .swipe-area {
+            background: linear-gradient(45deg, #fef3c7, #fde68a);
+            border: 2px dashed #f59e0b;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            color: #92400e;
+            font-weight: 600;
+            touch-action: pan-x pan-y;
+            user-select: none;
+        }
+
+        .gesture-feedback {
+            position: fixed;
+            pointer-events: none;
+            z-index: 1000;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            animation: fadeOut 1s ease-out forwards;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .touch-indicator {
+            position: fixed;
+            width: 30px;
+            height: 30px;
+            background: rgba(102, 126, 234, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 999;
+            transform: translate(-50%, -50%);
+            animation: touchRipple 0.3s ease-out;
+        }
+
+        @keyframes touchRipple {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+
+        .recording-indicator {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 200;
+            display: none;
+        }
+
+        .recording-indicator.active {
+            display: block;
+            animation: pulse 2s infinite;
+        }
+
+        .session-list {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .session-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            background: #f9fafb;
+        }
+
+        .session-info h4 {
+            color: #1f2937;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .session-info p {
+            color: #6b7280;
+            font-size: 0.8rem;
+        }
+
+        .play-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 0.5rem auto;
+                padding: 0 0.5rem;
+            }
+
+            .header {
+                padding: 0.75rem;
+            }
+
+            .header h1 {
+                font-size: 1.3rem;
+            }
+
+            .controls {
+                padding: 1rem;
+            }
+
+            .control-row {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="airis-content-wrapper">
+    <div class="recording-indicator" id="recordingIndicator">
+        🔴 녹화 중
+    </div>
+
+    <div class="header">
+        <h1>📱 AIRIS-MON 모바일 세션 녹화기</h1>
+        <p>터치, 제스처, 모바일 이벤트를 정확하게 녹화하고 재생합니다</p>
+    </div>
+
+    <div class="container">
+        <!-- 통계 -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="touchCount">0</div>
+                <div class="stat-label">터치</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="gestureCount">0</div>
+                <div class="stat-label">제스처</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="inputCount">0</div>
+                <div class="stat-label">입력</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="sessionTime">0s</div>
+                <div class="stat-label">시간</div>
+            </div>
+        </div>
+
+        <!-- 컨트롤 -->
+        <div class="controls">
+            <div class="control-row">
+                <div class="control-group">
+                    <button class="btn" id="startBtn" onclick="startRecording()">
+                        🎬 모바일 녹화 시작
+                    </button>
+                </div>
+                <div class="control-group">
+                    <button class="btn" id="stopBtn" onclick="stopRecording()" disabled>
+                        ⏹️ 녹화 중지
+                    </button>
+                </div>
+            </div>
+            <div class="control-row">
+                <div class="control-group">
+                    <button class="btn" onclick="playLatestSession()">
+                        ▶️ 최신 세션 재생
+                    </button>
+                </div>
+                <div class="control-group">
+                    <button class="btn" onclick="clearAllData()">
+                        🗑️ 데이터 삭제
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 모바일 테스트 영역 -->
+        <div class="test-area">
+            <div class="test-header">
+                <div class="test-title">📱 모바일 인터랙션 테스트 영역</div>
+                <p>다양한 터치, 스와이프, 입력을 시도해보세요</p>
+            </div>
+            <div class="test-content">
+                <div class="mobile-elements">
+                    <div class="mobile-card">
+                        <h4>텍스트 입력</h4>
+                        <input type="text" class="mobile-input" placeholder="이름을 입력하세요" id="nameInput">
+                        <input type="email" class="mobile-input" placeholder="이메일을 입력하세요" id="emailInput">
+                    </div>
+
+                    <div class="mobile-card">
+                        <h4>터치 버튼</h4>
+                        <button class="touch-button" onclick="handleTouchButton('primary')">
+                            주요 액션 버튼
+                        </button>
+                        <br><br>
+                        <button class="touch-button" style="background: #ef4444;" onclick="handleTouchButton('secondary')">
+                            보조 액션 버튼
+                        </button>
+                    </div>
+
+                    <div class="mobile-card">
+                        <h4>선택 옵션</h4>
+                        <select class="mobile-input" id="categorySelect">
+                            <option>카테고리 선택</option>
+                            <option>기술</option>
+                            <option>디자인</option>
+                            <option>마케팅</option>
+                        </select>
+                        <br>
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input type="checkbox" id="agreeCheck"> 약관에 동의합니다
+                        </label>
+                    </div>
+
+                    <div class="mobile-card">
+                        <h4>스와이프 영역</h4>
+                        <div class="swipe-area" id="swipeArea">
+                            ← 좌우로 스와이프하세요 →<br>
+                            <small>터치하고 드래그해보세요</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 세션 목록 -->
+        <div class="session-list">
+            <h3 style="margin-bottom: 1rem; color: #1f2937;">📋 녹화된 세션 목록</h3>
+            <div id="sessionsList">
+                <p style="color: #6b7280; text-align: center; padding: 2rem;">
+                    녹화된 세션이 없습니다. 위의 "모바일 녹화 시작" 버튼을 눌러 세션을 녹화해보세요.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 글로벌 변수
+        let isRecording = false;
+        let currentSession = null;
+        let sessionStartTime = null;
+        let events = [];
+        let touchCount = 0;
+        let gestureCount = 0;
+        let inputCount = 0;
+        let sessionTimer = null;
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            setupTouchEventListeners();
+            loadExistingSessions();
+            setupMobileOptimizations();
+        });
+
+        // 모바일 최적화 설정
+        function setupMobileOptimizations() {
+            // 터치 지연 제거
+            document.addEventListener('touchstart', function() {}, {passive: true});
+            
+            // 뷰포트 메타태그 동적 조정
+            const viewport = document.querySelector('meta[name="viewport"]');
+            viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+            
+            // iOS 사파리 바운스 효과 비활성화
+            document.body.style.overscrollBehavior = 'none';
+        }
+
+        // 터치 이벤트 리스너 설정
+        function setupTouchEventListeners() {
+            // 터치 시작
+            document.addEventListener('touchstart', handleTouchStart, {passive: false});
+            
+            // 터치 이동
+            document.addEventListener('touchmove', handleTouchMove, {passive: false});
+            
+            // 터치 종료
+            document.addEventListener('touchend', handleTouchEnd, {passive: false});
+            
+            // 제스처 이벤트
+            document.addEventListener('gesturestart', handleGestureStart, {passive: false});
+            document.addEventListener('gesturechange', handleGestureChange, {passive: false});
+            document.addEventListener('gestureend', handleGestureEnd, {passive: false});
+            
+            // 기존 마우스/키보드 이벤트도 유지
+            document.addEventListener('click', handleClick);
+            document.addEventListener('input', handleInput);
+            document.addEventListener('keydown', handleKeydown);
+            document.addEventListener('focus', handleFocus, true);
+            document.addEventListener('blur', handleBlur, true);
+        }
+
+        // 터치 시작 처리
+        function handleTouchStart(event) {
+            if (!isRecording) return;
+
+            const touch = event.changedTouches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            recordEvent({
+                type: 'touchstart',
+                timestamp: Date.now() - sessionStartTime,
+                touches: Array.from(event.changedTouches).map(t => ({
+                    x: t.clientX,
+                    y: t.clientY,
+                    identifier: t.identifier,
+                    force: t.force || 1,
+                    radiusX: t.radiusX || 10,
+                    radiusY: t.radiusY || 10
+                })),
+                target: getTargetInfo(target),
+                viewport: getViewportInfo()
+            });
+
+            touchCount++;
+            updateStats();
+            showTouchIndicator(touch.clientX, touch.clientY);
+        }
+
+        // 터치 이동 처리
+        function handleTouchMove(event) {
+            if (!isRecording) return;
+
+            const touch = event.changedTouches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            recordEvent({
+                type: 'touchmove',
+                timestamp: Date.now() - sessionStartTime,
+                touches: Array.from(event.changedTouches).map(t => ({
+                    x: t.clientX,
+                    y: t.clientY,
+                    identifier: t.identifier,
+                    force: t.force || 1,
+                    radiusX: t.radiusX || 10,
+                    radiusY: t.radiusY || 10
+                })),
+                target: getTargetInfo(target),
+                viewport: getViewportInfo()
+            });
+        }
+
+        // 터치 종료 처리
+        function handleTouchEnd(event) {
+            if (!isRecording) return;
+
+            const touch = event.changedTouches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            recordEvent({
+                type: 'touchend',
+                timestamp: Date.now() - sessionStartTime,
+                touches: Array.from(event.changedTouches).map(t => ({
+                    x: t.clientX,
+                    y: t.clientY,
+                    identifier: t.identifier,
+                    force: t.force || 1,
+                    radiusX: t.radiusX || 10,
+                    radiusY: t.radiusY || 10
+                })),
+                target: getTargetInfo(target),
+                viewport: getViewportInfo()
+            });
+
+            // 스와이프 감지
+            detectSwipeGesture(event);
+        }
+
+        // 제스처 시작 처리
+        function handleGestureStart(event) {
+            if (!isRecording) return;
+            
+            recordEvent({
+                type: 'gesturestart',
+                timestamp: Date.now() - sessionStartTime,
+                scale: event.scale,
+                rotation: event.rotation,
+                target: getTargetInfo(event.target),
+                viewport: getViewportInfo()
+            });
+
+            gestureCount++;
+            updateStats();
+        }
+
+        // 제스처 변경 처리
+        function handleGestureChange(event) {
+            if (!isRecording) return;
+            
+            recordEvent({
+                type: 'gesturechange',
+                timestamp: Date.now() - sessionStartTime,
+                scale: event.scale,
+                rotation: event.rotation,
+                target: getTargetInfo(event.target),
+                viewport: getViewportInfo()
+            });
+        }
+
+        // 제스처 종료 처리
+        function handleGestureEnd(event) {
+            if (!isRecording) return;
+            
+            recordEvent({
+                type: 'gestureend',
+                timestamp: Date.now() - sessionStartTime,
+                scale: event.scale,
+                rotation: event.rotation,
+                target: getTargetInfo(event.target),
+                viewport: getViewportInfo()
+            });
+        }
+
+        // 스와이프 감지
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartTime = 0;
+
+        function detectSwipeGesture(event) {
+            const touch = event.changedTouches[0];
+            const deltaX = touch.clientX - touchStartX;
+            const deltaY = touch.clientY - touchStartY;
+            const deltaTime = Date.now() - touchStartTime;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const velocity = distance / deltaTime;
+
+            // 스와이프 임계값 확인
+            if (distance > 50 && velocity > 0.1) {
+                let direction = '';
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    direction = deltaX > 0 ? 'right' : 'left';
+                } else {
+                    direction = deltaY > 0 ? 'down' : 'up';
+                }
+
+                recordEvent({
+                    type: 'swipe',
+                    timestamp: Date.now() - sessionStartTime,
+                    direction: direction,
+                    distance: distance,
+                    velocity: velocity,
+                    target: getTargetInfo(event.target),
+                    viewport: getViewportInfo()
+                });
+
+                showGestureFeedback(touch.clientX, touch.clientY, direction);
+                gestureCount++;
+                updateStats();
+            }
+        }
+
+        // 기존 이벤트 핸들러들 (모바일에서도 동작)
+        function handleClick(event) {
+            if (!isRecording) return;
+            
+            recordEvent({
+                type: 'click',
+                timestamp: Date.now() - sessionStartTime,
+                x: event.clientX,
+                y: event.clientY,
+                target: getTargetInfo(event.target),
+                viewport: getViewportInfo()
+            });
+
+            touchCount++;
+            updateStats();
+        }
+
+        function handleInput(event) {
+            if (!isRecording) return;
+            
+            recordEvent({
+                type: 'input',
+                timestamp: Date.now() - sessionStartTime,
+                value: event.target.value,
+                target: getTargetInfo(event.target),
+                viewport: getViewportInfo()
+            });
+
+            inputCount++;
+            updateStats();
+        }
+
+        function handleKeydown(event) {
+            if (!isRecording) return;
+            
+            recordEvent({
+                type: 'keydown',
+                timestamp: Date.now() - sessionStartTime,
+                key: event.key,
+                code: event.code,
+                target: getTargetInfo(event.target),
+                viewport: getViewportInfo()
+            });
+        }
+
+        function handleFocus(event) {
+            if (!isRecording) return;
+            
+            recordEvent({
+                type: 'focus',
+                timestamp: Date.now() - sessionStartTime,
+                target: getTargetInfo(event.target),
+                viewport: getViewportInfo()
+            });
+        }
+
+        function handleBlur(event) {
+            if (!isRecording) return;
+            
+            recordEvent({
+                type: 'blur',
+                timestamp: Date.now() - sessionStartTime,
+                target: getTargetInfo(event.target),
+                viewport: getViewportInfo()
+            });
+        }
+
+        // 뷰포트 정보 수집
+        function getViewportInfo() {
+            return {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                orientation: screen.orientation ? screen.orientation.angle : 0,
+                devicePixelRatio: window.devicePixelRatio || 1,
+                scrollX: window.scrollX,
+                scrollY: window.scrollY
+            };
+        }
+
+        // 타겟 요소 정보 수집 (기존 함수 확장)
+        function getTargetInfo(element) {
+            if (!element) return null;
+            
+            const rect = element.getBoundingClientRect();
+            return {
+                tagName: element.tagName.toLowerCase(),
+                id: element.id || null,
+                className: element.className || null,
+                textContent: element.textContent ? element.textContent.substring(0, 100) : null,
+                value: element.value || null,
+                boundingRect: {
+                    x: rect.x,
+                    y: rect.y,
+                    width: rect.width,
+                    height: rect.height,
+                    top: rect.top,
+                    left: rect.left,
+                    right: rect.right,
+                    bottom: rect.bottom
+                },
+                computedStyle: element.style ? {
+                    backgroundColor: getComputedStyle(element).backgroundColor,
+                    color: getComputedStyle(element).color,
+                    fontSize: getComputedStyle(element).fontSize,
+                    position: getComputedStyle(element).position
+                } : null
+            };
+        }
+
+        // 이벤트 기록
+        function recordEvent(eventData) {
+            events.push(eventData);
+        }
+
+        // 녹화 시작
+        async function startRecording() {
+            try {
+                // 새 세션 시작
+                const response = await fetch('/api/session-replay/start-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        scenario: 'mobile_recording',
+                        metadata: {
+                            userAgent: navigator.userAgent,
+                            viewport: getViewportInfo(),
+                            timestamp: new Date().toISOString(),
+                            type: 'mobile_session'
+                        }
+                    })
+                });
+
+                if (!response.ok) throw new Error('세션 시작 실패');
+                
+                const data = await response.json();
+                currentSession = data.sessionId;
+                
+                // 녹화 상태 초기화
+                isRecording = true;
+                sessionStartTime = Date.now();
+                events = [];
+                touchCount = 0;
+                gestureCount = 0;
+                inputCount = 0;
+                
+                // UI 업데이트
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('startBtn').textContent = '녹화 진행 중...';
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('recordingIndicator').classList.add('active');
+                
+                // 세션 타이머 시작
+                startSessionTimer();
+                
+                console.log('모바일 세션 녹화 시작:', currentSession);
+                
+            } catch (error) {
+                console.error('녹화 시작 오류:', error);
+                alert('녹화 시작에 실패했습니다: ' + error.message);
+            }
+        }
+
+        // 녹화 중지
+        async function stopRecording() {
+            if (!isRecording || !currentSession) return;
+            
+            try {
+                isRecording = false;
+                
+                // 모든 이벤트를 서버에 전송
+                for (const event of events) {
+                    await fetch('/api/session-replay/add-event', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            sessionId: currentSession,
+                            event: event
+                        })
+                    });
+                }
+                
+                // 세션 종료
+                await fetch('/api/session-replay/end-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: currentSession,
+                        summary: {
+                            totalEvents: events.length,
+                            touchEvents: touchCount,
+                            gestureEvents: gestureCount,
+                            inputEvents: inputCount,
+                            duration: Date.now() - sessionStartTime
+                        }
+                    })
+                });
+                
+                // UI 업데이트
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('startBtn').textContent = '🎬 모바일 녹화 시작';
+                document.getElementById('startBtn').classList.add('success');
+                setTimeout(() => {
+                    document.getElementById('startBtn').classList.remove('success');
+                }, 2000);
+                
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('recordingIndicator').classList.remove('active');
+                
+                // 타이머 중지
+                if (sessionTimer) {
+                    clearInterval(sessionTimer);
+                    sessionTimer = null;
+                }
+                
+                // 세션 목록 새로고침
+                loadExistingSessions();
+                
+                console.log('모바일 세션 녹화 완료:', currentSession);
+                alert(`모바일 세션이 성공적으로 녹화되었습니다!\n세션 ID: ${currentSession}\n총 이벤트: ${events.length}개`);
+                
+            } catch (error) {
+                console.error('녹화 중지 오류:', error);
+                alert('녹화 중지 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 세션 타이머 시작
+        function startSessionTimer() {
+            sessionTimer = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+                document.getElementById('sessionTime').textContent = elapsed + 's';
+            }, 1000);
+        }
+
+        // 통계 업데이트
+        function updateStats() {
+            document.getElementById('touchCount').textContent = touchCount;
+            document.getElementById('gestureCount').textContent = gestureCount;
+            document.getElementById('inputCount').textContent = inputCount;
+        }
+
+        // 터치 인디케이터 표시
+        function showTouchIndicator(x, y) {
+            const indicator = document.createElement('div');
+            indicator.className = 'touch-indicator';
+            indicator.style.left = x + 'px';
+            indicator.style.top = y + 'px';
+            document.body.appendChild(indicator);
+            
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    indicator.parentNode.removeChild(indicator);
+                }
+            }, 300);
+        }
+
+        // 제스처 피드백 표시
+        function showGestureFeedback(x, y, direction) {
+            const feedback = document.createElement('div');
+            feedback.className = 'gesture-feedback';
+            feedback.style.left = x + 'px';
+            feedback.style.top = y + 'px';
+            
+            const arrows = {
+                'left': '⬅️',
+                'right': '➡️',
+                'up': '⬆️',
+                'down': '⬇️'
+            };
+            
+            feedback.textContent = arrows[direction] || '👆';
+            document.body.appendChild(feedback);
+            
+            setTimeout(() => {
+                if (feedback.parentNode) {
+                    feedback.parentNode.removeChild(feedback);
+                }
+            }, 1000);
+        }
+
+        // 터치 버튼 처리
+        function handleTouchButton(type) {
+            console.log(`터치 버튼 클릭: ${type}`);
+            
+            // 햅틱 피드백 (지원하는 기기에서)
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+        }
+
+        // 기존 세션 로드
+        async function loadExistingSessions() {
+            try {
+                const response = await fetch('/api/session-replay/sessions/mobile_recording');
+                const data = await response.json();
+                
+                const sessionsList = document.getElementById('sessionsList');
+                
+                if (data.success && data.sessions.length > 0) {
+                    sessionsList.innerHTML = data.sessions.map(session => `
+                        <div class="session-item">
+                            <div class="session-info">
+                                <h4>모바일 세션 ${session.id.substring(0, 8)}...</h4>
+                                <p>이벤트: ${session.eventCount || 0}개 | 
+                                   생성: ${new Date(session.startTime).toLocaleString()}</p>
+                            </div>
+                            <button class="play-btn" onclick="playSession('${session.id}')">
+                                ▶️ 재생
+                            </button>
+                        </div>
+                    `).join('');
+                } else {
+                    sessionsList.innerHTML = `
+                        <p style="color: #6b7280; text-align: center; padding: 2rem;">
+                            녹화된 세션이 없습니다. 위의 "모바일 녹화 시작" 버튼을 눌러 세션을 녹화해보세요.
+                        </p>
+                    `;
+                }
+                
+            } catch (error) {
+                console.error('세션 로드 오류:', error);
+            }
+        }
+
+        // 최신 세션 재생
+        async function playLatestSession() {
+            try {
+                const response = await fetch('/api/session-replay/sessions/mobile_recording');
+                const data = await response.json();
+                
+                if (data.success && data.sessions.length > 0) {
+                    const latestSession = data.sessions[0];
+                    playSession(latestSession.id);
+                } else {
+                    alert('재생할 세션이 없습니다. 먼저 세션을 녹화해주세요.');
+                }
+            } catch (error) {
+                console.error('최신 세션 재생 오류:', error);
+                alert('세션을 찾을 수 없습니다.');
+            }
+        }
+
+        // 특정 세션 재생
+        function playSession(sessionId) {
+            // 모바일 플레이어로 이동
+            window.open(`/mobile-player?session=${sessionId}`, '_blank');
+        }
+
+        // 모든 데이터 삭제
+        async function clearAllData() {
+            if (!confirm('모든 녹화된 세션을 삭제하시겠습니까?')) return;
+            
+            try {
+                const response = await fetch('/api/session-replay/clear-all', {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('모든 세션이 삭제되었습니다.');
+                    loadExistingSessions();
+                } else {
+                    throw new Error('삭제 요청 실패');
+                }
+                
+            } catch (error) {
+                console.error('데이터 삭제 오류:', error);
+                alert('데이터 삭제 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 터치 시작 위치 기록 (스와이프 감지용)
+        document.addEventListener('touchstart', function(event) {
+            const touch = event.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            touchStartTime = Date.now();
+        }, {passive: true});
+    </script>
+    </div>
+</body>
+</html>

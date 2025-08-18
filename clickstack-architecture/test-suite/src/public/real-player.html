@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>세션 리플레이 플레이어 - AIRIS-MON</title>
+    <script src="https://cdn.jsdelivr.net/npm/rrweb@2.0.0-alpha.11/dist/rrweb-all.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0f172a;
+            color: white;
+            overflow: hidden;
+        }
+        
+        .player-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        .player-header {
+            background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .session-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 2px;
+        }
+        
+        .info-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .player-viewport {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #0f172a;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #replayContainer {
+            background: white;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            transform-origin: center center;
+        }
+        
+        .player-controls {
+            background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
+            padding: 20px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .timeline-container {
+            margin-bottom: 20px;
+        }
+        
+        .timeline {
+            position: relative;
+            height: 6px;
+            background: #475569;
+            border-radius: 3px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        
+        .timeline-progress {
+            position: absolute;
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.1s;
+        }
+        
+        .timeline-buffer {
+            position: absolute;
+            height: 100%;
+            background: rgba(255,255,255,0.1);
+            width: 100%;
+        }
+        
+        .timeline-thumb {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            cursor: grab;
+        }
+        
+        .timeline-thumb:active {
+            cursor: grabbing;
+        }
+        
+        .timeline-time {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        
+        .control-buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .control-btn {
+            background: #334155;
+            border: none;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 20px;
+        }
+        
+        .control-btn:hover {
+            background: #475569;
+            transform: scale(1.1);
+        }
+        
+        .control-btn.primary {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        }
+        
+        .control-btn.primary:hover {
+            transform: scale(1.15);
+            box-shadow: 0 5px 20px rgba(59, 130, 246, 0.5);
+        }
+        
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: 20px;
+        }
+        
+        .speed-select {
+            background: #334155;
+            border: 1px solid #475569;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .event-sidebar {
+            position: fixed;
+            right: -350px;
+            top: 0;
+            width: 350px;
+            height: 100vh;
+            background: #1e293b;
+            transition: right 0.3s;
+            z-index: 100;
+            overflow-y: auto;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.3);
+        }
+        
+        .event-sidebar.open {
+            right: 0;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            background: #0f172a;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        
+        .event-list {
+            padding: 20px;
+        }
+        
+        .event-item {
+            background: #334155;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .event-item:hover {
+            background: #475569;
+            transform: translateX(-5px);
+        }
+        
+        .event-item.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        }
+        
+        .event-type {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+        
+        .event-time {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .toggle-sidebar {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 101;
+            transition: all 0.3s;
+        }
+        
+        .toggle-sidebar:hover {
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #334155;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #94a3b8;
+        }
+        
+        .error-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ef4444;
+            color: white;
+            padding: 20px 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 1001;
+        }
+        
+        .error-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- 로딩 오버레이 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">세션 데이터 로딩 중...</div>
+    </div>
+    
+    <!-- 에러 메시지 -->
+    <div class="error-message" id="errorMessage"></div>
+    
+    <!-- 사이드바 토글 버튼 -->
+    <button class="toggle-sidebar" onclick="toggleSidebar()">📋</button>
+    
+    <!-- 이벤트 사이드바 -->
+    <div class="event-sidebar" id="eventSidebar">
+        <div class="sidebar-header">
+            <h3>이벤트 타임라인</h3>
+            <p style="color: #94a3b8; font-size: 14px; margin-top: 5px;">
+                총 <span id="totalEvents">0</span>개 이벤트
+            </p>
+        </div>
+        <div class="event-list" id="eventList"></div>
+    </div>
+    
+    <!-- 메인 플레이어 -->
+    <div class="player-container">
+        <div class="player-header">
+            <div class="header-left">
+                <div class="logo">
+                    🎬 AIRIS-MON Session Replay
+                </div>
+            </div>
+            
+            <div class="session-info">
+                <div class="info-item">
+                    <span class="info-label">세션 ID</span>
+                    <span class="info-value" id="sessionIdDisplay">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">녹화 시간</span>
+                    <span class="info-value" id="recordingDate">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">총 시간</span>
+                    <span class="info-value" id="totalDuration">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">이벤트 수</span>
+                    <span class="info-value" id="eventCountDisplay">-</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="player-viewport">
+            <div id="replayContainer"></div>
+        </div>
+        
+        <div class="player-controls">
+            <div class="timeline-container">
+                <div class="timeline" id="timeline">
+                    <div class="timeline-buffer"></div>
+                    <div class="timeline-progress" id="timelineProgress"></div>
+                    <div class="timeline-thumb" id="timelineThumb"></div>
+                </div>
+                <div class="timeline-time">
+                    <span id="currentTime">00:00</span>
+                    <span id="totalTime">00:00</span>
+                </div>
+            </div>
+            
+            <div style="display: flex; align-items: center;">
+                <div class="control-buttons">
+                    <button class="control-btn" onclick="skipBackward()">⏪</button>
+                    <button class="control-btn primary" id="playPauseBtn" onclick="togglePlayPause()">▶️</button>
+                    <button class="control-btn" onclick="skipForward()">⏩</button>
+                </div>
+                
+                <div class="speed-control">
+                    <label style="color: #94a3b8;">속도:</label>
+                    <select class="speed-select" id="speedSelect" onchange="changeSpeed()">
+                        <option value="0.5">0.5x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="2">2x</option>
+                        <option value="4">4x</option>
+                        <option value="8">8x</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let replayer = null;
+        let events = [];
+        let sessionData = null;
+        let isPlaying = false;
+        let currentTime = 0;
+        let totalTime = 0;
+        
+        // URL 파라미터에서 세션 ID 가져오기
+        function getSessionId() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('sessionId');
+        }
+        
+        // 세션 데이터 로드
+        async function loadSession() {
+            const sessionId = getSessionId();
+            
+            if (!sessionId) {
+                showError('세션 ID가 제공되지 않았습니다');
+                return;
+            }
+            
+            document.getElementById('sessionIdDisplay').textContent = sessionId.substring(0, 8) + '...';
+            
+            try {
+                // 먼저 로컬 스토리지에서 확인
+                const localData = localStorage.getItem(sessionId);
+                
+                if (localData) {
+                    sessionData = JSON.parse(localData);
+                    events = sessionData.events;
+                } else {
+                    // 서버에서 로드
+                    const response = await fetch(`/api/session-replay/session/${sessionId}`);
+                    if (!response.ok) throw new Error('세션을 찾을 수 없습니다');
+                    
+                    sessionData = await response.json();
+                    events = sessionData.events;
+                }
+                
+                if (!events || events.length === 0) {
+                    throw new Error('세션에 이벤트가 없습니다');
+                }
+                
+                // UI 업데이트
+                updateSessionInfo();
+                
+                // 리플레이어 초기화
+                initReplayer();
+                
+                // 이벤트 목록 표시
+                displayEventList();
+                
+                // 로딩 오버레이 숨기기
+                document.getElementById('loadingOverlay').style.display = 'none';
+                
+            } catch (error) {
+                console.error('세션 로드 실패:', error);
+                showError('세션을 로드할 수 없습니다: ' + error.message);
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+        
+        // 세션 정보 업데이트
+        function updateSessionInfo() {
+            if (!sessionData) return;
+            
+            // 날짜 표시
+            const date = new Date(sessionData.timestamp || sessionData.startTime);
+            document.getElementById('recordingDate').textContent = date.toLocaleString('ko-KR');
+            
+            // 총 시간 계산
+            const duration = sessionData.duration || (sessionData.endTime - sessionData.startTime);
+            totalTime = duration;
+            document.getElementById('totalDuration').textContent = formatTime(duration);
+            document.getElementById('totalTime').textContent = formatTime(duration);
+            
+            // 이벤트 수
+            document.getElementById('eventCountDisplay').textContent = events.length;
+            document.getElementById('totalEvents').textContent = events.length;
+        }
+        
+        // rrweb 리플레이어 초기화
+        function initReplayer() {
+            const container = document.getElementById('replayContainer');
+            
+            // 리플레이어 생성
+            replayer = new rrweb.Replayer(events, {
+                root: container,
+                wrapper: container,
+                speed: 1,
+                skipInactive: true,
+                showWarning: true,
+                showDebug: false,
+                blockClass: 'rr-block',
+                liveMode: false,
+                insertStyleRules: [],
+                triggerFocus: false,
+                UNSAFE_replayCanvas: true,
+                pauseAnimation: false,
+                mouseTail: {
+                    duration: 500,
+                    lineCap: 'round',
+                    lineWidth: 3,
+                    strokeStyle: '#3b82f6'
+                }
+            });
+            
+            // 이벤트 리스너 설정
+            replayer.on('finish', () => {
+                isPlaying = false;
+                updatePlayButton();
+            });
+            
+            replayer.on('skip-start', () => {
+                isPlaying = true;
+                updatePlayButton();
+            });
+            
+            replayer.on('skip-end', () => {
+                isPlaying = false;
+                updatePlayButton();
+            });
+            
+            // 타임라인 업데이트
+            startTimelineUpdate();
+            
+            // 뷰포트 크기 조정
+            adjustViewport();
+        }
+        
+        // 뷰포트 크기 조정
+        function adjustViewport() {
+            const container = document.getElementById('replayContainer');
+            const viewport = document.querySelector('.player-viewport');
+            
+            // 원본 크기 (보통 1920x1080)
+            const originalWidth = 1920;
+            const originalHeight = 1080;
+            
+            // 현재 뷰포트 크기
+            const viewportWidth = viewport.clientWidth - 100;
+            const viewportHeight = viewport.clientHeight - 100;
+            
+            // 스케일 계산
+            const scaleX = viewportWidth / originalWidth;
+            const scaleY = viewportHeight / originalHeight;
+            const scale = Math.min(scaleX, scaleY, 1);
+            
+            // 컨테이너 크기 설정
+            container.style.width = originalWidth + 'px';
+            container.style.height = originalHeight + 'px';
+            container.style.transform = `scale(${scale})`;
+        }
+        
+        // 재생/일시정지 토글
+        function togglePlayPause() {
+            if (!replayer) return;
+            
+            if (isPlaying) {
+                replayer.pause();
+                isPlaying = false;
+            } else {
+                replayer.play();
+                isPlaying = true;
+            }
+            
+            updatePlayButton();
+        }
+        
+        // 재생 버튼 업데이트
+        function updatePlayButton() {
+            const btn = document.getElementById('playPauseBtn');
+            btn.textContent = isPlaying ? '⏸️' : '▶️';
+        }
+        
+        // 앞으로 스킵
+        function skipForward() {
+            if (!replayer) return;
+            const current = replayer.getCurrentTime();
+            replayer.play(current + 10000); // 10초 앞으로
+        }
+        
+        // 뒤로 스킵
+        function skipBackward() {
+            if (!replayer) return;
+            const current = replayer.getCurrentTime();
+            replayer.play(Math.max(0, current - 10000)); // 10초 뒤로
+        }
+        
+        // 재생 속도 변경
+        function changeSpeed() {
+            if (!replayer) return;
+            const speed = parseFloat(document.getElementById('speedSelect').value);
+            replayer.setConfig({ speed: speed });
+        }
+        
+        // 타임라인 업데이트
+        function startTimelineUpdate() {
+            setInterval(() => {
+                if (!replayer || !isPlaying) return;
+                
+                const current = replayer.getCurrentTime();
+                const progress = (current / totalTime) * 100;
+                
+                document.getElementById('timelineProgress').style.width = progress + '%';
+                document.getElementById('timelineThumb').style.left = progress + '%';
+                document.getElementById('currentTime').textContent = formatTime(current);
+            }, 100);
+        }
+        
+        // 타임라인 클릭 처리
+        document.getElementById('timeline').addEventListener('click', (e) => {
+            if (!replayer) return;
+            
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const percentage = x / rect.width;
+            const targetTime = totalTime * percentage;
+            
+            replayer.play(targetTime);
+        });
+        
+        // 이벤트 목록 표시
+        function displayEventList() {
+            const container = document.getElementById('eventList');
+            container.innerHTML = '';
+            
+            events.forEach((event, index) => {
+                const item = document.createElement('div');
+                item.className = 'event-item';
+                item.onclick = () => jumpToEvent(event.timestamp);
+                
+                const typeMap = {
+                    0: 'DOM 콘텐츠 로드',
+                    1: 'Meta 정보',
+                    2: '전체 스냅샷',
+                    3: '증분 스냅샷',
+                    4: '플러그인',
+                    5: '커스텀 이벤트'
+                };
+                
+                item.innerHTML = `
+                    <div class="event-type">${typeMap[event.type] || '기타'}</div>
+                    <div class="event-time">${formatTime(event.timestamp)}</div>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+        
+        // 특정 이벤트로 점프
+        function jumpToEvent(timestamp) {
+            if (!replayer) return;
+            replayer.play(timestamp);
+        }
+        
+        // 사이드바 토글
+        function toggleSidebar() {
+            const sidebar = document.getElementById('eventSidebar');
+            sidebar.classList.toggle('open');
+        }
+        
+        // 시간 포맷팅
+        function formatTime(ms) {
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        // 에러 표시
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+            
+            setTimeout(() => {
+                errorEl.classList.remove('show');
+            }, 5000);
+        }
+        
+        // 윈도우 리사이즈 처리
+        window.addEventListener('resize', adjustViewport);
+        
+        // 페이지 로드 시 세션 로드
+        window.addEventListener('load', loadSession);
+    </script>
+</body>
+</html>

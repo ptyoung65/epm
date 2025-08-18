@@ -1,0 +1,1496 @@
+{
+  "name": "",
+  "url": null,
+  "root_path": ".",
+  "frontend_framework": "vanilla",
+  "backend_framework": "express",
+  "components": [
+    {
+      "id": "javascript_controller_app",
+      "name": "app",
+      "type": "controller",
+      "language": "javascript",
+      "file_path": "src/app.js",
+      "lines_of_code": 6051,
+      "complexity": "very_high",
+      "dependencies": [
+        "axios",
+        "http",
+        "chalk",
+        "express",
+        "child_process",
+        "socket.io",
+        "fs",
+        "path"
+      ],
+      "crud_operations": {
+        "mysql": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [
+        "/api/admin/restart",
+        "/api/application/traces",
+        "/api/session-replay/save-enhanced-session",
+        "/api/notices",
+        "/api/analysis/project/:analysisId",
+        "/alert-management",
+        "/api/alerts/:id/check-escalation",
+        "/api/alerts/:id/send-notification",
+        "/api/database/connections",
+        "/api/analysis/programs/:id",
+        "/api/application/metrics",
+        "/api/admin/notices",
+        "/api/alerts/:id/escalate",
+        "/api/admin/users/:userId",
+        "/api/notification-settings",
+        "/api/session-replay/clear-all",
+        "/api/application/endpoints",
+        "/api/alerts/:id/assign",
+        "/click-heatmap",
+        "/api/session-replay/add-event"
+      ],
+      "description": "* AIRIS-MON 포괄적 테스트 및 시연 프로그램\n * Korean HyperDX Style Complete Feature Demo"
+    },
+    {
+      "id": "sql_service_01-create-tables",
+      "name": "01-create-tables",
+      "type": "service",
+      "language": "sql",
+      "file_path": "database/clickhouse-init/01-create-tables.sql",
+      "lines_of_code": 227,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - 01-create-tables"
+    },
+    {
+      "id": "sql_service_02-create-views",
+      "name": "02-create-views",
+      "type": "service",
+      "language": "sql",
+      "file_path": "database/clickhouse-init/02-create-views.sql",
+      "lines_of_code": 198,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - 02-create-views"
+    },
+    {
+      "id": "sql_unknown_02-session-replay-tables",
+      "name": "02-session-replay-tables",
+      "type": "unknown",
+      "language": "sql",
+      "file_path": "database/clickhouse-init/02-session-replay-tables.sql",
+      "lines_of_code": 411,
+      "complexity": "low",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C"
+        ]
+      },
+      "apis": [],
+      "description": "코드 모듈 - 02-session-replay-tables"
+    },
+    {
+      "id": "html_service_e2e-performance-analyzer",
+      "name": "e2e-performance-analyzer",
+      "type": "service",
+      "language": "html",
+      "file_path": "src/public/e2e-performance-analyzer.html",
+      "lines_of_code": 1500,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "redis": [
+          "C",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - e2e-performance-analyzer"
+    },
+    {
+      "id": "html_service_application-apm",
+      "name": "application-apm",
+      "type": "service",
+      "language": "html",
+      "file_path": "src/public/application-apm.html",
+      "lines_of_code": 1984,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "mysql": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - application-apm"
+    },
+    {
+      "id": "html_component_mobile-session-player",
+      "name": "mobile-session-player",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/mobile-session-player.html",
+      "lines_of_code": 1141,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "1a1a1a;\n            color: #fff;\n            overflow: hidden;"
+    },
+    {
+      "id": "html_service_project-analysis",
+      "name": "project-analysis",
+      "type": "service",
+      "language": "html",
+      "file_path": "src/public/project-analysis.html",
+      "lines_of_code": 1022,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - project-analysis"
+    },
+    {
+      "id": "html_component_user-journey-map",
+      "name": "user-journey-map",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/user-journey-map.html",
+      "lines_of_code": 1553,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "UI 컴포넌트 - user-journey-map"
+    },
+    {
+      "id": "html_component_integrated-dashboard",
+      "name": "integrated-dashboard",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/integrated-dashboard.html",
+      "lines_of_code": 1226,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "667eea 0%, #764ba2 100%);\n            color: #333;\n            mi"
+    },
+    {
+      "id": "html_service_trace-sequence-diagram",
+      "name": "trace-sequence-diagram",
+      "type": "service",
+      "language": "html",
+      "file_path": "src/public/trace-sequence-diagram.html",
+      "lines_of_code": 1148,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "redis": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - trace-sequence-diagram"
+    },
+    {
+      "id": "html_service_application-analysis",
+      "name": "application-analysis",
+      "type": "service",
+      "language": "html",
+      "file_path": "src/public/application-analysis.html",
+      "lines_of_code": 1739,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "redis": [
+          "C",
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - application-analysis"
+    },
+    {
+      "id": "html_component_simple-recorder",
+      "name": "simple-recorder",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/simple-recorder.html",
+      "lines_of_code": 569,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "f5f5f5;\n        }\n        \n        .control-pane"
+    },
+    {
+      "id": "html_component_real-recorder",
+      "name": "real-recorder",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/real-recorder.html",
+      "lines_of_code": 734,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "UI 컴포넌트 - real-recorder"
+    },
+    {
+      "id": "html_service_notification-settings",
+      "name": "notification-settings",
+      "type": "service",
+      "language": "html",
+      "file_path": "src/public/notification-settings.html",
+      "lines_of_code": 1447,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - notification-settings"
+    },
+    {
+      "id": "html_component_working-player",
+      "name": "working-player",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/working-player.html",
+      "lines_of_code": 771,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "0d1117;\n            color: white;\n            font-family: Arial, s"
+    },
+    {
+      "id": "html_component_index",
+      "name": "index",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/index.html",
+      "lines_of_code": 774,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "UI 컴포넌트 - index"
+    },
+    {
+      "id": "html_component_ultra-simple-recorder",
+      "name": "ultra-simple-recorder",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/ultra-simple-recorder.html",
+      "lines_of_code": 361,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "f0f0f0;\n        }\n        \n        .panel {\n            background: white;\n            padding: 30px..."
+    },
+    {
+      "id": "html_component_integrated-session-recorder",
+      "name": "integrated-session-recorder",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/integrated-session-recorder.html",
+      "lines_of_code": 980,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "667eea 0%, #764ba2 100%);\n            color: white;\n            min-height: 100v"
+    },
+    {
+      "id": "html_component_threat-detection-dashboard",
+      "name": "threat-detection-dashboard",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/threat-detection-dashboard.html",
+      "lines_of_code": 1202,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "mysql": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "UI 컴포넌트 - threat-detection-dashboard"
+    },
+    {
+      "id": "html_component_working-recorder",
+      "name": "working-recorder",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/working-recorder.html",
+      "lines_of_code": 592,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "f5f5f5;\n        }\n        \n        .panel {"
+    },
+    {
+      "id": "html_component_enhanced-player",
+      "name": "enhanced-player",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/enhanced-player.html",
+      "lines_of_code": 833,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "0d1117;\n            color: white;\n        }\n        \n        .player-header {\n            background..."
+    },
+    {
+      "id": "javascript_component_session-replay-player",
+      "name": "session-replay-player",
+      "type": "component",
+      "language": "javascript",
+      "file_path": "src/public/session-replay-player.js",
+      "lines_of_code": 1028,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "* 세션 리플레이 플레이어 JavaScript\n * 사용자 세션을 시각적으로 재생하고 분석하는 플레이어"
+    },
+    {
+      "id": "html_component_enhanced-recorder",
+      "name": "enhanced-recorder",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/enhanced-recorder.html",
+      "lines_of_code": 470,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "f0f0f0;\n        }\n        \n        .panel {\n            background: white;\n            padding: 30px..."
+    },
+    {
+      "id": "html_component_click-heatmap-analyzer",
+      "name": "click-heatmap-analyzer",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/click-heatmap-analyzer.html",
+      "lines_of_code": 825,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "667eea 0%, #764ba2 100%);\n            min-height: 10"
+    },
+    {
+      "id": "html_component_infrastructure-monitoring",
+      "name": "infrastructure-monitoring",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/infrastructure-monitoring.html",
+      "lines_of_code": 2139,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "redis": [
+          "C",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "UI 컴포넌트 - infrastructure-monitoring"
+    },
+    {
+      "id": "html_component_session-replay-player",
+      "name": "session-replay-player",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/session-replay-player.html",
+      "lines_of_code": 669,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "UI 컴포넌트 - session-replay-player"
+    },
+    {
+      "id": "html_component_session-replay-scenarios",
+      "name": "session-replay-scenarios",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/session-replay-scenarios.html",
+      "lines_of_code": 1617,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "UI 컴포넌트 - session-replay-scenarios"
+    },
+    {
+      "id": "html_component_ultra-simple-player",
+      "name": "ultra-simple-player",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/ultra-simple-player.html",
+      "lines_of_code": 558,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R",
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "0d1117;\n            color: white;\n        }\n        \n        .player-header {\n            background..."
+    },
+    {
+      "id": "html_component_simple-player",
+      "name": "simple-player",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/simple-player.html",
+      "lines_of_code": 541,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "1a1a1a;\n            color: white;\n            font-family: Arial, san"
+    },
+    {
+      "id": "html_component_admin-settings",
+      "name": "admin-settings",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/admin-settings.html",
+      "lines_of_code": 1771,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "1e3c72 0%, #2a5298 100%);\n            color: #333;\n            min"
+    },
+    {
+      "id": "html_component_real-scenarios",
+      "name": "real-scenarios",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/real-scenarios.html",
+      "lines_of_code": 981,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "UI 컴포넌트 - real-scenarios"
+    },
+    {
+      "id": "html_component_final-recorder",
+      "name": "final-recorder",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/final-recorder.html",
+      "lines_of_code": 631,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "f5f5f5;\n        }\n        \n        .panel {"
+    },
+    {
+      "id": "html_component_integrated-session-recorder-fixed",
+      "name": "integrated-session-recorder-fixed",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/integrated-session-recorder-fixed.html",
+      "lines_of_code": 759,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "667eea 0%, #764ba2 100%);\n            color: white;\n            min-hei"
+    },
+    {
+      "id": "html_component_database-apm",
+      "name": "database-apm",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/database-apm.html",
+      "lines_of_code": 1911,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "mongodb": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "UI 컴포넌트 - database-apm"
+    },
+    {
+      "id": "html_component_real-replay-player",
+      "name": "real-replay-player",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/real-replay-player.html",
+      "lines_of_code": 942,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "UI 컴포넌트 - real-replay-player"
+    },
+    {
+      "id": "html_component_mini-recorder",
+      "name": "mini-recorder",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/mini-recorder.html",
+      "lines_of_code": 179,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; }\n        .btn { padding: 10px 20px;..."
+    },
+    {
+      "id": "html_component_mobile-session-recorder",
+      "name": "mobile-session-recorder",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/mobile-session-recorder.html",
+      "lines_of_code": 1081,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "667eea 0%, #764ba2 100%);\n            min-height: 10"
+    },
+    {
+      "id": "html_component_dom-player",
+      "name": "dom-player",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/dom-player.html",
+      "lines_of_code": 788,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "0d1117;\n            color: white;\n            font-family: -apple-sys"
+    },
+    {
+      "id": "javascript_service_rrweb",
+      "name": "rrweb",
+      "type": "service",
+      "language": "javascript",
+      "file_path": "src/public/rrweb.js",
+      "lines_of_code": 8080,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "비즈니스 로직 구현 - rrweb"
+    },
+    {
+      "id": "html_component_debug-application-analysis",
+      "name": "debug-application-analysis",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/debug-application-analysis.html",
+      "lines_of_code": 251,
+      "complexity": "medium",
+      "dependencies": [],
+      "crud_operations": {},
+      "apis": [],
+      "description": "f5f5f5;\n        }\n        .test-section {\n            background: white;\n            padding: 20px;\n..."
+    },
+    {
+      "id": "html_component_real-player",
+      "name": "real-player",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/real-player.html",
+      "lines_of_code": 718,
+      "complexity": "high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "UI 컴포넌트 - real-player"
+    },
+    {
+      "id": "html_component_alert-management",
+      "name": "alert-management",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/alert-management.html",
+      "lines_of_code": 2894,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "UI 컴포넌트 - alert-management"
+    },
+    {
+      "id": "html_component_dom-recorder",
+      "name": "dom-recorder",
+      "type": "component",
+      "language": "html",
+      "file_path": "src/public/dom-recorder.html",
+      "lines_of_code": 713,
+      "complexity": "very_high",
+      "dependencies": [],
+      "crud_operations": {
+        "database": [
+          "C",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "667eea 0%, #764ba2 100%);\n            min"
+    },
+    {
+      "id": "javascript_unknown_session-storage",
+      "name": "session-storage",
+      "type": "unknown",
+      "language": "javascript",
+      "file_path": "src/modules/session-storage.js",
+      "lines_of_code": 376,
+      "complexity": "high",
+      "dependencies": [
+        "fs",
+        "uuid",
+        "path"
+      ],
+      "crud_operations": {
+        "database": [
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "* 세션 리플레이 데이터 저장소 관리자\n * 실시간 세션 녹화 데이터를 메모리와 파일에 저장/관리"
+    },
+    {
+      "id": "javascript_service_data-simulator",
+      "name": "data-simulator",
+      "type": "service",
+      "language": "javascript",
+      "file_path": "src/modules/data-simulator.js",
+      "lines_of_code": 446,
+      "complexity": "medium",
+      "dependencies": [
+        "ioredis",
+        "@faker-js/faker",
+        "kafkajs",
+        "@clickhouse/client",
+        "uuid"
+      ],
+      "crud_operations": {
+        "redis": [
+          "C",
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "* 데이터 시뮬레이터 - AIRIS-MON 테스트용 실제 데이터 생성"
+    },
+    {
+      "id": "javascript_service_dashboard-ui",
+      "name": "dashboard-ui",
+      "type": "service",
+      "language": "javascript",
+      "file_path": "src/modules/dashboard-ui.js",
+      "lines_of_code": 751,
+      "complexity": "high",
+      "dependencies": [
+        "uuid"
+      ],
+      "crud_operations": {
+        "redis": [
+          "R",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "* 대시보드 UI 모듈 - AIRIS-MON 테스트 대시보드 UI 컴포넌트\n * 실시간 차트, 위젯, 데이터 시각화 등을 관리"
+    },
+    {
+      "id": "javascript_service_event-simulator",
+      "name": "event-simulator",
+      "type": "service",
+      "language": "javascript",
+      "file_path": "src/modules/event-simulator.js",
+      "lines_of_code": 517,
+      "complexity": "medium",
+      "dependencies": [
+        "axios",
+        "uuid"
+      ],
+      "crud_operations": {
+        "database": [
+          "U"
+        ]
+      },
+      "apis": [],
+      "description": "* 이벤트 시뮬레이터 - AIRIS-MON 시스템 이벤트 생성 및 테스트\n * 사용자 액션, 시스템 이벤트, 오류 상황 등을 시뮬레이션"
+    },
+    {
+      "id": "javascript_unknown_session-replay-data-generator",
+      "name": "session-replay-data-generator",
+      "type": "unknown",
+      "language": "javascript",
+      "file_path": "src/modules/session-replay-data-generator.js",
+      "lines_of_code": 706,
+      "complexity": "medium",
+      "dependencies": [
+        "uuid",
+        "@faker-js/faker"
+      ],
+      "crud_operations": {
+        "database": [
+          "R"
+        ]
+      },
+      "apis": [],
+      "description": "* 세션 리플레이 데이터 생성기 - 실제 사용자 시나리오 기반 데이터 생성"
+    },
+    {
+      "id": "javascript_service_metrics-generator",
+      "name": "metrics-generator",
+      "type": "service",
+      "language": "javascript",
+      "file_path": "src/modules/metrics-generator.js",
+      "lines_of_code": 334,
+      "complexity": "high",
+      "dependencies": [
+        "axios",
+        "uuid"
+      ],
+      "crud_operations": {},
+      "apis": [],
+      "description": "* 메트릭 생성기 - AIRIS-MON 시스템 성능 테스트용 메트릭 데이터 생성"
+    },
+    {
+      "id": "python_controller_project_analyzer",
+      "name": "project_analyzer",
+      "type": "controller",
+      "language": "python",
+      "file_path": "src/analysis/project_analyzer.py",
+      "lines_of_code": 876,
+      "complexity": "very_high",
+      "dependencies": [
+        "Path",
+        "dataclasses",
+        "re",
+        "Dict",
+        "django",
+        "json",
+        "urlparse",
+        "logging",
+        "urllib",
+        "ast"
+      ],
+      "crud_operations": {
+        "mongodb": [
+          "C",
+          "R",
+          "U",
+          "D"
+        ]
+      },
+      "apis": [],
+      "description": "프로젝트 코드 분석 엔진\n- 다양한 언어의 코드 분석 (Python, JavaScript, TypeScript, Java, Go 등)\n- 프론트엔드/백엔드 구조 파악\n- CRUD ..."
+    }
+  ],
+  "datastores": [
+    {
+      "id": "clickhouse",
+      "name": "ClickHouse Analytics",
+      "type": "Analytics Database",
+      "engine": "Clickhouse",
+      "connection_pattern": "감지된 연결: 13개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "read",
+        "delete",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "kafka",
+      "name": "Kafka Streams",
+      "type": "Message Queue",
+      "engine": "Kafka",
+      "connection_pattern": "감지된 연결: 10개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "read",
+        "delete",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "mysql",
+      "name": "MySQL Database",
+      "type": "Relational Database",
+      "engine": "Mysql",
+      "connection_pattern": "감지된 연결: 7개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "read",
+        "delete",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "redis",
+      "name": "Redis Cache",
+      "type": "Cache",
+      "engine": "Redis",
+      "connection_pattern": "감지된 연결: 10개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "read",
+        "delete",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "sqlite",
+      "name": "SQLite Database",
+      "type": "Embedded Database",
+      "engine": "Sqlite",
+      "connection_pattern": "감지된 연결: 3개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "read",
+        "delete",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "mongodb",
+      "name": "MongoDB Database",
+      "type": "NoSQL Database",
+      "engine": "Mongodb",
+      "connection_pattern": "감지된 연결: 1개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "read",
+        "delete",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "postgresql",
+      "name": "PostgreSQL Database",
+      "type": "Relational Database",
+      "engine": "Postgresql",
+      "connection_pattern": "감지된 연결: 1개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "read",
+        "delete",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "elasticsearch",
+      "name": "Elasticsearch Index",
+      "type": "Search Engine",
+      "engine": "Elasticsearch",
+      "connection_pattern": "감지된 연결: 3개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "read",
+        "delete",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "firebase",
+      "name": "Firebase Store",
+      "type": "Cloud Database",
+      "engine": "Firebase",
+      "connection_pattern": "감지된 연결: 3개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "read",
+        "delete",
+        "create",
+        "update"
+      ]
+    },
+    {
+      "id": "rabbitmq",
+      "name": "RabbitMQ Queue",
+      "type": "Message Queue",
+      "engine": "Rabbitmq",
+      "connection_pattern": "감지된 연결: 2개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "read",
+        "delete",
+        "create",
+        "update"
+      ]
+    }
+  ],
+  "crud_matrix": {
+    "javascript_controller_app": {
+      "clickhouse": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ],
+      "kafka": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ],
+      "mysql": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ],
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "sql_service_01-create-tables": {
+      "clickhouse": [
+        "U"
+      ],
+      "mysql": [
+        "U"
+      ],
+      "sqlite": [
+        "U"
+      ]
+    },
+    "sql_service_02-create-views": {},
+    "sql_unknown_02-session-replay-tables": {
+      "mysql": [
+        "C"
+      ],
+      "sqlite": [
+        "C"
+      ]
+    },
+    "html_service_e2e-performance-analyzer": {
+      "redis": [
+        "C",
+        "U",
+        "D"
+      ]
+    },
+    "html_service_application-apm": {
+      "mysql": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "html_component_mobile-session-player": {},
+    "html_service_project-analysis": {},
+    "html_component_user-journey-map": {},
+    "html_component_integrated-dashboard": {},
+    "html_service_trace-sequence-diagram": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "html_service_application-analysis": {
+      "clickhouse": [
+        "C",
+        "R",
+        "D"
+      ],
+      "kafka": [
+        "C",
+        "R",
+        "D"
+      ],
+      "redis": [
+        "C",
+        "R",
+        "D"
+      ]
+    },
+    "html_component_simple-recorder": {},
+    "html_component_real-recorder": {},
+    "html_service_notification-settings": {},
+    "html_component_working-player": {},
+    "html_component_index": {
+      "redis": [
+        "R",
+        "U"
+      ]
+    },
+    "html_component_ultra-simple-recorder": {},
+    "html_component_integrated-session-recorder": {},
+    "html_component_threat-detection-dashboard": {
+      "mysql": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "html_component_working-recorder": {},
+    "html_component_enhanced-player": {},
+    "javascript_component_session-replay-player": {},
+    "html_component_enhanced-recorder": {},
+    "html_component_click-heatmap-analyzer": {},
+    "html_component_infrastructure-monitoring": {
+      "redis": [
+        "C",
+        "U",
+        "D"
+      ]
+    },
+    "html_component_session-replay-player": {},
+    "html_component_session-replay-scenarios": {},
+    "html_component_ultra-simple-player": {},
+    "html_component_simple-player": {},
+    "html_component_admin-settings": {},
+    "html_component_real-scenarios": {},
+    "html_component_final-recorder": {},
+    "html_component_integrated-session-recorder-fixed": {},
+    "html_component_database-apm": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ],
+      "mongodb": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "html_component_real-replay-player": {},
+    "html_component_mini-recorder": {},
+    "html_component_mobile-session-recorder": {},
+    "html_component_dom-player": {},
+    "javascript_service_rrweb": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "html_component_debug-application-analysis": {},
+    "html_component_real-player": {},
+    "html_component_alert-management": {
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    },
+    "html_component_dom-recorder": {},
+    "javascript_unknown_session-storage": {},
+    "javascript_service_data-simulator": {
+      "clickhouse": [
+        "C",
+        "R"
+      ],
+      "kafka": [
+        "C",
+        "R"
+      ],
+      "redis": [
+        "C",
+        "R"
+      ]
+    },
+    "javascript_service_dashboard-ui": {
+      "clickhouse": [
+        "R",
+        "D"
+      ],
+      "kafka": [
+        "R",
+        "D"
+      ],
+      "redis": [
+        "R",
+        "D"
+      ]
+    },
+    "javascript_service_event-simulator": {},
+    "javascript_unknown_session-replay-data-generator": {
+      "clickhouse": [
+        "R"
+      ]
+    },
+    "javascript_service_metrics-generator": {},
+    "python_controller_project_analyzer": {
+      "clickhouse": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ],
+      "kafka": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ],
+      "mysql": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ],
+      "redis": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ],
+      "sqlite": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ],
+      "mongodb": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ],
+      "postgresql": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ],
+      "elasticsearch": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ],
+      "firebase": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ],
+      "rabbitmq": [
+        "C",
+        "R",
+        "U",
+        "D"
+      ]
+    }
+  },
+  "dependencies": {
+    "@clickhouse/client": 1,
+    "@faker-js/faker": 1,
+    "axios": 1,
+    "blessed": 1,
+    "blessed-contrib": 1,
+    "chalk": 1,
+    "cors": 1,
+    "express": 1,
+    "helmet": 1,
+    "ioredis": 1,
+    "kafkajs": 1,
+    "lodash": 1,
+    "moment": 1,
+    "rrweb": 1,
+    "rrweb-player": 1,
+    "socket.io": 1,
+    "socket.io-client": 1,
+    "uuid": 1,
+    "ws": 1,
+    "nodemon": 1
+  },
+  "metrics": {
+    "total_files": 98,
+    "total_lines": 107292,
+    "avg_lines_per_file": 1094.8163265306123,
+    "language_distribution": {
+      "yaml": {
+        "files": 4,
+        "lines": 358
+      },
+      "json": {
+        "files": 36,
+        "lines": 43643
+      },
+      "javascript": {
+        "files": 13,
+        "lines": 20552
+      },
+      "sql": {
+        "files": 3,
+        "lines": 836
+      },
+      "html": {
+        "files": 41,
+        "lines": 41027
+      },
+      "python": {
+        "files": 1,
+        "lines": 876
+      }
+    },
+    "complexity_distribution": {
+      "low": 3,
+      "medium": 7,
+      "high": 8,
+      "very_high": 33
+    },
+    "type_distribution": {
+      "docs": {
+        "files": 1,
+        "lines": 285
+      },
+      "config": {
+        "files": 38,
+        "lines": 43694
+      },
+      "test": {
+        "files": 8,
+        "lines": 3298
+      },
+      "backend": {
+        "files": 11,
+        "lines": 10893
+      },
+      "frontend": {
+        "files": 40,
+        "lines": 49122
+      }
+    },
+    "component_count": 51,
+    "estimated_effort_hours": 2145.84
+  }
+}

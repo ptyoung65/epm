@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS-MON OpenTelemetry 관리</title>
+    <script src="/components/common-layout.js"></script>
+    <style>
+        .otel-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .otel-header h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+        
+        .otel-header .subtitle {
+            color: var(--gray-600);
+            font-size: 1rem;
+        }
+
+        .conversion-form {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: auto;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-300);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .progress-section {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .status-card {
+            background: var(--gray-50);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .status-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .status-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .results-section {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .results-table th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-failed {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .status-skipped {
+            background: #fefce8;
+            color: #ca8a04;
+        }
+
+        .logs-panel {
+            background: var(--gray-900);
+            color: var(--success);
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.4;
+            margin-top: 1rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            border-left: 4px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .alert-warning {
+            background: #fffbeb;
+            border-left: 4px solid var(--warning);
+            color: var(--warning);
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            border-left: 4px solid var(--success);
+            color: var(--success);
+        }
+
+        .project-info {
+            background: var(--gray-50);
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-value {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .info-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+    </style>
+</head>
+<body>
+    <div class="otel-header">
+        <h2>🔧 OpenTelemetry 자동 적용 관리</h2>
+        <div class="subtitle">Java, Python 프로젝트에 OpenTelemetry SDK를 자동으로 적용하는 배치 프로그램</div>
+    </div>
+
+    <!-- 변환 폼 -->
+    <div class="conversion-form">
+        <h3 style="margin-bottom: 1.5rem; color: var(--gray-900); font-size: 1.25rem;">프로젝트 변환 설정</h3>
+        
+        <div class="form-group">
+            <label class="form-label" for="gitDirectory">
+                <span style="color: var(--error);">*</span> Git 디렉토리 경로
+            </label>
+            <input 
+                type="text" 
+                id="gitDirectory" 
+                class="form-input" 
+                placeholder="/path/to/your/project/.git 또는 /path/to/your/project"
+                value="/home/ptyoung/work/sample-project"
+            />
+            <small style="color: var(--gray-600); font-size: 0.875rem;">
+                .git 디렉토리가 있는 프로젝트 루트 경로를 입력하세요
+            </small>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">변환 옵션</label>
+            <div class="checkbox-group">
+                <div class="checkbox-item">
+                    <input type="checkbox" id="includeJava" checked>
+                    <label for="includeJava">Java 파일 (.java)</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="includePython" checked>
+                    <label for="includePython">Python 파일 (.py)</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="updateBuildFiles" checked>
+                    <label for="updateBuildFiles">빌드 파일 업데이트</label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="checkbox" id="createBackup" checked>
+                    <label for="createBackup">백업 생성</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="excludePatterns">제외할 패턴 (선택사항)</label>
+            <textarea 
+                id="excludePatterns" 
+                class="form-input form-textarea" 
+                placeholder="test&#10;target&#10;build&#10;node_modules"
+            >test
+target
+build
+node_modules
+__pycache__</textarea>
+            <small style="color: var(--gray-600); font-size: 0.875rem;">
+                각 라인에 하나씩 입력 (디렉토리/파일 패턴)
+            </small>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-secondary" onclick="analyzeProject()">
+                📊 프로젝트 분석
+            </button>
+            <button class="btn btn-primary" onclick="startConversion()" id="convertBtn">
+                🚀 OpenTelemetry 적용 시작
+            </button>
+            <button class="btn btn-success" onclick="downloadReport()" id="downloadBtn" disabled>
+                📥 리포트 다운로드
+            </button>
+        </div>
+    </div>
+
+    <!-- 진행 상황 -->
+    <div class="progress-section" id="progressSection">
+        <h3 style="margin-bottom: 1rem; color: var(--gray-900);">변환 진행 상황</h3>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <div id="currentStatus" style="text-align: center; color: var(--gray-600); margin: 0.5rem 0;">
+            대기 중...
+        </div>
+
+        <div class="status-grid">
+            <div class="status-card">
+                <div class="status-value" id="totalFiles">0</div>
+                <div class="status-label">전체 파일</div>
+            </div>
+            <div class="status-card">
+                <div class="status-value" id="processedFiles">0</div>
+                <div class="status-label">처리된 파일</div>
+            </div>
+            <div class="status-card">
+                <div class="status-value" id="successfulFiles">0</div>
+                <div class="status-label">성공</div>
+            </div>
+            <div class="status-card">
+                <div class="status-value" id="failedFiles">0</div>
+                <div class="status-label">실패</div>
+            </div>
+        </div>
+
+        <div class="logs-panel" id="logsPanel">
+            AIRIS-MON OpenTelemetry 자동 적용 시스템 준비 완료...
+        </div>
+    </div>
+
+    <!-- 프로젝트 정보 -->
+    <div class="project-info" id="projectInfo" style="display: none;">
+        <h3 style="margin-bottom: 1rem; color: var(--gray-900);">프로젝트 분석 결과</h3>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-value" id="infoJavaFiles">0</div>
+                <div class="info-label">Java 파일</div>
+            </div>
+            <div class="info-item">
+                <div class="info-value" id="infoPythonFiles">0</div>
+                <div class="info-label">Python 파일</div>
+            </div>
+            <div class="info-item">
+                <div class="info-value" id="infoFramework">unknown</div>
+                <div class="info-label">프레임워크</div>
+            </div>
+            <div class="info-item">
+                <div class="info-value" id="infoBuildTool">none</div>
+                <div class="info-label">빌드 도구</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 결과 섹션 -->
+    <div class="results-section" id="resultsSection">
+        <h3 style="margin-bottom: 1rem; color: var(--gray-900);">변환 결과</h3>
+        
+        <div id="resultsSummary"></div>
+        
+        <table class="results-table" id="resultsTable">
+            <thead>
+                <tr>
+                    <th>파일 경로</th>
+                    <th>언어</th>
+                    <th>상태</th>
+                    <th>크기 변화</th>
+                    <th>추가된 import</th>
+                    <th>메시지</th>
+                </tr>
+            </thead>
+            <tbody id="resultsTableBody">
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        let conversionInProgress = false;
+        let currentConversionResult = null;
+
+        // 로그 추가 함수
+        function addLog(message, type = 'info') {
+            const logsPanel = document.getElementById('logsPanel');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            
+            logsPanel.textContent += logEntry + '\n';
+            logsPanel.scrollTop = logsPanel.scrollHeight;
+            
+            console.log(`[OpenTelemetry] ${message}`);
+        }
+
+        // 진행률 업데이트
+        function updateProgress(percentage, status) {
+            const progressFill = document.getElementById('progressFill');
+            const currentStatus = document.getElementById('currentStatus');
+            
+            progressFill.style.width = percentage + '%';
+            currentStatus.textContent = status;
+        }
+
+        // 상태 카드 업데이트
+        function updateStatusCards(stats) {
+            document.getElementById('totalFiles').textContent = stats.total || 0;
+            document.getElementById('processedFiles').textContent = stats.processed || 0;
+            document.getElementById('successfulFiles').textContent = stats.successful || 0;
+            document.getElementById('failedFiles').textContent = stats.failed || 0;
+        }
+
+        // 프로젝트 분석
+        async function analyzeProject() {
+            const gitDirectory = document.getElementById('gitDirectory').value.trim();
+            
+            if (!gitDirectory) {
+                alert('Git 디렉토리 경로를 입력해주세요.');
+                return;
+            }
+
+            try {
+                addLog('프로젝트 분석 시작...');
+                
+                const response = await fetch('/api/opentelemetry/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        git_directory: gitDirectory
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayProjectInfo(result.analysis);
+                    addLog('프로젝트 분석 완료');
+                } else {
+                    addLog(`프로젝트 분석 실패: ${result.error}`, 'error');
+                    alert('프로젝트 분석에 실패했습니다: ' + result.error);
+                }
+            } catch (error) {
+                addLog(`프로젝트 분석 오류: ${error.message}`, 'error');
+                alert('프로젝트 분석 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 프로젝트 정보 표시
+        function displayProjectInfo(analysis) {
+            const projectInfo = document.getElementById('projectInfo');
+            
+            document.getElementById('infoJavaFiles').textContent = analysis.java_files;
+            document.getElementById('infoPythonFiles').textContent = analysis.python_files;
+            document.getElementById('infoFramework').textContent = analysis.framework_type;
+            
+            let buildTool = 'none';
+            if (analysis.has_maven) buildTool = 'Maven';
+            else if (analysis.has_gradle) buildTool = 'Gradle';
+            else if (analysis.has_poetry) buildTool = 'Poetry';
+            else if (analysis.has_requirements_txt) buildTool = 'pip';
+            
+            document.getElementById('infoBuildTool').textContent = buildTool;
+            
+            projectInfo.style.display = 'block';
+            
+            if (analysis.existing_otel) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-warning';
+                alertDiv.innerHTML = '⚠️ 이미 OpenTelemetry가 적용된 프로젝트입니다.';
+                projectInfo.appendChild(alertDiv);
+            }
+        }
+
+        // OpenTelemetry 적용 시작
+        async function startConversion() {
+            if (conversionInProgress) {
+                alert('이미 변환이 진행 중입니다.');
+                return;
+            }
+
+            const gitDirectory = document.getElementById('gitDirectory').value.trim();
+            
+            if (!gitDirectory) {
+                alert('Git 디렉토리 경로를 입력해주세요.');
+                return;
+            }
+
+            // 옵션 수집
+            const options = {
+                git_directory: gitDirectory,
+                include_java: document.getElementById('includeJava').checked,
+                include_python: document.getElementById('includePython').checked,
+                update_build_files: document.getElementById('updateBuildFiles').checked,
+                create_backup: document.getElementById('createBackup').checked,
+                exclude_patterns: document.getElementById('excludePatterns').value
+                    .split('\n')
+                    .map(p => p.trim())
+                    .filter(p => p.length > 0)
+            };
+
+            try {
+                conversionInProgress = true;
+                document.getElementById('convertBtn').disabled = true;
+                document.getElementById('progressSection').style.display = 'block';
+                
+                addLog('=== OpenTelemetry 자동 적용 시작 ===');
+                updateProgress(0, '변환 시작...');
+                updateStatusCards({ total: 0, processed: 0, successful: 0, failed: 0 });
+
+                const response = await fetch('/api/opentelemetry/convert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(options)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    currentConversionResult = result;
+                    displayConversionResults(result);
+                    addLog('=== OpenTelemetry 적용 완료 ===');
+                    updateProgress(100, '변환 완료');
+                    document.getElementById('downloadBtn').disabled = false;
+                } else {
+                    addLog(`변환 실패: ${result.error}`, 'error');
+                    updateProgress(0, '변환 실패');
+                    alert('OpenTelemetry 적용에 실패했습니다: ' + result.error);
+                }
+                
+            } catch (error) {
+                addLog(`변환 오류: ${error.message}`, 'error');
+                updateProgress(0, '변환 오류');
+                alert('변환 중 오류가 발생했습니다: ' + error.message);
+            } finally {
+                conversionInProgress = false;
+                document.getElementById('convertBtn').disabled = false;
+            }
+        }
+
+        // 변환 결과 표시
+        function displayConversionResults(result) {
+            const summary = result.conversion_summary;
+            const results = result.conversion_results;
+            
+            // 상태 카드 업데이트
+            updateStatusCards({
+                total: summary.total_files,
+                processed: summary.total_files,
+                successful: summary.successful,
+                failed: summary.failed
+            });
+
+            // 요약 정보 표시
+            const summaryDiv = document.getElementById('resultsSummary');
+            summaryDiv.innerHTML = `
+                <div class="alert alert-success">
+                    ✅ 변환 완료: 성공 ${summary.successful}개, 실패 ${summary.failed}개, 건너뜀 ${summary.skipped}개
+                    ${result.build_files_updated ? '<br>📦 빌드 파일 업데이트 완료' : ''}
+                </div>
+            `;
+
+            // 상세 결과 테이블
+            const tableBody = document.getElementById('resultsTableBody');
+            tableBody.innerHTML = '';
+            
+            results.forEach(item => {
+                const row = document.createElement('tr');
+                
+                const statusClass = item.status === 'success' ? 'status-success' : 
+                                   item.status === 'failed' ? 'status-failed' : 'status-skipped';
+                
+                const sizeChange = item.converted_size > item.original_size ? 
+                                  `+${item.converted_size - item.original_size} bytes` : 
+                                  item.converted_size === item.original_size ? 'No change' :
+                                  `${item.converted_size - item.original_size} bytes`;
+
+                row.innerHTML = `
+                    <td title="${item.file_path}">${item.file_path.split('/').pop()}</td>
+                    <td>${item.language.toUpperCase()}</td>
+                    <td><span class="status-badge ${statusClass}">${item.status.toUpperCase()}</span></td>
+                    <td>${sizeChange}</td>
+                    <td>${item.added_imports.length} imports</td>
+                    <td title="${item.error_message || ''}">${item.error_message || '성공'}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+
+            // 결과 섹션 표시
+            document.getElementById('resultsSection').style.display = 'block';
+        }
+
+        // 리포트 다운로드
+        function downloadReport() {
+            if (!currentConversionResult) {
+                alert('다운로드할 리포트가 없습니다.');
+                return;
+            }
+
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const reportData = {
+                timestamp: timestamp,
+                ...currentConversionResult
+            };
+
+            const blob = new Blob([JSON.stringify(reportData, null, 2)], {
+                type: 'application/json'
+            });
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `opentelemetry_conversion_report_${timestamp}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            addLog('리포트 다운로드 완료');
+        }
+
+        // 페이지 로드 시 초기화
+        window.addEventListener('load', function() {
+            addLog('OpenTelemetry 자동 적용 시스템 준비 완료');
+            addLog('프로젝트 경로를 입력하고 "프로젝트 분석" 버튼을 클릭하세요');
+        });
+    </script>
+</body>
+</html>

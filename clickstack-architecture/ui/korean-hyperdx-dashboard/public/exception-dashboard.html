@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIRIS-MON | 예외/에러 추적 대시보드</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Noto Sans KR', sans-serif; }
+    .korean-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .exception-gradient { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); }
+    .status-good { color: #10b981; }
+    .status-warning { color: #f59e0b; }
+    .status-error { color: #ef4444; }
+    .status-critical { color: #dc2626; }
+    .card { 
+      background: white; 
+      border-radius: 8px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .error-card {
+      background: linear-gradient(145deg, #fef2f2, #fecaca);
+      border-left: 4px solid #dc2626;
+    }
+    .warning-card {
+      background: linear-gradient(145deg, #fffbeb, #fed7aa);
+      border-left: 4px solid #f59e0b;
+    }
+    .info-card {
+      background: linear-gradient(145deg, #eff6ff, #dbeafe);
+      border-left: 4px solid #3b82f6;
+    }
+    .success-card {
+      background: linear-gradient(145deg, #f0fdf4, #bbf7d0);
+      border-left: 4px solid #16a34a;
+    }
+    .pulse-dot {
+      animation: pulse 2s infinite;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    .exception-item {
+      border-left: 4px solid;
+      margin-bottom: 0.5rem;
+    }
+    .exception-critical { border-color: #dc2626; }
+    .exception-high { border-color: #f59e0b; }
+    .exception-medium { border-color: #3b82f6; }
+    .exception-low { border-color: #16a34a; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Header -->
+  <header class="exception-gradient shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-6">
+        <div class="flex items-center">
+          <h1 class="text-3xl font-bold text-white">🚨 예외/에러 추적</h1>
+          <span class="ml-4 bg-white bg-opacity-20 text-white px-3 py-1 rounded-full text-sm">
+            실시간 모니터링 & 분석
+          </span>
+        </div>
+        <div class="flex items-center space-x-4 text-white">
+          <nav class="flex space-x-2">
+            <a href="/" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              📊 통합대시보드
+            </a>
+            <a href="/j2ee-dashboard.html" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              ☕ J2EE 모니터링
+            </a>
+            <a href="/was-dashboard.html" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              🏗️ WAS 모니터링
+            </a>
+            <a href="/exception-dashboard.html" class="bg-white bg-opacity-30 px-3 py-1 rounded text-sm">
+              🚨 예외추적
+            </a>
+            <a href="/topology-dashboard.html" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              🗺️ 서비스맵
+            </a>
+            <a href="/alert-dashboard.html" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              🔔 알림관리
+            </a>
+          </nav>
+          <span class="pulse-dot"></span>
+          <span id="current-time" class="text-sm opacity-90"></span>
+          <span class="bg-green-500 px-3 py-1 rounded-full text-xs font-semibold">
+            ✅ 정상
+          </span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Exception Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="card error-card">
+        <h3 class="text-lg font-semibold text-red-800 mb-2">🔥 Critical 에러</h3>
+        <p id="critical-count" class="text-2xl font-bold status-error">8</p>
+        <p class="text-sm text-red-700">즉시 대응 필요</p>
+      </div>
+      <div class="card warning-card">
+        <h3 class="text-lg font-semibold text-yellow-800 mb-2">⚠️ High 에러</h3>
+        <p id="high-count" class="text-2xl font-bold status-warning">23</p>
+        <p class="text-sm text-yellow-700">모니터링 필요</p>
+      </div>
+      <div class="card info-card">
+        <h3 class="text-lg font-semibold text-blue-800 mb-2">ℹ️ Medium 에러</h3>
+        <p id="medium-count" class="text-2xl font-bold text-blue-600">156</p>
+        <p class="text-sm text-blue-700">일반적 처리</p>
+      </div>
+      <div class="card success-card">
+        <h3 class="text-lg font-semibold text-green-800 mb-2">✅ 해결율</h3>
+        <p id="resolution-rate" class="text-2xl font-bold status-good">87%</p>
+        <p class="text-sm text-green-700">최근 24시간</p>
+      </div>
+    </div>
+
+    <!-- Exception Trends -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="card">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">📈 에러 발생 추세</h3>
+        <canvas id="errorTrendChart" width="400" height="200"></canvas>
+      </div>
+      <div class="card">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">🎯 에러 유형별 분포</h3>
+        <canvas id="errorTypeChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Recent Critical Exceptions -->
+    <div class="card mb-8">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold text-gray-800">🔥 최근 Critical 예외</h3>
+        <div class="flex space-x-2">
+          <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm">
+            🔄 새로고침
+          </button>
+          <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm">
+            📊 상세분석
+          </button>
+        </div>
+      </div>
+      <div id="critical-exceptions" class="space-y-3">
+        <!-- Critical exceptions will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Exception Details Table -->
+    <div class="card mb-8">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">🔍 예외 상세 목록</h3>
+      <div class="mb-4 flex space-x-4">
+        <select id="severity-filter" class="border rounded px-3 py-2">
+          <option value="all">모든 심각도</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+        <select id="type-filter" class="border rounded px-3 py-2">
+          <option value="all">모든 유형</option>
+          <option value="NullPointerException">NullPointerException</option>
+          <option value="SQLException">SQLException</option>
+          <option value="ClassNotFoundException">ClassNotFoundException</option>
+          <option value="ConnectionException">ConnectionException</option>
+        </select>
+        <input type="text" id="search-input" placeholder="예외 메시지 검색..." class="border rounded px-3 py-2 flex-grow">
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">시간</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">심각도</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">예외 유형</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">메시지</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">소스</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">상태</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">액션</th>
+            </tr>
+          </thead>
+          <tbody id="exception-table" class="bg-white divide-y divide-gray-200">
+            <!-- Exceptions will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Error Impact Analysis -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="card">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">👥 사용자 영향 분석</h3>
+        <div class="space-y-4">
+          <div class="flex justify-between items-center p-3 bg-red-50 rounded">
+            <span class="font-semibold">영향받은 사용자</span>
+            <span class="text-red-600 font-bold" id="affected-users">234</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-yellow-50 rounded">
+            <span class="font-semibold">실패한 거래</span>
+            <span class="text-yellow-600 font-bold" id="failed-transactions">45</span>
+          </div>
+          <div class="flex justify-between items-center p-3 bg-blue-50 rounded">
+            <span class="font-semibold">평균 복구 시간</span>
+            <span class="text-blue-600 font-bold" id="recovery-time">4.2분</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">🎯 예외 그룹별 통계</h3>
+        <canvas id="groupChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Solution Suggestions -->
+    <div class="card">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">💡 해결 방안 제안</h3>
+      <div id="solutions" class="space-y-3">
+        <!-- Solutions will be loaded here -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Exception Detail Modal -->
+  <div id="exception-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen px-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-xl font-bold text-gray-800">예외 상세 정보</h3>
+          <button id="close-modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+            ✕
+          </button>
+        </div>
+        <div id="modal-content" class="px-6 py-4">
+          <!-- Modal content will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script>
+    let errorTrendChart, errorTypeChart, groupChart;
+    
+    // Mock exception data
+    const exceptions = [
+      {
+        id: 'EX001',
+        timestamp: '2025-08-18 23:35:42',
+        severity: 'critical',
+        type: 'NullPointerException',
+        message: 'Attempt to invoke method on null reference',
+        source: 'UserService.java:142',
+        status: 'open',
+        stackTrace: 'java.lang.NullPointerException\n\tat com.airis.service.UserService.getUser(UserService.java:142)\n\tat com.airis.controller.UserController.profile(UserController.java:67)',
+        impact: 'high',
+        affectedUsers: 45
+      },
+      {
+        id: 'EX002',
+        timestamp: '2025-08-18 23:34:15',
+        severity: 'high',
+        type: 'SQLException',
+        message: 'Connection timeout to database',
+        source: 'DatabaseManager.java:89',
+        status: 'investigating',
+        stackTrace: 'java.sql.SQLException: Connection timed out\n\tat com.airis.db.DatabaseManager.getConnection(DatabaseManager.java:89)',
+        impact: 'medium',
+        affectedUsers: 23
+      },
+      {
+        id: 'EX003',
+        timestamp: '2025-08-18 23:33:08',
+        severity: 'medium',
+        type: 'ClassNotFoundException',
+        message: 'Cannot load class: com.airis.util.CacheUtil',
+        source: 'CacheService.java:34',
+        status: 'resolved',
+        stackTrace: 'java.lang.ClassNotFoundException: com.airis.util.CacheUtil\n\tat java.lang.ClassLoader.loadClass(ClassLoader.java:424)',
+        impact: 'low',
+        affectedUsers: 8
+      }
+    ];
+
+    const criticalExceptions = [
+      {
+        type: 'NullPointerException',
+        message: 'User object is null in authentication service',
+        time: '2분 전',
+        impact: '45명 사용자 영향',
+        severity: 'critical'
+      },
+      {
+        type: 'OutOfMemoryError',
+        message: 'Java heap space exceeded in analytics module',
+        time: '5분 전',
+        impact: '전체 서비스 성능 저하',
+        severity: 'critical'
+      },
+      {
+        type: 'ConnectionTimeoutException',
+        message: 'Database connection pool exhausted',
+        time: '8분 전',
+        impact: '234명 사용자 영향',
+        severity: 'critical'
+      }
+    ];
+
+    const solutions = [
+      {
+        type: 'NullPointerException',
+        title: 'Null 검사 패턴 적용',
+        description: 'Optional 클래스 사용 또는 null 검사 로직을 추가하여 안전한 객체 접근을 구현하세요.',
+        priority: 'high'
+      },
+      {
+        type: 'SQLException',
+        title: '데이터베이스 연결 풀 최적화',
+        description: '연결 풀 크기 조정 및 연결 타임아웃 설정을 검토하여 안정성을 향상하세요.',
+        priority: 'high'
+      },
+      {
+        type: 'OutOfMemoryError',
+        title: 'JVM 힙 메모리 증설',
+        description: '-Xmx 옵션을 조정하거나 메모리 사용량이 높은 코드를 최적화하세요.',
+        priority: 'critical'
+      }
+    ];
+
+    function initCharts() {
+      // Error Trend Chart
+      const trendCtx = document.getElementById('errorTrendChart').getContext('2d');
+      errorTrendChart = new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'],
+          datasets: [{
+            label: 'Critical',
+            data: [12, 8, 15, 11, 9, 8, 6],
+            borderColor: '#dc2626',
+            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+            tension: 0.4
+          }, {
+            label: 'High',
+            data: [34, 28, 31, 25, 29, 23, 20],
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            tension: 0.4
+          }, {
+            label: 'Medium',
+            data: [89, 76, 82, 79, 85, 90, 78],
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: '에러 발생 수' }
+            }
+          }
+        }
+      });
+
+      // Error Type Chart
+      const typeCtx = document.getElementById('errorTypeChart').getContext('2d');
+      errorTypeChart = new Chart(typeCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['NullPointerException', 'SQLException', 'ClassNotFoundException', 'ConnectionException', 'Other'],
+          datasets: [{
+            data: [35, 28, 15, 12, 10],
+            backgroundColor: ['#dc2626', '#f59e0b', '#3b82f6', '#8b5cf6', '#6b7280']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+
+      // Group Chart
+      const groupCtx = document.getElementById('groupChart').getContext('2d');
+      groupChart = new Chart(groupCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Authentication', 'Database', 'API Gateway', 'Business Logic', 'Cache Layer'],
+          datasets: [{
+            label: '에러 발생 수',
+            data: [45, 38, 29, 22, 16],
+            backgroundColor: ['#dc2626', '#f59e0b', '#3b82f6', '#8b5cf6', '#10b981']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: '에러 수' }
+            }
+          }
+        }
+      });
+    }
+
+    function loadCriticalExceptions() {
+      const container = document.getElementById('critical-exceptions');
+      container.innerHTML = criticalExceptions.map(ex => `
+        <div class="exception-item exception-${ex.severity} bg-red-50 p-4 rounded-lg">
+          <div class="flex justify-between items-start">
+            <div class="flex-grow">
+              <h4 class="font-semibold text-red-800">${ex.type}</h4>
+              <p class="text-sm text-red-600 mt-1">${ex.message}</p>
+              <div class="flex items-center mt-2 text-xs text-red-500">
+                <span>⏰ ${ex.time}</span>
+                <span class="mx-2">•</span>
+                <span>👥 ${ex.impact}</span>
+              </div>
+            </div>
+            <div class="flex space-x-2 ml-4">
+              <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs">
+                상세보기
+              </button>
+              <button class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs">
+                해결처리
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function loadExceptionTable() {
+      const tbody = document.getElementById('exception-table');
+      tbody.innerHTML = exceptions.map(ex => {
+        const severityColor = ex.severity === 'critical' ? 'bg-red-100 text-red-800' :
+                             ex.severity === 'high' ? 'bg-yellow-100 text-yellow-800' :
+                             ex.severity === 'medium' ? 'bg-blue-100 text-blue-800' :
+                             'bg-green-100 text-green-800';
+        
+        const statusColor = ex.status === 'open' ? 'bg-red-100 text-red-800' :
+                           ex.status === 'investigating' ? 'bg-yellow-100 text-yellow-800' :
+                           'bg-green-100 text-green-800';
+        
+        return `
+          <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 text-sm text-gray-900">${ex.timestamp}</td>
+            <td class="px-6 py-4">
+              <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${severityColor}">
+                ${ex.severity.toUpperCase()}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-sm font-medium text-gray-900">${ex.type}</td>
+            <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">${ex.message}</td>
+            <td class="px-6 py-4 text-sm text-gray-900">${ex.source}</td>
+            <td class="px-6 py-4">
+              <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusColor}">
+                ${ex.status}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-sm">
+              <button onclick="viewException('${ex.id}')" class="text-blue-600 hover:text-blue-900 mr-2">상세</button>
+              <button onclick="resolveException('${ex.id}')" class="text-green-600 hover:text-green-900">해결</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function loadSolutions() {
+      const container = document.getElementById('solutions');
+      container.innerHTML = solutions.map(sol => {
+        const priorityColor = sol.priority === 'critical' ? 'border-red-200 bg-red-50' :
+                             sol.priority === 'high' ? 'border-yellow-200 bg-yellow-50' :
+                             'border-blue-200 bg-blue-50';
+        
+        return `
+          <div class="p-4 border rounded-lg ${priorityColor}">
+            <div class="flex justify-between items-start">
+              <div>
+                <h4 class="font-semibold text-gray-800">${sol.title}</h4>
+                <p class="text-sm text-gray-600 mt-1">${sol.description}</p>
+                <span class="inline-block mt-2 text-xs px-2 py-1 bg-gray-200 rounded">${sol.type}</span>
+              </div>
+              <span class="text-xs px-2 py-1 rounded ${sol.priority === 'critical' ? 'bg-red-100 text-red-800' : sol.priority === 'high' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}">
+                ${sol.priority.toUpperCase()}
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function viewException(id) {
+      const exception = exceptions.find(ex => ex.id === id);
+      if (!exception) return;
+
+      const modalContent = document.getElementById('modal-content');
+      modalContent.innerHTML = `
+        <div class="space-y-6">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <h4 class="font-semibold text-gray-800">예외 ID</h4>
+              <p class="text-sm text-gray-600">${exception.id}</p>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-800">발생 시간</h4>
+              <p class="text-sm text-gray-600">${exception.timestamp}</p>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-800">심각도</h4>
+              <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${exception.severity === 'critical' ? 'bg-red-100 text-red-800' : exception.severity === 'high' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}">
+                ${exception.severity.toUpperCase()}
+              </span>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-800">상태</h4>
+              <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${exception.status === 'open' ? 'bg-red-100 text-red-800' : exception.status === 'investigating' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}">
+                ${exception.status}
+              </span>
+            </div>
+          </div>
+          <div>
+            <h4 class="font-semibold text-gray-800 mb-2">예외 메시지</h4>
+            <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded">${exception.message}</p>
+          </div>
+          <div>
+            <h4 class="font-semibold text-gray-800 mb-2">Stack Trace</h4>
+            <pre class="text-xs text-gray-600 bg-gray-900 text-green-400 p-3 rounded overflow-x-auto">${exception.stackTrace}</pre>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <h4 class="font-semibold text-gray-800">영향도</h4>
+              <p class="text-sm text-gray-600">${exception.impact}</p>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-800">영향받은 사용자</h4>
+              <p class="text-sm text-gray-600">${exception.affectedUsers}명</p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('exception-modal').classList.remove('hidden');
+    }
+
+    function resolveException(id) {
+      if (confirm('이 예외를 해결 완료로 표시하시겠습니까?')) {
+        // 실제 구현에서는 API 호출
+        alert('예외가 해결 완료로 표시되었습니다.');
+        loadExceptionTable(); // 테이블 새로고침
+      }
+    }
+
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('current-time').textContent = now.toLocaleString('ko-KR');
+    }
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+      initCharts();
+      loadCriticalExceptions();
+      loadExceptionTable();
+      loadSolutions();
+      updateTime();
+      setInterval(updateTime, 1000);
+      
+      // Modal close handler
+      document.getElementById('close-modal').addEventListener('click', () => {
+        document.getElementById('exception-modal').classList.add('hidden');
+      });
+      
+      // Simulate real-time updates
+      setInterval(() => {
+        // Update metrics with small random variations
+        document.getElementById('critical-count').textContent = 8 + Math.floor(Math.random() * 5);
+        document.getElementById('high-count').textContent = 23 + Math.floor(Math.random() * 10);
+        document.getElementById('medium-count').textContent = 156 + Math.floor(Math.random() * 20);
+        document.getElementById('resolution-rate').textContent = (85 + Math.floor(Math.random() * 10)) + '%';
+        document.getElementById('affected-users').textContent = 234 + Math.floor(Math.random() * 50);
+        document.getElementById('failed-transactions').textContent = 45 + Math.floor(Math.random() * 20);
+        document.getElementById('recovery-time').textContent = (4.0 + Math.random() * 2).toFixed(1) + '분';
+      }, 10000);
+    });
+  </script>
+
+</body>
+</html>

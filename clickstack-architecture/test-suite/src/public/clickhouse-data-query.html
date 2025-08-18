@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClickHouse 데이터 조회</title>
+    <script src="/components/common-layout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .clickhouse-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .clickhouse-header h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+        
+        .clickhouse-header .subtitle {
+            color: var(--gray-600);
+            font-size: 1rem;
+        }
+
+        .query-controls {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: var(--gray-700);
+            font-size: 0.875rem;
+        }
+
+        .filter-input {
+            padding: 0.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            background: var(--white);
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .query-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .query-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+
+        .query-btn.primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .query-btn.primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .query-btn.secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-200);
+        }
+
+        .query-btn.secondary:hover {
+            background: var(--gray-200);
+        }
+
+        .results-section {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .results-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .results-meta {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .query-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .query-status.loading {
+            background: #dbeafe;
+            color: var(--primary);
+        }
+
+        .query-status.success {
+            background: #dcfce7;
+            color: var(--success);
+        }
+
+        .query-status.error {
+            background: #fef2f2;
+            color: var(--error);
+        }
+
+        .spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .results-table th,
+        .results-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 0.875rem;
+        }
+
+        .results-table th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-700);
+            position: sticky;
+            top: 0;
+        }
+
+        .results-table tbody tr:hover {
+            background: var(--gray-50);
+        }
+
+        .trace-id {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            background: var(--gray-100);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-badge.success {
+            background: #dcfce7;
+            color: var(--success);
+        }
+
+        .status-badge.error {
+            background: #fef2f2;
+            color: var(--error);
+        }
+
+        .status-badge.timeout {
+            background: #fef3c7;
+            color: var(--warning);
+        }
+
+        .duration {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray-500);
+        }
+
+        .export-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+        }
+
+        .chart-container {
+            height: 250px;
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .query-actions {
+                flex-direction: column;
+            }
+            
+            .results-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="clickhouse-header">
+        <h2>🔍 ClickHouse 데이터 조회</h2>
+        <p class="subtitle">OpenTelemetry 추적 데이터를 실시간으로 조회하고 분석합니다</p>
+    </div>
+
+    <div class="query-controls">
+        <div class="filters-grid">
+            <div class="filter-group">
+                <label class="filter-label">시간 범위</label>
+                <select class="filter-input" id="timeRange">
+                    <option value="1h">최근 1시간</option>
+                    <option value="6h">최근 6시간</option>
+                    <option value="24h" selected>최근 24시간</option>
+                    <option value="7d">최근 7일</option>
+                    <option value="30d">최근 30일</option>
+                    <option value="custom">사용자 정의</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">서비스명</label>
+                <select class="filter-input" id="serviceFilter">
+                    <option value="">전체 서비스</option>
+                    <option value="user-service">user-service</option>
+                    <option value="payment-service">payment-service</option>
+                    <option value="order-service">order-service</option>
+                    <option value="inventory-service">inventory-service</option>
+                    <option value="notification-service">notification-service</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">추적 상태</label>
+                <select class="filter-input" id="statusFilter">
+                    <option value="">전체 상태</option>
+                    <option value="success">성공</option>
+                    <option value="error">오류</option>
+                    <option value="timeout">타임아웃</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">최소 응답시간 (ms)</label>
+                <input type="number" class="filter-input" id="minDuration" placeholder="예: 100" min="0">
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">최대 응답시간 (ms)</label>
+                <input type="number" class="filter-input" id="maxDuration" placeholder="예: 5000" min="0">
+            </div>
+
+            <div class="filter-group">
+                <label class="filter-label">최소 스팬 수</label>
+                <input type="number" class="filter-input" id="minSpans" placeholder="예: 1" min="1">
+            </div>
+        </div>
+
+        <div class="query-actions">
+            <button class="query-btn primary" id="executeQuery">
+                <span id="queryButtonText">쿼리 실행</span>
+            </button>
+            <button class="query-btn secondary" id="clearFilters">필터 초기화</button>
+            <button class="query-btn secondary" id="saveQuery">쿼리 저장</button>
+        </div>
+    </div>
+
+    <div class="charts-section" id="chartsSection" style="display: none;">
+        <div class="chart-card">
+            <div class="chart-title">서비스별 추적 분포</div>
+            <div class="chart-container">
+                <canvas id="serviceChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-title">응답시간 분포</div>
+            <div class="chart-container">
+                <canvas id="durationChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-section">
+        <div class="results-header">
+            <div>
+                <div class="results-title">조회 결과</div>
+                <div class="query-status" id="queryStatus">
+                    <span>쿼리를 실행하여 데이터를 조회하세요</span>
+                </div>
+            </div>
+            <div class="results-meta" id="resultsMeta" style="display: none;">
+                <span id="resultsCount">0개 결과</span>
+                <span id="queryTime">실행 시간: 0ms</span>
+                <div class="export-options">
+                    <button class="query-btn secondary" id="exportCSV">CSV 내보내기</button>
+                    <button class="query-btn secondary" id="exportJSON">JSON 내보내기</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="resultsContainer">
+            <div class="no-results">
+                아직 조회된 데이터가 없습니다. 위의 필터를 설정하고 "쿼리 실행" 버튼을 클릭하세요.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let currentResults = [];
+        let serviceChart = null;
+        let durationChart = null;
+
+        // 차트 초기화
+        function initializeCharts() {
+            // 서비스별 차트
+            const serviceCtx = document.getElementById('serviceChart').getContext('2d');
+            serviceChart = new Chart(serviceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // 응답시간 차트
+            const durationCtx = document.getElementById('durationChart').getContext('2d');
+            durationChart = new Chart(durationCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['0-100ms', '100-500ms', '500ms-1s', '1s-3s', '3s+'],
+                    datasets: [{
+                        label: '추적 수',
+                        data: [],
+                        backgroundColor: '#3b82f6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // 쿼리 실행
+        async function executeQuery() {
+            const statusEl = document.getElementById('queryStatus');
+            const buttonEl = document.getElementById('queryButtonText');
+            const metaEl = document.getElementById('resultsMeta');
+            const chartsEl = document.getElementById('chartsSection');
+
+            // 로딩 상태 표시
+            statusEl.className = 'query-status loading';
+            statusEl.innerHTML = '<div class="spinner"></div> 데이터 조회 중...';
+            buttonEl.textContent = '조회 중...';
+
+            const startTime = Date.now();
+
+            try {
+                // 필터 값 수집
+                const filters = {
+                    timeRange: document.getElementById('timeRange').value,
+                    service: document.getElementById('serviceFilter').value,
+                    status: document.getElementById('statusFilter').value,
+                    minDuration: document.getElementById('minDuration').value,
+                    maxDuration: document.getElementById('maxDuration').value,
+                    minSpans: document.getElementById('minSpans').value
+                };
+
+                // API 호출
+                const response = await fetch('/api/clickhouse/traces');
+                const data = await response.json();
+
+                // 필터 적용
+                const filteredResults = applyFilters(data.traces, filters);
+                currentResults = filteredResults;
+
+                const queryTime = Date.now() - startTime;
+
+                // 성공 상태 표시
+                statusEl.className = 'query-status success';
+                statusEl.innerHTML = '✓ 조회 완료';
+                buttonEl.textContent = '쿼리 실행';
+
+                // 결과 메타데이터 표시
+                document.getElementById('resultsCount').textContent = `${filteredResults.length}개 결과`;
+                document.getElementById('queryTime').textContent = `실행 시간: ${queryTime}ms`;
+                metaEl.style.display = 'flex';
+
+                // 결과 테이블 렌더링
+                renderResults(filteredResults);
+
+                // 차트 업데이트
+                updateCharts(filteredResults);
+                chartsEl.style.display = filteredResults.length > 0 ? 'grid' : 'none';
+
+            } catch (error) {
+                console.error('쿼리 실행 오류:', error);
+                statusEl.className = 'query-status error';
+                statusEl.innerHTML = '❌ 쿼리 실행 실패';
+                buttonEl.textContent = '쿼리 실행';
+                metaEl.style.display = 'none';
+            }
+        }
+
+        // 필터 적용
+        function applyFilters(traces, filters) {
+            return traces.filter(trace => {
+                // 서비스 필터
+                if (filters.service && !trace.serviceName.includes(filters.service)) {
+                    return false;
+                }
+
+                // 상태 필터
+                if (filters.status && trace.status !== filters.status) {
+                    return false;
+                }
+
+                // 응답시간 필터
+                if (filters.minDuration && trace.duration < parseInt(filters.minDuration)) {
+                    return false;
+                }
+                if (filters.maxDuration && trace.duration > parseInt(filters.maxDuration)) {
+                    return false;
+                }
+
+                // 스팬 수 필터
+                if (filters.minSpans && trace.spanCount < parseInt(filters.minSpans)) {
+                    return false;
+                }
+
+                return true;
+            });
+        }
+
+        // 결과 테이블 렌더링
+        function renderResults(results) {
+            const container = document.getElementById('resultsContainer');
+
+            if (results.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        필터 조건에 맞는 데이터가 없습니다. 다른 조건을 시도해보세요.
+                    </div>
+                `;
+                return;
+            }
+
+            const tableHTML = `
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>추적 ID</th>
+                            <th>서비스</th>
+                            <th>작업</th>
+                            <th>상태</th>
+                            <th>응답시간</th>
+                            <th>스팬 수</th>
+                            <th>시작 시간</th>
+                            <th>액션</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${results.map(trace => `
+                            <tr>
+                                <td><span class="trace-id">${trace.traceId}</span></td>
+                                <td>${trace.serviceName}</td>
+                                <td>${trace.operationName}</td>
+                                <td><span class="status-badge ${trace.status}">${getStatusText(trace.status)}</span></td>
+                                <td><span class="duration">${trace.duration}ms</span></td>
+                                <td>${trace.spanCount}</td>
+                                <td>${new Date(trace.startTime).toLocaleString('ko-KR')}</td>
+                                <td>
+                                    <button class="query-btn secondary" onclick="viewTraceDetails('${trace.traceId}')">
+                                        상세보기
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = tableHTML;
+        }
+
+        // 상태 텍스트 변환
+        function getStatusText(status) {
+            const statusMap = {
+                'success': '성공',
+                'error': '오류',
+                'timeout': '타임아웃'
+            };
+            return statusMap[status] || status;
+        }
+
+        // 차트 업데이트
+        function updateCharts(results) {
+            // 서비스별 분포
+            const serviceCounts = {};
+            results.forEach(trace => {
+                serviceCounts[trace.serviceName] = (serviceCounts[trace.serviceName] || 0) + 1;
+            });
+
+            serviceChart.data.labels = Object.keys(serviceCounts);
+            serviceChart.data.datasets[0].data = Object.values(serviceCounts);
+            serviceChart.update();
+
+            // 응답시간 분포
+            const durationBuckets = [0, 0, 0, 0, 0]; // 0-100ms, 100-500ms, 500ms-1s, 1s-3s, 3s+
+            results.forEach(trace => {
+                const duration = trace.duration;
+                if (duration <= 100) durationBuckets[0]++;
+                else if (duration <= 500) durationBuckets[1]++;
+                else if (duration <= 1000) durationBuckets[2]++;
+                else if (duration <= 3000) durationBuckets[3]++;
+                else durationBuckets[4]++;
+            });
+
+            durationChart.data.datasets[0].data = durationBuckets;
+            durationChart.update();
+        }
+
+        // 추적 상세보기
+        function viewTraceDetails(traceId) {
+            window.open(`/trace-detail-analyzer.html?traceId=${traceId}`, '_blank');
+        }
+
+        // 필터 초기화
+        function clearFilters() {
+            document.getElementById('timeRange').value = '24h';
+            document.getElementById('serviceFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('minDuration').value = '';
+            document.getElementById('maxDuration').value = '';
+            document.getElementById('minSpans').value = '';
+        }
+
+        // 데이터 내보내기
+        function exportData(format) {
+            if (currentResults.length === 0) {
+                alert('내보낼 데이터가 없습니다.');
+                return;
+            }
+
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+            const filename = `clickhouse_traces_${timestamp}`;
+
+            if (format === 'csv') {
+                const csv = convertToCSV(currentResults);
+                downloadFile(csv, `${filename}.csv`, 'text/csv');
+            } else if (format === 'json') {
+                const json = JSON.stringify(currentResults, null, 2);
+                downloadFile(json, `${filename}.json`, 'application/json');
+            }
+        }
+
+        // CSV 변환
+        function convertToCSV(data) {
+            const headers = ['추적ID', '서비스', '작업', '상태', '응답시간(ms)', '스팬수', '시작시간'];
+            const rows = data.map(trace => [
+                trace.traceId,
+                trace.serviceName,
+                trace.operationName,
+                getStatusText(trace.status),
+                trace.duration,
+                trace.spanCount,
+                new Date(trace.startTime).toLocaleString('ko-KR')
+            ]);
+
+            return [headers, ...rows].map(row => 
+                row.map(field => `"${field}"`).join(',')
+            ).join('\n');
+        }
+
+        // 파일 다운로드
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // 이벤트 리스너 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+
+            // 쿼리 실행 버튼
+            document.getElementById('executeQuery').addEventListener('click', executeQuery);
+
+            // 필터 초기화 버튼
+            document.getElementById('clearFilters').addEventListener('click', clearFilters);
+
+            // 내보내기 버튼들
+            document.getElementById('exportCSV').addEventListener('click', () => exportData('csv'));
+            document.getElementById('exportJSON').addEventListener('click', () => exportData('json'));
+
+            // 엔터 키로 쿼리 실행
+            document.querySelectorAll('.filter-input').forEach(input => {
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        executeQuery();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

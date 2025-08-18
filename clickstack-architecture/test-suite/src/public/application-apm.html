@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application APM - AIRIS-MON 애플리케이션 성능 모니터링</title>
+    <script src="/components/common-layout.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1 .icon {
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .positive {
+            color: #10b981;
+        }
+
+        .negative {
+            color: #ef4444;
+        }
+
+        .neutral {
+            color: #6b7280;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f3f4f6;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .panel-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .endpoint-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .endpoint-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .endpoint-item:hover {
+            background: #f3f4f6;
+            transform: translateX(5px);
+        }
+
+        .endpoint-method {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .method-get {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .method-post {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .method-put {
+            background: #fed7aa;
+            color: #9a3412;
+        }
+
+        .method-delete {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .endpoint-path {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #4b5563;
+        }
+
+        .endpoint-metrics {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+        }
+
+        .metric-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .latency-bar {
+            width: 60px;
+            height: 6px;
+            background: #e5e7eb;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .latency-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #fbbf24, #ef4444);
+            transition: width 0.3s ease;
+        }
+
+        .service-map {
+            position: relative;
+            height: 300px;
+            background: #f9fafb;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .service-node {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .service-node:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .service-main {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            width: 100px;
+            height: 100px;
+        }
+
+        .service-db {
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+        }
+
+        .service-cache {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .service-queue {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .service-external {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+        }
+
+        .service-line {
+            position: absolute;
+            background: #d1d5db;
+            height: 2px;
+            transform-origin: left center;
+            z-index: -1;
+        }
+
+        .service-line.active {
+            background: #667eea;
+            animation: pulse 2s infinite;
+        }
+
+        .error-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .error-item {
+            padding: 12px;
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .error-message {
+            font-size: 13px;
+            font-weight: 600;
+            color: #991b1b;
+            margin-bottom: 5px;
+        }
+
+        .error-stack {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #7f1d1d;
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 8px;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .error-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 11px;
+            color: #b91c1c;
+            margin-top: 8px;
+        }
+
+        .trace-timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .trace-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .trace-time {
+            width: 80px;
+            font-size: 11px;
+            color: #6b7280;
+            text-align: right;
+            margin-right: 15px;
+        }
+
+        .trace-bar {
+            flex: 1;
+            height: 30px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 4px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .trace-bar.database {
+            background: linear-gradient(90deg, #3b82f6, #1e40af);
+        }
+
+        .trace-bar.cache {
+            background: linear-gradient(90deg, #10b981, #059669);
+        }
+
+        .trace-bar.external {
+            background: linear-gradient(90deg, #8b5cf6, #6d28d9);
+        }
+
+        .trace-duration {
+            position: absolute;
+            right: 10px;
+            font-size: 11px;
+            opacity: 0.9;
+        }
+
+        .performance-chart {
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+
+        .resource-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .resource-item {
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .resource-item:hover {
+            background: #f3f4f6;
+        }
+
+        .resource-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .resource-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f2937;
+        }
+
+        .resource-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .resource-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .resource-fill.low {
+            background: #10b981;
+        }
+
+        .resource-fill.medium {
+            background: #fbbf24;
+        }
+
+        .resource-fill.high {
+            background: #ef4444;
+        }
+
+        .thread-pool {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .thread {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .thread.active {
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .thread.waiting {
+            background: #fbbf24;
+        }
+
+        .thread.blocked {
+            background: #ef4444;
+        }
+
+        .thread.idle {
+            background: #e5e7eb;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.1);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .alert-banner {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+
+        .alert-banner.show {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .gc-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .gc-item {
+            text-align: center;
+            padding: 12px;
+            background: #f0f9ff;
+            border-radius: 6px;
+            border: 1px solid #bfdbfe;
+        }
+
+        .gc-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1e40af;
+        }
+
+        .gc-label {
+            font-size: 11px;
+            color: #3730a3;
+            margin-top: 5px;
+        }
+
+        .floating-controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .fab {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #6b7280;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="airis-content-wrapper">
+        <div class="container">
+        <!-- Alert Banner -->
+        <div id="alertBanner" class="alert-banner">
+            <span>⚠️ <span id="alertMessage">높은 에러율 감지: API 응답 실패율이 5%를 초과했습니다</span></span>
+            <button class="btn btn-secondary" onclick="dismissAlert()">확인</button>
+        </div>
+
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <span class="icon">⚡</span>
+                Application APM
+            </h1>
+            <p class="subtitle">실시간 애플리케이션 성능 모니터링 | 분산 트레이싱 | 에러 추적 | 리소스 분석</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">평균 응답 시간</div>
+                <div class="stat-value" id="avgResponseTime">256<span style="font-size: 16px;">ms</span></div>
+                <div class="stat-change positive">
+                    <span>↓</span> 12% 개선
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">처리량</div>
+                <div class="stat-value" id="throughput">8.4K<span style="font-size: 16px;">rpm</span></div>
+                <div class="stat-change positive">
+                    <span>↑</span> 5% 증가
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">에러율</div>
+                <div class="stat-value negative" id="errorRate">2.3<span style="font-size: 16px;">%</span></div>
+                <div class="stat-change negative">
+                    <span>↑</span> 0.5% 증가
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Apdex 스코어</div>
+                <div class="stat-value" id="apdex">0.94</div>
+                <div class="stat-change positive">
+                    <span>↑</span> 우수
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">활성 사용자</div>
+                <div class="stat-value" id="activeUsers">1,247</div>
+                <div class="stat-change neutral">
+                    <span>→</span> 안정적
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">CPU 사용률</div>
+                <div class="stat-value" id="cpuUsage">68<span style="font-size: 16px;">%</span></div>
+                <div class="stat-change neutral">
+                    <span>→</span> 정상
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">메모리 사용률</div>
+                <div class="stat-value" id="memUsage">4.2<span style="font-size: 16px;">GB</span></div>
+                <div class="stat-change positive">
+                    <span>↓</span> 안정적
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">가동 시간</div>
+                <div class="stat-value" id="uptime">99.9<span style="font-size: 16px;">%</span></div>
+                <div class="stat-change positive">
+                    <span>✓</span> SLA 충족
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- API Endpoints Performance -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">🔌 API 엔드포인트 성능</h3>
+                    <div class="panel-actions">
+                        <button class="btn btn-secondary" onclick="filterEndpoints()">🔍 필터</button>
+                        <button class="btn btn-primary" onclick="refreshEndpoints()">🔄 새로고침</button>
+                    </div>
+                </div>
+                <div class="endpoint-list" id="endpointList">
+                    <!-- Endpoints will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Service Dependency Map -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">🗺️ 서비스 의존성 맵</h3>
+                    <div class="panel-actions">
+                        <button class="btn btn-primary" onclick="analyzeDependencies()">분석</button>
+                    </div>
+                </div>
+                <div class="service-map" id="serviceMap">
+                    <!-- Service nodes will be inserted here -->
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: linear-gradient(135deg, #667eea, #764ba2);"></div>
+                        <span>메인 서비스</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3b82f6;"></div>
+                        <span>데이터베이스</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #10b981;"></div>
+                        <span>캐시</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f59e0b;"></div>
+                        <span>메시지 큐</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distributed Tracing Timeline -->
+        <div class="panel full-width">
+            <div class="panel-header">
+                <h3 class="panel-title">🔍 분산 트레이싱 타임라인</h3>
+                <div class="panel-actions">
+                    <select class="btn btn-secondary" onchange="filterTraces(this.value)">
+                        <option value="all">모든 트레이스</option>
+                        <option value="slow">느린 트레이스</option>
+                        <option value="error">에러 트레이스</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="analyzeTrace()">상세 분석</button>
+                </div>
+            </div>
+            <div class="trace-timeline" id="traceTimeline">
+                <!-- Trace items will be inserted here -->
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <!-- Error Tracking -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">🚨 에러 추적</h3>
+                    <div class="panel-actions">
+                        <button class="btn btn-secondary" onclick="exportErrors()">📥 내보내기</button>
+                    </div>
+                </div>
+                <div class="error-list" id="errorList">
+                    <!-- Error items will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Resource Monitoring -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">💻 리소스 모니터링</h3>
+                    <div class="panel-actions">
+                        <button class="btn btn-primary" onclick="optimizeResources()">최적화</button>
+                    </div>
+                </div>
+                <div class="resource-grid">
+                    <div class="resource-item">
+                        <div class="resource-label">CPU 사용률</div>
+                        <div class="resource-value">68%</div>
+                        <div class="resource-bar">
+                            <div class="resource-fill medium" style="width: 68%"></div>
+                        </div>
+                    </div>
+                    <div class="resource-item">
+                        <div class="resource-label">메모리 사용률</div>
+                        <div class="resource-value">4.2GB</div>
+                        <div class="resource-bar">
+                            <div class="resource-fill low" style="width: 52%"></div>
+                        </div>
+                    </div>
+                    <div class="resource-item">
+                        <div class="resource-label">디스크 I/O</div>
+                        <div class="resource-value">124MB/s</div>
+                        <div class="resource-bar">
+                            <div class="resource-fill low" style="width: 35%"></div>
+                        </div>
+                    </div>
+                    <div class="resource-item">
+                        <div class="resource-label">네트워크</div>
+                        <div class="resource-value">892Mbps</div>
+                        <div class="resource-bar">
+                            <div class="resource-fill medium" style="width: 45%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thread Pool & GC Monitoring -->
+        <div class="main-grid">
+            <div class="panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">🔧 스레드 풀 상태</h3>
+                    <div class="panel-actions">
+                        <button class="btn btn-secondary" onclick="analyzeThreads()">분석</button>
+                    </div>
+                </div>
+                <div class="thread-pool" id="threadPool">
+                    <!-- Thread blocks will be inserted here -->
+                </div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #10b981;"></div>
+                        <span>활성</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #fbbf24;"></div>
+                        <span>대기</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ef4444;"></div>
+                        <span>차단</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e5e7eb;"></div>
+                        <span>유휴</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">♻️ 가비지 컬렉션</h3>
+                    <div class="panel-actions">
+                        <button class="btn btn-primary" onclick="forceGC()">강제 GC</button>
+                    </div>
+                </div>
+                <div class="gc-stats">
+                    <div class="gc-item">
+                        <div class="gc-value">142</div>
+                        <div class="gc-label">Minor GC</div>
+                    </div>
+                    <div class="gc-item">
+                        <div class="gc-value">8</div>
+                        <div class="gc-label">Major GC</div>
+                    </div>
+                    <div class="gc-item">
+                        <div class="gc-value">245ms</div>
+                        <div class="gc-label">평균 일시정지</div>
+                    </div>
+                </div>
+                <div class="performance-chart" style="margin-top: 20px; height: 150px;">
+                    <canvas id="gcChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Trends -->
+        <div class="panel full-width">
+            <div class="panel-header">
+                <h3 class="panel-title">📊 성능 추이</h3>
+                <div class="panel-actions">
+                    <select class="btn btn-secondary" onchange="changeTimeRange(this.value)">
+                        <option value="1h">1시간</option>
+                        <option value="6h">6시간</option>
+                        <option value="24h">24시간</option>
+                        <option value="7d">7일</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="exportMetrics()">📊 리포트</button>
+                </div>
+            </div>
+            <div class="performance-chart">
+                <canvas id="performanceChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Floating Controls -->
+        <div class="floating-controls">
+            <button class="fab" onclick="startProfiling()" title="프로파일링 시작">
+                🎯
+            </button>
+            <button class="fab" onclick="captureSnapshot()" title="스냅샷 캡처">
+                📸
+            </button>
+            <button class="fab" onclick="openDashboard()" title="대시보드">
+                📊
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Sample API endpoints data
+        const sampleEndpoints = [
+            {
+                method: 'GET',
+                path: '/api/users',
+                avgTime: 145,
+                calls: 3421,
+                errorRate: 0.5,
+                p99: 523
+            },
+            {
+                method: 'POST',
+                path: '/api/orders',
+                avgTime: 892,
+                calls: 1247,
+                errorRate: 2.1,
+                p99: 2341
+            },
+            {
+                method: 'GET',
+                path: '/api/products/{id}',
+                avgTime: 67,
+                calls: 8923,
+                errorRate: 0.2,
+                p99: 234
+            },
+            {
+                method: 'PUT',
+                path: '/api/inventory/update',
+                avgTime: 1234,
+                calls: 523,
+                errorRate: 3.5,
+                p99: 3456
+            },
+            {
+                method: 'DELETE',
+                path: '/api/sessions/{id}',
+                avgTime: 45,
+                calls: 892,
+                errorRate: 0.1,
+                p99: 123
+            }
+        ];
+
+        // Sample trace data
+        const sampleTraces = [
+            {
+                service: 'API Gateway',
+                operation: 'HTTP Request',
+                duration: 45,
+                type: 'main'
+            },
+            {
+                service: 'User Service',
+                operation: 'Authenticate',
+                duration: 23,
+                type: 'main'
+            },
+            {
+                service: 'Database',
+                operation: 'Query Users',
+                duration: 124,
+                type: 'database'
+            },
+            {
+                service: 'Cache',
+                operation: 'Get Session',
+                duration: 8,
+                type: 'cache'
+            },
+            {
+                service: 'Order Service',
+                operation: 'Process Order',
+                duration: 234,
+                type: 'main'
+            },
+            {
+                service: 'Payment API',
+                operation: 'External Call',
+                duration: 892,
+                type: 'external'
+            }
+        ];
+
+        // Sample error data
+        const sampleErrors = [
+            {
+                message: 'NullPointerException in OrderService.processOrder()',
+                stack: 'at com.airis.OrderService.processOrder(OrderService.java:145)\nat com.airis.API.handleRequest(API.java:234)',
+                count: 24,
+                lastOccurred: '2분 전',
+                severity: 'critical'
+            },
+            {
+                message: 'Database connection timeout',
+                stack: 'java.sql.SQLTimeoutException: Connection timeout\nat com.mysql.jdbc.Connection.connect()',
+                count: 8,
+                lastOccurred: '15분 전',
+                severity: 'high'
+            },
+            {
+                message: 'Redis cache miss rate exceeded threshold',
+                stack: 'Warning: Cache miss rate 45% > threshold 30%',
+                count: 156,
+                lastOccurred: '방금',
+                severity: 'medium'
+            }
+        ];
+
+        // Initialize endpoints
+        function initializeEndpoints() {
+            const endpointList = document.getElementById('endpointList');
+            endpointList.innerHTML = '';
+            
+            sampleEndpoints.forEach(endpoint => {
+                const item = document.createElement('div');
+                item.className = 'endpoint-item';
+                
+                const latencyPercent = Math.min((endpoint.avgTime / 1000) * 100, 100);
+                const errorClass = endpoint.errorRate > 2 ? 'negative' : endpoint.errorRate > 1 ? 'neutral' : 'positive';
+                
+                item.innerHTML = `
+                    <div style="display: flex; align-items: center; flex: 1;">
+                        <span class="endpoint-method method-${endpoint.method.toLowerCase()}">${endpoint.method}</span>
+                        <span class="endpoint-path">${endpoint.path}</span>
+                    </div>
+                    <div class="endpoint-metrics">
+                        <div class="metric-item">
+                            <span>⏱️</span>
+                            <div class="latency-bar">
+                                <div class="latency-fill" style="width: ${latencyPercent}%"></div>
+                            </div>
+                            <span>${endpoint.avgTime}ms</span>
+                        </div>
+                        <div class="metric-item">
+                            <span>📊 ${endpoint.calls.toLocaleString()}/min</span>
+                        </div>
+                        <div class="metric-item ${errorClass}">
+                            <span>⚠️ ${endpoint.errorRate}%</span>
+                        </div>
+                        <div class="metric-item">
+                            <span>P99: ${endpoint.p99}ms</span>
+                        </div>
+                    </div>
+                `;
+                endpointList.appendChild(item);
+            });
+        }
+
+        // Initialize service map
+        function initializeServiceMap() {
+            const serviceMap = document.getElementById('serviceMap');
+            serviceMap.innerHTML = '';
+            
+            // Main service node
+            const mainNode = document.createElement('div');
+            mainNode.className = 'service-node service-main';
+            mainNode.style.left = '50%';
+            mainNode.style.top = '50%';
+            mainNode.style.transform = 'translate(-50%, -50%)';
+            mainNode.innerHTML = '<span>🌐</span><span>API</span>';
+            serviceMap.appendChild(mainNode);
+            
+            // Database node
+            const dbNode = document.createElement('div');
+            dbNode.className = 'service-node service-db';
+            dbNode.style.left = '20%';
+            dbNode.style.top = '30%';
+            dbNode.innerHTML = '<span>🗄️</span><span>DB</span>';
+            serviceMap.appendChild(dbNode);
+            
+            // Cache node
+            const cacheNode = document.createElement('div');
+            cacheNode.className = 'service-node service-cache';
+            cacheNode.style.left = '80%';
+            cacheNode.style.top = '30%';
+            cacheNode.innerHTML = '<span>💾</span><span>Cache</span>';
+            serviceMap.appendChild(cacheNode);
+            
+            // Queue node
+            const queueNode = document.createElement('div');
+            queueNode.className = 'service-node service-queue';
+            queueNode.style.left = '20%';
+            queueNode.style.top = '70%';
+            queueNode.innerHTML = '<span>📬</span><span>Queue</span>';
+            serviceMap.appendChild(queueNode);
+            
+            // External API node
+            const extNode = document.createElement('div');
+            extNode.className = 'service-node service-external';
+            extNode.style.left = '80%';
+            extNode.style.top = '70%';
+            extNode.innerHTML = '<span>🌍</span><span>External</span>';
+            serviceMap.appendChild(extNode);
+            
+            // Add connection lines
+            const connections = [
+                {from: mainNode, to: dbNode},
+                {from: mainNode, to: cacheNode},
+                {from: mainNode, to: queueNode},
+                {from: mainNode, to: extNode}
+            ];
+            
+            connections.forEach(conn => {
+                const line = document.createElement('div');
+                line.className = 'service-line active';
+                // Calculate line position and angle
+                serviceMap.appendChild(line);
+            });
+        }
+
+        // Initialize trace timeline
+        function initializeTraceTimeline() {
+            const timeline = document.getElementById('traceTimeline');
+            timeline.innerHTML = '';
+            
+            let totalTime = 0;
+            sampleTraces.forEach(trace => {
+                const item = document.createElement('div');
+                item.className = 'trace-item';
+                
+                const startTime = totalTime;
+                totalTime += trace.duration;
+                
+                item.innerHTML = `
+                    <div class="trace-time">${startTime}ms</div>
+                    <div class="trace-bar ${trace.type}" style="width: ${Math.min(trace.duration / 10, 100)}%">
+                        <span>${trace.service}: ${trace.operation}</span>
+                        <span class="trace-duration">${trace.duration}ms</span>
+                    </div>
+                `;
+                timeline.appendChild(item);
+            });
+        }
+
+        // Initialize error list
+        function initializeErrors() {
+            const errorList = document.getElementById('errorList');
+            errorList.innerHTML = '';
+            
+            sampleErrors.forEach(error => {
+                const item = document.createElement('div');
+                item.className = 'error-item';
+                item.innerHTML = `
+                    <div class="error-message">${error.message}</div>
+                    <div class="error-stack">${error.stack}</div>
+                    <div class="error-meta">
+                        <span>🔢 ${error.count}회 발생</span>
+                        <span>🕒 ${error.lastOccurred}</span>
+                        <span>⚠️ ${error.severity}</span>
+                    </div>
+                `;
+                errorList.appendChild(item);
+            });
+        }
+
+        // Initialize thread pool
+        function initializeThreadPool() {
+            const pool = document.getElementById('threadPool');
+            pool.innerHTML = '';
+            
+            const states = ['active', 'waiting', 'blocked', 'idle'];
+            const distribution = [30, 20, 5, 45];
+            
+            for (let i = 0; i < 32; i++) {
+                const thread = document.createElement('div');
+                const random = Math.random() * 100;
+                let cumulative = 0;
+                let state = 'idle';
+                
+                for (let j = 0; j < states.length; j++) {
+                    cumulative += distribution[j];
+                    if (random < cumulative) {
+                        state = states[j];
+                        break;
+                    }
+                }
+                
+                thread.className = `thread ${state}`;
+                thread.title = `Thread #${i + 1} - ${state}`;
+                pool.appendChild(thread);
+            }
+        }
+
+        // Initialize performance chart
+        function initializePerformanceChart() {
+            const ctx = document.getElementById('performanceChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [{
+                        label: '응답 시간 (ms)',
+                        data: [234, 256, 289, 312, 345, 298, 267],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: '처리량 (rpm)',
+                        data: [7500, 8200, 8900, 9200, 8400, 7800, 7200],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }, {
+                        label: '에러율 (%)',
+                        data: [1.2, 1.5, 2.1, 2.8, 3.2, 2.3, 1.8],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'y2'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: '응답 시간 (ms)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: '처리량 (rpm)'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        },
+                        y2: {
+                            type: 'linear',
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize GC chart
+        function initializeGCChart() {
+            const ctx = document.getElementById('gcChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['10분', '20분', '30분', '40분', '50분', '60분'],
+                    datasets: [{
+                        label: 'GC 일시정지 시간',
+                        data: [123, 234, 189, 456, 234, 145],
+                        backgroundColor: '#3b82f6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '시간 (ms)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Real-time updates
+        function startRealTimeUpdates() {
+            setInterval(() => {
+                // Update response time
+                const avgResponse = document.getElementById('avgResponseTime');
+                avgResponse.innerHTML = Math.floor(200 + Math.random() * 100) + '<span style="font-size: 16px;">ms</span>';
+                
+                // Update throughput
+                const throughput = document.getElementById('throughput');
+                const tValue = (7 + Math.random() * 3).toFixed(1);
+                throughput.innerHTML = tValue + 'K<span style="font-size: 16px;">rpm</span>';
+                
+                // Update error rate
+                const errorRate = document.getElementById('errorRate');
+                const eValue = (1 + Math.random() * 3).toFixed(1);
+                errorRate.innerHTML = eValue + '<span style="font-size: 16px;">%</span>';
+                
+                // Update CPU
+                const cpu = document.getElementById('cpuUsage');
+                cpu.innerHTML = Math.floor(50 + Math.random() * 40) + '<span style="font-size: 16px;">%</span>';
+                
+                // Update memory
+                const mem = document.getElementById('memUsage');
+                const memValue = (3 + Math.random() * 3).toFixed(1);
+                mem.innerHTML = memValue + '<span style="font-size: 16px;">GB</span>';
+                
+                // Update active users
+                const users = document.getElementById('activeUsers');
+                users.textContent = Math.floor(1000 + Math.random() * 500).toLocaleString();
+            }, 3000);
+        }
+
+        // Global state
+        let currentFilter = 'all';
+        let isProfilingActive = false;
+        let gcStats = { minor: 142, major: 8, avgPause: 245 };
+
+        // API 엔드포인트 필터링 기능
+        function filterEndpoints() {
+            const modal = createModal('엔드포인트 필터', `
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">응답 시간 필터</label>
+                    <select id="responseTimeFilter" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="all">모든 응답 시간</option>
+                        <option value="fast">빠름 (< 100ms)</option>
+                        <option value="medium">보통 (100-500ms)</option>
+                        <option value="slow">느림 (> 500ms)</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">HTTP 메서드</label>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <label><input type="checkbox" checked> GET</label>
+                        <label><input type="checkbox" checked> POST</label>
+                        <label><input type="checkbox" checked> PUT</label>
+                        <label><input type="checkbox" checked> DELETE</label>
+                    </div>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">에러율 임계값</label>
+                    <input type="range" id="errorThreshold" min="0" max="10" value="2" step="0.1" style="width: 100%;">
+                    <span id="errorValue">2.0%</span>
+                </div>
+            `, () => {
+                applyEndpointFilter();
+                closeModal();
+            });
+            
+            // 실시간 업데이트
+            document.getElementById('errorThreshold').addEventListener('input', (e) => {
+                document.getElementById('errorValue').textContent = e.target.value + '%';
+            });
+        }
+
+        function applyEndpointFilter() {
+            const endpointItems = document.querySelectorAll('.endpoint-item');
+            endpointItems.forEach(item => {
+                // 필터 로직 구현
+                item.style.display = 'flex'; // 필터 조건에 따라 표시/숨김
+            });
+            addDebugLog('✅ 엔드포인트 필터가 적용되었습니다');
+        }
+
+        function refreshEndpoints() {
+            addDebugLog('🔄 엔드포인트 데이터를 새로고침 중...');
+            // API 호출 시뮬레이션
+            setTimeout(() => {
+                initializeEndpoints();
+                addDebugLog('✅ 엔드포인트 데이터가 업데이트되었습니다');
+            }, 1000);
+        }
+
+        // 서비스 의존성 분석
+        function analyzeDependencies() {
+            const modal = createModal('서비스 의존성 분석 결과', `
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #ef4444; margin-bottom: 10px;">🚨 발견된 문제점</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding: 8px; background: #fef2f2; border-left: 4px solid #ef4444; margin-bottom: 8px; border-radius: 4px;">
+                            <strong>단일 장애점:</strong> 메인 API가 모든 서비스에 의존
+                        </li>
+                        <li style="padding: 8px; background: #fef2f2; border-left: 4px solid #ef4444; margin-bottom: 8px; border-radius: 4px;">
+                            <strong>높은 결합도:</strong> 데이터베이스 연결이 과도함
+                        </li>
+                    </ul>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #10b981; margin-bottom: 10px;">✅ 최적화 제안</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding: 8px; background: #f0fdf4; border-left: 4px solid #10b981; margin-bottom: 8px; border-radius: 4px;">
+                            캐시 레이어를 통한 DB 부하 분산
+                        </li>
+                        <li style="padding: 8px; background: #f0fdf4; border-left: 4px solid #10b981; margin-bottom: 8px; border-radius: 4px;">
+                            서킷 브레이커 패턴 도입
+                        </li>
+                        <li style="padding: 8px; background: #f0fdf4; border-left: 4px solid #10b981; margin-bottom: 8px; border-radius: 4px;">
+                            마이크로서비스 분리 고려
+                        </li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: #3b82f6; margin-bottom: 10px;">📊 의존성 메트릭</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                        <div style="text-align: center; padding: 10px; background: #f0f9ff; border-radius: 6px;">
+                            <div style="font-size: 24px; font-weight: bold; color: #1e40af;">97%</div>
+                            <div style="font-size: 12px; color: #3730a3;">서비스 가용성</div>
+                        </div>
+                        <div style="text-align: center; padding: 10px; background: #f0f9ff; border-radius: 6px;">
+                            <div style="font-size: 24px; font-weight: bold; color: #1e40af;">245ms</div>
+                            <div style="font-size: 12px; color: #3730a3;">평균 지연시간</div>
+                        </div>
+                    </div>
+                </div>
+            `);
+            addDebugLog('🗺️ 서비스 의존성 분석을 완료했습니다');
+        }
+
+        // 트레이스 필터링
+        function filterTraces(filter) {
+            currentFilter = filter;
+            const timeline = document.getElementById('traceTimeline');
+            const items = timeline.querySelectorAll('.trace-item');
+            
+            items.forEach(item => {
+                const bar = item.querySelector('.trace-bar');
+                const duration = parseInt(bar.textContent.match(/(\d+)ms/)?.[1] || 0);
+                
+                let show = true;
+                switch(filter) {
+                    case 'slow':
+                        show = duration > 200;
+                        break;
+                    case 'error':
+                        show = bar.classList.contains('error') || Math.random() < 0.2;
+                        break;
+                    case 'all':
+                    default:
+                        show = true;
+                }
+                
+                item.style.display = show ? 'flex' : 'none';
+            });
+            
+            addDebugLog(`🔍 ${filter} 트레이스로 필터링되었습니다`);
+        }
+
+        // 트레이스 상세 분석
+        function analyzeTrace() {
+            const modal = createModal('트레이스 상세 분석', `
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 10px;">🔍 트레이스 ID: trace-${Date.now()}</h4>
+                    <div style="background: #f9fafb; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
+                            <div>
+                                <div style="font-size: 20px; font-weight: bold; color: #1f2937;">1,247ms</div>
+                                <div style="font-size: 12px; color: #6b7280;">총 실행 시간</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 20px; font-weight: bold; color: #ef4444;">3</div>
+                                <div style="font-size: 12px; color: #6b7280;">에러 발생</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 20px; font-weight: bold; color: #3b82f6;">7</div>
+                                <div style="font-size: 12px; color: #6b7280;">서비스 호출</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 10px;">⚡ 병목 구간 분석</h4>
+                    <div style="background: #fef3c7; padding: 12px; border-radius: 6px; border-left: 4px solid #f59e0b;">
+                        <strong>데이터베이스 쿼리 (892ms)</strong> - 전체 시간의 71.5% 차지
+                        <br><span style="font-size: 12px; color: #92400e;">최적화 권장: 인덱스 추가 또는 쿼리 튜닝</span>
+                    </div>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 10px;">🔧 최적화 제안</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding: 6px 0; border-bottom: 1px solid #e5e7eb;">
+                            💾 캐시 레이어 추가로 DB 호출 50% 감소 예상
+                        </li>
+                        <li style="padding: 6px 0; border-bottom: 1px solid #e5e7eb;">
+                            🔄 비동기 처리로 응답 시간 30% 단축 가능
+                        </li>
+                        <li style="padding: 6px 0;">
+                            📊 배치 처리로 API 호출 횟수 감소
+                        </li>
+                    </ul>
+                </div>
+            `);
+            addDebugLog('🔍 트레이스 상세 분석이 완료되었습니다');
+        }
+
+        // 에러 로그 내보내기
+        function exportErrors() {
+            addDebugLog('📥 에러 로그를 내보내는 중...');
+            
+            const errors = sampleErrors.map(error => ({
+                timestamp: new Date().toISOString(),
+                message: error.message,
+                stack: error.stack,
+                count: error.count,
+                severity: error.severity
+            }));
+            
+            const csv = [
+                'Timestamp,Message,Stack,Count,Severity',
+                ...errors.map(e => `"${e.timestamp}","${e.message}","${e.stack.replace(/"/g, '""')}",${e.count},${e.severity}`)
+            ].join('\n');
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `application-errors-${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            addDebugLog('✅ 에러 로그가 CSV 파일로 다운로드되었습니다');
+        }
+
+        // 리소스 최적화 제안
+        function optimizeResources() {
+            const modal = createModal('리소스 최적화 제안', `
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #ef4444; margin-bottom: 10px;">🚨 현재 리소스 상태</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                        <div style="padding: 10px; background: #fef2f2; border-radius: 6px;">
+                            <div style="font-weight: bold;">CPU: 68%</div>
+                            <div style="font-size: 12px; color: #991b1b;">높음 - 최적화 필요</div>
+                        </div>
+                        <div style="padding: 10px; background: #f0fdf4; border-radius: 6px;">
+                            <div style="font-weight: bold;">메모리: 4.2GB</div>
+                            <div style="font-size: 12px; color: #166534;">정상 - 안정적</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #3b82f6; margin-bottom: 10px;">💡 최적화 권장사항</h4>
+                    <div style="space-y: 10px;">
+                        <div style="padding: 12px; background: #f0f9ff; border-radius: 6px; border-left: 4px solid #3b82f6; margin-bottom: 10px;">
+                            <strong>1. 스레드 풀 조정</strong>
+                            <br><span style="font-size: 12px;">현재 32 → 권장 24 (25% 감소)</span>
+                            <br><span style="font-size: 12px; color: #1e40af;">예상 CPU 절약: 15-20%</span>
+                        </div>
+                        <div style="padding: 12px; background: #f0f9ff; border-radius: 6px; border-left: 4px solid #3b82f6; margin-bottom: 10px;">
+                            <strong>2. GC 튜닝</strong>
+                            <br><span style="font-size: 12px;">G1GC → ZGC 변경 권장</span>
+                            <br><span style="font-size: 12px; color: #1e40af;">예상 일시정지 시간 90% 감소</span>
+                        </div>
+                        <div style="padding: 12px; background: #f0f9ff; border-radius: 6px; border-left: 4px solid #3b82f6;">
+                            <strong>3. 캐시 최적화</strong>
+                            <br><span style="font-size: 12px;">Redis 클러스터 확장</span>
+                            <br><span style="font-size: 12px; color: #1e40af;">예상 DB 부하 40% 감소</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <button onclick="applyOptimizations()" style="width: 100%; background: #10b981; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer;">
+                        최적화 적용하기
+                    </button>
+                </div>
+            `);
+            addDebugLog('💡 리소스 최적화 제안을 생성했습니다');
+        }
+
+        function applyOptimizations() {
+            addDebugLog('⚡ 최적화를 적용하는 중...');
+            closeModal();
+            setTimeout(() => {
+                // 메트릭 업데이트 시뮬레이션
+                document.getElementById('cpuUsage').innerHTML = '52<span style="font-size: 16px;">%</span>';
+                addDebugLog('✅ 최적화가 적용되었습니다. CPU 사용률이 68% → 52%로 감소했습니다');
+            }, 2000);
+        }
+
+        // 스레드 분석
+        function analyzeThreads() {
+            const modal = createModal('스레드 덤프 분석', `
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 10px;">🧵 스레드 풀 상태</h4>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center;">
+                        <div style="padding: 10px; background: #f0fdf4; border-radius: 6px;">
+                            <div style="font-size: 18px; font-weight: bold; color: #166534;">9</div>
+                            <div style="font-size: 11px;">활성</div>
+                        </div>
+                        <div style="padding: 10px; background: #fefce8; border-radius: 6px;">
+                            <div style="font-size: 18px; font-weight: bold; color: #a16207;">6</div>
+                            <div style="font-size: 11px;">대기</div>
+                        </div>
+                        <div style="padding: 10px; background: #fef2f2; border-radius: 6px;">
+                            <div style="font-size: 18px; font-weight: bold; color: #991b1b;">2</div>
+                            <div style="font-size: 11px;">차단</div>
+                        </div>
+                        <div style="padding: 10px; background: #f9fafb; border-radius: 6px;">
+                            <div style="font-size: 18px; font-weight: bold; color: #4b5563;">15</div>
+                            <div style="font-size: 11px;">유휴</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 10px;">⚠️ 문제점 발견</h4>
+                    <div style="background: #fef2f2; padding: 12px; border-radius: 6px; border-left: 4px solid #ef4444;">
+                        <strong>데드락 감지:</strong> Thread-12와 Thread-18 간 상호 잠금
+                        <br><span style="font-size: 12px; color: #991b1b;">해결 방법: 락 순서 통일 또는 타임아웃 설정</span>
+                    </div>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 10px;">📊 스레드 사용 패턴</h4>
+                    <div style="font-family: monospace; font-size: 12px; background: #f9fafb; padding: 10px; border-radius: 4px; max-height: 150px; overflow-y: auto;">
+                        Thread-1: HTTP-Request-Handler [RUNNABLE]<br>
+                        Thread-2: DB-Connection-Pool [WAITING]<br>
+                        Thread-3: Cache-Worker [RUNNABLE]<br>
+                        Thread-12: Order-Processor [BLOCKED] ← 데드락<br>
+                        Thread-18: Payment-Handler [BLOCKED] ← 데드락<br>
+                        ...
+                    </div>
+                </div>
+            `);
+            addDebugLog('🧵 스레드 덤프 분석을 완료했습니다');
+        }
+
+        // 강제 GC
+        function forceGC() {
+            addDebugLog('♻️ 강제 가비지 컬렉션을 실행 중...');
+            
+            // GC 실행 시뮬레이션
+            setTimeout(() => {
+                gcStats.minor += 1;
+                gcStats.avgPause = Math.max(gcStats.avgPause - 10, 150);
+                
+                // 메모리 사용량 감소 시뮬레이션
+                const memUsage = document.getElementById('memUsage');
+                const currentMem = parseFloat(memUsage.textContent);
+                const newMem = Math.max(currentMem - 0.3, 3.0);
+                memUsage.innerHTML = newMem.toFixed(1) + '<span style="font-size: 16px;">GB</span>';
+                
+                // GC 통계 업데이트
+                const gcItems = document.querySelectorAll('.gc-value');
+                if (gcItems.length >= 3) {
+                    gcItems[0].textContent = gcStats.minor;
+                    gcItems[2].textContent = gcStats.avgPause + 'ms';
+                }
+                
+                addDebugLog(`✅ GC 완료 - 메모리: ${currentMem.toFixed(1)}GB → ${newMem.toFixed(1)}GB`);
+            }, 1500);
+        }
+
+        // 시간 범위 변경
+        function changeTimeRange(range) {
+            addDebugLog(`📊 차트 시간 범위를 ${range}로 변경 중...`);
+            
+            // 차트 데이터 업데이트 시뮬레이션
+            setTimeout(() => {
+                initializePerformanceChart();
+                addDebugLog(`✅ ${range} 데이터로 차트가 업데이트되었습니다`);
+            }, 1000);
+        }
+
+        // 메트릭 리포트 내보내기
+        function exportMetrics() {
+            addDebugLog('📊 성능 메트릭 리포트를 생성 중...');
+            
+            const report = {
+                timestamp: new Date().toISOString(),
+                period: '24시간',
+                metrics: {
+                    avgResponseTime: document.getElementById('avgResponseTime').textContent,
+                    throughput: document.getElementById('throughput').textContent,
+                    errorRate: document.getElementById('errorRate').textContent,
+                    cpuUsage: document.getElementById('cpuUsage').textContent,
+                    memUsage: document.getElementById('memUsage').textContent
+                },
+                recommendations: [
+                    'CPU 사용률 최적화 권장',
+                    '캐시 히트율 개선 필요',
+                    '데이터베이스 쿼리 튜닝 권장'
+                ]
+            };
+            
+            const json = JSON.stringify(report, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `application-metrics-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            addDebugLog('✅ 성능 메트릭 리포트가 JSON 파일로 다운로드되었습니다');
+        }
+
+        // 프로파일링 시작
+        function startProfiling() {
+            if (isProfilingActive) {
+                stopProfiling();
+                return;
+            }
+            
+            isProfilingActive = true;
+            addDebugLog('🎯 CPU 프로파일링을 시작합니다...');
+            
+            const button = document.querySelector('[onclick="startProfiling()"]');
+            button.textContent = '⏹️';
+            button.title = '프로파일링 중지';
+            
+            // 프로파일링 진행 시뮬레이션
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                addDebugLog(`📊 프로파일링 진행률: ${progress}%`);
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    showProfilingResults();
+                }
+            }, 500);
+        }
+
+        function stopProfiling() {
+            isProfilingActive = false;
+            const button = document.querySelector('[onclick="startProfiling()"]');
+            button.textContent = '🎯';
+            button.title = '프로파일링 시작';
+            addDebugLog('⏹️ 프로파일링이 중지되었습니다');
+        }
+
+        function showProfilingResults() {
+            stopProfiling();
+            const modal = createModal('CPU 프로파일링 결과', `
+                <div style="margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 10px;">🔥 핫스팟 메서드</h4>
+                    <div style="background: #f9fafb; border-radius: 6px; overflow: hidden;">
+                        <div style="display: flex; background: #f3f4f6; padding: 8px; font-weight: bold; font-size: 12px;">
+                            <div style="flex: 2;">메서드</div>
+                            <div style="flex: 1; text-align: center;">CPU %</div>
+                            <div style="flex: 1; text-align: center;">호출 수</div>
+                        </div>
+                        <div style="padding: 8px; border-bottom: 1px solid #e5e7eb; display: flex;">
+                            <div style="flex: 2; font-family: monospace; font-size: 11px;">OrderService.processOrder()</div>
+                            <div style="flex: 1; text-align: center; color: #ef4444; font-weight: bold;">23.4%</div>
+                            <div style="flex: 1; text-align: center;">1,247</div>
+                        </div>
+                        <div style="padding: 8px; border-bottom: 1px solid #e5e7eb; display: flex;">
+                            <div style="flex: 2; font-family: monospace; font-size: 11px;">DatabasePool.getConnection()</div>
+                            <div style="flex: 1; text-align: center; color: #f59e0b; font-weight: bold;">18.2%</div>
+                            <div style="flex: 1; text-align: center;">3,891</div>
+                        </div>
+                        <div style="padding: 8px; display: flex;">
+                            <div style="flex: 2; font-family: monospace; font-size: 11px;">JsonSerializer.serialize()</div>
+                            <div style="flex: 1; text-align: center; color: #10b981; font-weight: bold;">12.1%</div>
+                            <div style="flex: 1; text-align: center;">8,234</div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 10px;">💡 최적화 제안</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="padding: 8px; background: #f0f9ff; margin-bottom: 6px; border-radius: 4px; border-left: 3px solid #3b82f6;">
+                            OrderService.processOrder() 메서드 리팩토링 권장
+                        </li>
+                        <li style="padding: 8px; background: #f0f9ff; margin-bottom: 6px; border-radius: 4px; border-left: 3px solid #3b82f6;">
+                            DB 커넥션 풀 크기 조정 및 캐시 도입
+                        </li>
+                        <li style="padding: 8px; background: #f0f9ff; border-radius: 4px; border-left: 3px solid #3b82f6;">
+                            JSON 직렬화 라이브러리 최적화
+                        </li>
+                    </ul>
+                </div>
+            `);
+            addDebugLog('✅ CPU 프로파일링이 완료되었습니다');
+        }
+
+        // 힙 스냅샷 캡처
+        function captureSnapshot() {
+            addDebugLog('📸 힙 스냅샷을 캡처하는 중...');
+            
+            setTimeout(() => {
+                const modal = createModal('힙 스냅샷 분석', `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 10px;">📊 메모리 사용 현황</h4>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; text-align: center;">
+                            <div style="padding: 12px; background: #f0f9ff; border-radius: 6px;">
+                                <div style="font-size: 20px; font-weight: bold; color: #1e40af;">2.8GB</div>
+                                <div style="font-size: 11px; color: #3730a3;">힙 사용량</div>
+                            </div>
+                            <div style="padding: 12px; background: #f0fdf4; border-radius: 6px;">
+                                <div style="font-size: 20px; font-weight: bold; color: #166534;">1.4GB</div>
+                                <div style="font-size: 11px; color: #14532d;">사용 가능</div>
+                            </div>
+                            <div style="padding: 12px; background: #fef3c7; border-radius: 6px;">
+                                <div style="font-size: 20px; font-weight: bold; color: #a16207;">24,891</div>
+                                <div style="font-size: 11px; color: #92400e;">객체 수</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 10px;">🔍 메모리 누수 의심 객체</h4>
+                        <div style="background: #fef2f2; padding: 12px; border-radius: 6px; border-left: 4px solid #ef4444;">
+                            <div style="font-weight: bold; margin-bottom: 8px;">HashMap$Node (1.2GB, 45%)</div>
+                            <div style="font-size: 12px; color: #991b1b;">
+                                캐시 객체가 해제되지 않음 - TTL 설정 권장
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 10px;">🏆 상위 메모리 소비 클래스</h4>
+                        <div style="font-family: monospace; font-size: 11px; background: #f9fafb; padding: 10px; border-radius: 4px;">
+                            HashMap$Node: 1.2GB (45.2%)<br>
+                            String: 387MB (14.6%)<br>
+                            OrderObject: 245MB (9.2%)<br>
+                            JsonNode: 156MB (5.9%)<br>
+                            ArrayList: 124MB (4.7%)
+                        </div>
+                    </div>
+                `);
+                
+                addDebugLog('✅ 힙 스냅샷 분석이 완료되었습니다');
+            }, 2000);
+        }
+
+        function openDashboard() {
+            window.location.href = '/';
+        }
+
+        function dismissAlert() {
+            const alertBanner = document.getElementById('alertBanner');
+            alertBanner.classList.remove('show');
+        }
+
+        // 유틸리티 함수들
+        function createModal(title, content, onConfirm = null) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+                background: rgba(0,0,0,0.5); z-index: 10000; 
+                display: flex; align-items: center; justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 12px; padding: 25px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f3f4f6; padding-bottom: 15px;">
+                        <h3 style="margin: 0; font-size: 18px; font-weight: 600;">${title}</h3>
+                        <button onclick="closeModal()" style="border: none; background: none; font-size: 24px; cursor: pointer; color: #6b7280;">&times;</button>
+                    </div>
+                    <div>${content}</div>
+                    ${onConfirm ? `
+                        <div style="margin-top: 20px; text-align: right;">
+                            <button onclick="closeModal()" style="margin-right: 10px; padding: 8px 16px; border: 1px solid #d1d5db; background: white; border-radius: 6px; cursor: pointer;">취소</button>
+                            <button onclick="(${onConfirm})()" style="padding: 8px 16px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer;">적용</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            window.currentModal = modal;
+            return modal;
+        }
+
+        function closeModal() {
+            if (window.currentModal) {
+                document.body.removeChild(window.currentModal);
+                window.currentModal = null;
+            }
+        }
+
+        function addDebugLog(message) {
+            console.log(`[APM] ${message}`);
+            
+            // 디버그 패널이 있다면 추가
+            const debugPanel = document.getElementById('debugPanel');
+            if (debugPanel) {
+                const logEntry = document.createElement('div');
+                logEntry.style.cssText = 'padding: 4px 8px; border-bottom: 1px solid #e5e7eb; font-size: 12px; font-family: monospace;';
+                logEntry.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+                debugPanel.appendChild(logEntry);
+                debugPanel.scrollTop = debugPanel.scrollHeight;
+            }
+        }
+
+        // Initialize everything on load
+        window.addEventListener('load', () => {
+            initializeEndpoints();
+            initializeServiceMap();
+            initializeTraceTimeline();
+            initializeErrors();
+            initializeThreadPool();
+            initializePerformanceChart();
+            initializeGCChart();
+            startRealTimeUpdates();
+            
+            // Show alert after 5 seconds
+            setTimeout(() => {
+                const alertBanner = document.getElementById('alertBanner');
+                alertBanner.classList.add('show');
+                setTimeout(() => {
+                    alertBanner.classList.remove('show');
+                }, 5000);
+            }, 5000);
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'r':
+                        e.preventDefault();
+                        refreshEndpoints();
+                        break;
+                    case 'p':
+                        e.preventDefault();
+                        startProfiling();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        captureSnapshot();
+                        break;
+                }
+            }
+        });
+    </script>
+        </div>
+    </div>
+</body>
+</html>

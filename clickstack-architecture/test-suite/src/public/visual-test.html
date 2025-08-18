@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시각적 요소 테스트 페이지</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .emoji-test {
+            font-size: 2em;
+            margin: 10px 0;
+        }
+        .svg-test {
+            width: 100px;
+            height: 100px;
+            background: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"%3E%3Crect width="20" height="20" fill="%23f8f9fa"/%3E%3Crect width="10" height="10" fill="%23e9ecef"/%3E%3Crect x="10" y="10" width="10" height="10" fill="%23e9ecef"/%3E%3C/svg%3E');
+            border: 2px solid #ddd;
+            display: inline-block;
+        }
+        .gradient-test {
+            width: 200px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: inline-block;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 시각적 요소 테스트</h1>
+    
+    <div class="test-section">
+        <h2>이모지 테스트</h2>
+        <div class="emoji-test">
+            🎬 📊 🐛 🚨 ⚡ 🔐 👆 📋 💰 👥 🌐 🔄 ❌ ✅
+        </div>
+        <p>위 이모지들이 모두 올바르게 표시되는지 확인하세요.</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>SVG 배경 패턴 테스트</h2>
+        <div class="svg-test"></div>
+        <p>체크 패턴이 표시되는 사각형이 보이는지 확인하세요.</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>CSS 그라디언트 테스트</h2>
+        <div class="gradient-test"></div>
+        <p>파란색에서 보라색으로 변하는 그라디언트가 보이는지 확인하세요.</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>파비콘 테스트</h2>
+        <p>브라우저 탭에 아이콘이 표시되는지 확인하세요.</p>
+        <img src="/favicon.svg" alt="Favicon" width="32" height="32">
+    </div>
+    
+    <div class="test-section">
+        <h2>네비게이션</h2>
+        <p>
+            <a href="/">메인 페이지</a> |
+            <a href="/session-replay-scenarios">세션 시나리오</a> |
+            <a href="/session-replay-player">세션 플레이어</a>
+        </p>
+    </div>
+</body>
+</html>

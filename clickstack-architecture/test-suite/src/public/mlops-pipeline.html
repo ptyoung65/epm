@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLOps 파이프라인 - AIRIS-MON</title>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    
+    <!-- Common Layout -->
+    <script src="components/common-layout.js"></script>
+    
+    <style>
+        .mlops-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .mlops-section {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .mlops-section-header {
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+            color: white;
+            padding: 20px 24px;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mlops-section-content {
+            padding: 24px;
+        }
+
+        .pipeline-stage {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .pipeline-stage:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        .pipeline-stage.running {
+            border-color: #10b981;
+            background-color: #ecfdf5;
+        }
+
+        .pipeline-stage.failed {
+            border-color: #ef4444;
+            background-color: #fef2f2;
+        }
+
+        .pipeline-stage.completed {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+
+        .stage-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .stage-icon.running {
+            background: #10b981;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .stage-icon.failed {
+            background: #ef4444;
+            color: white;
+        }
+
+        .stage-icon.completed {
+            background: #10b981;
+            color: white;
+        }
+
+        .stage-icon.pending {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .stage-info {
+            flex: 1;
+        }
+
+        .stage-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+
+        .stage-details {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .stage-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .status-running {
+            background: #ecfdf5;
+            color: #10b981;
+        }
+
+        .status-completed {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .status-failed {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .status-pending {
+            background: #f8fafc;
+            color: #64748b;
+        }
+
+        .model-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+        }
+
+        .model-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+
+        .model-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .model-name {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .model-version {
+            background: #f1f5f9;
+            color: #475569;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .model-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .metric-item {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .prediction-chart {
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        .alert-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .alert-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #ef4444;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 12px;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 500;
+            color: #991b1b;
+            margin-bottom: 2px;
+        }
+
+        .alert-message {
+            font-size: 14px;
+            color: #7f1d1d;
+        }
+
+        .experiment-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .experiment-item {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .experiment-item:last-child {
+            border-bottom: none;
+        }
+
+        .experiment-info {
+            flex: 1;
+        }
+
+        .experiment-name {
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .experiment-date {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .experiment-score {
+            font-weight: 600;
+            color: #10b981;
+        }
+
+        .realtime-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #10b981;
+        }
+
+        .realtime-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .pipeline-flow {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            overflow-x: auto;
+            padding: 10px;
+        }
+
+        .flow-step {
+            min-width: 120px;
+            text-align: center;
+            position: relative;
+        }
+
+        .flow-step:not(:last-child)::after {
+            content: '→';
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            color: #94a3b8;
+        }
+
+        .flow-step-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin: 0 auto 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .flow-step-label {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .deployment-status {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .deployment-status h3 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+        }
+
+        .deployment-status p {
+            margin: 0;
+            opacity: 0.9;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: #2563eb;
+            border-bottom-color: #2563eb;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="airis-content-wrapper">
+        <!-- 메인 컨텐츠 영역 -->
+        <div class="mlops-grid">
+            <!-- 파이프라인 상태 -->
+            <div class="mlops-section">
+                <div class="mlops-section-header">
+                    <span>🚀 ML 파이프라인 상태</span>
+                    <div class="realtime-indicator">
+                        <div class="realtime-dot"></div>
+                        실시간 모니터링
+                    </div>
+                </div>
+                <div class="mlops-section-content">
+                    <div class="pipeline-flow">
+                        <div class="flow-step">
+                            <div class="flow-step-icon" style="background: #10b981; color: white;">📊</div>
+                            <div class="flow-step-label">데이터 수집</div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="flow-step-icon" style="background: #10b981; color: white;">🔄</div>
+                            <div class="flow-step-label">전처리</div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="flow-step-icon" style="background: #f59e0b; color: white;">🧠</div>
+                            <div class="flow-step-label">모델 훈련</div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="flow-step-icon" style="background: #f1f5f9; color: #64748b;">✅</div>
+                            <div class="flow-step-label">검증</div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="flow-step-icon" style="background: #f1f5f9; color: #64748b;">🚀</div>
+                            <div class="flow-step-label">배포</div>
+                        </div>
+                    </div>
+
+                    <div class="pipeline-stage running">
+                        <div class="stage-icon running">🧠</div>
+                        <div class="stage-info">
+                            <div class="stage-name">모델 훈련 진행 중</div>
+                            <div class="stage-details">이상 탐지 모델 v2.1 - Epoch 47/100</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 47%"></div>
+                            </div>
+                        </div>
+                        <div class="stage-status status-running">실행 중</div>
+                    </div>
+
+                    <div class="pipeline-stage completed">
+                        <div class="stage-icon completed">✅</div>
+                        <div class="stage-info">
+                            <div class="stage-name">데이터 전처리 완료</div>
+                            <div class="stage-details">2.3M 레코드 처리 완료 - 5분 전</div>
+                        </div>
+                        <div class="stage-status status-completed">완료</div>
+                    </div>
+
+                    <div class="pipeline-stage pending">
+                        <div class="stage-icon pending">⏳</div>
+                        <div class="stage-info">
+                            <div class="stage-name">모델 검증 대기</div>
+                            <div class="stage-details">훈련 완료 후 자동 시작</div>
+                        </div>
+                        <div class="stage-status status-pending">대기 중</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 실시간 예측 분석 -->
+            <div class="mlops-section">
+                <div class="mlops-section-header">
+                    <span>📈 실시간 예측 분석</span>
+                    <button class="btn btn-secondary" onclick="refreshPredictions()">새로고침</button>
+                </div>
+                <div class="mlops-section-content">
+                    <div class="tabs">
+                        <button class="tab active" onclick="showTab('predictions')">시스템 예측</button>
+                        <button class="tab" onclick="showTab('anomalies')">이상 탐지</button>
+                        <button class="tab" onclick="showTab('trends')">트렌드 분석</button>
+                    </div>
+
+                    <div id="predictions" class="tab-content active">
+                        <canvas id="predictionsChart" class="prediction-chart"></canvas>
+                        <div class="model-metrics">
+                            <div class="metric-item">
+                                <div class="metric-value">94.2%</div>
+                                <div class="metric-label">정확도</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-value">2.3ms</div>
+                                <div class="metric-label">예측 시간</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-value">847</div>
+                                <div class="metric-label">일일 예측</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="anomalies" class="tab-content">
+                        <canvas id="anomalyChart" class="prediction-chart"></canvas>
+                        <div class="alert-item">
+                            <div class="alert-icon">!</div>
+                            <div class="alert-content">
+                                <div class="alert-title">CPU 사용률 이상 감지</div>
+                                <div class="alert-message">서버 노드 3에서 예상보다 높은 CPU 사용률 감지됨</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="trends" class="tab-content">
+                        <canvas id="trendChart" class="prediction-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mlops-grid">
+            <!-- 모델 관리 -->
+            <div class="mlops-section">
+                <div class="mlops-section-header">
+                    <span>🤖 모델 레지스트리</span>
+                    <button class="btn btn-primary" onclick="deployModel()">새 모델 배포</button>
+                </div>
+                <div class="mlops-section-content">
+                    <div class="model-card">
+                        <div class="model-header">
+                            <div class="model-name">이상 탐지 모델</div>
+                            <div class="model-version">v2.0</div>
+                        </div>
+                        <div class="deployment-status">
+                            <h3>운영 환경 배포 중</h3>
+                            <p>마지막 업데이트: 2시간 전</p>
+                        </div>
+                        <div class="model-metrics">
+                            <div class="metric-item">
+                                <div class="metric-value">96.8%</div>
+                                <div class="metric-label">정밀도</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-value">94.2%</div>
+                                <div class="metric-label">재현율</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-value">95.5%</div>
+                                <div class="metric-label">F1 점수</div>
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary">성능 분석</button>
+                            <button class="btn btn-secondary">버전 비교</button>
+                            <button class="btn btn-danger">롤백</button>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header">
+                            <div class="model-name">시계열 예측 모델</div>
+                            <div class="model-version">v1.3</div>
+                        </div>
+                        <div style="background: #f8fafc; padding: 12px; border-radius: 6px; text-align: center; color: #64748b;">
+                            개발 환경에서 테스트 중
+                        </div>
+                        <div class="model-metrics">
+                            <div class="metric-item">
+                                <div class="metric-value">87.3%</div>
+                                <div class="metric-label">정확도</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-value">12.4</div>
+                                <div class="metric-label">MAE</div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="metric-value">0.89</div>
+                                <div class="metric-label">R²</div>
+                            </div>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary">운영 배포</button>
+                            <button class="btn btn-secondary">A/B 테스트</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 실험 추적 -->
+            <div class="mlops-section">
+                <div class="mlops-section-header">
+                    <span>🔬 실험 추적</span>
+                    <button class="btn btn-primary" onclick="createExperiment()">새 실험</button>
+                </div>
+                <div class="mlops-section-content">
+                    <div class="experiment-list" id="experimentList">
+                        <div class="experiment-item">
+                            <div class="experiment-info">
+                                <div class="experiment-name">LSTM + Attention 모델</div>
+                                <div class="experiment-date">2024-01-15 14:30</div>
+                            </div>
+                            <div class="experiment-score">94.7%</div>
+                        </div>
+                        <div class="experiment-item">
+                            <div class="experiment-info">
+                                <div class="experiment-name">Transformer 기반 예측</div>
+                                <div class="experiment-date">2024-01-15 10:15</div>
+                            </div>
+                            <div class="experiment-score">92.3%</div>
+                        </div>
+                        <div class="experiment-item">
+                            <div class="experiment-info">
+                                <div class="experiment-name">CNN + BiLSTM 하이브리드</div>
+                                <div class="experiment-date">2024-01-14 16:45</div>
+                            </div>
+                            <div class="experiment-score">89.8%</div>
+                        </div>
+                        <div class="experiment-item">
+                            <div class="experiment-info">
+                                <div class="experiment-name">Random Forest 앙상블</div>
+                                <div class="experiment-date">2024-01-14 09:20</div>
+                            </div>
+                            <div class="experiment-score">87.1%</div>
+                        </div>
+                        <div class="experiment-item">
+                            <div class="experiment-info">
+                                <div class="experiment-name">XGBoost 최적화</div>
+                                <div class="experiment-date">2024-01-13 15:30</div>
+                            </div>
+                            <div class="experiment-score">85.9%</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <h4 style="margin-bottom: 12px; color: #1e293b;">하이퍼파라미터 최적화</h4>
+                        <div style="background: #f8fafc; padding: 16px; border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>학습률 최적화</span>
+                                <span>진행률: 73%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 73%"></div>
+                            </div>
+                            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
+                                최적 학습률: 0.0023 (현재 최고 성능)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mlops-grid">
+            <!-- 성능 모니터링 -->
+            <div class="mlops-section">
+                <div class="mlops-section-header">
+                    <span>📊 성능 모니터링</span>
+                    <div class="realtime-indicator">
+                        <div class="realtime-dot"></div>
+                        실시간 갱신
+                    </div>
+                </div>
+                <div class="mlops-section-content">
+                    <canvas id="performanceChart" class="prediction-chart"></canvas>
+                    
+                    <div class="model-metrics">
+                        <div class="metric-item">
+                            <div class="metric-value">1,247</div>
+                            <div class="metric-label">시간당 예측</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">99.9%</div>
+                            <div class="metric-label">가용성</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">4.2ms</div>
+                            <div class="metric-label">평균 지연시간</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-value">0.03%</div>
+                            <div class="metric-label">드리프트율</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 데이터 파이프라인 -->
+            <div class="mlops-section">
+                <div class="mlops-section-header">
+                    <span>🔄 데이터 파이프라인</span>
+                    <button class="btn btn-secondary" onclick="refreshPipeline()">파이프라인 새로고침</button>
+                </div>
+                <div class="mlops-section-content">
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 12px; color: #1e293b;">데이터 수집 상태</h4>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                            <div style="background: #ecfdf5; padding: 12px; border-radius: 6px; border: 1px solid #d1fae5;">
+                                <div style="font-weight: 600; color: #10b981;">AIRIS-MON 메트릭</div>
+                                <div style="font-size: 12px; color: #059669;">실시간 수집 중 - 342MB/시간</div>
+                            </div>
+                            <div style="background: #ecfdf5; padding: 12px; border-radius: 6px; border: 1px solid #d1fae5;">
+                                <div style="font-weight: 600; color: #10b981;">OpenTelemetry 추적</div>
+                                <div style="font-size: 12px; color: #059669;">정상 수집 중 - 1.2GB/시간</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 12px; color: #1e293b;">데이터 품질 점검</h4>
+                        <div class="pipeline-stage completed">
+                            <div class="stage-icon completed">✅</div>
+                            <div class="stage-info">
+                                <div class="stage-name">스키마 검증</div>
+                                <div class="stage-details">모든 필드 검증 통과 - 99.97% 품질 점수</div>
+                            </div>
+                            <div class="stage-status status-completed">통과</div>
+                        </div>
+
+                        <div class="pipeline-stage running">
+                            <div class="stage-icon running">🔍</div>
+                            <div class="stage-info">
+                                <div class="stage-name">이상값 탐지</div>
+                                <div class="stage-details">실시간 이상값 검사 진행 중</div>
+                            </div>
+                            <div class="stage-status status-running">진행 중</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 style="margin-bottom: 12px; color: #1e293b;">배치 작업 스케줄</h4>
+                        <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: 500;">모델 재훈련</span>
+                                <span style="color: #64748b;">매일 02:00</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: 500;">특성 엔지니어링</span>
+                                <span style="color: #64748b;">매시간 15분</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="font-weight: 500;">모델 평가</span>
+                                <span style="color: #64748b;">매주 일요일 01:00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let predictionsChart, anomalyChart, trendChart, performanceChart;
+        let wsConnection = null;
+
+        // 페이지 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            initializeWebSocket();
+            updateRealTimeData();
+            setInterval(updateRealTimeData, 5000); // 5초마다 업데이트
+        });
+
+        // WebSocket 연결 초기화
+        function initializeWebSocket() {
+            // 실제 환경에서는 WebSocket 서버 주소 사용
+            // wsConnection = new WebSocket('ws://localhost:8080/mlops');
+            
+            // 데모용 가상 연결
+            console.log('MLOps WebSocket 연결 시뮬레이션');
+        }
+
+        // 차트 초기화
+        function initializeCharts() {
+            // 예측 분석 차트
+            const predictionsCtx = document.getElementById('predictionsChart').getContext('2d');
+            predictionsChart = new Chart(predictionsCtx, {
+                type: 'line',
+                data: {
+                    labels: generateTimeLabels(24),
+                    datasets: [{
+                        label: '실제 값',
+                        data: generateRandomData(24, 70, 90),
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: '예측 값',
+                        data: generateRandomData(24, 75, 85),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderDash: [5, 5],
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                color: '#f1f5f9'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: '#f1f5f9'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 이상 탐지 차트
+            const anomalyCtx = document.getElementById('anomalyChart').getContext('2d');
+            anomalyChart = new Chart(anomalyCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: '정상 데이터',
+                        data: generateScatterData(100, false),
+                        backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                        borderColor: '#10b981'
+                    }, {
+                        label: '이상 데이터',
+                        data: generateScatterData(10, true),
+                        backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                        borderColor: '#ef4444'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: {
+                                color: '#f1f5f9'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: '#f1f5f9'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 트렌드 분석 차트
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            trendChart = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: generateTimeLabels(30),
+                    datasets: [{
+                        label: '시스템 성능 추세',
+                        data: generateTrendData(30),
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: {
+                                color: '#f1f5f9'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: '#f1f5f9'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 성능 모니터링 차트
+            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+            performanceChart = new Chart(performanceCtx, {
+                type: 'line',
+                data: {
+                    labels: generateTimeLabels(12),
+                    datasets: [{
+                        label: '처리량 (req/s)',
+                        data: generateRandomData(12, 800, 1200),
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        yAxisID: 'y'
+                    }, {
+                        label: '지연시간 (ms)',
+                        data: generateRandomData(12, 2, 8),
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            grid: {
+                                color: '#f1f5f9'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: '#f1f5f9'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 실시간 데이터 업데이트
+        function updateRealTimeData() {
+            // 진행률 업데이트
+            const progressBars = document.querySelectorAll('.progress-fill');
+            progressBars.forEach(bar => {
+                const currentWidth = parseInt(bar.style.width) || 0;
+                if (currentWidth < 100) {
+                    bar.style.width = (currentWidth + Math.random() * 2) + '%';
+                }
+            });
+
+            // 메트릭 업데이트 (랜덤 변화)
+            updateMetricValues();
+        }
+
+        // 메트릭 값 업데이트
+        function updateMetricValues() {
+            const metricElements = document.querySelectorAll('.metric-value');
+            metricElements.forEach(element => {
+                const currentValue = element.textContent;
+                if (currentValue.includes('%')) {
+                    const numValue = parseFloat(currentValue);
+                    const variation = (Math.random() - 0.5) * 0.2;
+                    const newValue = Math.max(0, Math.min(100, numValue + variation));
+                    element.textContent = newValue.toFixed(1) + '%';
+                } else if (currentValue.includes('ms')) {
+                    const numValue = parseFloat(currentValue);
+                    const variation = (Math.random() - 0.5) * 0.1;
+                    const newValue = Math.max(0.1, numValue + variation);
+                    element.textContent = newValue.toFixed(1) + 'ms';
+                }
+            });
+        }
+
+        // 탭 전환
+        function showTab(tabId) {
+            // 모든 탭 비활성화
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // 선택된 탭 활성화
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // 유틸리티 함수들
+        function generateTimeLabels(count) {
+            const labels = [];
+            const now = new Date();
+            for (let i = count - 1; i >= 0; i--) {
+                const time = new Date(now.getTime() - i * 60 * 60 * 1000);
+                labels.push(time.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }));
+            }
+            return labels;
+        }
+
+        function generateRandomData(count, min, max) {
+            const data = [];
+            for (let i = 0; i < count; i++) {
+                data.push(Math.random() * (max - min) + min);
+            }
+            return data;
+        }
+
+        function generateScatterData(count, isAnomaly) {
+            const data = [];
+            for (let i = 0; i < count; i++) {
+                if (isAnomaly) {
+                    data.push({
+                        x: Math.random() * 100,
+                        y: Math.random() * 30 + 70 // 이상값은 높은 값
+                    });
+                } else {
+                    data.push({
+                        x: Math.random() * 100,
+                        y: Math.random() * 60 + 10 // 정상값은 낮은 값
+                    });
+                }
+            }
+            return data;
+        }
+
+        function generateTrendData(count) {
+            const data = [];
+            let current = 50;
+            for (let i = 0; i < count; i++) {
+                current += (Math.random() - 0.5) * 10;
+                current = Math.max(10, Math.min(90, current));
+                data.push(current);
+            }
+            return data;
+        }
+
+        // 액션 함수들
+        function refreshPredictions() {
+            // 예측 데이터 새로고침
+            predictionsChart.data.datasets[0].data = generateRandomData(24, 70, 90);
+            predictionsChart.data.datasets[1].data = generateRandomData(24, 75, 85);
+            predictionsChart.update();
+        }
+
+        function deployModel() {
+            alert('새 모델 배포 프로세스를 시작합니다.');
+        }
+
+        function createExperiment() {
+            const experimentName = prompt('실험 이름을 입력하세요:');
+            if (experimentName) {
+                const experimentList = document.getElementById('experimentList');
+                const newExperiment = document.createElement('div');
+                newExperiment.className = 'experiment-item';
+                newExperiment.innerHTML = `
+                    <div class="experiment-info">
+                        <div class="experiment-name">${experimentName}</div>
+                        <div class="experiment-date">${new Date().toLocaleString('ko-KR')}</div>
+                    </div>
+                    <div class="experiment-score">실행 중...</div>
+                `;
+                experimentList.insertBefore(newExperiment, experimentList.firstChild);
+            }
+        }
+
+        function refreshPipeline() {
+            // 파이프라인 상태 새로고침
+            location.reload();
+        }
+    </script>
+</body>
+</html>

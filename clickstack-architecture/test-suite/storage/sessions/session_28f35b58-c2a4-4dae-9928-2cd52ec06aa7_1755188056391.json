@@ -1,0 +1,621 @@
+{
+  "id": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+  "scenario": "journey_complex",
+  "startTime": "2025-08-14T16:14:14.758Z",
+  "lastActivity": "2025-08-14T16:14:16.347Z",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+  "ipAddress": "::1",
+  "events": [
+    {
+      "id": "444a4274-cad2-42d1-bfc7-43ade0b11b67",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188054731,
+      "recordedAt": "2025-08-14T16:14:14.803Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188054731,
+        "page_url": "/",
+        "title": "home",
+        "referrer": null,
+        "load_time": 1116,
+        "duration": 2607
+      }
+    },
+    {
+      "id": "7081f2e6-24e7-4c52-bcf1-38d6f4d633c8",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188056776,
+      "recordedAt": "2025-08-14T16:14:14.852Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188056776,
+        "page_url": "/about",
+        "title": "about",
+        "referrer": "/",
+        "load_time": 2391,
+        "duration": 1078
+      }
+    },
+    {
+      "id": "0fbc10a4-5868-477a-a8ae-d67655628199",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188058824,
+      "recordedAt": "2025-08-14T16:14:14.900Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188058824,
+        "page_url": "/products",
+        "title": "products",
+        "referrer": "/about",
+        "load_time": 2192,
+        "duration": 1948
+      }
+    },
+    {
+      "id": "09f198c8-44d5-4436-8ba4-ab91fbc6a217",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188060872,
+      "recordedAt": "2025-08-14T16:14:14.947Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188060872,
+        "page_url": "/products/category/electronics",
+        "title": "electronics",
+        "referrer": "/products",
+        "load_time": 992,
+        "duration": 1435
+      }
+    },
+    {
+      "id": "78c75123-3c9a-4771-97ee-ce4435897c0b",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188061419,
+      "recordedAt": "2025-08-14T16:14:14.995Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188061419,
+        "page_url": "/products/category/electronics",
+        "target": {
+          "tagName": "button",
+          "text": "Action"
+        }
+      }
+    },
+    {
+      "id": "71ac92f8-7ce7-4fd0-aae7-70778df214b1",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188062968,
+      "recordedAt": "2025-08-14T16:14:15.047Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188062968,
+        "page_url": "/products/laptop",
+        "title": "laptop",
+        "referrer": "/products/category/electronics",
+        "load_time": 705,
+        "duration": 4253
+      }
+    },
+    {
+      "id": "6ddc62d0-edc9-4a55-9cf5-8a1620478081",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188065019,
+      "recordedAt": "2025-08-14T16:14:15.095Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188065019,
+        "page_url": "/products/laptop/compare",
+        "title": "compare",
+        "referrer": "/products/laptop",
+        "load_time": 1189,
+        "duration": 2349
+      }
+    },
+    {
+      "id": "ff17b4ef-53ec-4116-a22d-8cd8c51ab86c",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188065566,
+      "recordedAt": "2025-08-14T16:14:15.139Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188065566,
+        "page_url": "/products/laptop/compare",
+        "target": {
+          "tagName": "button",
+          "text": "Action"
+        }
+      }
+    },
+    {
+      "id": "44b4a3c0-34db-43a7-a367-0e82bb489daf",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188067110,
+      "recordedAt": "2025-08-14T16:14:15.184Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188067110,
+        "page_url": "/products/mouse",
+        "title": "mouse",
+        "referrer": "/products/laptop/compare",
+        "load_time": 801,
+        "duration": 2092
+      }
+    },
+    {
+      "id": "38b67637-0298-48b5-b59b-97453a6c0e53",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188067655,
+      "recordedAt": "2025-08-14T16:14:15.231Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188067655,
+        "page_url": "/products/mouse",
+        "target": {
+          "tagName": "button",
+          "text": "Action"
+        }
+      }
+    },
+    {
+      "id": "7e4c5507-0ca7-4086-81f8-852c7ff69ef6",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188069203,
+      "recordedAt": "2025-08-14T16:14:15.279Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188069203,
+        "page_url": "/blog",
+        "title": "blog",
+        "referrer": "/products/mouse",
+        "load_time": 504,
+        "duration": 1309
+      }
+    },
+    {
+      "id": "5168ccf1-e733-4abe-8e1e-7232b824d31f",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188071250,
+      "recordedAt": "2025-08-14T16:14:15.323Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188071250,
+        "page_url": "/blog/tech-tips",
+        "title": "tech-tips",
+        "referrer": "/blog",
+        "load_time": 522,
+        "duration": 5713
+      }
+    },
+    {
+      "id": "eb0f5568-40e6-4620-9955-f00bdc1b7352",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188071794,
+      "recordedAt": "2025-08-14T16:14:15.367Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188071794,
+        "page_url": "/blog/tech-tips",
+        "target": {
+          "tagName": "button",
+          "text": "Action"
+        }
+      }
+    },
+    {
+      "id": "9bca32a3-5a4a-48fd-a58a-761b5e52c8e6",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188073338,
+      "recordedAt": "2025-08-14T16:14:15.415Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188073338,
+        "page_url": "/support",
+        "title": "support",
+        "referrer": "/blog/tech-tips",
+        "load_time": 1915,
+        "duration": 4683
+      }
+    },
+    {
+      "id": "cf7df33c-d5c8-4983-b5de-f344cb0025d7",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188073885,
+      "recordedAt": "2025-08-14T16:14:15.459Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188073885,
+        "page_url": "/support",
+        "target": {
+          "tagName": "button",
+          "text": "Action"
+        }
+      }
+    },
+    {
+      "id": "bb97916e-be7c-411e-ad5f-84e9bc3fc668",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188075429,
+      "recordedAt": "2025-08-14T16:14:15.504Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188075429,
+        "page_url": "/support/contact",
+        "title": "contact",
+        "referrer": "/support",
+        "load_time": 2014,
+        "duration": 2392
+      }
+    },
+    {
+      "id": "f9373659-58fb-47b8-9dc8-2f4ae3ef137b",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188077474,
+      "recordedAt": "2025-08-14T16:14:15.552Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188077474,
+        "page_url": "/products",
+        "title": "products",
+        "referrer": "/support/contact",
+        "load_time": 1306,
+        "duration": 1691
+      }
+    },
+    {
+      "id": "958ab29a-f34c-4a21-9279-1dab0746e507",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188078022,
+      "recordedAt": "2025-08-14T16:14:15.599Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188078022,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "text": "Action"
+        }
+      }
+    },
+    {
+      "id": "8ae52843-9bc5-432c-b641-fe30cd12d6ea",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188079569,
+      "recordedAt": "2025-08-14T16:14:15.648Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188079569,
+        "page_url": "/products/keyboard",
+        "title": "keyboard",
+        "referrer": "/products",
+        "load_time": 1379,
+        "duration": 3364
+      }
+    },
+    {
+      "id": "28c7ae82-e289-4e58-a229-f48b7c0e4261",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188080117,
+      "recordedAt": "2025-08-14T16:14:15.691Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188080117,
+        "page_url": "/products/keyboard",
+        "target": {
+          "tagName": "button",
+          "text": "Action"
+        }
+      }
+    },
+    {
+      "id": "d439228c-37f0-4161-8345-3f6c0908e794",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188081660,
+      "recordedAt": "2025-08-14T16:14:15.739Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188081660,
+        "page_url": "/cart",
+        "title": "cart",
+        "referrer": "/products/keyboard",
+        "load_time": 1839,
+        "duration": 2101
+      }
+    },
+    {
+      "id": "82687978-75d1-4f74-9830-8b2af1bcffda",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188083708,
+      "recordedAt": "2025-08-14T16:14:15.783Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188083708,
+        "page_url": "/products/monitor",
+        "title": "monitor",
+        "referrer": "/cart",
+        "load_time": 1463,
+        "duration": 2414
+      }
+    },
+    {
+      "id": "71551e88-17f8-4e86-bfbc-160f43eb0a3e",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188085752,
+      "recordedAt": "2025-08-14T16:14:15.835Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188085752,
+        "page_url": "/cart",
+        "title": "cart",
+        "referrer": "/products/monitor",
+        "load_time": 882,
+        "duration": 5698
+      }
+    },
+    {
+      "id": "af742b3e-0d33-4938-a34b-7fa80126e50f",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188086304,
+      "recordedAt": "2025-08-14T16:14:15.883Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188086304,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "text": "Action"
+        }
+      }
+    },
+    {
+      "id": "805d3877-265a-49e9-9695-0c5d1bd6fd22",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188087852,
+      "recordedAt": "2025-08-14T16:14:15.931Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188087852,
+        "page_url": "/account/login",
+        "title": "login",
+        "referrer": "/cart",
+        "load_time": 1784,
+        "duration": 1023
+      }
+    },
+    {
+      "id": "ec33ffb2-1249-471d-9594-6fb15a163415",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188088399,
+      "recordedAt": "2025-08-14T16:14:15.975Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188088399,
+        "page_url": "/account/login",
+        "target": {
+          "tagName": "button",
+          "text": "Action"
+        }
+      }
+    },
+    {
+      "id": "70ed7567-e8b4-4589-b129-5b2aeed4b9e1",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188089943,
+      "recordedAt": "2025-08-14T16:14:16.019Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188089943,
+        "page_url": "/account/dashboard",
+        "title": "dashboard",
+        "referrer": "/account/login",
+        "load_time": 583,
+        "duration": 1786
+      }
+    },
+    {
+      "id": "34ab367f-401b-4bf2-baa7-a409be38892d",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188091987,
+      "recordedAt": "2025-08-14T16:14:16.063Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188091987,
+        "page_url": "/account/orders",
+        "title": "orders",
+        "referrer": "/account/dashboard",
+        "load_time": 1497,
+        "duration": 4648
+      }
+    },
+    {
+      "id": "d7f262ef-93c4-4177-9aba-1b855e472495",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188094031,
+      "recordedAt": "2025-08-14T16:14:16.111Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188094031,
+        "page_url": "/checkout",
+        "title": "checkout",
+        "referrer": "/account/orders",
+        "load_time": 2119,
+        "duration": 2517
+      }
+    },
+    {
+      "id": "8d8edb4d-4eec-4910-9adb-20bcdece6e45",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188094579,
+      "recordedAt": "2025-08-14T16:14:16.160Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188094579,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "text": "Action"
+        }
+      }
+    },
+    {
+      "id": "3627dc42-2207-4bba-a528-8e648bbe8e0f",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188096127,
+      "recordedAt": "2025-08-14T16:14:16.207Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188096127,
+        "page_url": "/checkout/shipping",
+        "title": "shipping",
+        "referrer": "/checkout",
+        "load_time": 1523,
+        "duration": 5394
+      }
+    },
+    {
+      "id": "d34ca499-5cc7-4d60-a38a-b80250d7c6cf",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188098175,
+      "recordedAt": "2025-08-14T16:14:16.255Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188098175,
+        "page_url": "/checkout/payment",
+        "title": "payment",
+        "referrer": "/checkout/shipping",
+        "load_time": 1606,
+        "duration": 3808
+      }
+    },
+    {
+      "id": "bc66a314-822a-4859-b268-312cd4a45c5c",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188098722,
+      "recordedAt": "2025-08-14T16:14:16.303Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188098722,
+        "page_url": "/checkout/payment",
+        "target": {
+          "tagName": "button",
+          "text": "Action"
+        }
+      }
+    },
+    {
+      "id": "e27f344e-9177-4005-b9d8-a7565c609a96",
+      "sessionId": "28f35b58-c2a4-4dae-9928-2cd52ec06aa7",
+      "timestamp": 1755188100270,
+      "recordedAt": "2025-08-14T16:14:16.347Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755188100270,
+        "page_url": "/order/success",
+        "title": "success",
+        "referrer": "/checkout/payment",
+        "load_time": 1408,
+        "duration": 2869
+      }
+    }
+  ],
+  "status": "completed",
+  "metadata": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+    "device": {
+      "type": "desktop",
+      "browser": "Chrome",
+      "os": "Windows"
+    }
+  },
+  "endTime": "2025-08-14T16:14:16.391Z",
+  "duration": 1633,
+  "endReason": "user_ended",
+  "statistics": {
+    "totalEvents": 34,
+    "eventTypes": {
+      "rrweb_event": 34
+    },
+    "clicks": 0,
+    "formInputs": 0,
+    "pageViews": 0,
+    "errors": 0,
+    "scrollEvents": 0,
+    "userBehavior": {
+      "avgTimeBetweenEvents": 1339.3823529411766,
+      "hasErrors": false,
+      "hasFormInteraction": false,
+      "hasNavigation": false
+    }
+  }
+}

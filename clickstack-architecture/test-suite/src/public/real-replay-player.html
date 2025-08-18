@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 실제 DOM 기반 세션 리플레이 플레이어</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    
+    <!-- rrweb-player CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/rrweb-player@1/dist/style.css">
+    
+    <!-- rrweb 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/rrweb@2/dist/rrweb.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/rrweb-player@1/dist/index.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .player-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+        }
+        
+        .session-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: end;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .form-control {
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-primary:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .player-container {
+            margin: 20px 0;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            overflow: hidden;
+            min-height: 600px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .player-placeholder {
+            text-align: center;
+            color: #6c757d;
+            font-size: 1.2rem;
+        }
+        
+        .session-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .info-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .events-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .event-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .event-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+        
+        .event-item.active {
+            background: #e3f2fd;
+            border-left-color: #2196f3;
+        }
+        
+        .event-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .event-type {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .event-timestamp {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .event-details {
+            font-size: 0.9rem;
+            color: #495057;
+            line-height: 1.4;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 200px;
+            color: #6c757d;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .controls-panel {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .rrweb-player {
+            width: 100% !important;
+            height: 600px !important;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .alert-info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            color: #1565c0;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            border: 1px solid #dc3545;
+            color: #721c24;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        @keyframes clickPulse {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 실제 DOM 기반 세션 리플레이 플레이어</h1>
+            <p>rrweb-player를 사용한 실제 사용자 상호작용 재생 및 분석</p>
+        </div>
+
+        <!-- 세션 선택 섹션 -->
+        <div class="player-section">
+            <h3>📋 세션 선택</h3>
+            <div class="session-selector">
+                <div class="form-group">
+                    <label for="scenarioSelect">시나리오</label>
+                    <select id="scenarioSelect" class="form-control">
+                        <option value="">시나리오를 선택하세요</option>
+                        <option value="ecommerce_checkout">🛒 E-commerce 결제 플로우</option>
+                        <option value="saas_dashboard">📊 SaaS 대시보드 상호작용</option>
+                        <option value="form_validation">📝 폼 검증 및 사용자 피드백</option>
+                        <option value="mobile_responsive">📱 모바일 반응형 상호작용</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="sessionSelect">세션</label>
+                    <select id="sessionSelect" class="form-control" disabled>
+                        <option value="">먼저 시나리오를 선택하세요</option>
+                    </select>
+                </div>
+                <button id="loadSessionBtn" class="btn btn-primary" disabled>
+                    🎬 세션 로드
+                </button>
+            </div>
+        </div>
+
+        <!-- 세션 정보 섹션 -->
+        <div class="session-info" id="sessionInfoPanel" style="display: none;">
+            <h3>📊 세션 정보</h3>
+            <div class="info-grid" id="sessionInfoGrid">
+                <!-- 동적으로 채워짐 -->
+            </div>
+        </div>
+
+        <!-- 통계 섹션 -->
+        <div class="player-section" id="statsPanel" style="display: none;">
+            <h3>📈 세션 통계</h3>
+            <div class="stats-grid" id="sessionStats">
+                <!-- 동적으로 채워짐 -->
+            </div>
+        </div>
+
+        <!-- 플레이어 섹션 -->
+        <div class="player-section">
+            <h3>🎮 리플레이 플레이어</h3>
+            <div class="controls-panel">
+                <button id="playBtn" class="btn btn-success" disabled>▶️ 재생</button>
+                <button id="pauseBtn" class="btn btn-warning" disabled>⏸️ 일시정지</button>
+                <button id="restartBtn" class="btn btn-primary" disabled>🔄 처음부터</button>
+                <button id="downloadBtn" class="btn btn-danger" disabled>💾 세션 다운로드</button>
+            </div>
+            
+            <div class="player-container" id="playerContainer">
+                <div class="player-placeholder" id="playerPlaceholder">
+                    <div>🎬 세션을 선택하고 로드하면 리플레이가 여기에 표시됩니다</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 로딩 모달 -->
+    <div id="loadingModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; text-align: center;">
+            <div class="loading-spinner"></div>
+            <div>세션 데이터를 로드하는 중...</div>
+        </div>
+    </div>
+
+    <script>
+        class RealReplayPlayer {
+            constructor() {
+                this.currentSession = null;
+                this.rrwebEvents = [];
+                this.player = null;
+                this.isLoading = false;
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.checkUrlParameters();
+            }
+            
+            initializeElements() {
+                this.scenarioSelect = document.getElementById('scenarioSelect');
+                this.sessionSelect = document.getElementById('sessionSelect');
+                this.loadSessionBtn = document.getElementById('loadSessionBtn');
+                this.playerContainer = document.getElementById('playerContainer');
+                this.playerPlaceholder = document.getElementById('playerPlaceholder');
+                this.sessionInfoPanel = document.getElementById('sessionInfoPanel');
+                this.sessionInfoGrid = document.getElementById('sessionInfoGrid');
+                this.statsPanel = document.getElementById('statsPanel');
+                this.sessionStats = document.getElementById('sessionStats');
+                this.loadingModal = document.getElementById('loadingModal');
+                
+                // 컨트롤 버튼들
+                this.playBtn = document.getElementById('playBtn');
+                this.pauseBtn = document.getElementById('pauseBtn');
+                this.restartBtn = document.getElementById('restartBtn');
+                this.downloadBtn = document.getElementById('downloadBtn');
+            }
+            
+            bindEvents() {
+                this.scenarioSelect.addEventListener('change', () => this.onScenarioChange());
+                this.sessionSelect.addEventListener('change', () => this.onSessionChange());
+                this.loadSessionBtn.addEventListener('click', () => this.loadSession());
+                
+                this.playBtn.addEventListener('click', () => this.play());
+                this.pauseBtn.addEventListener('click', () => this.pause());
+                this.restartBtn.addEventListener('click', () => this.restart());
+                this.downloadBtn.addEventListener('click', () => this.downloadSession());
+            }
+            
+            checkUrlParameters() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const sessionId = urlParams.get('session');
+                
+                if (sessionId) {
+                    console.log(`URL에서 세션 ID 감지: ${sessionId}`);
+                    this.loadSessionById(sessionId);
+                }
+            }
+            
+            async onScenarioChange() {
+                const scenario = this.scenarioSelect.value;
+                this.sessionSelect.innerHTML = '<option value="">로딩 중...</option>';
+                this.sessionSelect.disabled = true;
+                
+                if (scenario) {
+                    try {
+                        const response = await fetch(`/api/session-replay/sessions/${scenario}`);
+                        const data = await response.json();
+                        
+                        if (data.success && data.sessions && data.sessions.length > 0) {
+                            this.sessionSelect.innerHTML = '<option value="">세션을 선택하세요</option>';
+                            data.sessions.forEach(session => {
+                                const option = document.createElement('option');
+                                option.value = session.id;
+                                option.textContent = `${session.id.substr(0,8)}... (${this.formatDuration(session.duration)}) - ${session.eventCount}개 이벤트`;
+                                this.sessionSelect.appendChild(option);
+                            });
+                            this.sessionSelect.disabled = false;
+                        } else {
+                            this.sessionSelect.innerHTML = '<option value="">사용 가능한 세션이 없습니다</option>';
+                        }
+                    } catch (error) {
+                        console.error('세션 목록 로드 실패:', error);
+                        this.sessionSelect.innerHTML = '<option value="">세션 목록 로드 실패</option>';
+                    }
+                } else {
+                    this.sessionSelect.innerHTML = '<option value="">먼저 시나리오를 선택하세요</option>';
+                }
+                
+                this.updateLoadButton();
+            }
+            
+            onSessionChange() {
+                this.updateLoadButton();
+            }
+            
+            updateLoadButton() {
+                const hasScenario = this.scenarioSelect.value;
+                const hasSession = this.sessionSelect.value;
+                this.loadSessionBtn.disabled = !hasScenario || !hasSession;
+            }
+            
+            async loadSession() {
+                const sessionId = this.sessionSelect.value;
+                if (!sessionId) return;
+                
+                await this.loadSessionById(sessionId);
+            }
+            
+            async loadSessionById(sessionId) {
+                this.showLoading(true);
+                
+                try {
+                    const response = await fetch(`/api/session-replay/session/${sessionId}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        this.currentSession = data.session;
+                        this.rrwebEvents = this.extractRrwebEvents(data.events);
+                        
+                        if (this.rrwebEvents.length === 0) {
+                            throw new Error('이 세션에는 rrweb 이벤트가 없습니다. 실제 DOM 기반 세션이 아닙니다.');
+                        }
+                        
+                        this.updateSessionInfo();
+                        this.updateSessionStats();
+                        this.initializePlayer();
+                        
+                        console.log(`✅ 세션 로드 완료: ${sessionId} (${this.rrwebEvents.length}개 rrweb 이벤트)`);
+                    } else {
+                        throw new Error(data.error || '세션을 로드할 수 없습니다');
+                    }
+                } catch (error) {
+                    console.error('세션 로드 실패:', error);
+                    this.showAlert('세션을 로드할 수 없습니다: ' + error.message, 'danger');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+            
+            extractRrwebEvents(events) {
+                const rrwebEvents = [];
+                const basicEvents = [];
+                
+                events.forEach(event => {
+                    if (event.type === 'rrweb_event' && event.originalEvent) {
+                        rrwebEvents.push(event.originalEvent);
+                    } else if (event.type === 'click' || event.type === 'input' || event.type === 'scroll' || event.type === 'page_load') {
+                        // 기본 이벤트 처리
+                        basicEvents.push(event);
+                    }
+                });
+                
+                // rrweb 이벤트가 있으면 우선 사용, 없으면 기본 이벤트 사용
+                if (rrwebEvents.length > 0) {
+                    return rrwebEvents.sort((a, b) => a.timestamp - b.timestamp);
+                } else {
+                    console.log('rrweb 이벤트가 없습니다. 기본 이벤트를 사용합니다:', basicEvents.length);
+                    return basicEvents.sort((a, b) => a.timestamp - b.timestamp);
+                }
+            }
+            
+            updateSessionInfo() {
+                const session = this.currentSession;
+                
+                this.sessionInfoGrid.innerHTML = `
+                    <div class="info-item">
+                        <div class="info-label">세션 ID</div>
+                        <div class="info-value">${session.id.substr(0, 8)}...</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">시나리오</div>
+                        <div class="info-value">${this.getScenarioName(session.scenario)}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">시작 시간</div>
+                        <div class="info-value">${new Date(session.startTime).toLocaleString()}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">소요 시간</div>
+                        <div class="info-value">${this.formatDuration(session.duration)}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">총 이벤트</div>
+                        <div class="info-value">${session.events.length}개</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">DOM 이벤트</div>
+                        <div class="info-value">${this.rrwebEvents.length}개</div>
+                    </div>
+                `;
+                
+                this.sessionInfoPanel.style.display = 'block';
+            }
+            
+            updateSessionStats() {
+                const rrwebEventTypes = {};
+                this.rrwebEvents.forEach(event => {
+                    const type = this.getRrwebEventTypeName(event.type);
+                    rrwebEventTypes[type] = (rrwebEventTypes[type] || 0) + 1;
+                });
+                
+                let statsHtml = '';
+                Object.entries(rrwebEventTypes).forEach(([type, count]) => {
+                    statsHtml += `
+                        <div class="stat-card">
+                            <div class="stat-value">${count}</div>
+                            <div class="stat-label">${type}</div>
+                        </div>
+                    `;
+                });
+                
+                this.sessionStats.innerHTML = statsHtml;
+                this.statsPanel.style.display = 'block';
+            }
+            
+            initializePlayer() {
+                // 라이브러리 확인
+                console.log('rrweb 사용 가능:', typeof rrweb !== 'undefined');
+                console.log('rrwebPlayer 사용 가능:', typeof rrwebPlayer !== 'undefined');
+                console.log('이벤트 수:', this.rrwebEvents.length);
+                console.log('이벤트 샘플:', this.rrwebEvents.slice(0, 3));
+                
+                if (this.rrwebEvents.length === 0) {
+                    throw new Error('재생할 이벤트가 없습니다.');
+                }
+                
+                // 기존 플레이어가 있다면 제거
+                if (this.player) {
+                    this.playerContainer.innerHTML = '';
+                    this.player = null;
+                }
+                
+                this.playerPlaceholder.style.display = 'none';
+                
+                try {
+                    // rrweb 이벤트가 있고 플레이어 라이브러리가 있으면 rrweb-player 사용
+                    if (typeof rrwebPlayer !== 'undefined' && this.rrwebEvents[0].type !== undefined && typeof this.rrwebEvents[0].type === 'number') {
+                        console.log('rrweb-player 초기화 시도...');
+                        this.player = new rrwebPlayer({
+                            target: this.playerContainer,
+                            props: {
+                                events: this.rrwebEvents,
+                                width: this.playerContainer.clientWidth - 40,
+                                height: 600,
+                                autoPlay: false,
+                                speedOption: [1, 2, 4, 8],
+                                showController: true,
+                                tags: {
+                                    'session-id': this.currentSession.id,
+                                    'scenario': this.currentSession.scenario
+                                }
+                            }
+                        });
+                        console.log('✅ rrweb-player 초기화 완료');
+                    } else {
+                        // 기본 이벤트 플레이어 사용
+                        console.log('기본 이벤트 플레이어 초기화...');
+                        this.initializeBasicPlayer();
+                        console.log('✅ 기본 이벤트 플레이어 초기화 완료');
+                    }
+                    
+                    // 컨트롤 버튼 활성화
+                    this.playBtn.disabled = false;
+                    this.pauseBtn.disabled = false;
+                    this.restartBtn.disabled = false;
+                    this.downloadBtn.disabled = false;
+                    
+                    console.log('✅ rrweb-player 초기화 완료');
+                } catch (error) {
+                    console.error('플레이어 초기화 실패:', error);
+                    this.showAlert('플레이어를 초기화할 수 없습니다: ' + error.message, 'danger');
+                    this.playerPlaceholder.style.display = 'block';
+                    this.playerPlaceholder.innerHTML = `
+                        <div>❌ 플레이어 초기화 실패</div>
+                        <div style="font-size: 0.9rem; margin-top: 10px; color: #666;">
+                            ${error.message}
+                        </div>
+                    `;
+                }
+            }
+            
+            play() {
+                if (this.player && this.player.play) {
+                    this.player.play();
+                }
+            }
+            
+            pause() {
+                if (this.player && this.player.pause) {
+                    this.player.pause();
+                }
+            }
+            
+            restart() {
+                if (this.player) {
+                    this.player.goto(0);
+                    this.player.play();
+                }
+            }
+            
+            async downloadSession() {
+                if (!this.currentSession) return;
+                
+                try {
+                    const sessionData = {
+                        session: this.currentSession,
+                        rrwebEvents: this.rrwebEvents,
+                        exportedAt: new Date().toISOString(),
+                        format: 'rrweb-compatible'
+                    };
+                    
+                    const blob = new Blob([JSON.stringify(sessionData, null, 2)], { 
+                        type: 'application/json' 
+                    });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `session_${this.currentSession.id}_rrweb.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    this.showAlert('세션 데이터가 다운로드되었습니다.', 'info');
+                } catch (error) {
+                    console.error('세션 다운로드 실패:', error);
+                    this.showAlert('세션을 다운로드할 수 없습니다: ' + error.message, 'danger');
+                }
+            }
+            
+            getRrwebEventTypeName(type) {
+                const typeNames = {
+                    0: 'DOM 콘텐츠',
+                    1: 'DOM 변화',
+                    2: 'DOM 변경',
+                    3: '마우스 이동',
+                    4: '마우스 상호작용',
+                    5: '뷰포트 크기',
+                    6: '입력',
+                    7: '미디어 상호작용',
+                    8: '스타일 선언',
+                    9: '캔버스 변화',
+                    10: '폰트 로드',
+                    11: '로그',
+                    12: '드래그',
+                    13: '스타일시트 규칙',
+                    14: '선택 변화'
+                };
+                return typeNames[type] || `타입 ${type}`;
+            }
+            
+            getScenarioName(scenario) {
+                const names = {
+                    'ecommerce_checkout': '🛒 E-commerce 결제',
+                    'saas_dashboard': '📊 SaaS 대시보드',
+                    'form_validation': '📝 폼 검증',
+                    'mobile_responsive': '📱 모바일 반응형'
+                };
+                return names[scenario] || scenario;
+            }
+            
+            formatDuration(milliseconds) {
+                if (!milliseconds) return '0초';
+                const seconds = Math.floor(milliseconds / 1000);
+                const minutes = Math.floor(seconds / 60);
+                
+                if (minutes > 0) {
+                    return `${minutes}분 ${seconds % 60}초`;
+                } else {
+                    return `${seconds}초`;
+                }
+            }
+            
+            showLoading(show) {
+                this.isLoading = show;
+                this.loadingModal.style.display = show ? 'block' : 'none';
+            }
+            
+            // 기본 이벤트 플레이어 초기화
+            initializeBasicPlayer() {
+                this.playerContainer.innerHTML = `
+                    <div style="background: white; border: 2px solid #e9ecef; border-radius: 8px; padding: 20px; height: 580px; overflow-y: auto;">
+                        <h4 style="color: #2c3e50; margin-bottom: 20px;">📋 기본 이벤트 재생 (${this.rrwebEvents.length}개 이벤트)</h4>
+                        <div id="basicEventsList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                    </div>
+                `;
+                
+                const eventsList = document.getElementById('basicEventsList');
+                
+                this.rrwebEvents.forEach((event, index) => {
+                    const eventDiv = document.createElement('div');
+                    eventDiv.style.cssText = `
+                        padding: 15px;
+                        border: 1px solid #dee2e6;
+                        border-radius: 6px;
+                        background: ${this.getEventColor(event.type)};
+                        transition: all 0.3s ease;
+                        cursor: pointer;
+                    `;
+                    
+                    eventDiv.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: bold; color: #2c3e50;">
+                                ${this.getEventIcon(event.type)} ${this.getEventTypeName(event.type)}
+                            </span>
+                            <span style="font-size: 0.9rem; color: #6c757d;">
+                                ${this.formatTime(event.timestamp)}
+                            </span>
+                        </div>
+                        <div style="font-size: 0.9rem; color: #495057;">
+                            ${this.getBasicEventDetails(event)}
+                        </div>
+                    `;
+                    
+                    eventDiv.addEventListener('click', () => {
+                        this.highlightEvent(eventDiv);
+                        if (event.type === 'click') {
+                            this.showClickVisualization(event);
+                        }
+                    });
+                    
+                    eventsList.appendChild(eventDiv);
+                });
+                
+                this.player = { isBasic: true };
+            }
+            
+            getEventColor(type) {
+                const colors = {
+                    'page_load': '#e3f2fd',
+                    'click': '#fff3e0',
+                    'input': '#f3e5f5',
+                    'scroll': '#e8f5e8'
+                };
+                return colors[type] || '#f8f9fa';
+            }
+            
+            getEventIcon(type) {
+                const icons = {
+                    'page_load': '🌐',
+                    'click': '👆',
+                    'input': '✏️',
+                    'scroll': '🔄'
+                };
+                return icons[type] || '📝';
+            }
+            
+            getEventTypeName(type) {
+                const names = {
+                    'page_load': '페이지 로드',
+                    'click': '클릭',
+                    'input': '입력',
+                    'scroll': '스크롤'
+                };
+                return names[type] || type;
+            }
+            
+            getBasicEventDetails(event) {
+                switch (event.type) {
+                    case 'page_load':
+                        return `URL: ${event.url} | 제목: ${event.title} | 뷰포트: ${event.viewport?.width}x${event.viewport?.height}`;
+                    case 'click':
+                        return `위치: (${event.x}, ${event.y}) | 요소: ${event.element?.tagName}${event.element?.id ? '#' + event.element.id : ''} | 텍스트: ${event.element?.textContent || '없음'}`;
+                    case 'input':
+                        return `요소: ${event.element?.tagName}${event.element?.id ? '#' + event.element.id : ''} | 타입: ${event.element?.type} | 입력 길이: ${event.valueLength}자`;
+                    case 'scroll':
+                        return `스크롤 위치: X=${event.scrollX}, Y=${event.scrollY}`;
+                    default:
+                        return JSON.stringify(event).slice(0, 100) + '...';
+                }
+            }
+            
+            highlightEvent(eventDiv) {
+                // 이전 하이라이트 제거
+                document.querySelectorAll('#basicEventsList > div').forEach(div => {
+                    div.style.boxShadow = 'none';
+                    div.style.transform = 'none';
+                });
+                
+                // 현재 이벤트 하이라이트
+                eventDiv.style.boxShadow = '0 4px 12px rgba(0,123,255,0.3)';
+                eventDiv.style.transform = 'translateX(10px)';
+            }
+            
+            showClickVisualization(clickEvent) {
+                // 간단한 클릭 시각화 (향후 확장 가능)
+                const visualization = document.createElement('div');
+                visualization.style.cssText = `
+                    position: fixed;
+                    left: ${clickEvent.x}px;
+                    top: ${clickEvent.y}px;
+                    width: 20px;
+                    height: 20px;
+                    background: radial-gradient(circle, rgba(255,0,0,0.8) 0%, transparent 70%);
+                    border-radius: 50%;
+                    pointer-events: none;
+                    z-index: 9999;
+                    animation: clickPulse 1s ease-out;
+                `;
+                
+                document.body.appendChild(visualization);
+                setTimeout(() => {
+                    if (visualization.parentElement) {
+                        visualization.parentElement.removeChild(visualization);
+                    }
+                }, 1000);
+            }
+            
+            showAlert(message, type = 'info') {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type}`;
+                alertDiv.textContent = message;
+                
+                document.body.insertBefore(alertDiv, document.body.firstChild);
+                
+                setTimeout(() => {
+                    if (alertDiv.parentElement) {
+                        alertDiv.parentElement.removeChild(alertDiv);
+                    }
+                }, 5000);
+            }
+        }
+        
+        // 페이지 로드 시 플레이어 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            const player = new RealReplayPlayer();
+            window.realReplayPlayer = player; // 디버깅용
+        });
+    </script>
+</body>
+</html>

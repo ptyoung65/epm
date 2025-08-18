@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>최종 안정화 DOM 녹화기</title>
+    <script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .panel {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 { 
+            color: #333; 
+            text-align: center; 
+            margin-bottom: 20px;
+        }
+        
+        .status {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 16px;
+        }
+        
+        .controls {
+            text-align: center;
+            margin: 25px 0;
+        }
+        
+        .btn {
+            font-size: 16px;
+            padding: 12px 25px;
+            margin: 8px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn-green {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-green:hover {
+            background: #218838;
+        }
+        
+        .btn-red {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-red:hover {
+            background: #c82333;
+        }
+        
+        .btn-blue {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-blue:hover {
+            background: #0056b3;
+        }
+        
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .test-area {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px dashed #dee2e6;
+        }
+        
+        .form-row {
+            margin: 12px 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #ced4da;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        
+        .test-btn {
+            padding: 12px 20px;
+            background: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .test-btn:hover {
+            background: #138496;
+        }
+        
+        .click-area {
+            background: #e3f2fd;
+            padding: 25px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 15px 0;
+            border: 2px solid #2196f3;
+        }
+        
+        .click-area:hover {
+            background: #bbdefb;
+        }
+        
+        #debugLog {
+            background: #000;
+            color: #0f0;
+            padding: 12px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 11px;
+            max-height: 150px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h1>🎬 최종 안정화 DOM 녹화기</h1>
+        
+        <div class="status">
+            <div><strong>상태:</strong> <span id="status">시스템 초기화 중...</span></div>
+            <div><strong>세션 ID:</strong> <span id="sessionId">-</span></div>
+            <div><strong>이벤트 수:</strong> <span id="eventCount">0</span></div>
+            <div><strong>녹화 시간:</strong> <span id="timer">00:00</span></div>
+        </div>
+        
+        <div class="controls">
+            <button class="btn btn-green" id="startBtn">🔴 녹화 시작</button>
+            <button class="btn btn-red" id="stopBtn" disabled>⏹️ 녹화 중지</button>
+            <button class="btn btn-blue" id="playBtn" disabled>▶️ 재생하기</button>
+        </div>
+    </div>
+    
+    <div class="panel test-area">
+        <h2>🧪 테스트 영역 - 여기서 인터랙션을 시도해보세요</h2>
+        
+        <div class="form-row">
+            <label for="nameInput">이름:</label>
+            <input type="text" id="nameInput" placeholder="이름을 입력하세요">
+        </div>
+        
+        <div class="form-row">
+            <label for="emailInput">이메일:</label>
+            <input type="email" id="emailInput" placeholder="email@example.com">
+        </div>
+        
+        <div class="form-row">
+            <label for="messageInput">메시지:</label>
+            <textarea id="messageInput" rows="3" placeholder="메시지를 입력하세요"></textarea>
+        </div>
+        
+        <div class="form-row">
+            <label for="categorySelect">카테고리:</label>
+            <select id="categorySelect">
+                <option>일반 문의</option>
+                <option>기술 지원</option>
+                <option>버그 신고</option>
+                <option>기능 요청</option>
+            </select>
+        </div>
+        
+        <div class="test-buttons">
+            <button class="test-btn" id="colorBtn">색상 변경</button>
+            <button class="test-btn" id="contentBtn">콘텐츠 추가</button>
+            <button class="test-btn" id="alertBtn">알림 표시</button>
+        </div>
+        
+        <div class="click-area" id="clickArea">
+            <h3>🎯 클릭 테스트 영역</h3>
+            <p>이 영역을 클릭하면 색상이 변경됩니다</p>
+        </div>
+        
+        <div id="dynamicContent"></div>
+    </div>
+    
+    <div class="panel">
+        <h3>🐛 실시간 디버그 로그</h3>
+        <div id="debugLog">시스템 로딩 시작...
+</div>
+    </div>
+
+    <script>
+        console.log('=== 스크립트 시작 ===');
+        
+        // 디버그 로그 함수 (가장 먼저 정의)
+        function debugLog(message) {
+            const logElement = document.getElementById('debugLog');
+            if (logElement) {
+                const timestamp = new Date().toLocaleTimeString();
+                logElement.textContent += `[${timestamp}] ${message}\n`;
+                logElement.scrollTop = logElement.scrollHeight;
+            }
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        // 즉시 로그 시작
+        debugLog('JavaScript 초기화 시작');
+        
+        // 전역 변수
+        let isRecording = false;
+        let events = [];
+        let stopFn = null;
+        let currentSessionId = null;
+        let startTime = null;
+        let timerInterval = null;
+        
+        debugLog('전역 변수 초기화 완료');
+        
+        // rrweb 라이브러리 상태 확인
+        function checkRRWeb() {
+            debugLog(`rrweb 라이브러리 확인: ${typeof rrweb}`);
+            if (typeof rrweb !== 'undefined') {
+                debugLog('✅ rrweb 라이브러리 사용 가능');
+                return true;
+            } else {
+                debugLog('❌ rrweb 라이브러리 없음');
+                return false;
+            }
+        }
+        
+        // 세션 ID 생성
+        function generateSessionId() {
+            const id = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            debugLog(`세션 ID 생성: ${id}`);
+            return id;
+        }
+        
+        // DOM 요소 확인 및 가져오기
+        function getDOMElements() {
+            const elements = {
+                startBtn: document.getElementById('startBtn'),
+                stopBtn: document.getElementById('stopBtn'),
+                playBtn: document.getElementById('playBtn'),
+                status: document.getElementById('status'),
+                sessionId: document.getElementById('sessionId'),
+                eventCount: document.getElementById('eventCount'),
+                timer: document.getElementById('timer')
+            };
+            
+            debugLog(`DOM 요소 확인: ${Object.keys(elements).map(key => `${key}=${!!elements[key]}`).join(', ')}`);
+            return elements;
+        }
+        
+        // 녹화 시작 함수
+        function startRecording() {
+            debugLog('🔴 startRecording 함수 호출됨');
+            
+            if (isRecording) {
+                debugLog('이미 녹화 중 - 중단');
+                alert('이미 녹화 중입니다!');
+                return;
+            }
+            
+            if (!checkRRWeb()) {
+                alert('❌ rrweb 라이브러리가 로드되지 않았습니다!');
+                return;
+            }
+            
+            try {
+                // 초기화
+                events = [];
+                currentSessionId = generateSessionId();
+                startTime = Date.now();
+                isRecording = true;
+                
+                debugLog(`녹화 초기화 완료 - 세션: ${currentSessionId}`);
+                
+                // rrweb 녹화 시작 (최소 설정)
+                stopFn = rrweb.record({
+                    emit(event) {
+                        events.push(event);
+                        const eventCountEl = document.getElementById('eventCount');
+                        if (eventCountEl) {
+                            eventCountEl.textContent = events.length;
+                        }
+                        debugLog(`이벤트 수집: ${event.type} (총 ${events.length}개)`);
+                    },
+                    // 최소한의 설정으로 성능 최적화
+                    sampling: {
+                        mousemove: false,     // 마우스 이동 비활성화
+                        mouseInteraction: true,
+                        scroll: 100,
+                        input: true
+                    },
+                    recordCanvas: false,      // Canvas 비활성화
+                    collectFonts: false,      // 폰트 수집 비활성화
+                    maskAllInputs: false,
+                    blockClass: 'rr-block',
+                    ignoreClass: 'rr-ignore'
+                });
+                
+                // UI 업데이트
+                const elements = getDOMElements();
+                if (elements.status) elements.status.textContent = '🔴 녹화 중';
+                if (elements.sessionId) elements.sessionId.textContent = currentSessionId.substring(0, 15) + '...';
+                if (elements.startBtn) elements.startBtn.disabled = true;
+                if (elements.stopBtn) elements.stopBtn.disabled = false;
+                if (elements.playBtn) elements.playBtn.disabled = true;
+                
+                // 타이머 시작
+                startTimer();
+                
+                debugLog('✅ 녹화 시작 성공');
+                alert('✅ 녹화가 시작되었습니다! 아래 테스트 영역에서 다양한 인터랙션을 시도해보세요.');
+                
+            } catch (error) {
+                debugLog(`❌ 녹화 시작 실패: ${error.message}`);
+                console.error('녹화 시작 오류:', error);
+                alert('❌ 녹화 시작에 실패했습니다: ' + error.message);
+                resetState();
+            }
+        }
+        
+        // 녹화 중지 함수
+        function stopRecording() {
+            debugLog('⏹️ stopRecording 함수 호출됨');
+            
+            if (!isRecording || !stopFn) {
+                debugLog('녹화 중이 아님');
+                alert('녹화 중이 아닙니다!');
+                return;
+            }
+            
+            try {
+                // rrweb 중지
+                stopFn();
+                stopFn = null;
+                isRecording = false;
+                
+                // 타이머 중지
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                
+                // UI 업데이트
+                const elements = getDOMElements();
+                if (elements.status) elements.status.textContent = '✅ 녹화 완료';
+                if (elements.startBtn) elements.startBtn.disabled = false;
+                if (elements.stopBtn) elements.stopBtn.disabled = true;
+                if (elements.playBtn) elements.playBtn.disabled = false;
+                
+                // 세션 저장
+                const session = {
+                    id: currentSessionId,
+                    events: events,
+                    startTime: startTime,
+                    endTime: Date.now(),
+                    duration: Date.now() - startTime,
+                    eventCount: events.length,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // 로컬 저장
+                localStorage.setItem(currentSessionId, JSON.stringify(session));
+                debugLog(`세션 저장 완료: ${events.length}개 이벤트`);
+                
+                alert(`✅ 녹화 완료! ${events.length}개의 이벤트가 저장되었습니다.`);
+                
+                // 서버에도 저장 시도
+                saveToServer(session);
+                
+            } catch (error) {
+                debugLog(`❌ 녹화 중지 실패: ${error.message}`);
+                console.error('녹화 중지 오류:', error);
+                alert('❌ 녹화 중지에 실패했습니다: ' + error.message);
+            }
+        }
+        
+        // 재생 함수
+        function playRecording() {
+            debugLog('▶️ playRecording 함수 호출됨');
+            
+            if (!currentSessionId || events.length === 0) {
+                debugLog('재생할 세션 없음');
+                alert('⚠️ 재생할 세션이 없습니다. 먼저 녹화를 진행해주세요.');
+                return;
+            }
+            
+            const playerUrl = `working-player.html?sessionId=${currentSessionId}`;
+            debugLog(`플레이어 열기: ${playerUrl}`);
+            
+            // 새 창으로 플레이어 열기
+            const playerWindow = window.open(playerUrl, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+            
+            if (!playerWindow) {
+                alert('⚠️ 팝업이 차단되었습니다. 브라우저에서 팝업을 허용해주세요.');
+            }
+        }
+        
+        // 서버에 저장
+        async function saveToServer(session) {
+            try {
+                debugLog('서버 저장 시도');
+                const response = await fetch('/api/session-replay/save-full-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(session)
+                });
+                
+                if (response.ok) {
+                    debugLog('서버 저장 성공');
+                } else {
+                    debugLog('서버 저장 실패');
+                }
+            } catch (error) {
+                debugLog(`서버 저장 오류: ${error.message}`);
+            }
+        }
+        
+        // 타이머 시작
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                if (startTime) {
+                    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                    const minutes = Math.floor(elapsed / 60);
+                    const seconds = elapsed % 60;
+                    const timerEl = document.getElementById('timer');
+                    if (timerEl) {
+                        timerEl.textContent = 
+                            `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    }
+                }
+            }, 1000);
+        }
+        
+        // 상태 리셋
+        function resetState() {
+            isRecording = false;
+            const elements = getDOMElements();
+            if (elements.startBtn) elements.startBtn.disabled = false;
+            if (elements.stopBtn) elements.stopBtn.disabled = true;
+            if (elements.playBtn) elements.playBtn.disabled = true;
+            if (elements.status) elements.status.textContent = '준비 완료';
+            if (elements.sessionId) elements.sessionId.textContent = '-';
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+        
+        // 테스트 함수들
+        function setupTestFunctions() {
+            debugLog('테스트 함수 설정 중');
+            
+            // 색상 변경 버튼
+            const colorBtn = document.getElementById('colorBtn');
+            if (colorBtn) {
+                colorBtn.onclick = function() {
+                    this.style.backgroundColor = `hsl(${Math.random() * 360}, 70%, 50%)`;
+                    debugLog('색상 변경 버튼 클릭됨');
+                };
+            }
+            
+            // 콘텐츠 추가 버튼
+            const contentBtn = document.getElementById('contentBtn');
+            if (contentBtn) {
+                contentBtn.onclick = function() {
+                    const container = document.getElementById('dynamicContent');
+                    if (container) {
+                        const newElement = document.createElement('div');
+                        newElement.style.cssText = `
+                            background: hsl(${Math.random() * 360}, 50%, 90%);
+                            padding: 8px;
+                            margin: 4px 0;
+                            border-radius: 4px;
+                            border-left: 3px solid hsl(${Math.random() * 360}, 70%, 50%);
+                        `;
+                        newElement.textContent = `새 콘텐츠 ${Date.now()}`;
+                        container.appendChild(newElement);
+                        debugLog('콘텐츠 추가 버튼 클릭됨');
+                    }
+                };
+            }
+            
+            // 알림 버튼
+            const alertBtn = document.getElementById('alertBtn');
+            if (alertBtn) {
+                alertBtn.onclick = function() {
+                    alert('테스트 알림입니다!');
+                    debugLog('알림 버튼 클릭됨');
+                };
+            }
+            
+            // 클릭 영역
+            const clickArea = document.getElementById('clickArea');
+            if (clickArea) {
+                clickArea.onclick = function() {
+                    this.style.backgroundColor = `hsl(${Math.random() * 360}, 30%, 85%)`;
+                    debugLog('클릭 영역 클릭됨');
+                };
+            }
+            
+            debugLog('테스트 함수 설정 완료');
+        }
+        
+        // 메인 초기화 함수
+        function initializeSystem() {
+            debugLog('시스템 초기화 시작');
+            
+            // DOM 완전 로드 확인
+            if (document.readyState !== 'complete') {
+                debugLog('DOM 아직 로딩 중 - 대기');
+                return;
+            }
+            
+            debugLog('DOM 로드 완료 확인');
+            
+            // 기본 상태로 리셋
+            resetState();
+            
+            // DOM 요소들 확인
+            const elements = getDOMElements();
+            
+            // 메인 버튼 이벤트 리스너 등록
+            if (elements.startBtn) {
+                elements.startBtn.onclick = startRecording;
+                debugLog('시작 버튼 이벤트 등록 완료');
+            } else {
+                debugLog('❌ 시작 버튼을 찾을 수 없음');
+            }
+            
+            if (elements.stopBtn) {
+                elements.stopBtn.onclick = stopRecording;
+                debugLog('중지 버튼 이벤트 등록 완료');
+            } else {
+                debugLog('❌ 중지 버튼을 찾을 수 없음');
+            }
+            
+            if (elements.playBtn) {
+                elements.playBtn.onclick = playRecording;
+                debugLog('재생 버튼 이벤트 등록 완료');
+            } else {
+                debugLog('❌ 재생 버튼을 찾을 수 없음');
+            }
+            
+            // 테스트 함수들 설정
+            setupTestFunctions();
+            
+            // rrweb 최종 확인
+            checkRRWeb();
+            
+            // 상태 업데이트
+            if (elements.status) {
+                elements.status.textContent = '✅ 시스템 준비 완료';
+            }
+            
+            debugLog('✅ 시스템 초기화 완료');
+        }
+        
+        // DOM 로드 완료 후 초기화 (여러 방법으로 시도)
+        if (document.readyState === 'loading') {
+            debugLog('DOM 로딩 중 - 이벤트 대기');
+            document.addEventListener('DOMContentLoaded', initializeSystem);
+        } else {
+            debugLog('DOM 이미 로드됨 - 즉시 초기화');
+            initializeSystem();
+        }
+        
+        // 윈도우 로드도 함께 대기
+        window.addEventListener('load', function() {
+            debugLog('윈도우 로드 완료 - 재초기화');
+            setTimeout(initializeSystem, 100);
+        });
+        
+        // 전역 오류 처리
+        window.addEventListener('error', function(e) {
+            debugLog(`전역 오류: ${e.error?.message || e.message}`);
+            console.error('전역 오류:', e.error);
+        });
+        
+        // 처리되지 않은 Promise 오류
+        window.addEventListener('unhandledrejection', function(e) {
+            debugLog(`Promise 오류: ${e.reason}`);
+            console.error('Promise 거부:', e.reason);
+        });
+        
+        debugLog('스크립트 로딩 완료 - 초기화 대기 중');
+    </script>
+</body>
+</html>

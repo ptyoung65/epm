@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS-MON 모바일 세션 플레이어</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        .player-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .player-header {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .session-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .session-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .session-details {
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+
+        .player-controls {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+        }
+
+        .control-btn:hover, .control-btn:active {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(0.95);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .play-btn {
+            background: #667eea !important;
+            font-size: 1rem;
+            padding: 0.75rem 1rem;
+        }
+
+        .viewport {
+            flex: 1;
+            position: relative;
+            background: #f9fafb;
+            overflow: hidden;
+        }
+
+        .mobile-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 375px;
+            height: 667px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            border: 8px solid #333;
+        }
+
+        @media (max-width: 400px) {
+            .mobile-screen {
+                width: 100vw;
+                height: 100%;
+                border-radius: 0;
+                border: none;
+                top: 0;
+                left: 0;
+                transform: none;
+                position: static;
+            }
+        }
+
+        .screen-content {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1rem;
+            color: white;
+        }
+
+        .touch-indicator {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 3px solid #667eea;
+            border-radius: 50%;
+            background: rgba(102, 126, 234, 0.2);
+            pointer-events: none;
+            z-index: 50;
+            transform: translate(-50%, -50%);
+            animation: touchPulse 0.5s ease-out;
+        }
+
+        @keyframes touchPulse {
+            0% { 
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+            }
+            100% { 
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        .swipe-indicator {
+            position: absolute;
+            width: 60px;
+            height: 4px;
+            background: #667eea;
+            border-radius: 2px;
+            pointer-events: none;
+            z-index: 50;
+            animation: swipeMove 0.8s ease-out;
+        }
+
+        @keyframes swipeMove {
+            0% { 
+                opacity: 1;
+                transform: scale(0.5);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1);
+            }
+            100% { 
+                opacity: 0;
+                transform: scale(1.2);
+            }
+        }
+
+        .gesture-indicator {
+            position: absolute;
+            font-size: 2rem;
+            pointer-events: none;
+            z-index: 50;
+            transform: translate(-50%, -50%);
+            animation: gestureShow 1s ease-out;
+        }
+
+        @keyframes gestureShow {
+            0% { 
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% { 
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1.5);
+            }
+        }
+
+        .timeline-container {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .timeline {
+            flex: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .timeline-progress {
+            height: 100%;
+            background: #667eea;
+            border-radius: 2px;
+            transition: width 0.1s ease;
+        }
+
+        .timeline-handle {
+            position: absolute;
+            top: -6px;
+            width: 16px;
+            height: 16px;
+            background: #667eea;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .timeline-handle:hover {
+            transform: translateX(-50%) scale(1.2);
+        }
+
+        .time-display {
+            font-size: 0.8rem;
+            color: #9ca3af;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .speed-control {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .speed-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .speed-btn.active {
+            background: #667eea;
+        }
+
+        .event-log {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            width: 250px;
+            max-height: 200px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 8px;
+            padding: 0.75rem;
+            overflow-y: auto;
+            font-size: 0.7rem;
+            color: #9ca3af;
+            z-index: 60;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .event-log {
+                display: none !important;
+            }
+        }
+
+        .event-log.visible {
+            display: block;
+        }
+
+        .log-entry {
+            margin-bottom: 0.25rem;
+            padding: 0.25rem;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .log-entry.active {
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #ef4444;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem;
+            text-align: center;
+        }
+
+        .mobile-elements {
+            display: grid;
+            gap: 0.75rem;
+            grid-template-columns: 1fr;
+            margin-top: 1rem;
+        }
+
+        .mobile-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .mobile-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .mobile-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .touch-button {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+        }
+
+        .swipe-demo-area {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-weight: 600;
+        }
+
+        .debug-info {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            color: #9ca3af;
+            z-index: 60;
+            display: none;
+        }
+
+        .debug-info.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="player-container">
+        <!-- 헤더 -->
+        <div class="player-header">
+            <div class="session-info">
+                <div class="session-title" id="sessionTitle">모바일 세션 로딩 중...</div>
+                <div class="session-details" id="sessionDetails">세션 정보를 가져오는 중...</div>
+            </div>
+            
+            <div class="player-controls">
+                <button class="control-btn" onclick="toggleEventLog()">
+                    📋 로그
+                </button>
+                <button class="control-btn" onclick="toggleDebug()">
+                    🐛 디버그
+                </button>
+                <button class="control-btn" onclick="resetPlayer()">
+                    🔄 초기화
+                </button>
+                <button class="play-btn" id="playBtn" onclick="togglePlayback()">
+                    ▶️ 재생
+                </button>
+            </div>
+        </div>
+
+        <!-- 뷰포트 -->
+        <div class="viewport">
+            <div class="mobile-screen">
+                <div class="screen-content" id="screenContent">
+                    <h2 style="margin-bottom: 1rem; text-align: center;">📱 모바일 테스트 앱</h2>
+                    
+                    <div class="mobile-elements">
+                        <div class="mobile-card">
+                            <h4 style="margin-bottom: 0.5rem;">사용자 정보</h4>
+                            <input type="text" class="mobile-input" placeholder="이름을 입력하세요" id="replayNameInput">
+                            <input type="email" class="mobile-input" placeholder="이메일을 입력하세요" id="replayEmailInput">
+                        </div>
+
+                        <div class="mobile-card">
+                            <h4 style="margin-bottom: 0.5rem;">액션 버튼</h4>
+                            <button class="touch-button" id="replayPrimaryBtn">
+                                주요 액션 버튼
+                            </button>
+                            <button class="touch-button" id="replaySecondaryBtn" style="background: rgba(239, 68, 68, 0.6);">
+                                보조 액션 버튼
+                            </button>
+                        </div>
+
+                        <div class="mobile-card">
+                            <h4 style="margin-bottom: 0.5rem;">선택 옵션</h4>
+                            <select class="mobile-input" id="replayCategorySelect">
+                                <option>카테고리 선택</option>
+                                <option>기술</option>
+                                <option>디자인</option>
+                                <option>마케팅</option>
+                            </select>
+                        </div>
+
+                        <div class="mobile-card">
+                            <div class="swipe-demo-area" id="replaySwipeArea">
+                                ← 스와이프 데모 영역 →<br>
+                                <small>터치와 제스처를 재현합니다</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 로딩 오버레이 -->
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="loading-spinner"></div>
+                <p>모바일 세션을 로딩하고 있습니다...</p>
+            </div>
+        </div>
+
+        <!-- 타임라인 컨트롤 -->
+        <div class="timeline-container">
+            <div class="time-display" id="timeDisplay">00:00 / 00:00</div>
+            
+            <div class="timeline" id="timeline">
+                <div class="timeline-progress" id="timelineProgress"></div>
+                <div class="timeline-handle" id="timelineHandle"></div>
+            </div>
+            
+            <div class="speed-control">
+                <button class="speed-btn" onclick="setPlaybackSpeed(0.5)">0.5x</button>
+                <button class="speed-btn active" onclick="setPlaybackSpeed(1)">1x</button>
+                <button class="speed-btn" onclick="setPlaybackSpeed(2)">2x</button>
+                <button class="speed-btn" onclick="setPlaybackSpeed(4)">4x</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 이벤트 로그 -->
+    <div class="event-log" id="eventLog">
+        <h4 style="margin-bottom: 0.5rem; color: #667eea;">이벤트 로그</h4>
+        <div id="eventLogContent">이벤트가 없습니다.</div>
+    </div>
+
+    <!-- 디버그 정보 -->
+    <div class="debug-info" id="debugInfo">
+        <div>현재 이벤트: <span id="currentEventIndex">0</span> / <span id="totalEvents">0</span></div>
+        <div>재생 속도: <span id="currentSpeed">1x</span></div>
+        <div>세션 시간: <span id="sessionDuration">0s</span></div>
+    </div>
+
+    <script>
+        // 글로벌 변수
+        let currentSession = null;
+        let sessionEvents = [];
+        let isPlaying = false;
+        let currentEventIndex = 0;
+        let playbackSpeed = 1;
+        let sessionStartTime = null;
+        let playbackStartTime = null;
+        let playbackTimer = null;
+        let sessionDuration = 0;
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session');
+            
+            if (sessionId) {
+                loadSession(sessionId);
+            } else {
+                showError('세션 ID가 제공되지 않았습니다.');
+            }
+            
+            setupTimelineControls();
+        });
+
+        // 세션 데이터 로드
+        async function loadSession(sessionId) {
+            try {
+                showLoading(true);
+                
+                const response = await fetch(`/api/session-replay/session/${sessionId}`);
+                const data = await response.json();
+                
+                if (!data.success || !data.session) {
+                    throw new Error('세션 데이터를 찾을 수 없습니다.');
+                }
+                
+                currentSession = data.session;
+                sessionEvents = data.session.events || [];
+                sessionDuration = currentSession.duration || 0;
+                
+                // UI 업데이트
+                updateSessionInfo();
+                updateDebugInfo();
+                
+                console.log('모바일 세션 로드 완료:', sessionId, sessionEvents.length, '개 이벤트');
+                
+                showLoading(false);
+                
+            } catch (error) {
+                console.error('세션 로드 오류:', error);
+                showError('세션을 로드할 수 없습니다: ' + error.message);
+            }
+        }
+
+        // 세션 정보 업데이트
+        function updateSessionInfo() {
+            document.getElementById('sessionTitle').textContent = 
+                `모바일 세션 ${currentSession.id.substring(0, 8)}...`;
+            
+            document.getElementById('sessionDetails').textContent = 
+                `${sessionEvents.length}개 이벤트 | ${formatDuration(sessionDuration)} | ${new Date(currentSession.startTime).toLocaleString()}`;
+            
+            // 이벤트 로그 업데이트
+            updateEventLog();
+        }
+
+        // 재생/일시정지 토글
+        function togglePlayback() {
+            if (isPlaying) {
+                pausePlayback();
+            } else {
+                startPlayback();
+            }
+        }
+
+        // 재생 시작
+        function startPlayback() {
+            if (sessionEvents.length === 0) {
+                alert('재생할 이벤트가 없습니다.');
+                return;
+            }
+            
+            isPlaying = true;
+            playbackStartTime = Date.now();
+            
+            // 첫 번째 이벤트의 타임스탬프를 기준으로 시작 시간 조정
+            if (sessionEvents.length > 0) {
+                const firstEventTime = sessionEvents[0].timestamp || 0;
+                if (firstEventTime > 5000) { // 5초 이상 지연된 경우 조정
+                    sessionStartTime = firstEventTime;
+                } else {
+                    sessionStartTime = 0;
+                }
+            }
+            
+            playbackTimer = setInterval(processPlayback, 50); // 20fps
+            
+            document.getElementById('playBtn').textContent = '⏸️ 일시정지';
+            document.getElementById('playBtn').style.background = '#ef4444';
+            
+            console.log('모바일 세션 재생 시작');
+        }
+
+        // 재생 일시정지
+        function pausePlayback() {
+            isPlaying = false;
+            
+            if (playbackTimer) {
+                clearInterval(playbackTimer);
+                playbackTimer = null;
+            }
+            
+            document.getElementById('playBtn').textContent = '▶️ 재생';
+            document.getElementById('playBtn').style.background = '#667eea';
+        }
+
+        // 재생 처리
+        function processPlayback() {
+            if (!isPlaying || currentEventIndex >= sessionEvents.length) {
+                if (currentEventIndex >= sessionEvents.length) {
+                    // 재생 완료
+                    pausePlayback();
+                    console.log('모바일 세션 재생 완료');
+                }
+                return;
+            }
+            
+            const elapsed = (Date.now() - playbackStartTime) * playbackSpeed;
+            const targetTime = sessionStartTime + elapsed;
+            
+            // 현재 시간에 해당하는 이벤트들 처리
+            while (currentEventIndex < sessionEvents.length) {
+                const event = sessionEvents[currentEventIndex];
+                const eventTime = event.timestamp || 0;
+                
+                if (eventTime <= targetTime) {
+                    processEvent(event, currentEventIndex);
+                    currentEventIndex++;
+                } else {
+                    break;
+                }
+            }
+            
+            // UI 업데이트
+            updateTimeline(elapsed / sessionDuration * 100);
+            updateTimeDisplay(elapsed);
+            updateDebugInfo();
+        }
+
+        // 이벤트 처리
+        function processEvent(event, index) {
+            try {
+                switch (event.type) {
+                    case 'touchstart':
+                    case 'touchend':
+                        handleTouchEvent(event);
+                        break;
+                        
+                    case 'touchmove':
+                        // 터치 이동은 너무 많으므로 일부만 처리
+                        if (index % 3 === 0) {
+                            handleTouchEvent(event);
+                        }
+                        break;
+                        
+                    case 'swipe':
+                        handleSwipeEvent(event);
+                        break;
+                        
+                    case 'gesturestart':
+                    case 'gestureend':
+                        handleGestureEvent(event);
+                        break;
+                        
+                    case 'click':
+                        handleClickEvent(event);
+                        break;
+                        
+                    case 'input':
+                        handleInputEvent(event);
+                        break;
+                        
+                    case 'focus':
+                    case 'blur':
+                        handleFocusEvent(event);
+                        break;
+                        
+                    default:
+                        console.log('알 수 없는 이벤트 타입:', event.type);
+                }
+                
+                // 이벤트 로그 업데이트
+                highlightEventInLog(index);
+                
+            } catch (error) {
+                console.error('이벤트 처리 오류:', error, event);
+            }
+        }
+
+        // 터치 이벤트 처리
+        function handleTouchEvent(event) {
+            if (event.touches && event.touches.length > 0) {
+                const touch = event.touches[0];
+                showTouchIndicator(touch.x, touch.y);
+            }
+        }
+
+        // 스와이프 이벤트 처리
+        function handleSwipeEvent(event) {
+            if (event.touches && event.touches.length > 0) {
+                const touch = event.touches[0];
+                showSwipeIndicator(touch.x, touch.y, event.direction);
+                showGestureIndicator(touch.x, touch.y, event.direction);
+            }
+        }
+
+        // 제스처 이벤트 처리
+        function handleGestureEvent(event) {
+            if (event.target) {
+                const rect = getElementPosition(event.target);
+                if (rect) {
+                    showGestureIndicator(rect.x + rect.width/2, rect.y + rect.height/2, 'gesture');
+                }
+            }
+        }
+
+        // 클릭 이벤트 처리
+        function handleClickEvent(event) {
+            if (event.x && event.y) {
+                showTouchIndicator(event.x, event.y);
+            }
+            
+            if (event.target) {
+                highlightElement(event.target);
+            }
+        }
+
+        // 입력 이벤트 처리
+        function handleInputEvent(event) {
+            if (event.target && event.value) {
+                const element = findElementByTarget(event.target);
+                if (element) {
+                    element.value = event.value;
+                    highlightElement(event.target, 'input');
+                }
+            }
+        }
+
+        // 포커스 이벤트 처리
+        function handleFocusEvent(event) {
+            if (event.target) {
+                const element = findElementByTarget(event.target);
+                if (element) {
+                    if (event.type === 'focus') {
+                        element.focus();
+                        highlightElement(event.target, 'focus');
+                    } else {
+                        element.blur();
+                    }
+                }
+            }
+        }
+
+        // 터치 인디케이터 표시
+        function showTouchIndicator(x, y) {
+            const screen = document.querySelector('.mobile-screen');
+            const screenRect = screen.getBoundingClientRect();
+            
+            // 모바일 스크린 내 좌표로 변환
+            const screenX = x * (screenRect.width / 375);
+            const screenY = y * (screenRect.height / 667);
+            
+            const indicator = document.createElement('div');
+            indicator.className = 'touch-indicator';
+            indicator.style.left = screenX + 'px';
+            indicator.style.top = screenY + 'px';
+            
+            screen.appendChild(indicator);
+            
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    indicator.parentNode.removeChild(indicator);
+                }
+            }, 500);
+        }
+
+        // 스와이프 인디케이터 표시
+        function showSwipeIndicator(x, y, direction) {
+            const screen = document.querySelector('.mobile-screen');
+            const screenRect = screen.getBoundingClientRect();
+            
+            const screenX = x * (screenRect.width / 375);
+            const screenY = y * (screenRect.height / 667);
+            
+            const indicator = document.createElement('div');
+            indicator.className = 'swipe-indicator';
+            indicator.style.left = screenX + 'px';
+            indicator.style.top = screenY + 'px';
+            
+            // 방향에 따라 회전
+            const rotations = { 'right': 0, 'down': 90, 'left': 180, 'up': 270 };
+            const rotation = rotations[direction] || 0;
+            indicator.style.transform = `rotate(${rotation}deg)`;
+            
+            screen.appendChild(indicator);
+            
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    indicator.parentNode.removeChild(indicator);
+                }
+            }, 800);
+        }
+
+        // 제스처 인디케이터 표시
+        function showGestureIndicator(x, y, type) {
+            const screen = document.querySelector('.mobile-screen');
+            const screenRect = screen.getBoundingClientRect();
+            
+            const screenX = x * (screenRect.width / 375);
+            const screenY = y * (screenRect.height / 667);
+            
+            const indicator = document.createElement('div');
+            indicator.className = 'gesture-indicator';
+            indicator.style.left = screenX + 'px';
+            indicator.style.top = screenY + 'px';
+            
+            const symbols = {
+                'left': '⬅️',
+                'right': '➡️',
+                'up': '⬆️',
+                'down': '⬇️',
+                'gesture': '🤏',
+                'pinch': '🤏',
+                'zoom': '🔍'
+            };
+            
+            indicator.textContent = symbols[type] || '👆';
+            
+            screen.appendChild(indicator);
+            
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    indicator.parentNode.removeChild(indicator);
+                }
+            }, 1000);
+        }
+
+        // 요소 하이라이트
+        function highlightElement(targetInfo, type = 'click') {
+            const element = findElementByTarget(targetInfo);
+            if (element) {
+                const colors = {
+                    'click': 'rgba(102, 126, 234, 0.5)',
+                    'input': 'rgba(16, 185, 129, 0.5)',
+                    'focus': 'rgba(245, 158, 11, 0.5)'
+                };
+                
+                const originalBackground = element.style.backgroundColor;
+                element.style.backgroundColor = colors[type] || colors['click'];
+                element.style.transition = 'background-color 0.3s ease';
+                
+                setTimeout(() => {
+                    element.style.backgroundColor = originalBackground;
+                    element.style.transition = '';
+                }, 1000);
+            }
+        }
+
+        // 타겟 정보로 요소 찾기
+        function findElementByTarget(targetInfo) {
+            if (!targetInfo) return null;
+            
+            // ID로 찾기
+            if (targetInfo.id) {
+                const byId = document.getElementById(targetInfo.id.replace('Input', 'ReplayInput').replace('Btn', 'ReplayBtn').replace('Select', 'ReplaySelect'));
+                if (byId) return byId;
+            }
+            
+            // 태그 이름과 클래스로 찾기
+            const selector = targetInfo.tagName + 
+                (targetInfo.className ? '.' + targetInfo.className.split(' ')[0] : '');
+            
+            const elements = document.querySelectorAll(selector);
+            if (elements.length > 0) {
+                return elements[0];
+            }
+            
+            return null;
+        }
+
+        // 요소 위치 계산
+        function getElementPosition(targetInfo) {
+            const element = findElementByTarget(targetInfo);
+            if (element) {
+                const rect = element.getBoundingClientRect();
+                const screen = document.querySelector('.mobile-screen').getBoundingClientRect();
+                
+                return {
+                    x: rect.left - screen.left,
+                    y: rect.top - screen.top,
+                    width: rect.width,
+                    height: rect.height
+                };
+            }
+            return null;
+        }
+
+        // 타임라인 컨트롤 설정
+        function setupTimelineControls() {
+            const timeline = document.getElementById('timeline');
+            const handle = document.getElementById('timelineHandle');
+            
+            let isDragging = false;
+            
+            timeline.addEventListener('click', function(e) {
+                if (sessionDuration > 0) {
+                    const rect = timeline.getBoundingClientRect();
+                    const percent = (e.clientX - rect.left) / rect.width;
+                    seekToPercent(percent);
+                }
+            });
+            
+            handle.addEventListener('mousedown', function(e) {
+                isDragging = true;
+                e.preventDefault();
+            });
+            
+            document.addEventListener('mousemove', function(e) {
+                if (isDragging && sessionDuration > 0) {
+                    const rect = timeline.getBoundingClientRect();
+                    let percent = (e.clientX - rect.left) / rect.width;
+                    percent = Math.max(0, Math.min(1, percent));
+                    seekToPercent(percent);
+                }
+            });
+            
+            document.addEventListener('mouseup', function() {
+                isDragging = false;
+            });
+        }
+
+        // 특정 위치로 시크
+        function seekToPercent(percent) {
+            const targetTime = sessionDuration * percent;
+            const targetIndex = sessionEvents.findIndex(event => 
+                (event.timestamp || 0) > targetTime + sessionStartTime
+            );
+            
+            currentEventIndex = Math.max(0, targetIndex - 1);
+            
+            if (isPlaying) {
+                playbackStartTime = Date.now() - (targetTime / playbackSpeed);
+            }
+            
+            updateTimeline(percent * 100);
+            updateTimeDisplay(targetTime);
+            updateDebugInfo();
+        }
+
+        // 재생 속도 설정
+        function setPlaybackSpeed(speed) {
+            playbackSpeed = speed;
+            
+            // 재생 중이면 시작 시간 조정
+            if (isPlaying) {
+                const elapsed = (Date.now() - playbackStartTime) * playbackSpeed;
+                playbackStartTime = Date.now() - (elapsed / speed);
+            }
+            
+            // UI 업데이트
+            document.querySelectorAll('.speed-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            event.target.classList.add('active');
+            updateDebugInfo();
+        }
+
+        // 플레이어 초기화
+        function resetPlayer() {
+            pausePlayback();
+            currentEventIndex = 0;
+            updateTimeline(0);
+            updateTimeDisplay(0);
+            updateDebugInfo();
+            
+            // 스크린 초기화
+            const inputs = document.querySelectorAll('.mobile-input');
+            inputs.forEach(input => {
+                input.value = '';
+                input.style.backgroundColor = '';
+            });
+        }
+
+        // 이벤트 로그 토글
+        function toggleEventLog() {
+            const log = document.getElementById('eventLog');
+            log.classList.toggle('visible');
+        }
+
+        // 디버그 정보 토글
+        function toggleDebug() {
+            const debug = document.getElementById('debugInfo');
+            debug.classList.toggle('visible');
+        }
+
+        // 이벤트 로그 업데이트
+        function updateEventLog() {
+            const logContent = document.getElementById('eventLogContent');
+            
+            if (sessionEvents.length === 0) {
+                logContent.innerHTML = '이벤트가 없습니다.';
+                return;
+            }
+            
+            logContent.innerHTML = sessionEvents.slice(0, 50).map((event, index) => `
+                <div class="log-entry" id="log-${index}">
+                    <strong>${event.type}</strong> @ ${formatTime(event.timestamp || 0)}
+                    ${event.target ? `<br><small>${event.target.tagName || ''} ${event.target.id || ''}</small>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // 이벤트 로그에서 현재 이벤트 하이라이트
+        function highlightEventInLog(index) {
+            document.querySelectorAll('.log-entry').forEach(entry => {
+                entry.classList.remove('active');
+            });
+            
+            const currentLog = document.getElementById(`log-${index}`);
+            if (currentLog) {
+                currentLog.classList.add('active');
+                currentLog.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+
+        // 타임라인 업데이트
+        function updateTimeline(percent) {
+            document.getElementById('timelineProgress').style.width = percent + '%';
+            document.getElementById('timelineHandle').style.left = percent + '%';
+        }
+
+        // 시간 표시 업데이트
+        function updateTimeDisplay(elapsed) {
+            const current = formatTime(elapsed);
+            const total = formatTime(sessionDuration);
+            document.getElementById('timeDisplay').textContent = `${current} / ${total}`;
+        }
+
+        // 디버그 정보 업데이트
+        function updateDebugInfo() {
+            document.getElementById('currentEventIndex').textContent = currentEventIndex;
+            document.getElementById('totalEvents').textContent = sessionEvents.length;
+            document.getElementById('currentSpeed').textContent = playbackSpeed + 'x';
+            document.getElementById('sessionDuration').textContent = formatTime(sessionDuration);
+        }
+
+        // 유틸리티 함수들
+        function formatTime(ms) {
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        function formatDuration(ms) {
+            const seconds = Math.floor(ms / 1000);
+            if (seconds < 60) {
+                return seconds + '초';
+            }
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}분 ${remainingSeconds}초`;
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        }
+
+        function showError(message) {
+            showLoading(false);
+            const viewport = document.querySelector('.viewport');
+            viewport.innerHTML = `<div class="error-message">${message}</div>`;
+        }
+
+        // 키보드 단축키
+        document.addEventListener('keydown', function(e) {
+            switch (e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    togglePlayback();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    if (sessionDuration > 0) {
+                        const newPercent = Math.max(0, (currentEventIndex / sessionEvents.length) - 0.05);
+                        seekToPercent(newPercent);
+                    }
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    if (sessionDuration > 0) {
+                        const newPercent = Math.min(1, (currentEventIndex / sessionEvents.length) + 0.05);
+                        seekToPercent(newPercent);
+                    }
+                    break;
+                case 'KeyR':
+                    e.preventDefault();
+                    resetPlayer();
+                    break;
+            }
+        });
+    </script>
+</body>
+</html>

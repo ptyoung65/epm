@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>디버그 - CRUD 매트릭스 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .crud-matrix {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .crud-matrix th, .crud-matrix td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .crud-matrix th {
+            background: #f0f0f0;
+        }
+        .crud-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            margin: 1px;
+            border-radius: 3px;
+            font-size: 11px;
+            color: white;
+        }
+        .crud-c { background: #28a745; }
+        .crud-r { background: #17a2b8; }
+        .crud-u { background: #ffc107; color: #333; }
+        .crud-d { background: #dc3545; }
+        #log {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 CRUD 매트릭스 디버그 테스트</h1>
+    
+    <div class="test-section">
+        <h2>API 테스트</h2>
+        <button onclick="testCorrelationAPI()">상관도 API 테스트</button>
+        <button onclick="testProgramsAPI()">프로그램 API 테스트</button>
+        <button onclick="testTablesAPI()">테이블 API 테스트</button>
+        <button onclick="clearLog()">로그 클리어</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>CRUD 매트릭스</h2>
+        <table class="crud-matrix" id="testMatrix">
+            <thead>
+                <tr>
+                    <th>프로그램 / 테이블</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="test-section">
+        <h2>프로그램 리스트</h2>
+        <div id="programList"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>테이블 리스트</h2>
+        <div id="tableList"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>로그</h2>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${time}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+        
+        async function testCorrelationAPI() {
+            try {
+                log('🔄 /api/analysis/correlation 호출 중...');
+                const response = await fetch('/api/analysis/correlation');
+                log(`📡 응답 상태: ${response.status} ${response.statusText}`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                log(`📦 응답 데이터 크기: ${JSON.stringify(data).length} bytes`);
+                log(`✅ success: ${data.success}`);
+                
+                if (data.success && data.data) {
+                    log(`📋 프로그램: ${data.data.programs?.length || 0}개`);
+                    log(`🗄️ 테이블: ${data.data.tables?.length || 0}개`);
+                    log(`🔗 매트릭스: ${Object.keys(data.data.matrix || {}).length}개 프로그램`);
+                    
+                    // 매트릭스 렌더링 테스트
+                    renderTestMatrix(data.data);
+                }
+            } catch (error) {
+                log(`❌ 오류: ${error.message}`);
+            }
+        }
+        
+        async function testProgramsAPI() {
+            try {
+                log('🔄 /api/analysis/programs 호출 중...');
+                const response = await fetch('/api/analysis/programs');
+                const data = await response.json();
+                
+                log(`📦 프로그램 데이터: ${data.success ? 'OK' : 'FAIL'}`);
+                if (data.success) {
+                    log(`📋 프로그램 개수: ${data.data?.length || 0}`);
+                    displayTestPrograms(data.data || []);
+                }
+            } catch (error) {
+                log(`❌ 프로그램 API 오류: ${error.message}`);
+            }
+        }
+        
+        async function testTablesAPI() {
+            try {
+                log('🔄 /api/analysis/tables 호출 중...');
+                const response = await fetch('/api/analysis/tables');
+                const data = await response.json();
+                
+                log(`📦 테이블 데이터: ${data.success ? 'OK' : 'FAIL'}`);
+                if (data.success) {
+                    log(`🗄️ 테이블 개수: ${data.data?.length || 0}`);
+                    displayTestTables(data.data || []);
+                }
+            } catch (error) {
+                log(`❌ 테이블 API 오류: ${error.message}`);
+            }
+        }
+        
+        function renderTestMatrix(data) {
+            if (!data || !data.programs || !data.tables) {
+                log('❌ 매트릭스 데이터가 유효하지 않음');
+                return;
+            }
+            
+            const matrix = document.getElementById('testMatrix');
+            const thead = matrix.querySelector('thead tr');
+            const tbody = matrix.querySelector('tbody');
+            
+            // 헤더 초기화
+            while (thead.children.length > 1) {
+                thead.removeChild(thead.lastChild);
+            }
+            
+            // 테이블 헤더 추가
+            data.tables.forEach(table => {
+                const th = document.createElement('th');
+                th.textContent = table.name;
+                thead.appendChild(th);
+            });
+            
+            // 바디 초기화
+            tbody.innerHTML = '';
+            
+            // 프로그램 행 추가
+            data.programs.forEach(program => {
+                const tr = document.createElement('tr');
+                
+                // 프로그램 이름
+                const programCell = document.createElement('td');
+                programCell.textContent = program.name;
+                programCell.style.fontWeight = 'bold';
+                tr.appendChild(programCell);
+                
+                // CRUD 셀들
+                data.tables.forEach(table => {
+                    const crudCell = document.createElement('td');
+                    const crudOps = data.matrix[program.id] && data.matrix[program.id][table.id];
+                    
+                    if (crudOps && crudOps.length > 0) {
+                        crudOps.forEach(op => {
+                            const badge = document.createElement('span');
+                            badge.className = `crud-badge crud-${op.toLowerCase()}`;
+                            badge.textContent = op;
+                            crudCell.appendChild(badge);
+                        });
+                    }
+                    
+                    tr.appendChild(crudCell);
+                });
+                
+                tbody.appendChild(tr);
+            });
+            
+            log(`✅ 매트릭스 렌더링 완료: ${data.programs.length} x ${data.tables.length}`);
+        }
+        
+        function displayTestPrograms(programs) {
+            const container = document.getElementById('programList');
+            container.innerHTML = programs.map(program => `
+                <div style="padding: 8px; border: 1px solid #ddd; margin: 4px 0; border-radius: 4px;">
+                    <strong>${program.name}</strong> (${program.type})<br>
+                    <small>LOC: ${program.loc}, 복잡도: ${program.complexity}, 의존성: ${program.dependencies}</small>
+                </div>
+            `).join('');
+        }
+        
+        function displayTestTables(tables) {
+            const container = document.getElementById('tableList');
+            container.innerHTML = tables.map(table => `
+                <div style="padding: 8px; border: 1px solid #ddd; margin: 4px 0; border-radius: 4px;">
+                    <strong>${table.name}</strong> (${table.type})<br>
+                    <small>엔진: ${table.engine}, 크기: ${table.size}, 연결: ${table.connections}</small>
+                </div>
+            `).join('');
+        }
+        
+        // 페이지 로드 시 자동 테스트
+        window.addEventListener('DOMContentLoaded', function() {
+            log('🎯 디버그 페이지 로드 완료');
+            log('📝 버튼을 클릭하여 API를 테스트해보세요');
+        });
+    </script>
+</body>
+</html>

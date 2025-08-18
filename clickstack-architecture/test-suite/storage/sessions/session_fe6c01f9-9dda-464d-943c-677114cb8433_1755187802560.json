@@ -1,0 +1,139 @@
+{
+  "id": "fe6c01f9-9dda-464d-943c-677114cb8433",
+  "scenario": "journey_dashboard",
+  "startTime": "2025-08-14T16:10:02.220Z",
+  "lastActivity": "2025-08-14T16:10:02.504Z",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+  "ipAddress": "::1",
+  "events": [
+    {
+      "id": "c59886bc-c68c-42a9-842a-a80f202d28bb",
+      "sessionId": "fe6c01f9-9dda-464d-943c-677114cb8433",
+      "timestamp": 1755187802230,
+      "recordedAt": "2025-08-14T16:10:02.271Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187802230,
+        "page_url": "/login",
+        "title": "login",
+        "referrer": null,
+        "load_time": 2060
+      }
+    },
+    {
+      "id": "530a3fcc-5539-47f7-beda-9508c1b2b430",
+      "sessionId": "fe6c01f9-9dda-464d-943c-677114cb8433",
+      "timestamp": 1755187803278,
+      "recordedAt": "2025-08-14T16:10:02.315Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187803278,
+        "page_url": "/dashboard",
+        "title": "dashboard",
+        "referrer": "/login",
+        "load_time": 2168
+      }
+    },
+    {
+      "id": "b05c00eb-2299-486a-9ca8-b2309d1ca21e",
+      "sessionId": "fe6c01f9-9dda-464d-943c-677114cb8433",
+      "timestamp": 1755187804323,
+      "recordedAt": "2025-08-14T16:10:02.360Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187804323,
+        "page_url": "/dashboard/analytics",
+        "title": "analytics",
+        "referrer": "/dashboard",
+        "load_time": 1483
+      }
+    },
+    {
+      "id": "efe3cbfe-88aa-4007-9a96-1dcf511afd87",
+      "sessionId": "fe6c01f9-9dda-464d-943c-677114cb8433",
+      "timestamp": 1755187805369,
+      "recordedAt": "2025-08-14T16:10:02.408Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187805369,
+        "page_url": "/dashboard/reports",
+        "title": "reports",
+        "referrer": "/dashboard/analytics",
+        "load_time": 966
+      }
+    },
+    {
+      "id": "2e644eec-1d67-4282-b92a-33a8ae90ef61",
+      "sessionId": "fe6c01f9-9dda-464d-943c-677114cb8433",
+      "timestamp": 1755187806417,
+      "recordedAt": "2025-08-14T16:10:02.456Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187806417,
+        "page_url": "/dashboard/settings",
+        "title": "settings",
+        "referrer": "/dashboard/reports",
+        "load_time": 1508
+      }
+    },
+    {
+      "id": "6bffeaf1-e9c4-4738-8455-6dc019cb20e5",
+      "sessionId": "fe6c01f9-9dda-464d-943c-677114cb8433",
+      "timestamp": 1755187807465,
+      "recordedAt": "2025-08-14T16:10:02.504Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187807465,
+        "page_url": "/dashboard",
+        "title": "dashboard",
+        "referrer": "/dashboard/settings",
+        "load_time": 1511
+      }
+    }
+  ],
+  "status": "completed",
+  "metadata": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+    "device": {
+      "type": "desktop",
+      "browser": "Chrome",
+      "os": "Windows"
+    }
+  },
+  "endTime": "2025-08-14T16:10:02.560Z",
+  "duration": 340,
+  "endReason": "user_ended",
+  "statistics": {
+    "totalEvents": 6,
+    "eventTypes": {
+      "rrweb_event": 6
+    },
+    "clicks": 0,
+    "formInputs": 0,
+    "pageViews": 0,
+    "errors": 0,
+    "scrollEvents": 0,
+    "userBehavior": {
+      "avgTimeBetweenEvents": 872.5,
+      "hasErrors": false,
+      "hasFormInteraction": false,
+      "hasNavigation": false
+    }
+  }
+}

@@ -1,0 +1,287 @@
+{
+  "apm": {
+    "version": "1.0.0",
+    "name": "AIRIS APM System",
+    "description": "Java Application Performance Monitoring with Real-time Analysis"
+  },
+  "agent": {
+    "enabled": true,
+    "port": 8080,
+    "udpPort": 8081,
+    "jmxPort": 9999,
+    "samplingInterval": 5000,
+    "maxQueueSize": 10000,
+    "batchSize": 100
+  },
+  "profiler": {
+    "enabled": true,
+    "cpuProfiling": {
+      "enabled": true,
+      "interval": 30000,
+      "samplingRate": 100,
+      "maxDepth": 50
+    },
+    "memoryProfiling": {
+      "enabled": true,
+      "interval": 30000,
+      "heapDumpInterval": 300000,
+      "heapDumpThreshold": 80
+    },
+    "threadProfiling": {
+      "enabled": true,
+      "interval": 30000,
+      "deadlockDetection": true
+    },
+    "callStackTracing": {
+      "enabled": true,
+      "interval": 30000,
+      "maxDepth": 50,
+      "samplingRate": 100
+    }
+  },
+  "monitoring": {
+    "jvm": {
+      "enabled": true,
+      "gcMonitoring": true,
+      "memoryMonitoring": true,
+      "threadMonitoring": true
+    },
+    "j2ee": {
+      "enabled": true,
+      "webContainerMonitoring": true,
+      "ejbMonitoring": true,
+      "servletMonitoring": true,
+      "filterMonitoring": true
+    },
+    "jdbc": {
+      "enabled": true,
+      "connectionPoolMonitoring": true,
+      "queryPerformanceMonitoring": true,
+      "connectionLeakDetection": true,
+      "slowQueryThreshold": 5000
+    },
+    "system": {
+      "enabled": true,
+      "cpuMonitoring": true,
+      "memoryMonitoring": true,
+      "diskMonitoring": true,
+      "networkMonitoring": true
+    }
+  },
+  "bytecodeInstrumentation": {
+    "enabled": true,
+    "packages": [
+      "com.example.*",
+      "org.springframework.*",
+      "javax.servlet.*"
+    ],
+    "excludePackages": [
+      "java.*",
+      "javax.*",
+      "sun.*",
+      "com.sun.*"
+    ],
+    "methodEntryExit": true,
+    "exceptionTracking": true,
+    "parameterTracking": false
+  },
+  "dataCollection": {
+    "udp": {
+      "enabled": true,
+      "bufferSize": 8192,
+      "timeout": 5000
+    },
+    "tcp": {
+      "enabled": false,
+      "port": 8082,
+      "keepAlive": true
+    },
+    "compression": {
+      "enabled": true,
+      "algorithm": "gzip",
+      "level": 6
+    }
+  },
+  "storage": {
+    "realtime": {
+      "type": "redis",
+      "host": "localhost",
+      "port": 6379,
+      "database": 0,
+      "ttl": 3600
+    },
+    "historical": {
+      "type": "influxdb",
+      "host": "localhost",
+      "port": 8086,
+      "database": "apm-monitoring",
+      "retention": "30d"
+    },
+    "metadata": {
+      "type": "mongodb",
+      "host": "localhost",
+      "port": 27017,
+      "database": "airis-apm"
+    }
+  },
+  "dashboard": {
+    "port": 3000,
+    "refreshInterval": 30000,
+    "maxDataPoints": 1000,
+    "charts": {
+      "responseTime": true,
+      "throughput": true,
+      "errorRate": true,
+      "cpuUsage": true,
+      "memoryUsage": true,
+      "gcActivity": true,
+      "threadCount": true,
+      "jdbcConnections": true
+    }
+  },
+  "alerts": {
+    "enabled": true,
+    "rules": [
+      {
+        "name": "High CPU Usage",
+        "metric": "cpu.usage",
+        "threshold": 80,
+        "operator": ">",
+        "duration": 300,
+        "severity": "warning"
+      },
+      {
+        "name": "High Memory Usage",
+        "metric": "memory.usage",
+        "threshold": 85,
+        "operator": ">",
+        "duration": 300,
+        "severity": "critical"
+      },
+      {
+        "name": "Slow Response Time",
+        "metric": "response.time",
+        "threshold": 5000,
+        "operator": ">",
+        "duration": 60,
+        "severity": "warning"
+      },
+      {
+        "name": "High Error Rate",
+        "metric": "error.rate",
+        "threshold": 5,
+        "operator": ">",
+        "duration": 300,
+        "severity": "critical"
+      },
+      {
+        "name": "JDBC Connection Pool Exhausted",
+        "metric": "jdbc.pool.usage",
+        "threshold": 90,
+        "operator": ">",
+        "duration": 60,
+        "severity": "critical"
+      }
+    ],
+    "notifications": {
+      "email": {
+        "enabled": false,
+        "smtp": {
+          "host": "localhost",
+          "port": 587,
+          "secure": false,
+          "auth": {
+            "user": "",
+            "pass": ""
+          }
+        },
+        "recipients": []
+      },
+      "webhook": {
+        "enabled": false,
+        "url": "",
+        "timeout": 5000
+      },
+      "console": {
+        "enabled": true
+      }
+    }
+  },
+  "reporting": {
+    "enabled": true,
+    "schedule": "0 0 * * *",
+    "formats": ["html", "pdf", "json"],
+    "outputDir": "./apm/reports",
+    "retention": "90d",
+    "sections": [
+      "summary",
+      "performance-trends",
+      "bottlenecks",
+      "recommendations",
+      "sla-compliance"
+    ]
+  },
+  "security": {
+    "authentication": {
+      "enabled": false,
+      "type": "basic",
+      "users": []
+    },
+    "encryption": {
+      "enabled": false,
+      "algorithm": "AES-256-GCM"
+    },
+    "ipWhitelist": [],
+    "rateLimiting": {
+      "enabled": true,
+      "maxRequests": 1000,
+      "windowMs": 60000
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "outputs": [
+      {
+        "type": "console",
+        "level": "info"
+      },
+      {
+        "type": "file",
+        "level": "debug",
+        "filename": "logs/apm-debug.log",
+        "maxSize": "10m",
+        "maxFiles": 5
+      },
+      {
+        "type": "file",
+        "level": "error",
+        "filename": "logs/apm-error.log",
+        "maxSize": "10m",
+        "maxFiles": 10
+      }
+    ]
+  },
+  "performance": {
+    "maxConcurrentConnections": 1000,
+    "connectionTimeout": 30000,
+    "readTimeout": 60000,
+    "writeTimeout": 30000,
+    "keepAliveTimeout": 60000,
+    "memoryPool": {
+      "initial": "256m",
+      "maximum": "2g",
+      "young": "512m"
+    }
+  },
+  "clustering": {
+    "enabled": false,
+    "mode": "standalone",
+    "nodes": [],
+    "coordination": {
+      "enabled": false,
+      "algorithm": "raft",
+      "heartbeatInterval": 5000
+    }
+  }
+}

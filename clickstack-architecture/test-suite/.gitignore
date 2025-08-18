@@ -1,0 +1,339 @@
+# AIRIS-MON 테스트 스위트 .gitignore
+
+# ===========================================
+# Node.js
+# ===========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage
+.grunt
+
+# Bower dependency directory
+bower_components
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release
+
+# Dependency directories
+jspm_packages/
+
+# Snowpack dependency directory (https://snowpack.dev/)
+web_modules/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# ===========================================
+# 환경 변수 및 설정 파일
+# ===========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 로컬 설정 파일
+config/local.json
+config/local-*.json
+
+# ===========================================
+# 테스트 결과 및 데이터
+# ===========================================
+test-results/
+test-data/
+test-output/
+test-reports/
+*.test-results.json
+
+# 벤치마크 결과
+benchmark-results/
+performance-reports/
+
+# 생성된 테스트 데이터
+generated-data/
+simulated-data/
+
+# 로그 파일
+logs/
+*.log
+*.log.*
+test-logs/
+
+# ===========================================
+# 데이터베이스 및 캐시
+# ===========================================
+# ClickHouse 로컬 데이터
+clickhouse-data/
+clickhouse-logs/
+
+# Redis 덤프
+dump.rdb
+*.rdb
+
+# Kafka 로그 디렉토리
+kafka-logs/
+
+# 백업 파일
+*.backup
+*.bak
+backups/
+
+# ===========================================
+# Docker
+# ===========================================
+# Docker volumes
+docker-volumes/
+data-volumes/
+
+# Docker 빌드 캐시
+.dockerignore.bak
+
+# ===========================================
+# IDE 및 에디터
+# ===========================================
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ===========================================
+# OS 생성 파일
+# ===========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ===========================================
+# 임시 및 캐시 파일
+# ===========================================
+# 임시 파일
+temp/
+tmp/
+.temp/
+.tmp/
+
+# 압축 파일
+*.tar.gz
+*.tar.bz2
+*.zip
+*.7z
+*.rar
+
+# 캐시 디렉토리
+.cache/
+cache/
+
+# ===========================================
+# 보안 관련 파일
+# ===========================================
+# 키 파일
+*.key
+*.pem
+*.crt
+*.cert
+*.p12
+*.pfx
+
+# 시크릿 파일
+secrets/
+.secrets/
+*.secret
+*.secrets
+
+# 인증 정보
+auth/
+.auth/
+credentials/
+.credentials/
+
+# ===========================================
+# 프로덕션 빌드
+# ===========================================
+build/
+dist/
+out/
+.next/
+.nuxt/
+
+# ===========================================
+# 모니터링 및 분석 도구
+# ===========================================
+# Grafana 데이터
+grafana-data/
+
+# 메트릭 데이터 로컬 저장소
+metrics-data/
+
+# 알림 히스토리
+alert-history/
+
+# 성능 프로파일링 결과
+profile-results/
+*.prof
+
+# ===========================================
+# 사용자 정의 제외
+# ===========================================
+# 개발자별 설정
+.personal/
+personal-*
+
+# 프로토타입 및 실험
+prototype/
+experimental/
+sandbox/
+
+# 문서 임시 파일
+*.draft
+*.draft.*
+
+# 스크린샷 및 이미지
+screenshots/
+*.png
+*.jpg
+*.jpeg
+*.gif
+!docs/**/*.png
+!docs/**/*.jpg
+!docs/**/*.jpeg
+!docs/**/*.gif
+
+# 미디어 파일
+*.mp4
+*.avi
+*.mov
+*.wmv
+
+# ===========================================
+# 패키지 관리자
+# ===========================================
+# Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# pnpm
+.pnpm-store/
+
+# ===========================================
+# 에러 및 디버그 파일
+# ===========================================
+# 크래시 덤프
+*.dmp
+core.*
+vgcore.*
+
+# 에러 리포트
+error-reports/
+crash-logs/

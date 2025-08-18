@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIRIS-MON | 알림 관리 대시보드</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Noto Sans KR', sans-serif; }
+    .korean-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .alert-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+    .status-good { color: #10b981; }
+    .status-warning { color: #f59e0b; }
+    .status-error { color: #ef4444; }
+    .status-critical { color: #dc2626; }
+    .card { 
+      background: white; 
+      border-radius: 8px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .critical-card {
+      background: linear-gradient(145deg, #fef2f2, #fecaca);
+      border-left: 4px solid #dc2626;
+    }
+    .warning-card {
+      background: linear-gradient(145deg, #fffbeb, #fed7aa);
+      border-left: 4px solid #f59e0b;
+    }
+    .info-card {
+      background: linear-gradient(145deg, #eff6ff, #dbeafe);
+      border-left: 4px solid #3b82f6;
+    }
+    .success-card {
+      background: linear-gradient(145deg, #f0fdf4, #bbf7d0);
+      border-left: 4px solid #16a34a;
+    }
+    .pulse-dot {
+      animation: pulse 2s infinite;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    .alert-item {
+      border-left: 4px solid;
+      transition: all 0.3s ease;
+    }
+    .alert-item:hover {
+      shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transform: translateY(-1px);
+    }
+    .alert-critical { border-color: #dc2626; }
+    .alert-warning { border-color: #f59e0b; }
+    .alert-info { border-color: #3b82f6; }
+    .alert-success { border-color: #16a34a; }
+    .notification-bell {
+      animation: ring 2s ease-in-out infinite;
+    }
+    @keyframes ring {
+      0%, 100% { transform: rotate(0deg); }
+      10%, 30%, 50%, 70%, 90% { transform: rotate(-10deg); }
+      20%, 40%, 60%, 80% { transform: rotate(10deg); }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Header -->
+  <header class="alert-gradient shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-6">
+        <div class="flex items-center">
+          <h1 class="text-3xl font-bold text-white">🔔 알림 관리</h1>
+          <span class="ml-4 bg-white bg-opacity-20 text-white px-3 py-1 rounded-full text-sm">
+            실시간 알림 & 알림 시스템
+          </span>
+        </div>
+        <div class="flex items-center space-x-4 text-white">
+          <nav class="flex space-x-2">
+            <a href="/" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              📊 통합대시보드
+            </a>
+            <a href="/j2ee-dashboard.html" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              ☕ J2EE 모니터링
+            </a>
+            <a href="/was-dashboard.html" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              🏗️ WAS 모니터링
+            </a>
+            <a href="/exception-dashboard.html" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              🚨 예외추적
+            </a>
+            <a href="/topology-dashboard.html" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              🗺️ 서비스맵
+            </a>
+            <a href="/alert-dashboard.html" class="bg-white bg-opacity-30 px-3 py-1 rounded text-sm">
+              🔔 알림관리
+            </a>
+          </nav>
+          <span class="pulse-dot"></span>
+          <span id="current-time" class="text-sm opacity-90"></span>
+          <span class="bg-yellow-500 px-3 py-1 rounded-full text-xs font-semibold notification-bell">
+            🔔 3개 알림
+          </span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- Alert Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="card critical-card">
+        <h3 class="text-lg font-semibold text-red-800 mb-2">🔥 Critical 알림</h3>
+        <p id="critical-alerts" class="text-2xl font-bold status-critical">2</p>
+        <p class="text-sm text-red-700">즉시 대응 필요</p>
+      </div>
+      <div class="card warning-card">
+        <h3 class="text-lg font-semibold text-yellow-800 mb-2">⚠️ Warning 알림</h3>
+        <p id="warning-alerts" class="text-2xl font-bold status-warning">8</p>
+        <p class="text-sm text-yellow-700">모니터링 필요</p>
+      </div>
+      <div class="card info-card">
+        <h3 class="text-lg font-semibold text-blue-800 mb-2">ℹ️ Info 알림</h3>
+        <p id="info-alerts" class="text-2xl font-bold text-blue-600">15</p>
+        <p class="text-sm text-blue-700">정보 알림</p>
+      </div>
+      <div class="card success-card">
+        <h3 class="text-lg font-semibold text-green-800 mb-2">✅ 해결률</h3>
+        <p id="resolution-rate" class="text-2xl font-bold status-good">92%</p>
+        <p class="text-sm text-green-700">최근 24시간</p>
+      </div>
+    </div>
+
+    <!-- Alert Trends and Statistics -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="card">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">📈 알림 발생 추세</h3>
+        <canvas id="alertTrendChart" width="400" height="200"></canvas>
+      </div>
+      <div class="card">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">🎯 알림 유형별 분포</h3>
+        <canvas id="alertTypeChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Active Alerts -->
+    <div class="card mb-8">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-xl font-bold text-gray-800">🔥 활성 알림</h3>
+        <div class="flex space-x-2">
+          <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm">
+            🔄 새로고침
+          </button>
+          <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm">
+            ⚙️ 필터 설정
+          </button>
+          <button id="clear-all-btn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm">
+            ✅ 전체 해결
+          </button>
+        </div>
+      </div>
+      <div id="active-alerts" class="space-y-3">
+        <!-- Active alerts will be loaded here -->
+      </div>
+    </div>
+
+    <!-- Alert Rules and Configuration -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="card">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">📋 알림 규칙</h3>
+        <div id="alert-rules" class="space-y-3">
+          <!-- Alert rules will be loaded here -->
+        </div>
+        <button class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded">
+          + 새 규칙 추가
+        </button>
+      </div>
+      <div class="card">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">📧 알림 채널</h3>
+        <div id="notification-channels" class="space-y-3">
+          <!-- Notification channels will be loaded here -->
+        </div>
+        <button class="mt-4 w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded">
+          + 채널 추가
+        </button>
+      </div>
+    </div>
+
+    <!-- Alert History -->
+    <div class="card mb-8">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">📋 알림 이력</h3>
+      <div class="mb-4 flex space-x-4">
+        <select id="severity-filter" class="border rounded px-3 py-2">
+          <option value="all">모든 심각도</option>
+          <option value="critical">Critical</option>
+          <option value="warning">Warning</option>
+          <option value="info">Info</option>
+        </select>
+        <select id="status-filter" class="border rounded px-3 py-2">
+          <option value="all">모든 상태</option>
+          <option value="active">활성</option>
+          <option value="resolved">해결</option>
+          <option value="acknowledged">확인됨</option>
+        </select>
+        <input type="text" id="search-alerts" placeholder="알림 메시지 검색..." class="border rounded px-3 py-2 flex-grow">
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">시간</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">심각도</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">서비스</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">알림 메시지</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">상태</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">액션</th>
+            </tr>
+          </thead>
+          <tbody id="alert-history-table" class="bg-white divide-y divide-gray-200">
+            <!-- Alert history will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="card">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">📈 알림 시스템 성능</h3>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="text-center p-4 bg-blue-50 rounded-lg">
+          <h4 class="text-lg font-semibold text-blue-800">평균 대응시간</h4>
+          <p id="avg-response-time" class="text-2xl font-bold text-blue-600">2.3분</p>
+        </div>
+        <div class="text-center p-4 bg-green-50 rounded-lg">
+          <h4 class="text-lg font-semibold text-green-800">알림 정확도</h4>
+          <p id="alert-accuracy" class="text-2xl font-bold text-green-600">94.2%</p>
+        </div>
+        <div class="text-center p-4 bg-yellow-50 rounded-lg">
+          <h4 class="text-lg font-semibold text-yellow-800">오탐지율</h4>
+          <p id="false-positive" class="text-2xl font-bold text-yellow-600">5.8%</p>
+        </div>
+        <div class="text-center p-4 bg-purple-50 rounded-lg">
+          <h4 class="text-lg font-semibold text-purple-800">전송 성공률</h4>
+          <p id="delivery-rate" class="text-2xl font-bold text-purple-600">99.1%</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Alert Detail Modal -->
+  <div id="alert-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen px-4">
+      <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-xl font-bold text-gray-800">알림 상세 정보</h3>
+          <button id="close-alert-modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+            ✕
+          </button>
+        </div>
+        <div id="alert-modal-content" class="px-6 py-4">
+          <!-- Modal content will be loaded here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script>
+    let alertTrendChart, alertTypeChart;
+    
+    // Mock alert data
+    const activeAlerts = [
+      {
+        id: 'AL001',
+        timestamp: '2025-08-18 23:42:15',
+        severity: 'critical',
+        service: 'J2EE Monitor',
+        message: 'JVM 힙 메모리 사용률 95% 초과',
+        status: 'active',
+        duration: '15분',
+        impact: 'high'
+      },
+      {
+        id: 'AL002',
+        timestamp: '2025-08-18 23:38:22',
+        severity: 'critical',
+        service: 'Exception Tracker',
+        message: 'NullPointerException 발생률 임계치 초과 (50/분)',
+        status: 'acknowledged',
+        duration: '19분',
+        impact: 'high'
+      },
+      {
+        id: 'AL003',
+        timestamp: '2025-08-18 23:35:45',
+        severity: 'warning',
+        service: 'WAS Monitor',
+        message: 'Tomcat 스레드 풀 사용률 85% 초과',
+        status: 'active',
+        duration: '22분',
+        impact: 'medium'
+      },
+      {
+        id: 'AL004',
+        timestamp: '2025-08-18 23:32:10',
+        severity: 'warning',
+        service: 'Service Topology',
+        message: 'API Gateway 응답시간 지연 (150ms)',
+        status: 'active',
+        duration: '25분',
+        impact: 'medium'
+      }
+    ];
+
+    const alertRules = [
+      {
+        name: 'JVM 힙 메모리 경고',
+        condition: 'heap_usage > 80%',
+        severity: 'warning',
+        enabled: true
+      },
+      {
+        name: 'JVM 힙 메모리 위험',
+        condition: 'heap_usage > 90%',
+        severity: 'critical',
+        enabled: true
+      },
+      {
+        name: '예외 발생률 경고',
+        condition: 'exception_rate > 10/min',
+        severity: 'warning',
+        enabled: true
+      },
+      {
+        name: '서비스 다운',
+        condition: 'service_status == down',
+        severity: 'critical',
+        enabled: true
+      }
+    ];
+
+    const notificationChannels = [
+      {
+        name: 'Slack - 개발팀',
+        type: 'slack',
+        target: '#dev-alerts',
+        enabled: true
+      },
+      {
+        name: '이메일 - 운영팀',
+        type: 'email',
+        target: 'ops@company.com',
+        enabled: true
+      },
+      {
+        name: 'SMS - 온콜',
+        type: 'sms',
+        target: '+82-10-****-1234',
+        enabled: false
+      },
+      {
+        name: 'Webhook - 모니터링',
+        type: 'webhook',
+        target: 'https://api.monitoring.com/webhook',
+        enabled: true
+      }
+    ];
+
+    const alertHistory = [
+      {
+        timestamp: '2025-08-18 23:42:15',
+        severity: 'critical',
+        service: 'J2EE Monitor',
+        message: 'JVM 힙 메모리 사용률 95% 초과',
+        status: 'active'
+      },
+      {
+        timestamp: '2025-08-18 23:25:33',
+        severity: 'warning',
+        service: 'Exception Tracker',
+        message: 'SQLException 빈발 발생',
+        status: 'resolved'
+      },
+      {
+        timestamp: '2025-08-18 23:15:12',
+        severity: 'info',
+        service: 'Alert System',
+        message: '알림 규칙 업데이트 완료',
+        status: 'resolved'
+      },
+      {
+        timestamp: '2025-08-18 23:10:45',
+        severity: 'warning',
+        service: 'WAS Monitor',
+        message: '스레드 풀 포화 상태',
+        status: 'acknowledged'
+      }
+    ];
+
+    function initCharts() {
+      // Alert Trend Chart
+      const trendCtx = document.getElementById('alertTrendChart').getContext('2d');
+      alertTrendChart = new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '23:59'],
+          datasets: [{
+            label: 'Critical',
+            data: [1, 0, 2, 1, 3, 2, 2],
+            borderColor: '#dc2626',
+            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+            tension: 0.4
+          }, {
+            label: 'Warning',
+            data: [5, 3, 8, 6, 12, 10, 8],
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            tension: 0.4
+          }, {
+            label: 'Info',
+            data: [12, 8, 15, 18, 22, 20, 15],
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: '알림 수' }
+            }
+          }
+        }
+      });
+
+      // Alert Type Chart
+      const typeCtx = document.getElementById('alertTypeChart').getContext('2d');
+      alertTypeChart = new Chart(typeCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Performance', 'Exception', 'Service Down', 'Resource', 'Security'],
+          datasets: [{
+            data: [45, 28, 12, 25, 8],
+            backgroundColor: ['#3b82f6', '#f59e0b', '#dc2626', '#10b981', '#8b5cf6']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+    }
+
+    function loadActiveAlerts() {
+      const container = document.getElementById('active-alerts');
+      container.innerHTML = activeAlerts.map(alert => {
+        const severityColor = alert.severity === 'critical' ? 'alert-critical bg-red-50' :
+                             alert.severity === 'warning' ? 'alert-warning bg-yellow-50' :
+                             'alert-info bg-blue-50';
+        
+        const statusIcon = alert.status === 'active' ? '🔴' :
+                          alert.status === 'acknowledged' ? '🟡' : '🟢';
+        
+        return `
+          <div class="alert-item ${severityColor} p-4 rounded-lg">
+            <div class="flex justify-between items-start">
+              <div class="flex-grow">
+                <div class="flex items-center mb-2">
+                  <span class="text-lg">${statusIcon}</span>
+                  <h4 class="font-semibold text-gray-800 ml-2">${alert.service}</h4>
+                  <span class="ml-2 text-xs px-2 py-1 rounded ${alert.severity === 'critical' ? 'bg-red-100 text-red-800' : alert.severity === 'warning' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'}">
+                    ${alert.severity.toUpperCase()}
+                  </span>
+                </div>
+                <p class="text-sm text-gray-700 mb-2">${alert.message}</p>
+                <div class="flex items-center text-xs text-gray-500">
+                  <span>⏰ ${alert.timestamp}</span>
+                  <span class="mx-2">•</span>
+                  <span>🕐 지속시간: ${alert.duration}</span>
+                </div>
+              </div>
+              <div class="flex space-x-2 ml-4">
+                <button onclick="acknowledgeAlert('${alert.id}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs">
+                  확인
+                </button>
+                <button onclick="resolveAlert('${alert.id}')" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs">
+                  해결
+                </button>
+                <button onclick="viewAlertDetails('${alert.id}')" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs">
+                  상세
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function loadAlertRules() {
+      const container = document.getElementById('alert-rules');
+      container.innerHTML = alertRules.map(rule => `
+        <div class="p-3 border rounded-lg ${rule.enabled ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'}">
+          <div class="flex justify-between items-start">
+            <div>
+              <h4 class="font-semibold text-gray-800">${rule.name}</h4>
+              <p class="text-sm text-gray-600">${rule.condition}</p>
+              <span class="inline-block mt-1 text-xs px-2 py-1 rounded ${rule.severity === 'critical' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}">
+                ${rule.severity.toUpperCase()}
+              </span>
+            </div>
+            <label class="flex items-center">
+              <input type="checkbox" ${rule.enabled ? 'checked' : ''} class="mr-2">
+              <span class="text-sm">활성</span>
+            </label>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function loadNotificationChannels() {
+      const container = document.getElementById('notification-channels');
+      container.innerHTML = notificationChannels.map(channel => {
+        const typeIcon = channel.type === 'slack' ? '📨' :
+                        channel.type === 'email' ? '📧' :
+                        channel.type === 'sms' ? '📱' : '🔗';
+        
+        return `
+          <div class="p-3 border rounded-lg ${channel.enabled ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'}">
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="flex items-center">
+                  <span class="text-lg mr-2">${typeIcon}</span>
+                  <h4 class="font-semibold text-gray-800">${channel.name}</h4>
+                </div>
+                <p class="text-sm text-gray-600">${channel.target}</p>
+              </div>
+              <label class="flex items-center">
+                <input type="checkbox" ${channel.enabled ? 'checked' : ''} class="mr-2">
+                <span class="text-sm">활성</span>
+              </label>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function loadAlertHistory() {
+      const tbody = document.getElementById('alert-history-table');
+      tbody.innerHTML = alertHistory.map(alert => {
+        const severityColor = alert.severity === 'critical' ? 'bg-red-100 text-red-800' :
+                             alert.severity === 'warning' ? 'bg-yellow-100 text-yellow-800' :
+                             'bg-blue-100 text-blue-800';
+        
+        const statusColor = alert.status === 'active' ? 'bg-red-100 text-red-800' :
+                           alert.status === 'acknowledged' ? 'bg-yellow-100 text-yellow-800' :
+                           'bg-green-100 text-green-800';
+        
+        return `
+          <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 text-sm text-gray-900">${alert.timestamp}</td>
+            <td class="px-6 py-4">
+              <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${severityColor}">
+                ${alert.severity.toUpperCase()}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-sm font-medium text-gray-900">${alert.service}</td>
+            <td class="px-6 py-4 text-sm text-gray-900 max-w-xs truncate">${alert.message}</td>
+            <td class="px-6 py-4">
+              <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusColor}">
+                ${alert.status === 'active' ? '활성' : alert.status === 'acknowledged' ? '확인됨' : '해결'}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-sm">
+              <button class="text-blue-600 hover:text-blue-900 mr-2">상세</button>
+              <button class="text-green-600 hover:text-green-900">해결</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function acknowledgeAlert(alertId) {
+      // 알림 확인 처리
+      console.log(`Alert ${alertId} acknowledged`);
+      // 실제 구현에서는 API 호출
+      loadActiveAlerts(); // 목록 새로고침
+    }
+
+    function resolveAlert(alertId) {
+      if (confirm('이 알림을 해결로 표시하시겠습니까?')) {
+        console.log(`Alert ${alertId} resolved`);
+        // 실제 구현에서는 API 호출
+        loadActiveAlerts(); // 목록 새로고침
+      }
+    }
+
+    function viewAlertDetails(alertId) {
+      const alert = activeAlerts.find(a => a.id === alertId);
+      if (!alert) return;
+
+      const modalContent = document.getElementById('alert-modal-content');
+      modalContent.innerHTML = `
+        <div class="space-y-6">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <h4 class="font-semibold text-gray-800">알림 ID</h4>
+              <p class="text-sm text-gray-600">${alert.id}</p>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-800">발생 시간</h4>
+              <p class="text-sm text-gray-600">${alert.timestamp}</p>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-800">심각도</h4>
+              <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${alert.severity === 'critical' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}">
+                ${alert.severity.toUpperCase()}
+              </span>
+            </div>
+            <div>
+              <h4 class="font-semibold text-gray-800">상태</h4>
+              <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${alert.status === 'active' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}">
+                ${alert.status === 'active' ? '활성' : '확인됨'}
+              </span>
+            </div>
+          </div>
+          <div>
+            <h4 class="font-semibold text-gray-800 mb-2">알림 메시지</h4>
+            <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded">${alert.message}</p>
+          </div>
+          <div>
+            <h4 class="font-semibold text-gray-800 mb-2">서비스 정보</h4>
+            <div class="bg-blue-50 p-3 rounded">
+              <p><strong>서비스:</strong> ${alert.service}</p>
+              <p><strong>지속시간:</strong> ${alert.duration}</p>
+              <p><strong>영향도:</strong> ${alert.impact}</p>
+            </div>
+          </div>
+          <div>
+            <h4 class="font-semibold text-gray-800 mb-2">처리 지침</h4>
+            <div class="bg-yellow-50 p-3 rounded text-sm">
+              ${alert.severity === 'critical' ? 
+                '1. 즉시 개발팀에 알림<br>2. 서비스 상태 점검<br>3. 장애 원인 파악 및 조치' :
+                '1. 모니터링 강화<br>2. 리소스 사용량 점검<br>3. 필요시 스케일링 고려'
+              }
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('alert-modal').classList.remove('hidden');
+    }
+
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('current-time').textContent = now.toLocaleString('ko-KR');
+    }
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+      initCharts();
+      loadActiveAlerts();
+      loadAlertRules();
+      loadNotificationChannels();
+      loadAlertHistory();
+      updateTime();
+      setInterval(updateTime, 1000);
+      
+      // Modal close handler
+      document.getElementById('close-alert-modal').addEventListener('click', () => {
+        document.getElementById('alert-modal').classList.add('hidden');
+      });
+      
+      // Clear all alerts
+      document.getElementById('clear-all-btn').addEventListener('click', () => {
+        if (confirm('모든 알림을 해결로 표시하시겠습니까?')) {
+          console.log('All alerts cleared');
+          // 실제 구현에서는 API 호출
+          loadActiveAlerts();
+        }
+      });
+      
+      // Simulate real-time updates
+      setInterval(() => {
+        // Update metrics with small random variations
+        document.getElementById('critical-alerts').textContent = 2 + Math.floor(Math.random() * 3);
+        document.getElementById('warning-alerts').textContent = 8 + Math.floor(Math.random() * 5);
+        document.getElementById('info-alerts').textContent = 15 + Math.floor(Math.random() * 10);
+        document.getElementById('resolution-rate').textContent = (88 + Math.floor(Math.random() * 10)) + '%';
+        document.getElementById('avg-response-time').textContent = (2.0 + Math.random() * 1).toFixed(1) + '분';
+        document.getElementById('alert-accuracy').textContent = (92 + Math.random() * 6).toFixed(1) + '%';
+        document.getElementById('false-positive').textContent = (3 + Math.random() * 5).toFixed(1) + '%';
+        document.getElementById('delivery-rate').textContent = (98 + Math.random() * 2).toFixed(1) + '%';
+      }, 12000);
+    });
+  </script>
+
+</body>
+</html>

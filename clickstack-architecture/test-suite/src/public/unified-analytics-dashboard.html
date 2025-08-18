@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>통합 분석 대시보드 - AIRIS-MON</title>
+    <script src="/components/common-layout.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .dashboard-header h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+        
+        .dashboard-header .subtitle {
+            color: var(--gray-600);
+            font-size: 1rem;
+        }
+
+        .metrics-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .metric-icon.app {
+            background: var(--primary);
+            color: white;
+        }
+
+        .metric-icon.db {
+            background: var(--success);
+            color: white;
+        }
+
+        .metric-icon.infra {
+            background: var(--warning);
+            color: white;
+        }
+
+        .metric-icon.network {
+            background: var(--error);
+            color: white;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-trend {
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+        }
+
+        .trend-up {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .trend-down {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .trend-stable {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-subtitle {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-svg {
+            width: 100%;
+            height: 300px;
+        }
+
+        .detailed-charts {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .full-width-chart {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .control-select {
+            padding: 0.5rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            background: var(--white);
+        }
+
+        .data-source-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            margin-left: auto;
+        }
+
+        .source-realtime {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .source-aggregated {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .source-mixed {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        /* D3.js 차트 스타일 */
+        .line {
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .area {
+            opacity: 0.3;
+        }
+
+        .axis text {
+            font-size: 12px;
+            fill: #6b7280;
+        }
+
+        .axis path,
+        .axis line {
+            stroke: #d1d5db;
+            stroke-width: 1;
+        }
+
+        .grid line {
+            stroke: #f3f4f6;
+            stroke-width: 1;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .legend {
+            font-size: 12px;
+        }
+
+        .legend-item {
+            cursor: pointer;
+        }
+
+        .legend-item.disabled {
+            opacity: 0.3;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-overview {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .chart-controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        /* 실시간 업데이트 애니메이션 */
+        .updating {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="margin: 0;">📊 통합 분석 대시보드</h2>
+            <a href="/detailed-metrics-dashboard.html" style="
+                display: inline-flex;
+                align-items: center;
+                padding: 8px 16px;
+                background: #10b981;
+                color: white;
+                text-decoration: none;
+                border-radius: 6px;
+                font-size: 14px;
+                font-weight: 500;
+                transition: background 0.2s;
+            " onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">
+                📈 상세 메트릭 대시보드
+            </a>
+        </div>
+        <p class="subtitle">MongoDB 집계 데이터 + ClickHouse 실시간 데이터 D3.js 시각화</p>
+    </div>
+
+    <!-- 주요 메트릭 개요 -->
+    <div class="metrics-overview">
+        <div class="metric-card">
+            <div class="metric-icon app">📱</div>
+            <div class="metric-value" id="appMetricValue">--</div>
+            <div class="metric-label">APP 평균 응답시간</div>
+            <div class="metric-trend trend-up" id="appMetricTrend">↗ 12% 개선</div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-icon db">🗄️</div>
+            <div class="metric-value" id="dbMetricValue">--</div>
+            <div class="metric-label">DB 쿼리 성능</div>
+            <div class="metric-trend trend-stable" id="dbMetricTrend">→ 안정적</div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-icon infra">🖥️</div>
+            <div class="metric-value" id="infraMetricValue">--</div>
+            <div class="metric-label">INFRA CPU 사용률</div>
+            <div class="metric-trend trend-down" id="infraMetricTrend">↘ 5% 감소</div>
+        </div>
+        
+        <div class="metric-card">
+            <div class="metric-icon network">🌐</div>
+            <div class="metric-value" id="networkMetricValue">--</div>
+            <div class="metric-label">NETWORK 대역폭</div>
+            <div class="metric-trend trend-up" id="networkMetricTrend">↗ 8% 증가</div>
+        </div>
+    </div>
+
+    <!-- 주요 차트 그리드 -->
+    <div class="charts-grid">
+        <!-- APP 성능 트렌드 -->
+        <div class="chart-container">
+            <div class="chart-title">
+                📱 APP 성능 트렌드
+                <div class="data-source-indicator source-mixed">
+                    🔴 실시간 + 🟢 집계
+                </div>
+            </div>
+            <div class="chart-subtitle">응답시간, 처리량, 에러율 실시간 모니터링</div>
+            <svg class="chart-svg" id="appTrendChart"></svg>
+        </div>
+
+        <!-- DB 성능 분석 -->
+        <div class="chart-container">
+            <div class="chart-title">
+                🗄️ DB 성능 분석
+                <div class="data-source-indicator source-aggregated">
+                    🟢 MongoDB 집계
+                </div>
+            </div>
+            <div class="chart-subtitle">쿼리 성능, 연결 상태, TPS 분석</div>
+            <svg class="chart-svg" id="dbPerformanceChart"></svg>
+        </div>
+
+        <!-- 인프라 리소스 -->
+        <div class="chart-container">
+            <div class="chart-title">
+                🖥️ 인프라 리소스
+                <div class="data-source-indicator source-realtime">
+                    🔴 ClickHouse 실시간
+                </div>
+            </div>
+            <div class="chart-subtitle">CPU, 메모리, 디스크 사용량 실시간 추적</div>
+            <svg class="chart-svg" id="infraResourceChart"></svg>
+        </div>
+
+        <!-- 네트워크 분석 -->
+        <div class="chart-container">
+            <div class="chart-title">
+                🌐 네트워크 분석
+                <div class="data-source-indicator source-mixed">
+                    🔴 실시간 + 🟢 집계
+                </div>
+            </div>
+            <div class="chart-subtitle">대역폭, 지연시간, 패킷 손실률</div>
+            <svg class="chart-svg" id="networkAnalysisChart"></svg>
+        </div>
+    </div>
+
+    <!-- 상세 분석 차트 -->
+    <div class="detailed-charts">
+        <!-- 통합 시스템 상관관계 분석 -->
+        <div class="full-width-chart">
+            <div class="chart-controls">
+                <div class="control-group">
+                    <label class="control-label">시간 범위:</label>
+                    <select class="control-select" id="timeRangeSelect">
+                        <option value="1h">최근 1시간</option>
+                        <option value="6h">최근 6시간</option>
+                        <option value="24h" selected>최근 24시간</option>
+                        <option value="7d">최근 7일</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">데이터 소스:</label>
+                    <select class="control-select" id="dataSourceSelect">
+                        <option value="mixed" selected>실시간 + 집계</option>
+                        <option value="realtime">ClickHouse 실시간</option>
+                        <option value="aggregated">MongoDB 집계</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">집계 단위:</label>
+                    <select class="control-select" id="aggregationSelect">
+                        <option value="1m">1분</option>
+                        <option value="5m" selected>5분</option>
+                        <option value="15m">15분</option>
+                        <option value="1h">1시간</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="chart-title">
+                🔗 통합 시스템 상관관계 분석
+                <div class="data-source-indicator source-mixed">
+                    🟡 혼합 데이터
+                </div>
+            </div>
+            <div class="chart-subtitle">APP ↔ DB ↔ INFRA ↔ NETWORK 성능 상관관계 및 병목 지점 분석</div>
+            <svg class="chart-svg" id="correlationChart" style="height: 400px;"></svg>
+        </div>
+
+        <!-- 이상 탐지 및 예측 분석 -->
+        <div class="full-width-chart">
+            <div class="chart-title">
+                🔍 이상 탐지 및 예측 분석
+                <div class="data-source-indicator source-mixed">
+                    🟡 AI 기반 분석
+                </div>
+            </div>
+            <div class="chart-subtitle">실시간 이상 패턴 감지 및 향후 성능 예측</div>
+            <svg class="chart-svg" id="anomalyDetectionChart" style="height: 350px;"></svg>
+        </div>
+    </div>
+
+    <!-- 툴팁 -->
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // 전역 변수
+        let dashboardData = {
+            app: [],
+            db: [],
+            infra: [],
+            network: [],
+            correlation: [],
+            anomalies: []
+        };
+
+        let updateInterval;
+        let isRealTimeMode = true;
+
+        // D3.js 유틸리티 함수
+        const formatTime = d3.timeFormat("%H:%M");
+        const formatDate = d3.timeFormat("%m/%d %H:%M");
+        const formatValue = d3.format(".1f");
+        const formatPercent = d3.format(".1%");
+
+        // 색상 팔레트
+        const colorSchemes = {
+            app: ['#667eea', '#764ba2', '#f093fb'],
+            db: ['#f093fb', '#f5576c', '#4facfe'],
+            infra: ['#4facfe', '#00f2fe', '#43e97b'],
+            network: ['#43e97b', '#38f9d7', '#667eea']
+        };
+
+        // 툴팁 관리
+        const tooltip = d3.select("#tooltip");
+
+        function showTooltip(event, content) {
+            tooltip
+                .style("opacity", 1)
+                .html(content)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 10) + "px");
+        }
+
+        function hideTooltip() {
+            tooltip.style("opacity", 0);
+        }
+
+        // 메인 초기화 함수
+        function initializeDashboard() {
+            console.log('📊 통합 분석 대시보드 초기화 시작...');
+            
+            // 모든 차트 초기화
+            initializeAppTrendChart();
+            initializeDBPerformanceChart();
+            initializeInfraResourceChart();
+            initializeNetworkAnalysisChart();
+            initializeCorrelationChart();
+            initializeAnomalyDetectionChart();
+            
+            // 데이터 로드 및 실시간 업데이트 시작
+            loadInitialData();
+            startRealTimeUpdates();
+            
+            // 컨트롤 이벤트 리스너
+            setupControlListeners();
+            
+            console.log('✅ 통합 분석 대시보드 초기화 완료');
+        }
+
+        // APP 성능 트렌드 차트 (라인차트 + 영역차트)
+        function initializeAppTrendChart() {
+            const svg = d3.select("#appTrendChart");
+            if (!svg.node()) {
+                console.error('❌ APP 차트 SVG 요소를 찾을 수 없습니다!');
+                return;
+            }
+            
+            const svgRect = svg.node().getBoundingClientRect();
+            console.log('📊 APP 차트 크기:', svgRect.width, 'x', svgRect.height);
+            
+            const margin = {top: 20, right: 80, bottom: 40, left: 60};
+            const width = Math.max(svgRect.width - margin.left - margin.right, 400);
+            const height = 300 - margin.top - margin.bottom;
+
+            svg.selectAll("*").remove();
+
+            const g = svg.append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            // 스케일 설정
+            const xScale = d3.scaleTime().range([0, width]);
+            const yScale = d3.scaleLinear().range([height, 0]);
+
+            // 축 생성
+            const xAxis = d3.axisBottom(xScale).tickFormat(formatTime);
+            const yAxis = d3.axisLeft(yScale).tickFormat(d => d + "ms");
+
+            // 그리드 라인
+            g.append("g")
+                .attr("class", "grid")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale).tickSize(-height).tickFormat(""));
+
+            g.append("g")
+                .attr("class", "grid")
+                .call(d3.axisLeft(yScale).tickSize(-width).tickFormat(""));
+
+            // 축 추가
+            g.append("g")
+                .attr("class", "axis")
+                .attr("transform", `translate(0,${height})`)
+                .call(xAxis);
+
+            g.append("g")
+                .attr("class", "axis")
+                .call(yAxis);
+
+            // 라인 및 영역 생성기
+            const line = d3.line()
+                .x(d => xScale(d.timestamp))
+                .y(d => yScale(d.value))
+                .curve(d3.curveMonotoneX);
+
+            const area = d3.area()
+                .x(d => xScale(d.timestamp))
+                .y0(height)
+                .y1(d => yScale(d.value))
+                .curve(d3.curveMonotoneX);
+
+            // 범례 추가
+            const legend = g.append("g")
+                .attr("class", "legend")
+                .attr("transform", `translate(${width - 70}, 20)`);
+
+            legend.append("text")
+                .attr("x", 0)
+                .attr("y", 0)
+                .style("font-size", "12px")
+                .style("font-weight", "600")
+                .text("메트릭");
+
+            // 초기 테스트 데이터 생성
+            const testData = [];
+            const now = new Date();
+            for (let i = 0; i < 30; i++) {
+                testData.push({
+                    timestamp: new Date(now.getTime() - (29 - i) * 60000),
+                    value: 150 + Math.random() * 100 + Math.sin(i * 0.5) * 50,
+                    source: 'initial'
+                });
+            }
+            
+            // 차트 업데이트 함수를 전역으로 저장
+            window.updateAppTrendChart = function(data) {
+                if (!data || data.length === 0) {
+                    console.log('⚠️ APP 데이터 없음, 테스트 데이터 사용');
+                    data = testData;
+                }
+
+                xScale.domain(d3.extent(data, d => d.timestamp));
+                yScale.domain([0, d3.max(data, d => d.value) * 1.1]);
+
+                // 기존 경로 제거
+                g.selectAll(".line, .area").remove();
+
+                // 영역 차트 추가
+                g.append("path")
+                    .datum(data)
+                    .attr("class", "area")
+                    .attr("d", area)
+                    .style("fill", colorSchemes.app[0])
+                    .style("opacity", 0.3);
+
+                // 라인 차트 추가
+                g.append("path")
+                    .datum(data)
+                    .attr("class", "line")
+                    .attr("d", line)
+                    .style("stroke", colorSchemes.app[0]);
+
+                // 축 업데이트
+                g.select(".axis").transition().duration(500).call(xAxis);
+                g.select(".axis:last-child").transition().duration(500).call(yAxis);
+
+                // 인터랙션 포인트 추가
+                g.selectAll(".dot").remove();
+                g.selectAll(".dot")
+                    .data(data.filter((d, i) => i % 5 === 0)) // 5개마다 점 표시
+                    .enter().append("circle")
+                    .attr("class", "dot")
+                    .attr("cx", d => xScale(d.timestamp))
+                    .attr("cy", d => yScale(d.value))
+                    .attr("r", 3)
+                    .style("fill", colorSchemes.app[0])
+                    .on("mouseover", function(event, d) {
+                        showTooltip(event, `
+                            <strong>APP 응답시간</strong><br>
+                            시간: ${formatDate(d.timestamp)}<br>
+                            값: ${formatValue(d.value)}ms<br>
+                            소스: ${d.source || 'ClickHouse'}
+                        `);
+                    })
+                    .on("mouseout", hideTooltip);
+            };
+            
+            // 초기 차트 그리기 (테스트 데이터로)
+            console.log('📊 APP 차트 초기 렌더링 실행...');
+            window.updateAppTrendChart(testData);
+        }
+
+        // DB 성능 분석 차트 (멀티 바 차트)
+        function initializeDBPerformanceChart() {
+            const svg = d3.select("#dbPerformanceChart");
+            if (!svg.node()) {
+                console.error('❌ DB 차트 SVG 요소를 찾을 수 없습니다!');
+                return;
+            }
+            
+            const margin = {top: 20, right: 20, bottom: 40, left: 60};
+            const width = Math.max(svg.node().getBoundingClientRect().width - margin.left - margin.right, 400);
+            const height = 300 - margin.top - margin.bottom;
+
+            svg.selectAll("*").remove();
+
+            const g = svg.append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+            
+            // 초기 테스트 데이터 생성
+            const testData = [];
+            const now = new Date();
+            for (let i = 0; i < 10; i++) {
+                testData.push({
+                    timestamp: new Date(now.getTime() - (9 - i) * 60000),
+                    queryTime: 80 + Math.random() * 40,
+                    connections: 20 + Math.random() * 30,
+                    tps: 2000 + Math.random() * 1000
+                });
+            }
+
+            window.updateDBPerformanceChart = function(data) {
+                if (!data || data.length === 0) {
+                    console.log('⚠️ DB 데이터 없음, 테스트 데이터 사용');
+                    data = testData;
+                }
+
+                g.selectAll("*").remove();
+
+                const metrics = ['queryTime', 'connections', 'tps'];
+                const metricLabels = ['쿼리시간', '연결수', 'TPS'];
+                
+                const xScale = d3.scaleBand()
+                    .domain(data.map(d => formatTime(d.timestamp)))
+                    .range([0, width])
+                    .padding(0.1);
+
+                const yScale = d3.scaleLinear()
+                    .domain([0, d3.max(data, d => Math.max(d.queryTime, d.connections, d.tps / 10))])
+                    .range([height, 0]);
+
+                const colorScale = d3.scaleOrdinal()
+                    .domain(metrics)
+                    .range(colorSchemes.db);
+
+                // 축 추가
+                g.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", `translate(0,${height})`)
+                    .call(d3.axisBottom(xScale));
+
+                g.append("g")
+                    .attr("class", "axis")
+                    .call(d3.axisLeft(yScale));
+
+                // 그룹별 바 차트
+                const barWidth = xScale.bandwidth() / metrics.length;
+
+                metrics.forEach((metric, i) => {
+                    g.selectAll(`.bar-${metric}`)
+                        .data(data)
+                        .enter().append("rect")
+                        .attr("class", `bar-${metric}`)
+                        .attr("x", d => xScale(formatTime(d.timestamp)) + barWidth * i)
+                        .attr("y", d => yScale(metric === 'tps' ? d[metric] / 10 : d[metric]))
+                        .attr("width", barWidth)
+                        .attr("height", d => height - yScale(metric === 'tps' ? d[metric] / 10 : d[metric]))
+                        .style("fill", colorScale(metric))
+                        .on("mouseover", function(event, d) {
+                            showTooltip(event, `
+                                <strong>DB ${metricLabels[i]}</strong><br>
+                                시간: ${formatDate(d.timestamp)}<br>
+                                값: ${formatValue(metric === 'tps' ? d[metric] : d[metric])}${metric === 'tps' ? '' : metric === 'connections' ? '개' : 'ms'}<br>
+                                소스: MongoDB 집계
+                            `);
+                        })
+                        .on("mouseout", hideTooltip);
+                });
+
+                // 범례
+                const legend = g.append("g")
+                    .attr("class", "legend")
+                    .attr("transform", `translate(${width - 100}, 20)`);
+
+                metricLabels.forEach((label, i) => {
+                    const legendItem = legend.append("g")
+                        .attr("transform", `translate(0, ${i * 20})`);
+
+                    legendItem.append("rect")
+                        .attr("width", 12)
+                        .attr("height", 12)
+                        .style("fill", colorScale(metrics[i]));
+
+                    legendItem.append("text")
+                        .attr("x", 18)
+                        .attr("y", 9)
+                        .style("font-size", "11px")
+                        .text(label);
+                });
+            };
+            
+            // 초기 차트 그리기 (테스트 데이터로)
+            console.log('📊 DB 차트 초기 렌더링 실행...');
+            window.updateDBPerformanceChart(testData);
+        }
+
+        // 인프라 리소스 차트 (스택 영역 차트)
+        function initializeInfraResourceChart() {
+            const svg = d3.select("#infraResourceChart");
+            if (!svg.node()) {
+                console.error('❌ INFRA 차트 SVG 요소를 찾을 수 없습니다!');
+                return;
+            }
+            
+            const margin = {top: 20, right: 20, bottom: 40, left: 60};
+            const width = Math.max(svg.node().getBoundingClientRect().width - margin.left - margin.right, 400);
+            const height = 300 - margin.top - margin.bottom;
+
+            svg.selectAll("*").remove();
+
+            const g = svg.append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+            
+            // 초기 테스트 데이터 생성
+            const testData = [];
+            const now = new Date();
+            for (let i = 0; i < 20; i++) {
+                testData.push({
+                    timestamp: new Date(now.getTime() - (19 - i) * 60000),
+                    cpu: 30 + Math.random() * 40,
+                    memory: 40 + Math.random() * 30,
+                    disk: 20 + Math.random() * 25
+                });
+            }
+
+            window.updateInfraResourceChart = function(data) {
+                if (!data || data.length === 0) {
+                    console.log('⚠️ INFRA 데이터 없음, 테스트 데이터 사용');
+                    data = testData;
+                }
+
+                g.selectAll("*").remove();
+
+                const keys = ['cpu', 'memory', 'disk'];
+                const stack = d3.stack().keys(keys);
+                const stackedData = stack(data);
+
+                const xScale = d3.scaleTime()
+                    .domain(d3.extent(data, d => d.timestamp))
+                    .range([0, width]);
+
+                const yScale = d3.scaleLinear()
+                    .domain([0, 100])
+                    .range([height, 0]);
+
+                const colorScale = d3.scaleOrdinal()
+                    .domain(keys)
+                    .range(colorSchemes.infra);
+
+                const area = d3.area()
+                    .x(d => xScale(d.data.timestamp))
+                    .y0(d => yScale(d[0]))
+                    .y1(d => yScale(d[1]))
+                    .curve(d3.curveMonotoneX);
+
+                // 축 추가
+                g.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", `translate(0,${height})`)
+                    .call(d3.axisBottom(xScale).tickFormat(formatTime));
+
+                g.append("g")
+                    .attr("class", "axis")
+                    .call(d3.axisLeft(yScale).tickFormat(d => d + "%"));
+
+                // 스택 영역 추가
+                g.selectAll(".area")
+                    .data(stackedData)
+                    .enter().append("path")
+                    .attr("class", "area")
+                    .attr("d", area)
+                    .style("fill", d => colorScale(d.key))
+                    .on("mouseover", function(event, d) {
+                        const values = d[Math.floor(d.length / 2)];
+                        showTooltip(event, `
+                            <strong>INFRA ${d.key.toUpperCase()}</strong><br>
+                            시간: ${formatDate(values.data.timestamp)}<br>
+                            사용률: ${formatValue(values[1] - values[0])}%<br>
+                            소스: ClickHouse 실시간
+                        `);
+                    })
+                    .on("mouseout", hideTooltip);
+            };
+            
+            // 초기 차트 그리기 (테스트 데이터로)
+            console.log('📊 INFRA 차트 초기 렌더링 실행...');
+            window.updateInfraResourceChart(testData);
+        }
+
+        // 네트워크 분석 차트 (레이더 차트)
+        function initializeNetworkAnalysisChart() {
+            const svg = d3.select("#networkAnalysisChart");
+            if (!svg.node()) {
+                console.error('❌ NETWORK 차트 SVG 요소를 찾을 수 없습니다!');
+                return;
+            }
+            
+            const margin = {top: 40, right: 40, bottom: 40, left: 40};
+            const width = Math.max(svg.node().getBoundingClientRect().width - margin.left - margin.right, 400);
+            const height = 300 - margin.top - margin.bottom;
+            const radius = Math.min(width, height) / 2;
+
+            svg.selectAll("*").remove();
+
+            const g = svg.append("g")
+                .attr("transform", `translate(${width/2 + margin.left},${height/2 + margin.top})`);
+            
+            // 초기 테스트 데이터 생성
+            const testData = [{
+                timestamp: new Date(),
+                bandwidth: 75 + Math.random() * 20,
+                latency: 20 + Math.random() * 30,
+                packetLoss: Math.random() * 5,
+                throughput: 60 + Math.random() * 30
+            }];
+
+            window.updateNetworkAnalysisChart = function(data) {
+                if (!data || data.length === 0) {
+                    console.log('⚠️ NETWORK 데이터 없음, 테스트 데이터 사용');
+                    data = testData;
+                }
+
+                g.selectAll("*").remove();
+
+                const metrics = ['bandwidth', 'latency', 'packetLoss', 'throughput'];
+                const angleSlice = Math.PI * 2 / metrics.length;
+
+                // 방사형 스케일
+                const rScale = d3.scaleLinear()
+                    .domain([0, 100])
+                    .range([0, radius]);
+
+                // 그리드 라인
+                for (let i = 1; i <= 5; i++) {
+                    g.append("circle")
+                        .attr("r", radius * i / 5)
+                        .style("fill", "none")
+                        .style("stroke", "#f3f4f6")
+                        .style("stroke-width", 1);
+
+                    g.append("text")
+                        .attr("x", 5)
+                        .attr("y", -radius * i / 5)
+                        .style("font-size", "10px")
+                        .style("fill", "#6b7280")
+                        .text(20 * i);
+                }
+
+                // 축 라인
+                metrics.forEach((metric, i) => {
+                    const angle = angleSlice * i - Math.PI / 2;
+                    const x = Math.cos(angle) * radius;
+                    const y = Math.sin(angle) * radius;
+
+                    g.append("line")
+                        .attr("x1", 0)
+                        .attr("y1", 0)
+                        .attr("x2", x)
+                        .attr("y2", y)
+                        .style("stroke", "#d1d5db")
+                        .style("stroke-width", 1);
+
+                    // 라벨
+                    const labelX = Math.cos(angle) * (radius + 20);
+                    const labelY = Math.sin(angle) * (radius + 20);
+
+                    g.append("text")
+                        .attr("x", labelX)
+                        .attr("y", labelY)
+                        .style("font-size", "11px")
+                        .style("text-anchor", "middle")
+                        .style("fill", "#374151")
+                        .text(metric === 'packetLoss' ? 'Packet Loss' : 
+                              metric === 'bandwidth' ? 'Bandwidth' :
+                              metric === 'latency' ? 'Latency' : 'Throughput');
+                });
+
+                // 최신 데이터로 레이더 차트 생성
+                const latestData = data[data.length - 1];
+                const radarData = metrics.map((metric, i) => {
+                    const angle = angleSlice * i - Math.PI / 2;
+                    const value = rScale(latestData[metric] || 0);
+                    return {
+                        x: Math.cos(angle) * value,
+                        y: Math.sin(angle) * value,
+                        metric: metric,
+                        value: latestData[metric] || 0
+                    };
+                });
+
+                // 레이더 영역
+                const radarLine = d3.line()
+                    .x(d => d.x)
+                    .y(d => d.y)
+                    .curve(d3.curveLinearClosed);
+
+                g.append("path")
+                    .datum(radarData)
+                    .attr("d", radarLine)
+                    .style("fill", colorSchemes.network[0])
+                    .style("opacity", 0.3)
+                    .style("stroke", colorSchemes.network[0])
+                    .style("stroke-width", 2);
+
+                // 데이터 포인트
+                g.selectAll(".radar-dot")
+                    .data(radarData)
+                    .enter().append("circle")
+                    .attr("class", "radar-dot")
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y)
+                    .attr("r", 4)
+                    .style("fill", colorSchemes.network[1])
+                    .on("mouseover", function(event, d) {
+                        showTooltip(event, `
+                            <strong>NETWORK ${d.metric.toUpperCase()}</strong><br>
+                            값: ${formatValue(d.value)}${d.metric === 'latency' ? 'ms' : d.metric === 'bandwidth' ? 'Mbps' : '%'}<br>
+                            소스: 혼합 데이터
+                        `);
+                    })
+                    .on("mouseout", hideTooltip);
+            };
+            
+            // 초기 차트 그리기 (테스트 데이터로)
+            console.log('📊 NETWORK 차트 초기 렌더링 실행...');
+            window.updateNetworkAnalysisChart(testData);
+        }
+
+        // 상관관계 분석 차트 (히트맵)
+        function initializeCorrelationChart() {
+            const svg = d3.select("#correlationChart");
+            const margin = {top: 40, right: 100, bottom: 80, left: 100};
+            const width = svg.node().getBoundingClientRect().width - margin.left - margin.right;
+            const height = 400 - margin.top - margin.bottom;
+
+            svg.selectAll("*").remove();
+
+            const g = svg.append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            window.updateCorrelationChart = function(correlationMatrix) {
+                g.selectAll("*").remove();
+
+                const categories = ['APP', 'DB', 'INFRA', 'NETWORK'];
+                const cellSize = Math.min(width, height) / categories.length;
+
+                // 색상 스케일
+                const colorScale = d3.scaleSequential(d3.interpolateRdYlBu)
+                    .domain([-1, 1]);
+
+                // 모의 상관관계 데이터 생성
+                const correlation = [
+                    [1.0, -0.6, 0.8, 0.3],
+                    [-0.6, 1.0, -0.4, 0.7],
+                    [0.8, -0.4, 1.0, 0.2],
+                    [0.3, 0.7, 0.2, 1.0]
+                ];
+
+                // 히트맵 셀
+                categories.forEach((rowCategory, i) => {
+                    categories.forEach((colCategory, j) => {
+                        const cell = g.append("rect")
+                            .attr("x", j * cellSize)
+                            .attr("y", i * cellSize)
+                            .attr("width", cellSize)
+                            .attr("height", cellSize)
+                            .style("fill", colorScale(correlation[i][j]))
+                            .style("stroke", "white")
+                            .style("stroke-width", 2)
+                            .on("mouseover", function(event) {
+                                showTooltip(event, `
+                                    <strong>${rowCategory} ↔ ${colCategory}</strong><br>
+                                    상관계수: ${formatValue(correlation[i][j])}<br>
+                                    ${Math.abs(correlation[i][j]) > 0.7 ? '강한 상관관계' : 
+                                      Math.abs(correlation[i][j]) > 0.3 ? '중간 상관관계' : '약한 상관관계'}
+                                `);
+                            })
+                            .on("mouseout", hideTooltip);
+
+                        // 상관계수 값 표시
+                        g.append("text")
+                            .attr("x", j * cellSize + cellSize / 2)
+                            .attr("y", i * cellSize + cellSize / 2)
+                            .attr("text-anchor", "middle")
+                            .attr("dominant-baseline", "middle")
+                            .style("font-size", "14px")
+                            .style("font-weight", "600")
+                            .style("fill", Math.abs(correlation[i][j]) > 0.5 ? "white" : "black")
+                            .text(formatValue(correlation[i][j]));
+                    });
+                });
+
+                // 라벨
+                categories.forEach((category, i) => {
+                    // 행 라벨
+                    g.append("text")
+                        .attr("x", -10)
+                        .attr("y", i * cellSize + cellSize / 2)
+                        .attr("text-anchor", "end")
+                        .attr("dominant-baseline", "middle")
+                        .style("font-size", "14px")
+                        .style("font-weight", "600")
+                        .text(category);
+
+                    // 열 라벨
+                    g.append("text")
+                        .attr("x", i * cellSize + cellSize / 2)
+                        .attr("y", -10)
+                        .attr("text-anchor", "middle")
+                        .attr("dominant-baseline", "middle")
+                        .style("font-size", "14px")
+                        .style("font-weight", "600")
+                        .text(category);
+                });
+
+                // 색상 범례
+                const legendScale = d3.scaleLinear()
+                    .domain([-1, 1])
+                    .range([0, 200]);
+
+                const legendAxis = d3.axisBottom(legendScale)
+                    .tickFormat(d3.format(".1f"));
+
+                const legend = g.append("g")
+                    .attr("transform", `translate(${width + 20}, 50)`);
+
+                const legendGradient = svg.append("defs")
+                    .append("linearGradient")
+                    .attr("id", "correlation-gradient")
+                    .attr("x1", "0%")
+                    .attr("x2", "0%")
+                    .attr("y1", "0%")
+                    .attr("y2", "100%");
+
+                legendGradient.selectAll("stop")
+                    .data(d3.range(-1, 1.1, 0.1))
+                    .enter().append("stop")
+                    .attr("offset", d => ((d + 1) / 2) * 100 + "%")
+                    .attr("stop-color", d => colorScale(d));
+
+                legend.append("rect")
+                    .attr("width", 20)
+                    .attr("height", 200)
+                    .style("fill", "url(#correlation-gradient)");
+
+                legend.append("g")
+                    .attr("transform", `translate(25, 200)`)
+                    .call(legendAxis);
+
+                legend.append("text")
+                    .attr("x", 10)
+                    .attr("y", -10)
+                    .style("font-size", "12px")
+                    .style("text-anchor", "middle")
+                    .text("상관계수");
+            };
+        }
+
+        // 이상 탐지 차트 (산점도 + 시계열)
+        function initializeAnomalyDetectionChart() {
+            const svg = d3.select("#anomalyDetectionChart");
+            const margin = {top: 20, right: 20, bottom: 40, left: 60};
+            const width = svg.node().getBoundingClientRect().width - margin.left - margin.right;
+            const height = 350 - margin.top - margin.bottom;
+
+            svg.selectAll("*").remove();
+
+            const g = svg.append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            window.updateAnomalyDetectionChart = function(data) {
+                if (!data || data.length === 0) return;
+
+                g.selectAll("*").remove();
+
+                const xScale = d3.scaleTime()
+                    .domain(d3.extent(data, d => d.timestamp))
+                    .range([0, width]);
+
+                const yScale = d3.scaleLinear()
+                    .domain(d3.extent(data, d => d.value))
+                    .range([height, 0]);
+
+                // 축 추가
+                g.append("g")
+                    .attr("class", "axis")
+                    .attr("transform", `translate(0,${height})`)
+                    .call(d3.axisBottom(xScale).tickFormat(formatTime));
+
+                g.append("g")
+                    .attr("class", "axis")
+                    .call(d3.axisLeft(yScale));
+
+                // 정상 범위 영역
+                const normalRange = g.append("g").attr("class", "normal-range");
+                
+                const meanValue = d3.mean(data, d => d.value);
+                const stdDev = d3.deviation(data, d => d.value);
+                
+                normalRange.append("rect")
+                    .attr("x", 0)
+                    .attr("y", yScale(meanValue + 2 * stdDev))
+                    .attr("width", width)
+                    .attr("height", yScale(meanValue - 2 * stdDev) - yScale(meanValue + 2 * stdDev))
+                    .style("fill", "#ecfdf5")
+                    .style("opacity", 0.5);
+
+                // 데이터 포인트
+                g.selectAll(".data-point")
+                    .data(data)
+                    .enter().append("circle")
+                    .attr("class", "data-point")
+                    .attr("cx", d => xScale(d.timestamp))
+                    .attr("cy", d => yScale(d.value))
+                    .attr("r", d => d.isAnomaly ? 5 : 3)
+                    .style("fill", d => d.isAnomaly ? "#ef4444" : "#3b82f6")
+                    .style("stroke", d => d.isAnomaly ? "#dc2626" : "#2563eb")
+                    .style("stroke-width", d => d.isAnomaly ? 2 : 1)
+                    .on("mouseover", function(event, d) {
+                        showTooltip(event, `
+                            <strong>${d.isAnomaly ? '🚨 이상치 감지' : '📊 정상 데이터'}</strong><br>
+                            시간: ${formatDate(d.timestamp)}<br>
+                            값: ${formatValue(d.value)}<br>
+                            ${d.isAnomaly ? `이상점수: ${formatValue(d.anomalyScore)}` : ''}
+                        `);
+                    })
+                    .on("mouseout", hideTooltip);
+
+                // 트렌드 라인
+                const lineGenerator = d3.line()
+                    .x(d => xScale(d.timestamp))
+                    .y(d => yScale(d.predicted || d.value))
+                    .curve(d3.curveMonotoneX);
+
+                g.append("path")
+                    .datum(data)
+                    .attr("class", "trend-line")
+                    .attr("d", lineGenerator)
+                    .style("fill", "none")
+                    .style("stroke", "#8b5cf6")
+                    .style("stroke-width", 2)
+                    .style("stroke-dasharray", "5,5");
+
+                // 범례
+                const legend = g.append("g")
+                    .attr("class", "legend")
+                    .attr("transform", `translate(${width - 120}, 20)`);
+
+                const legendData = [
+                    {label: "정상", color: "#3b82f6"},
+                    {label: "이상치", color: "#ef4444"},
+                    {label: "예측", color: "#8b5cf6"}
+                ];
+
+                legendData.forEach((item, i) => {
+                    const legendItem = legend.append("g")
+                        .attr("transform", `translate(0, ${i * 20})`);
+
+                    if (item.label === "예측") {
+                        legendItem.append("line")
+                            .attr("x1", 0)
+                            .attr("x2", 15)
+                            .attr("y1", 5)
+                            .attr("y2", 5)
+                            .style("stroke", item.color)
+                            .style("stroke-width", 2)
+                            .style("stroke-dasharray", "3,3");
+                    } else {
+                        legendItem.append("circle")
+                            .attr("cx", 7)
+                            .attr("cy", 5)
+                            .attr("r", item.label === "이상치" ? 5 : 3)
+                            .style("fill", item.color);
+                    }
+
+                    legendItem.append("text")
+                        .attr("x", 20)
+                        .attr("y", 9)
+                        .style("font-size", "11px")
+                        .text(item.label);
+                });
+            };
+        }
+
+        // 데이터 로드 함수들
+        async function loadInitialData() {
+            console.log('📊 초기 데이터 로드 시작...');
+            
+            try {
+                // 실제 API에서 데이터 로드 (현재는 모의 데이터)
+                await Promise.all([
+                    loadAppData(),
+                    loadDBData(), 
+                    loadInfraData(),
+                    loadNetworkData(),
+                    loadCorrelationData(),
+                    loadAnomalyData()
+                ]);
+                
+                updateAllCharts();
+                updateMetricCards();
+                
+                console.log('✅ 초기 데이터 로드 완료');
+            } catch (error) {
+                console.error('❌ 데이터 로드 실패:', error);
+            }
+        }
+
+        // 개별 데이터 로드 함수들
+        async function loadAppData() {
+            try {
+                const timeRange = document.getElementById('timeRangeSelect')?.value || '24h';
+                const dataSource = document.getElementById('dataSourceSelect')?.value || 'mixed';
+                
+                const response = await fetch(`/api/analytics/app-metrics?timeRange=${timeRange}&source=${dataSource}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    dashboardData.app = result.data.map(item => ({
+                        ...item,
+                        timestamp: new Date(item.timestamp)
+                    }));
+                    console.log('✅ APP 데이터 로드 완료:', result.metadata);
+                } else {
+                    throw new Error(result.error || 'APP 데이터 로드 실패');
+                }
+            } catch (error) {
+                console.error('❌ APP 데이터 로드 실패:', error);
+                // 폴백: 로컬 모의 데이터
+                loadAppDataFallback();
+            }
+        }
+        
+        function loadAppDataFallback() {
+            const mockData = [];
+            const now = new Date();
+            
+            for (let i = 30; i >= 0; i--) {
+                mockData.push({
+                    timestamp: new Date(now.getTime() - i * 60000),
+                    value: 150 + Math.random() * 100 + Math.sin(i * 0.1) * 20,
+                    source: i < 10 ? 'clickhouse' : 'mongodb'
+                });
+            }
+            
+            dashboardData.app = mockData;
+        }
+
+        async function loadDBData() {
+            try {
+                const timeRange = document.getElementById('timeRangeSelect')?.value || '24h';
+                
+                const response = await fetch(`/api/analytics/db-metrics?timeRange=${timeRange}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    dashboardData.db = result.data.map(item => ({
+                        ...item,
+                        timestamp: new Date(item.timestamp)
+                    }));
+                    console.log('✅ DB 데이터 로드 완료:', result.metadata);
+                } else {
+                    throw new Error(result.error || 'DB 데이터 로드 실패');
+                }
+            } catch (error) {
+                console.error('❌ DB 데이터 로드 실패:', error);
+                // 폴백: 로컬 모의 데이터
+                loadDBDataFallback();
+            }
+        }
+        
+        function loadDBDataFallback() {
+            const mockData = [];
+            const now = new Date();
+            
+            for (let i = 20; i >= 0; i--) {
+                mockData.push({
+                    timestamp: new Date(now.getTime() - i * 300000), // 5분 간격
+                    queryTime: 80 + Math.random() * 40,
+                    connections: 20 + Math.random() * 30,
+                    tps: 2000 + Math.random() * 1000
+                });
+            }
+            
+            dashboardData.db = mockData;
+        }
+
+        async function loadInfraData() {
+            try {
+                const timeRange = document.getElementById('timeRangeSelect')?.value || '24h';
+                
+                const response = await fetch(`/api/analytics/infra-metrics?timeRange=${timeRange}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    dashboardData.infra = result.data.map(item => ({
+                        ...item,
+                        timestamp: new Date(item.timestamp)
+                    }));
+                    console.log('✅ INFRA 데이터 로드 완료:', result.metadata);
+                } else {
+                    throw new Error(result.error || 'INFRA 데이터 로드 실패');
+                }
+            } catch (error) {
+                console.error('❌ INFRA 데이터 로드 실패:', error);
+                // 폴백: 로컬 모의 데이터
+                loadInfraDataFallback();
+            }
+        }
+        
+        function loadInfraDataFallback() {
+            const mockData = [];
+            const now = new Date();
+            
+            for (let i = 30; i >= 0; i--) {
+                const cpu = 30 + Math.random() * 40;
+                const memory = 40 + Math.random() * 30;
+                const disk = 20 + Math.random() * 25;
+                
+                mockData.push({
+                    timestamp: new Date(now.getTime() - i * 60000),
+                    cpu: cpu,
+                    memory: memory,
+                    disk: disk
+                });
+            }
+            
+            dashboardData.infra = mockData;
+        }
+
+        async function loadNetworkData() {
+            try {
+                const timeRange = document.getElementById('timeRangeSelect')?.value || '24h';
+                
+                const response = await fetch(`/api/analytics/network-metrics?timeRange=${timeRange}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    dashboardData.network = result.data.map(item => ({
+                        ...item,
+                        timestamp: new Date(item.timestamp)
+                    }));
+                    console.log('✅ NETWORK 데이터 로드 완료:', result.metadata);
+                } else {
+                    throw new Error(result.error || 'NETWORK 데이터 로드 실패');
+                }
+            } catch (error) {
+                console.error('❌ NETWORK 데이터 로드 실패:', error);
+                // 폴백: 로컬 모의 데이터
+                loadNetworkDataFallback();
+            }
+        }
+        
+        function loadNetworkDataFallback() {
+            const mockData = [];
+            const now = new Date();
+            
+            for (let i = 20; i >= 0; i--) {
+                mockData.push({
+                    timestamp: new Date(now.getTime() - i * 120000), // 2분 간격
+                    bandwidth: 70 + Math.random() * 20,
+                    latency: 20 + Math.random() * 30,
+                    packetLoss: Math.random() * 5,
+                    throughput: 80 + Math.random() * 15
+                });
+            }
+            
+            dashboardData.network = mockData;
+        }
+
+        async function loadCorrelationData() {
+            try {
+                const response = await fetch('/api/analytics/correlation-matrix');
+                const result = await response.json();
+                
+                if (result.success) {
+                    dashboardData.correlation = result.data;
+                    console.log('✅ 상관관계 데이터 로드 완료:', result.data.correlationStrength);
+                } else {
+                    throw new Error(result.error || '상관관계 데이터 로드 실패');
+                }
+            } catch (error) {
+                console.error('❌ 상관관계 데이터 로드 실패:', error);
+                // 폴백: 로컬 모의 데이터
+                loadCorrelationDataFallback();
+            }
+        }
+        
+        function loadCorrelationDataFallback() {
+            dashboardData.correlation = {
+                matrix: [
+                    [1.0, -0.6, 0.8, 0.3],
+                    [-0.6, 1.0, -0.4, 0.7],
+                    [0.8, -0.4, 1.0, 0.2],
+                    [0.3, 0.7, 0.2, 1.0]
+                ],
+                categories: ['APP', 'DB', 'INFRA', 'NETWORK']
+            };
+        }
+
+        async function loadAnomalyData() {
+            try {
+                const timeRange = document.getElementById('timeRangeSelect')?.value || '24h';
+                
+                const response = await fetch(`/api/analytics/anomaly-detection?timeRange=${timeRange}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    dashboardData.anomalies = result.data.map(item => ({
+                        ...item,
+                        timestamp: new Date(item.timestamp)
+                    }));
+                    console.log('✅ 이상 탐지 데이터 로드 완료:', result.metadata);
+                } else {
+                    throw new Error(result.error || '이상 탐지 데이터 로드 실패');
+                }
+            } catch (error) {
+                console.error('❌ 이상 탐지 데이터 로드 실패:', error);
+                // 폴백: 로컬 모의 데이터
+                loadAnomalyDataFallback();
+            }
+        }
+        
+        function loadAnomalyDataFallback() {
+            const mockData = [];
+            const now = new Date();
+            
+            for (let i = 60; i >= 0; i--) {
+                const baseValue = 100 + Math.sin(i * 0.1) * 20;
+                const isAnomaly = Math.random() < 0.1; // 10% 확률로 이상치
+                const value = isAnomaly ? baseValue + (Math.random() - 0.5) * 100 : baseValue + (Math.random() - 0.5) * 20;
+                
+                mockData.push({
+                    timestamp: new Date(now.getTime() - i * 60000),
+                    value: value,
+                    predicted: baseValue,
+                    isAnomaly: isAnomaly,
+                    anomalyScore: isAnomaly ? 0.7 + Math.random() * 0.3 : Math.random() * 0.3
+                });
+            }
+            
+            dashboardData.anomalies = mockData;
+        }
+
+        // 차트 업데이트
+        function updateAllCharts() {
+            if (window.updateAppTrendChart) window.updateAppTrendChart(dashboardData.app);
+            if (window.updateDBPerformanceChart) window.updateDBPerformanceChart(dashboardData.db);
+            if (window.updateInfraResourceChart) window.updateInfraResourceChart(dashboardData.infra);
+            if (window.updateNetworkAnalysisChart) window.updateNetworkAnalysisChart(dashboardData.network);
+            if (window.updateCorrelationChart) window.updateCorrelationChart(dashboardData.correlation);
+            if (window.updateAnomalyDetectionChart) window.updateAnomalyDetectionChart(dashboardData.anomalies);
+        }
+
+        // 메트릭 카드 업데이트 (API 데이터 기반)
+        async function updateMetricCards() {
+            try {
+                const response = await fetch('/api/analytics/metrics-summary');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const data = result.data;
+                    
+                    // APP 메트릭
+                    document.getElementById('appMetricValue').textContent = formatValue(data.app.responseTime) + 'ms';
+                    const appTrend = document.getElementById('appMetricTrend');
+                    appTrend.className = `metric-trend trend-${data.app.trend}`;
+                    appTrend.textContent = data.app.trend === 'up' ? '↗ 개선' : data.app.trend === 'down' ? '↘ 악화' : '→ 안정적';
+                    
+                    // DB 메트릭
+                    document.getElementById('dbMetricValue').textContent = formatValue(data.db.queryTime) + 'ms';
+                    const dbTrend = document.getElementById('dbMetricTrend');
+                    dbTrend.className = `metric-trend trend-${data.db.trend}`;
+                    dbTrend.textContent = data.db.trend === 'up' ? '↗ 증가' : data.db.trend === 'down' ? '↘ 감소' : '→ 안정적';
+                    
+                    // INFRA 메트릭
+                    document.getElementById('infraMetricValue').textContent = formatValue(data.infra.cpuUsage) + '%';
+                    const infraTrend = document.getElementById('infraMetricTrend');
+                    infraTrend.className = `metric-trend trend-${data.infra.trend}`;
+                    infraTrend.textContent = data.infra.trend === 'up' ? '↗ 증가' : data.infra.trend === 'down' ? '↘ 감소' : '→ 안정적';
+                    
+                    // NETWORK 메트릭
+                    document.getElementById('networkMetricValue').textContent = formatValue(data.network.bandwidth) + 'Mbps';
+                    const networkTrend = document.getElementById('networkMetricTrend');
+                    networkTrend.className = `metric-trend trend-${data.network.trend}`;
+                    networkTrend.textContent = data.network.trend === 'up' ? '↗ 증가' : data.network.trend === 'down' ? '↘ 감소' : '→ 안정적';
+                    
+                    console.log('✅ 메트릭 카드 업데이트 완료');
+                } else {
+                    throw new Error(result.error || '메트릭 요약 데이터 로드 실패');
+                }
+            } catch (error) {
+                console.error('❌ 메트릭 카드 업데이트 실패:', error);
+                // 폴백: 기존 로직
+                updateMetricCardsFallback();
+            }
+        }
+        
+        function updateMetricCardsFallback() {
+            if (dashboardData.app.length > 0) {
+                const latest = dashboardData.app[dashboardData.app.length - 1];
+                document.getElementById('appMetricValue').textContent = formatValue(latest.value || latest.responseTime) + 'ms';
+            }
+            
+            if (dashboardData.db.length > 0) {
+                const latest = dashboardData.db[dashboardData.db.length - 1];
+                document.getElementById('dbMetricValue').textContent = formatValue(latest.queryTime) + 'ms';
+            }
+            
+            if (dashboardData.infra.length > 0) {
+                const latest = dashboardData.infra[dashboardData.infra.length - 1];
+                document.getElementById('infraMetricValue').textContent = formatValue(latest.cpu) + '%';
+            }
+            
+            if (dashboardData.network.length > 0) {
+                const latest = dashboardData.network[dashboardData.network.length - 1];
+                document.getElementById('networkMetricValue').textContent = formatValue(latest.bandwidth) + 'Mbps';
+            }
+        }
+
+        // 실시간 업데이트 (API 기반)
+        function startRealTimeUpdates() {
+            updateInterval = setInterval(async () => {
+                if (isRealTimeMode) {
+                    console.log('🔄 실시간 데이터 업데이트 시작...');
+                    
+                    try {
+                        // 새로운 APP 데이터 한 개씩 추가 (실시간 시뮬레이션)
+                        const appResponse = await fetch('/api/analytics/app-metrics?timeRange=1h&source=realtime');
+                        if (appResponse.ok) {
+                            const appResult = await appResponse.json();
+                            if (appResult.success && appResult.data.length > 0) {
+                                const latestApp = appResult.data[appResult.data.length - 1];
+                                latestApp.timestamp = new Date();
+                                dashboardData.app.push(latestApp);
+                                if (dashboardData.app.length > 50) dashboardData.app.shift();
+                            }
+                        }
+                        
+                        // 인프라 데이터 업데이트 (ClickHouse 실시간)
+                        const infraResponse = await fetch('/api/analytics/infra-metrics?timeRange=1h');
+                        if (infraResponse.ok) {
+                            const infraResult = await infraResponse.json();
+                            if (infraResult.success && infraResult.data.length > 0) {
+                                const latestInfra = infraResult.data[infraResult.data.length - 1];
+                                latestInfra.timestamp = new Date();
+                                dashboardData.infra.push(latestInfra);
+                                if (dashboardData.infra.length > 60) dashboardData.infra.shift();
+                            }
+                        }
+                        
+                        // 네트워크 데이터 업데이트 (주기적)
+                        if (Math.random() < 0.6) { // 60% 확률로 업데이트
+                            const networkResponse = await fetch('/api/analytics/network-metrics?timeRange=6h');
+                            if (networkResponse.ok) {
+                                const networkResult = await networkResponse.json();
+                                if (networkResult.success && networkResult.data.length > 0) {
+                                    const latestNetwork = networkResult.data[networkResult.data.length - 1];
+                                    latestNetwork.timestamp = new Date();
+                                    dashboardData.network.push(latestNetwork);
+                                    if (dashboardData.network.length > 30) dashboardData.network.shift();
+                                }
+                            }
+                        }
+                        
+                        // 이상 탐지 데이터 업데이트
+                        const anomalyResponse = await fetch('/api/analytics/anomaly-detection?timeRange=6h');
+                        if (anomalyResponse.ok) {
+                            const anomalyResult = await anomalyResponse.json();
+                            if (anomalyResult.success && anomalyResult.data.length > 0) {
+                                // 새로운 이상 탐지 포인트 시뮬레이션
+                                const now = new Date();
+                                const baseValue = 100 + Math.sin(Date.now() * 0.001) * 20;
+                                const isAnomaly = Math.random() < 0.05;
+                                const value = isAnomaly ? baseValue + (Math.random() - 0.5) * 100 : baseValue + (Math.random() - 0.5) * 20;
+                                
+                                dashboardData.anomalies.push({
+                                    timestamp: now,
+                                    value: Math.max(0, value),
+                                    predicted: baseValue,
+                                    isAnomaly: isAnomaly,
+                                    anomalyScore: isAnomaly ? 0.7 + Math.random() * 0.3 : Math.random() * 0.3,
+                                    confidence: 0.85 + Math.random() * 0.15
+                                });
+                                if (dashboardData.anomalies.length > 100) dashboardData.anomalies.shift();
+                            }
+                        }
+                        
+                        // 차트 및 메트릭 업데이트
+                        updateAllCharts();
+                        await updateMetricCards();
+                        
+                        console.log('✅ 실시간 데이터 업데이트 완료');
+                        
+                    } catch (error) {
+                        console.error('❌ 실시간 업데이트 실패:', error);
+                        // 폴백: 로컬 데이터 생성
+                        fallbackRealTimeUpdate();
+                    }
+                }
+            }, 5000); // 5초마다 업데이트
+        }
+        
+        // 폴백 실시간 업데이트
+        function fallbackRealTimeUpdate() {
+            const now = new Date();
+            
+            // APP 데이터 추가
+            dashboardData.app.push({
+                timestamp: now,
+                value: 150 + Math.random() * 100 + Math.sin(Date.now() * 0.001) * 20,
+                responseTime: 150 + Math.random() * 100,
+                source: 'clickhouse'
+            });
+            if (dashboardData.app.length > 50) dashboardData.app.shift();
+            
+            // 인프라 데이터 추가
+            const cpu = 30 + Math.random() * 40;
+            const memory = 40 + Math.random() * 30;
+            const disk = 20 + Math.random() * 25;
+            
+            dashboardData.infra.push({
+                timestamp: now,
+                cpu: cpu,
+                memory: memory,
+                disk: disk
+            });
+            if (dashboardData.infra.length > 60) dashboardData.infra.shift();
+            
+            // 차트 업데이트
+            updateAllCharts();
+            updateMetricCardsFallback();
+        }
+
+        // 컨트롤 이벤트 리스너
+        function setupControlListeners() {
+            document.getElementById('timeRangeSelect').addEventListener('change', function() {
+                console.log('🔄 시간 범위 변경:', this.value);
+                // 시간 범위에 따른 데이터 재로드
+                loadInitialData();
+            });
+
+            document.getElementById('dataSourceSelect').addEventListener('change', function() {
+                console.log('🔄 데이터 소스 변경:', this.value);
+                // 데이터 소스에 따른 APP 데이터 재로드
+                loadAppData().then(() => {
+                    updateAllCharts();
+                    updateMetricCards();
+                });
+            });
+
+            document.getElementById('aggregationSelect').addEventListener('change', function() {
+                console.log('🔄 집계 단위 변경:', this.value);
+                // 집계 단위에 따른 데이터 처리 (실제 구현에서는 API 파라미터로 전달)
+                loadInitialData();
+            });
+            
+            // 실시간 모드 토글 (선택적)
+            const realTimeToggle = document.createElement('button');
+            realTimeToggle.textContent = '실시간 모드: ON';
+            realTimeToggle.className = 'control-select';
+            realTimeToggle.style.marginLeft = 'auto';
+            realTimeToggle.onclick = () => {
+                isRealTimeMode = !isRealTimeMode;
+                realTimeToggle.textContent = `실시간 모드: ${isRealTimeMode ? 'ON' : 'OFF'}`;
+                realTimeToggle.style.background = isRealTimeMode ? '#3b82f6' : '#6c757d';
+                realTimeToggle.style.color = 'white';
+                console.log('🔄 실시간 모드:', isRealTimeMode ? '활성화' : '비활성화');
+            };
+            
+            const controlsContainer = document.querySelector('.chart-controls');
+            if (controlsContainer && !controlsContainer.querySelector('button[onclick]')) {
+                controlsContainer.appendChild(realTimeToggle);
+            }
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 통합 분석 대시보드 로드 시작...');
+            
+            // D3.js 로드 확인
+            if (typeof d3 === 'undefined') {
+                console.error('❌ D3.js가 로드되지 않았습니다!');
+                return;
+            }
+            console.log('✅ D3.js v' + d3.version + ' 로드 완료');
+            
+            // SVG 요소 확인
+            const svgElements = document.querySelectorAll('.chart-svg');
+            console.log('📊 발견된 SVG 차트 요소:', svgElements.length);
+            svgElements.forEach((svg, index) => {
+                console.log(`  - ${index + 1}. ${svg.id}: ${svg.getBoundingClientRect().width}x${svg.getBoundingClientRect().height}`);
+            });
+            
+            // 공통 레이아웃 로드 대기
+            setTimeout(() => {
+                console.log('🎯 대시보드 초기화 시작...');
+                initializeDashboard();
+            }, 500);
+        });
+
+        // 리사이즈 이벤트 처리
+        window.addEventListener('resize', function() {
+            // 차트 크기 조정
+            setTimeout(() => {
+                initializeDashboard();
+            }, 100);
+        });
+    </script>
+</body>
+</html>

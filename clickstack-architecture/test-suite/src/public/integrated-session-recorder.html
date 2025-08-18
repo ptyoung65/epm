@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS-MON 통합 세션 녹화기</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header .subtitle {
+            opacity: 0.8;
+            font-size: 1.1em;
+        }
+        
+        .monitoring-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .status-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+            text-align: center;
+        }
+        
+        .status-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .status-label {
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+        
+        .controls-panel {
+            background: rgba(255,255,255,0.15);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .controls-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #4834d4, #686de0);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, #00d2d3, #54a0ff);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .btn:disabled {
+            background: #6c757d !important;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        .session-info {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .info-item {
+            text-align: center;
+        }
+        
+        .info-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .info-label {
+            opacity: 0.7;
+            font-size: 0.9em;
+        }
+        
+        .test-area {
+            background: rgba(255,255,255,0.95);
+            color: #333;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .test-area h2 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+            font-weight: 300;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #34495e;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .test-btn {
+            padding: 12px 25px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .test-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .interactive-area {
+            background: linear-gradient(45deg, #f093fb, #f5576c);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .interactive-area:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(240, 147, 251, 0.3);
+        }
+        
+        .logs-panel {
+            background: rgba(0,0,0,0.8);
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            line-height: 1.4;
+        }
+        
+        /* 실시간 피드백 스타일 */
+        .input-recording {
+            border-color: #ff6b6b !important;
+            box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.2) !important;
+        }
+        
+        .click-recording {
+            animation: clickPulse 0.3s ease;
+        }
+        
+        @keyframes clickPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); background: rgba(255, 107, 107, 0.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .recording-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ff6b6b;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            z-index: 1000;
+            animation: recordingBlink 1s infinite;
+        }
+        
+        @keyframes recordingBlink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.7; }
+        }
+        
+        @media (max-width: 768px) {
+            .controls-row {
+                flex-direction: column;
+            }
+            
+            .btn {
+                min-width: 250px;
+            }
+            
+            .test-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="recordingIndicator" class="recording-indicator" style="display: none;">
+        🔴 녹화 중...
+    </div>
+    
+    <div class="header">
+        <h1>🎬 AIRIS-MON 통합 세션 녹화기</h1>
+        <div class="subtitle">실시간 모니터링과 함께하는 향상된 세션 리플레이 시스템</div>
+    </div>
+    
+    <div class="monitoring-status">
+        <div class="status-card">
+            <div class="status-value" id="activeConnections">0</div>
+            <div class="status-label">활성 연결</div>
+        </div>
+        <div class="status-card">
+            <div class="status-value" id="totalSessions">0</div>
+            <div class="status-label">총 세션</div>
+        </div>
+        <div class="status-card">
+            <div class="status-value" id="currentEvents">0</div>
+            <div class="status-label">수집된 이벤트</div>
+        </div>
+        <div class="status-card">
+            <div class="status-value" id="systemHealth">100%</div>
+            <div class="status-label">시스템 상태</div>
+        </div>
+    </div>
+    
+    <div class="controls-panel">
+        <div class="controls-row">
+            <button class="btn btn-primary" onclick="startIntegratedRecording()" id="startBtn">
+                🔴 통합 녹화 시작
+            </button>
+            <button class="btn btn-secondary" onclick="stopIntegratedRecording()" id="stopBtn" disabled>
+                ⏹️ 녹화 중지
+            </button>
+            <button class="btn btn-success" onclick="playIntegratedRecording()" id="playBtn" disabled>
+                ▶️ 리플레이 보기
+            </button>
+        </div>
+        
+        <div class="controls-row">
+            <select id="scenarioSelect" style="padding: 15px; border-radius: 25px; border: none; font-size: 16px; min-width: 200px;">
+                <option value="integrated_test">통합 테스트</option>
+                <option value="performance_test">성능 테스트</option>
+                <option value="user_interaction">사용자 상호작용</option>
+                <option value="error_scenario">오류 시나리오</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="session-info" id="sessionInfo" style="display: none;">
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-value" id="sessionId">-</div>
+                <div class="info-label">세션 ID</div>
+            </div>
+            <div class="info-item">
+                <div class="info-value" id="recordingTime">00:00</div>
+                <div class="info-label">녹화 시간</div>
+            </div>
+            <div class="info-item">
+                <div class="info-value" id="eventCount">0</div>
+                <div class="info-label">이벤트 수</div>
+            </div>
+            <div class="info-item">
+                <div class="info-value" id="dataSize">0 KB</div>
+                <div class="info-label">데이터 크기</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="test-area" id="testArea">
+        <h2>🧪 통합 테스트 영역</h2>
+        
+        <div class="form-group">
+            <label class="form-label" for="userNameInput">사용자 이름</label>
+            <input type="text" id="userNameInput" placeholder="이름을 입력하세요">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="emailInput">이메일 주소</label>
+            <input type="email" id="emailInput" placeholder="example@email.com">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="categorySelect">카테고리 선택</label>
+            <select id="categorySelect">
+                <option value="">선택하세요</option>
+                <option value="frontend">프론트엔드</option>
+                <option value="backend">백엔드</option>
+                <option value="database">데이터베이스</option>
+                <option value="devops">DevOps</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="messageInput">메시지</label>
+            <textarea id="messageInput" rows="4" placeholder="상세한 메시지를 입력하세요..."></textarea>
+        </div>
+        
+        <div class="test-buttons">
+            <button class="test-btn" onclick="testAction('save')" id="saveBtn">💾 저장하기</button>
+            <button class="test-btn" onclick="testAction('validate')" id="validateBtn">✅ 유효성 검사</button>
+            <button class="test-btn" onclick="testAction('submit')" id="submitBtn">📤 제출하기</button>
+            <button class="test-btn" onclick="testAction('reset')" id="resetBtn">🔄 초기화</button>
+        </div>
+        
+        <div class="interactive-area" onclick="interactiveAreaClick()" id="interactiveArea">
+            <h3>🎯 상호작용 테스트 영역</h3>
+            <p>이 영역을 클릭하여 상호작용을 테스트하세요</p>
+            <div id="clickCounter" style="font-size: 1.2em; margin-top: 10px;">클릭 횟수: 0</div>
+        </div>
+    </div>
+    
+    <div class="controls-panel">
+        <h3 style="margin-bottom: 20px;">🐛 실시간 로그</h3>
+        <div class="logs-panel" id="logsPanel">
+            AIRIS-MON 통합 세션 녹화기 초기화 중...
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let isRecording = false;
+        let sessionId = null;
+        let startTime = null;
+        let recordedEvents = [];
+        let clickCount = 0;
+        let recordingTimer = null;
+        let websocket = null;
+        
+        // 모니터링 데이터
+        let monitoringData = {
+            activeConnections: 0,
+            totalSessions: 0,
+            currentEvents: 0,
+            systemHealth: 100
+        };
+        
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeIntegratedSystem();
+        });
+        
+        // 통합 시스템 초기화
+        function initializeIntegratedSystem() {
+            addLog('🚀 AIRIS-MON 통합 시스템 초기화 시작');
+            
+            // WebSocket 연결 시도
+            connectWebSocket();
+            
+            // 시스템 상태 주기적 업데이트
+            setInterval(updateMonitoringStatus, 2000);
+            
+            // 기존 세션 통계 로드
+            loadSystemStats();
+            
+            addLog('✅ 통합 시스템 초기화 완료');
+        }
+        
+        // WebSocket 연결
+        function connectWebSocket() {
+            try {
+                websocket = new WebSocket('ws://localhost:3100');
+                
+                websocket.onopen = function() {
+                    addLog('🔌 WebSocket 연결 성공');
+                    monitoringData.activeConnections = 1;
+                    updateMonitoringDisplay();
+                };
+                
+                websocket.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    handleWebSocketMessage(data);
+                };
+                
+                websocket.onclose = function() {
+                    addLog('❌ WebSocket 연결 종료');
+                    monitoringData.activeConnections = 0;
+                    updateMonitoringDisplay();
+                };
+                
+                websocket.onerror = function(error) {
+                    addLog('⚠️ WebSocket 오류: ' + error.message);
+                };
+                
+            } catch (error) {
+                addLog('❌ WebSocket 연결 실패: ' + error.message);
+            }
+        }
+        
+        // WebSocket 메시지 처리
+        function handleWebSocketMessage(data) {
+            if (data.type === 'monitoring_update') {
+                Object.assign(monitoringData, data.data);
+                updateMonitoringDisplay();
+            }
+        }
+        
+        // 시스템 통계 로드
+        async function loadSystemStats() {
+            try {
+                const response = await fetch('/api/session-replay/stats');
+                const stats = await response.json();
+                
+                if (stats.success) {
+                    monitoringData.totalSessions = stats.stats.totalSessions || 0;
+                    updateMonitoringDisplay();
+                    addLog('📊 시스템 통계 로드 완료');
+                }
+            } catch (error) {
+                addLog('⚠️ 시스템 통계 로드 실패: ' + error.message);
+            }
+        }
+        
+        // 모니터링 상태 업데이트
+        function updateMonitoringStatus() {
+            // 시뮬레이션된 실시간 데이터 (실제 환경에서는 서버에서 받아옴)
+            if (isRecording) {
+                monitoringData.currentEvents = recordedEvents.length;
+                monitoringData.systemHealth = Math.max(85, 100 - Math.floor(Math.random() * 15));
+            }
+            updateMonitoringDisplay();
+        }
+        
+        // 모니터링 디스플레이 업데이트
+        function updateMonitoringDisplay() {
+            document.getElementById('activeConnections').textContent = monitoringData.activeConnections;
+            document.getElementById('totalSessions').textContent = monitoringData.totalSessions;
+            document.getElementById('currentEvents').textContent = monitoringData.currentEvents;
+            document.getElementById('systemHealth').textContent = monitoringData.systemHealth + '%';
+        }
+        
+        // 통합 녹화 시작
+        async function startIntegratedRecording() {
+            addLog('=== 통합 세션 녹화 시작 ===');
+            
+            if (isRecording) {
+                alert('이미 녹화 중입니다!');
+                return;
+            }
+            
+            try {
+                // 세션 초기화
+                sessionId = 'integrated_' + Date.now();
+                startTime = Date.now();
+                recordedEvents = [];
+                clickCount = 0;
+                isRecording = true;
+                
+                // 서버에 세션 시작 알림
+                const scenario = document.getElementById('scenarioSelect').value;
+                await startServerSession(scenario);
+                
+                // UI 업데이트
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('playBtn').disabled = true;
+                document.getElementById('recordingIndicator').style.display = 'block';
+                document.getElementById('sessionInfo').style.display = 'block';
+                
+                // 세션 정보 업데이트
+                updateSessionInfo();
+                
+                // 이벤트 리스너 등록
+                setupEnhancedEventListeners();
+                
+                // 녹화 타이머 시작
+                startRecordingTimer();
+                
+                // 초기 DOM 스냅샷 저장
+                await recordDOMSnapshot();
+                
+                addLog('✅ 통합 녹화 시작 성공: ' + sessionId);
+                
+                // WebSocket으로 실시간 알림
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    websocket.send(JSON.stringify({
+                        type: 'session_started',
+                        sessionId: sessionId,
+                        scenario: scenario
+                    }));
+                }
+                
+            } catch (error) {
+                addLog('❌ 통합 녹화 시작 실패: ' + error.message);
+                alert('녹화 시작에 실패했습니다: ' + error.message);
+                resetRecording();
+            }
+        }
+        
+        // 서버 세션 시작
+        async function startServerSession(scenario) {
+            const response = await fetch('/api/session-replay/start-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scenario: scenario,
+                    userAgent: navigator.userAgent,
+                    ipAddress: 'integrated_client'
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('서버 세션 시작 실패');
+            }
+            
+            const result = await response.json();
+            addLog('📡 서버 세션 시작: ' + result.sessionId);
+        }
+        
+        // DOM 스냅샷 기록
+        async function recordDOMSnapshot() {
+            const snapshot = {
+                url: window.location.href,
+                timestamp: Date.now() - startTime,
+                viewport: {
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                },
+                testArea: document.getElementById('testArea').innerHTML
+            };
+            
+            await recordEvent('dom_snapshot', document.body, '', { snapshot });
+            addLog('📸 DOM 스냅샷 저장');
+        }
+        
+        // 향상된 이벤트 리스너 설정
+        function setupEnhancedEventListeners() {
+            addLog('🎯 향상된 이벤트 리스너 설정');
+            
+            // 클릭 이벤트 (시각적 피드백 포함)
+            document.addEventListener('click', async function(e) {
+                if (!isRecording) return;
+                
+                // 시각적 피드백
+                e.target.classList.add('click-recording');
+                setTimeout(() => e.target.classList.remove('click-recording'), 300);
+                
+                await recordEvent('click', e.target, e.target.textContent || e.target.value, {
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    elementRect: e.target.getBoundingClientRect()
+                });
+            });
+            
+            // 입력 이벤트 (실시간 표시)
+            document.addEventListener('input', async function(e) {
+                if (!isRecording) return;
+                
+                e.target.classList.add('input-recording');
+                setTimeout(() => e.target.classList.remove('input-recording'), 500);
+                
+                await recordEvent('input', e.target, e.target.value, {
+                    inputType: e.inputType,
+                    selectionStart: e.target.selectionStart
+                });
+            });
+            
+            // 포커스/블러 이벤트
+            document.addEventListener('focus', async function(e) {
+                if (!isRecording) return;
+                await recordEvent('focus', e.target, e.target.value || '');
+            }, true);
+            
+            document.addEventListener('blur', async function(e) {
+                if (!isRecording) return;
+                await recordEvent('blur', e.target, e.target.value || '');
+            }, true);
+            
+            // 키보드 이벤트
+            document.addEventListener('keydown', async function(e) {
+                if (!isRecording) return;
+                await recordEvent('keydown', e.target, e.key, {
+                    keyCode: e.keyCode,
+                    ctrlKey: e.ctrlKey,
+                    shiftKey: e.shiftKey,
+                    altKey: e.altKey
+                });
+            });
+        }
+        
+        // 향상된 이벤트 기록
+        async function recordEvent(type, target, value, extraData = {}) {
+            if (!isRecording) return;
+            
+            const rect = target.getBoundingClientRect();
+            const event = {
+                type: type,
+                timestamp: Date.now() - startTime,
+                target: {
+                    tagName: target.tagName,
+                    id: target.id,
+                    className: target.className,
+                    textContent: target.textContent ? target.textContent.substring(0, 100) : ''
+                },
+                value: value || '',
+                position: {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2
+                },
+                viewport: {
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                },
+                ...extraData
+            };
+            
+            recordedEvents.push(event);
+            
+            // 서버로 실시간 전송
+            try {
+                await fetch('/api/session-replay/add-event', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        event: event
+                    })
+                });
+            } catch (error) {
+                addLog('⚠️ 서버 이벤트 전송 실패: ' + error.message);
+            }
+            
+            // UI 업데이트
+            updateSessionInfo();
+            
+            addLog(`📝 이벤트 기록: ${type} - ${target.tagName}#${target.id}`);
+        }
+        
+        // 녹화 타이머
+        function startRecordingTimer() {
+            recordingTimer = setInterval(() => {
+                if (isRecording) {
+                    updateSessionInfo();
+                }
+            }, 1000);
+        }
+        
+        // 세션 정보 업데이트
+        function updateSessionInfo() {
+            if (!isRecording) return;
+            
+            const duration = Date.now() - startTime;
+            const minutes = Math.floor(duration / 60000);
+            const seconds = Math.floor((duration % 60000) / 1000);
+            
+            document.getElementById('sessionId').textContent = sessionId.substring(11, 25) + '...';
+            document.getElementById('recordingTime').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('eventCount').textContent = recordedEvents.length;
+            
+            const dataSize = JSON.stringify(recordedEvents).length;
+            document.getElementById('dataSize').textContent = (dataSize / 1024).toFixed(1) + ' KB';
+        }
+        
+        // 통합 녹화 중지
+        async function stopIntegratedRecording() {
+            addLog('=== 통합 세션 녹화 중지 ===');
+            
+            if (!isRecording) {
+                alert('녹화 중이 아닙니다!');
+                return;
+            }
+            
+            try {
+                isRecording = false;
+                
+                // 타이머 정지
+                if (recordingTimer) {
+                    clearInterval(recordingTimer);
+                    recordingTimer = null;
+                }
+                
+                // 최종 스냅샷 저장
+                await recordDOMSnapshot();
+                
+                // 서버 세션 종료
+                await endServerSession();
+                
+                // UI 업데이트
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('playBtn').disabled = false;
+                document.getElementById('recordingIndicator').style.display = 'none';
+                
+                // 세션 데이터 로컬 저장
+                saveSessionLocally();
+                
+                addLog(`✅ 통합 녹화 완료: ${recordedEvents.length}개 이벤트, ${clickCount}번 클릭`);
+                
+                // 성공 알림
+                alert(`✅ 통합 세션 녹화 완료!\n\n세션 ID: ${sessionId}\n이벤트 수: ${recordedEvents.length}개\n클릭 수: ${clickCount}번\n녹화 시간: ${formatDuration(Date.now() - startTime)}`);
+                
+                // 통계 업데이트
+                monitoringData.totalSessions++;
+                updateMonitoringDisplay();
+                
+            } catch (error) {
+                addLog('❌ 통합 녹화 중지 실패: ' + error.message);
+                alert('녹화 중지에 실패했습니다: ' + error.message);
+            }
+        }
+        
+        // 서버 세션 종료
+        async function endServerSession() {
+            const response = await fetch('/api/session-replay/end-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: sessionId,
+                    reason: 'user_stopped'
+                })
+            });
+            
+            if (response.ok) {
+                addLog('📡 서버 세션 종료 완료');
+            }
+        }
+        
+        // 로컬 세션 저장
+        function saveSessionLocally() {
+            const sessionData = {
+                id: sessionId,
+                startTime: startTime,
+                endTime: Date.now(),
+                duration: Date.now() - startTime,
+                events: recordedEvents,
+                eventCount: recordedEvents.length,
+                clickCount: clickCount,
+                scenario: document.getElementById('scenarioSelect').value,
+                metadata: {
+                    userAgent: navigator.userAgent,
+                    viewport: `${window.innerWidth}x${window.innerHeight}`,
+                    timestamp: new Date().toISOString()
+                }
+            };
+            
+            localStorage.setItem(sessionId, JSON.stringify(sessionData));
+            addLog('💾 로컬 세션 데이터 저장 완료');
+        }
+        
+        // 통합 리플레이 재생
+        function playIntegratedRecording() {
+            addLog('=== 통합 리플레이 재생 ===');
+            
+            if (!sessionId || recordedEvents.length === 0) {
+                alert('재생할 세션 데이터가 없습니다!');
+                return;
+            }
+            
+            // 향상된 플레이어로 이동
+            const playerUrl = `enhanced-player.html?sessionId=${sessionId}`;
+            const playerWindow = window.open(playerUrl, '_blank', 'width=1400,height=900,scrollbars=yes,resizable=yes');
+            
+            if (!playerWindow) {
+                alert('⚠️ 팝업이 차단되었습니다. 브라우저에서 팝업을 허용해주세요.');
+            } else {
+                addLog('🎬 향상된 플레이어 창 열림');
+            }
+        }
+        
+        // 테스트 액션 함수들
+        function testAction(action) {
+            addLog(`🎯 테스트 액션: ${action}`);
+            
+            const btn = event.target;
+            const originalText = btn.textContent;
+            
+            switch (action) {
+                case 'save':
+                    btn.textContent = '💾 저장 중...';
+                    btn.style.background = 'linear-gradient(45deg, #00d2d3, #54a0ff)';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.style.background = '';
+                    }, 1000);
+                    break;
+                    
+                case 'validate':
+                    btn.textContent = '✅ 검사 중...';
+                    btn.style.background = 'linear-gradient(45deg, #00d2d3, #1dd1a1)';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.style.background = '';
+                    }, 1500);
+                    break;
+                    
+                case 'submit':
+                    btn.textContent = '📤 제출 중...';
+                    btn.style.background = 'linear-gradient(45deg, #ff6b6b, #ee5a24)';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.style.background = '';
+                    }, 2000);
+                    break;
+                    
+                case 'reset':
+                    // 폼 초기화
+                    document.getElementById('userNameInput').value = '';
+                    document.getElementById('emailInput').value = '';
+                    document.getElementById('categorySelect').selectedIndex = 0;
+                    document.getElementById('messageInput').value = '';
+                    clickCount = 0;
+                    document.getElementById('clickCounter').textContent = '클릭 횟수: 0';
+                    
+                    btn.textContent = '🔄 초기화 완료';
+                    btn.style.background = 'linear-gradient(45deg, #ffa726, #ff7043)';
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.style.background = '';
+                    }, 1000);
+                    break;
+            }
+        }
+        
+        // 상호작용 영역 클릭
+        function interactiveAreaClick() {
+            clickCount++;
+            document.getElementById('clickCounter').textContent = `클릭 횟수: ${clickCount}`;
+            
+            // 색상 변경 효과
+            const area = document.getElementById('interactiveArea');
+            const colors = [
+                'linear-gradient(45deg, #f093fb, #f5576c)',
+                'linear-gradient(45deg, #4facfe, #00f2fe)',
+                'linear-gradient(45deg, #43e97b, #38f9d7)',
+                'linear-gradient(45deg, #fa709a, #fee140)',
+                'linear-gradient(45deg, #a8edea, #fed6e3)'
+            ];
+            
+            area.style.background = colors[Math.floor(Math.random() * colors.length)];
+            
+            addLog(`🎯 상호작용 영역 클릭 #${clickCount}`);
+        }
+        
+        // 녹화 리셋
+        function resetRecording() {
+            isRecording = false;
+            sessionId = null;
+            startTime = null;
+            recordedEvents = [];
+            clickCount = 0;
+            
+            if (recordingTimer) {
+                clearInterval(recordingTimer);
+                recordingTimer = null;
+            }
+            
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('playBtn').disabled = true;
+            document.getElementById('recordingIndicator').style.display = 'none';
+            document.getElementById('sessionInfo').style.display = 'none';
+        }
+        
+        // 시간 포맷팅
+        function formatDuration(ms) {
+            const minutes = Math.floor(ms / 60000);
+            const seconds = Math.floor((ms % 60000) / 1000);
+            return `${minutes}분 ${seconds}초`;
+        }
+        
+        // 로그 추가 함수
+        function addLog(message) {
+            const logsPanel = document.getElementById('logsPanel');
+            const timestamp = new Date().toLocaleTimeString();
+            logsPanel.textContent += `[${timestamp}] ${message}\n`;
+            logsPanel.scrollTop = logsPanel.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        // 페이지 언로드 시 정리
+        window.addEventListener('beforeunload', function() {
+            if (isRecording) {
+                // 세션 자동 저장 시도
+                saveSessionLocally();
+            }
+            
+            if (websocket) {
+                websocket.close();
+            }
+        });
+        
+        addLog('🎬 AIRIS-MON 통합 세션 녹화기 로딩 완료');
+    </script>
+</body>
+</html>

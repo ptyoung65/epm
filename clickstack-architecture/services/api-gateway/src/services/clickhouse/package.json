@@ -1,0 +1,82 @@
+{
+  "name": "@airis-mon/clickhouse-service",
+  "version": "1.0.0",
+  "description": "ClickHouse service for AIRIS-MON with Korean timezone support and ClickStack architecture patterns",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --coverage",
+    "test:watch": "jest --watch",
+    "lint": "eslint *.js",
+    "lint:fix": "eslint *.js --fix",
+    "migrate": "clickhouse-client --multiquery < migrations.sql",
+    "benchmark": "node benchmark.js"
+  },
+  "keywords": [
+    "clickhouse",
+    "observability",
+    "metrics",
+    "logs",
+    "traces",
+    "alerts",
+    "korean",
+    "timezone",
+    "airis-mon"
+  ],
+  "author": "AIRIS-MON Team",
+  "license": "MIT",
+  "dependencies": {
+    "@clickhouse/client": "^0.2.5",
+    "redis": "^4.6.5",
+    "moment-timezone": "^0.5.43"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0",
+    "eslint": "^8.38.0",
+    "@babel/preset-env": "^7.21.4"
+  },
+  "peerDependencies": {
+    "winston": "^3.8.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/airis-mon/clickhouse-service"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "*.js",
+      "!benchmark.js",
+      "!jest.config.js"
+    ],
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ]
+  },
+  "eslintConfig": {
+    "env": {
+      "node": true,
+      "es2021": true,
+      "jest": true
+    },
+    "extends": [
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "ecmaVersion": 12,
+      "sourceType": "module"
+    },
+    "rules": {
+      "no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "no-console": "warn",
+      "indent": ["error", 2],
+      "quotes": ["error", "single"],
+      "semi": ["error", "always"]
+    }
+  }
+}

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3.js Chart Test</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .chart-container { background: white; padding: 20px; margin: 20px 0; border: 1px solid #ddd; border-radius: 8px; }
+        .chart-svg { width: 100%; height: 300px; background: #f9f9f9; }
+        .line { fill: none; stroke: #3b82f6; stroke-width: 2px; }
+        .area { fill: #3b82f6; opacity: 0.3; }
+        .dot { fill: #3b82f6; }
+        .axis { font-size: 12px; }
+        .grid line { stroke: #e0e0e0; stroke-opacity: 0.7; }
+        .grid path { stroke-width: 0; }
+        button { padding: 10px 20px; margin: 5px; background: #3b82f6; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #2563eb; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>D3.js Chart 테스트</h1>
+    
+    <div class="status" id="status">준비 중...</div>
+    
+    <button onclick="testAPI()">API 데이터 테스트</button>
+    <button onclick="drawTestChart()">테스트 차트 그리기</button>
+    <button onclick="clearChart()">차트 초기화</button>
+    
+    <div class="chart-container">
+        <h3>APP 성능 트렌드 (테스트)</h3>
+        <svg class="chart-svg" id="testChart"></svg>
+    </div>
+    
+    <div class="chart-container">
+        <h3>API 데이터 기반 차트</h3>
+        <svg class="chart-svg" id="apiChart"></svg>
+    </div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        
+        // D3.js 로드 확인
+        window.addEventListener('load', function() {
+            if (typeof d3 !== 'undefined') {
+                statusEl.className = 'status success';
+                statusEl.textContent = '✅ D3.js v' + d3.version + ' 로드 완료';
+                console.log('D3.js loaded:', d3.version);
+                
+                // 자동으로 테스트 차트 그리기
+                setTimeout(drawTestChart, 500);
+            } else {
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ D3.js 로드 실패';
+            }
+        });
+        
+        // 테스트 차트 그리기
+        function drawTestChart() {
+            console.log('Drawing test chart...');
+            
+            // 테스트 데이터 생성
+            const data = [];
+            const now = new Date();
+            for (let i = 0; i < 30; i++) {
+                data.push({
+                    timestamp: new Date(now.getTime() - (29 - i) * 60000),
+                    value: 100 + Math.random() * 100 + Math.sin(i * 0.5) * 50
+                });
+            }
+            
+            // SVG 설정
+            const svg = d3.select("#testChart");
+            const margin = {top: 20, right: 80, bottom: 40, left: 60};
+            const width = 800 - margin.left - margin.right;
+            const height = 300 - margin.top - margin.bottom;
+            
+            // 기존 요소 제거
+            svg.selectAll("*").remove();
+            
+            const g = svg.append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+            
+            // 스케일 설정
+            const xScale = d3.scaleTime()
+                .domain(d3.extent(data, d => d.timestamp))
+                .range([0, width]);
+                
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.value) * 1.1])
+                .range([height, 0]);
+            
+            // 라인 생성기
+            const line = d3.line()
+                .x(d => xScale(d.timestamp))
+                .y(d => yScale(d.value))
+                .curve(d3.curveMonotoneX);
+            
+            // 영역 생성기
+            const area = d3.area()
+                .x(d => xScale(d.timestamp))
+                .y0(height)
+                .y1(d => yScale(d.value))
+                .curve(d3.curveMonotoneX);
+            
+            // 그리드 라인
+            g.append("g")
+                .attr("class", "grid")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale)
+                    .tickSize(-height)
+                    .tickFormat("")
+                );
+            
+            g.append("g")
+                .attr("class", "grid")
+                .call(d3.axisLeft(yScale)
+                    .tickSize(-width)
+                    .tickFormat("")
+                );
+            
+            // 영역 차트
+            g.append("path")
+                .datum(data)
+                .attr("class", "area")
+                .attr("d", area);
+            
+            // 라인 차트
+            g.append("path")
+                .datum(data)
+                .attr("class", "line")
+                .attr("d", line);
+            
+            // X축
+            g.append("g")
+                .attr("class", "axis")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale)
+                    .tickFormat(d3.timeFormat("%H:%M"))
+                );
+            
+            // Y축
+            g.append("g")
+                .attr("class", "axis")
+                .call(d3.axisLeft(yScale)
+                    .tickFormat(d => d.toFixed(0) + "ms")
+                );
+            
+            // 데이터 포인트
+            g.selectAll(".dot")
+                .data(data.filter((d, i) => i % 3 === 0))
+                .enter().append("circle")
+                .attr("class", "dot")
+                .attr("cx", d => xScale(d.timestamp))
+                .attr("cy", d => yScale(d.value))
+                .attr("r", 4);
+            
+            statusEl.className = 'status success';
+            statusEl.textContent = '✅ 테스트 차트 그리기 완료 (' + data.length + '개 데이터 포인트)';
+        }
+        
+        // API 데이터 테스트
+        async function testAPI() {
+            console.log('Testing API...');
+            statusEl.className = 'status';
+            statusEl.textContent = 'API 데이터 로드 중...';
+            
+            try {
+                const response = await fetch('/api/analytics/app-metrics?timeRange=24h&source=mixed');
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    console.log('API Data:', result.data);
+                    
+                    // 데이터 변환
+                    const data = result.data.map(item => ({
+                        timestamp: new Date(item.timestamp),
+                        value: item.value || item.responseTime || Math.random() * 200 + 100
+                    }));
+                    
+                    // API 데이터로 차트 그리기
+                    drawAPIChart(data);
+                    
+                    statusEl.className = 'status success';
+                    statusEl.textContent = '✅ API 데이터 로드 및 차트 그리기 완료 (' + data.length + '개 데이터)';
+                } else {
+                    throw new Error('Invalid API response');
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                statusEl.className = 'status error';
+                statusEl.textContent = '❌ API 오류: ' + error.message;
+            }
+        }
+        
+        // API 데이터로 차트 그리기
+        function drawAPIChart(data) {
+            const svg = d3.select("#apiChart");
+            const margin = {top: 20, right: 80, bottom: 40, left: 60};
+            const width = 800 - margin.left - margin.right;
+            const height = 300 - margin.top - margin.bottom;
+            
+            svg.selectAll("*").remove();
+            
+            const g = svg.append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+            
+            const xScale = d3.scaleTime()
+                .domain(d3.extent(data, d => d.timestamp))
+                .range([0, width]);
+                
+            const yScale = d3.scaleLinear()
+                .domain([0, d3.max(data, d => d.value) * 1.1])
+                .range([height, 0]);
+            
+            const line = d3.line()
+                .x(d => xScale(d.timestamp))
+                .y(d => yScale(d.value))
+                .curve(d3.curveMonotoneX);
+            
+            // 배경 그라데이션
+            const gradient = svg.append("defs")
+                .append("linearGradient")
+                .attr("id", "gradient")
+                .attr("x1", "0%")
+                .attr("y1", "0%")
+                .attr("x2", "0%")
+                .attr("y2", "100%");
+            
+            gradient.append("stop")
+                .attr("offset", "0%")
+                .attr("stop-color", "#3b82f6")
+                .attr("stop-opacity", 0.6);
+            
+            gradient.append("stop")
+                .attr("offset", "100%")
+                .attr("stop-color", "#3b82f6")
+                .attr("stop-opacity", 0.1);
+            
+            // 영역 차트
+            const area = d3.area()
+                .x(d => xScale(d.timestamp))
+                .y0(height)
+                .y1(d => yScale(d.value))
+                .curve(d3.curveMonotoneX);
+            
+            g.append("path")
+                .datum(data)
+                .attr("fill", "url(#gradient)")
+                .attr("d", area);
+            
+            // 라인 차트
+            g.append("path")
+                .datum(data)
+                .attr("class", "line")
+                .attr("d", line);
+            
+            // 축
+            g.append("g")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(xScale).tickFormat(d3.timeFormat("%H:%M")));
+            
+            g.append("g")
+                .call(d3.axisLeft(yScale).tickFormat(d => d.toFixed(0) + "ms"));
+        }
+        
+        // 차트 초기화
+        function clearChart() {
+            d3.select("#testChart").selectAll("*").remove();
+            d3.select("#apiChart").selectAll("*").remove();
+            statusEl.className = 'status';
+            statusEl.textContent = '차트가 초기화되었습니다.';
+        }
+    </script>
+</body>
+</html>

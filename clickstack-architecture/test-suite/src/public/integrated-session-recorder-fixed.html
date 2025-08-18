@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS-MON 통합 세션 녹화기 (수정된 버전)</title>
+    <script src="/components/common-layout.js"></script>
+    <style>
+        /* 기본 스타일 제거 - 공통 레이아웃이 관리 */
+
+        /* 컨테이너는 공통 레이아웃이 관리하므로 제거 */
+        
+        .recorder-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .recorder-header h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+        
+        .recorder-header .subtitle {
+            color: var(--gray-600);
+            font-size: 1rem;
+        }
+        
+        .monitoring-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .status-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .status-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .status-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0.75rem 0;
+            color: var(--primary);
+        }
+        
+        .status-label {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .controls-panel {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .controls-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 12px 24px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 180px;
+            text-decoration: none;
+            background: none;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+        
+        .btn-secondary {
+            background: var(--gray-600);
+            color: var(--white);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: var(--white);
+        }
+        
+        .btn:hover {
+            transform: translateY(-1px);
+            opacity: 0.9;
+        }
+        
+        .btn:disabled {
+            background: var(--gray-400) !important;
+            cursor: not-allowed;
+            transform: none !important;
+            opacity: 0.6 !important;
+        }
+        
+        .session-info {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .info-item {
+            text-align: center;
+        }
+        
+        .info-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: var(--gray-900);
+        }
+        
+        .info-label {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        
+        .test-area {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .test-area h2 {
+            color: var(--gray-900);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            font-size: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #34495e;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .test-btn {
+            padding: 12px 20px;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .test-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+        
+        .interactive-area {
+            background: var(--primary);
+            color: var(--white);
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            margin: 1.5rem 0;
+            transition: all 0.2s ease;
+        }
+        
+        .interactive-area:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .logs-panel {
+            background: var(--gray-900);
+            color: var(--success);
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+            line-height: 1.4;
+            border: 1px solid var(--gray-800);
+        }
+        
+        /* 실시간 피드백 스타일 */
+        .input-highlight {
+            border-color: var(--success) !important;
+            box-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
+        }
+        
+        .click-highlight {
+            background: var(--warning) !important;
+            transform: scale(1.02);
+            transition: all 0.2s;
+        }
+        
+        .recording-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--error);
+            color: var(--white);
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 1000;
+            animation: recordingBlink 1s infinite;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+        
+        @keyframes recordingBlink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.7; }
+        }
+        
+        @media (max-width: 768px) {
+            .controls-row {
+                flex-direction: column;
+            }
+            
+            .btn {
+                min-width: 100%;
+                margin-bottom: 0.5rem;
+            }
+            
+            .test-buttons {
+                flex-direction: column;
+            }
+            
+            .test-btn {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="recordingIndicator" class="recording-indicator" style="display: none;">
+        🔴 녹화 중...
+    </div>
+    
+    <div class="recorder-header">
+        <h2>🎬 통합 세션 녹화기</h2>
+        <div class="subtitle">향상된 녹화기 기술을 통합한 실시간 모니터링 + 세션 리플레이 시스템</div>
+    </div>
+    
+    <div class="monitoring-status">
+        <div class="status-card">
+            <div class="status-value" id="activeConnections">1</div>
+            <div class="status-label">활성 연결</div>
+        </div>
+        <div class="status-card">
+            <div class="status-value" id="totalSessions">0</div>
+            <div class="status-label">총 세션</div>
+        </div>
+        <div class="status-card">
+            <div class="status-value" id="currentEvents">0</div>
+            <div class="status-label">수집된 이벤트</div>
+        </div>
+        <div class="status-card">
+            <div class="status-value" id="systemHealth">100%</div>
+            <div class="status-label">시스템 상태</div>
+        </div>
+    </div>
+    
+    <div class="controls-panel">
+        <div class="controls-row">
+            <button class="btn btn-primary" onclick="startEnhancedRecording()" id="startBtn">
+                🔴 향상된 통합 녹화 시작
+            </button>
+            <button class="btn btn-secondary" onclick="stopEnhancedRecording()" id="stopBtn" disabled>
+                ⏹️ 녹화 중지
+            </button>
+            <button class="btn btn-success" onclick="playEnhancedRecording()" id="playBtn" disabled>
+                ▶️ 향상된 플레이어로 재생
+            </button>
+        </div>
+        
+        <div class="controls-row">
+            <select id="scenarioSelect" style="padding: 15px; border-radius: 25px; border: none; font-size: 16px; min-width: 200px; color: #333;">
+                <option value="integrated_enhanced">통합 향상된 테스트</option>
+                <option value="performance_enhanced">성능 향상된 테스트</option>
+                <option value="user_interaction_enhanced">사용자 상호작용 향상됨</option>
+                <option value="error_scenario_enhanced">오류 시나리오 향상됨</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="session-info" id="sessionInfo" style="display: none;">
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-value" id="sessionId">-</div>
+                <div class="info-label">세션 ID</div>
+            </div>
+            <div class="info-item">
+                <div class="info-value" id="recordingTime">00:00</div>
+                <div class="info-label">녹화 시간</div>
+            </div>
+            <div class="info-item">
+                <div class="info-value" id="eventCount">0</div>
+                <div class="info-label">이벤트 수</div>
+            </div>
+            <div class="info-item">
+                <div class="info-value" id="dataSize">0 KB</div>
+                <div class="info-label">데이터 크기</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 향상된 녹화기와 동일한 테스트 영역 구조 -->
+    <div class="test-area" id="recordingArea">
+        <h2>🧪 통합 테스트 영역 (향상된 버전)</h2>
+        
+        <input type="text" placeholder="이름을 입력하세요" id="nameField">
+        <input type="email" placeholder="이메일을 입력하세요" id="emailField">
+        <textarea placeholder="메시지를 입력하세요" rows="3" id="messageField"></textarea>
+        
+        <div style="margin: 20px 0;">
+            <button class="test-btn" onclick="testButtonClick('버튼A')" id="buttonA">테스트 버튼 A</button>
+            <button class="test-btn" onclick="testButtonClick('버튼B')" id="buttonB">테스트 버튼 B</button>
+            <button class="test-btn" onclick="changeColorTest()" id="colorButton">색상 변경</button>
+        </div>
+        
+        <div class="interactive-area" onclick="clickTestAreaEnhanced()" id="clickTestArea">
+            <h3>🎯 클릭 테스트 영역</h3>
+            <p>여기를 클릭해보세요</p>
+            <div id="clickCounter">클릭 횟수: 0</div>
+        </div>
+    </div>
+    
+    <div class="controls-panel">
+        <h3 style="margin-bottom: 20px;">🐛 실시간 로그</h3>
+        <div class="logs-panel" id="debugArea">
+            AIRIS-MON 통합 세션 녹화기 (향상된 버전) 초기화 중...
+        </div>
+    </div>
+
+    <script>
+        // 향상된 녹화기의 검증된 코드를 기반으로 한 전역 변수
+        let isRecording = false;
+        let recordedEvents = [];
+        let sessionId = null;
+        let startTime = null;
+        let clickCount = 0;
+        let recordingTimer = null;
+        
+        // 디버그 로그 함수 - 향상된 녹화기와 동일
+        function addDebugLog(message) {
+            const debugArea = document.getElementById('debugArea');
+            const timestamp = new Date().toLocaleTimeString();
+            debugArea.textContent += `[${timestamp}] ${message}\n`;
+            debugArea.scrollTop = debugArea.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        // 상태 업데이트 함수
+        function updateStatus(message) {
+            addDebugLog(`상태 변경: ${message}`);
+        }
+        
+        // 향상된 녹화기의 검증된 이벤트 기록 함수 사용
+        function recordEventEnhanced(type, target, value, extraData = {}) {
+            if (!isRecording) return;
+            
+            const rect = target.getBoundingClientRect();
+            const event = {
+                type: type,
+                timestamp: Date.now() - startTime,
+                target: {
+                    tagName: target.tagName,
+                    id: target.id,
+                    className: target.className,
+                    textContent: target.textContent ? target.textContent.substring(0, 100) : ''
+                },
+                value: value || '',
+                position: {
+                    x: rect.left + rect.width / 2,
+                    y: rect.top + rect.height / 2
+                },
+                styles: {
+                    backgroundColor: getComputedStyle(target).backgroundColor,
+                    color: getComputedStyle(target).color,
+                    fontSize: getComputedStyle(target).fontSize
+                },
+                ...extraData
+            };
+            
+            recordedEvents.push(event);
+            addDebugLog(`이벤트 기록: ${type} - ${target.tagName}#${target.id} - "${value}"`);
+            updateSessionInfo();
+        }
+        
+        // 향상된 녹화 시작 함수 - 향상된 녹화기 기반
+        function startEnhancedRecording() {
+            addDebugLog('=== 향상된 통합 녹화 시작 ===');
+            
+            if (isRecording) {
+                alert('이미 녹화 중입니다!');
+                return;
+            }
+            
+            try {
+                // 초기화 - 향상된 녹화기와 동일한 방식
+                recordedEvents = [];
+                sessionId = 'enhanced_integrated_' + Date.now();
+                startTime = Date.now();
+                isRecording = true;
+                clickCount = 0;
+                
+                // DOM 상태 초기 스냅샷 저장
+                const domSnapshot = captureInitialDOM();
+                recordEventEnhanced('dom_snapshot', document.body, '', { domSnapshot });
+                
+                addDebugLog(`향상된 녹화 초기화 완료 - 세션: ${sessionId}`);
+                
+                // UI 업데이트
+                updateStatus(`🔴 녹화 중 - 세션: ${sessionId.substring(17, 30)}...`);
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('playBtn').disabled = true;
+                document.getElementById('recordingIndicator').style.display = 'block';
+                document.getElementById('sessionInfo').style.display = 'block';
+                
+                // 향상된 이벤트 리스너 등록
+                setupEnhancedEventListeners();
+                
+                // 녹화 타이머 시작
+                startRecordingTimer();
+                
+                addDebugLog('✅ 향상된 통합 녹화 시작 성공');
+                alert('✅ 향상된 녹화가 시작되었습니다! 아래 테스트 영역에서 실제 인터랙션을 해보세요.');
+                
+                // 모니터링 상태 업데이트
+                updateMonitoringStatus();
+                
+            } catch (error) {
+                addDebugLog(`❌ 향상된 녹화 시작 실패: ${error.message}`);
+                alert('❌ 녹화 시작에 실패했습니다: ' + error.message);
+            }
+        }
+        
+        // 초기 DOM 상태 캡처 - 향상된 녹화기와 동일
+        function captureInitialDOM() {
+            const recordingArea = document.getElementById('recordingArea');
+            return {
+                innerHTML: recordingArea.innerHTML,
+                styles: getComputedStyle(recordingArea).cssText,
+                dimensions: {
+                    width: recordingArea.offsetWidth,
+                    height: recordingArea.offsetHeight
+                }
+            };
+        }
+        
+        // 향상된 이벤트 리스너 설정 - 향상된 녹화기와 동일한 구현
+        function setupEnhancedEventListeners() {
+            addDebugLog('향상된 이벤트 리스너 설정 시작');
+            
+            // 클릭 이벤트 (더 정확한 위치 정보)
+            document.addEventListener('click', function(e) {
+                if (isRecording && e.target.closest('#recordingArea')) {
+                    // 시각적 피드백
+                    e.target.classList.add('click-highlight');
+                    setTimeout(() => e.target.classList.remove('click-highlight'), 300);
+                    
+                    recordEventEnhanced('click', e.target, e.target.textContent || e.target.value, {
+                        clientX: e.clientX,
+                        clientY: e.clientY,
+                        pageX: e.pageX,
+                        pageY: e.pageY
+                    });
+                }
+            });
+            
+            // 키보드 입력 이벤트 (실시간 표시)
+            document.addEventListener('input', function(e) {
+                if (isRecording && e.target.closest('#recordingArea')) {
+                    // 시각적 피드백
+                    e.target.classList.add('input-highlight');
+                    setTimeout(() => e.target.classList.remove('input-highlight'), 500);
+                    
+                    recordEventEnhanced('input', e.target, e.target.value, {
+                        inputType: e.inputType || 'unknown',
+                        selectionStart: e.target.selectionStart,
+                        selectionEnd: e.target.selectionEnd
+                    });
+                }
+            });
+            
+            // 키 입력 이벤트
+            document.addEventListener('keydown', function(e) {
+                if (isRecording && e.target.closest('#recordingArea')) {
+                    recordEventEnhanced('keydown', e.target, e.key, {
+                        keyCode: e.keyCode,
+                        shiftKey: e.shiftKey,
+                        ctrlKey: e.ctrlKey,
+                        altKey: e.altKey
+                    });
+                }
+            });
+            
+            // 포커스 이벤트
+            document.addEventListener('focus', function(e) {
+                if (isRecording && e.target.closest('#recordingArea')) {
+                    recordEventEnhanced('focus', e.target, e.target.value || '');
+                }
+            }, true);
+            
+            // 블러 이벤트
+            document.addEventListener('blur', function(e) {
+                if (isRecording && e.target.closest('#recordingArea')) {
+                    recordEventEnhanced('blur', e.target, e.target.value || '');
+                }
+            }, true);
+            
+            addDebugLog('향상된 이벤트 리스너 설정 완료');
+        }
+        
+        // 녹화 중지 함수 - 향상된 녹화기와 동일
+        function stopEnhancedRecording() {
+            addDebugLog('=== 향상된 통합 녹화 중지 ===');
+            
+            if (!isRecording) {
+                alert('녹화 중이 아닙니다!');
+                return;
+            }
+            
+            try {
+                isRecording = false;
+                
+                // 타이머 정지
+                if (recordingTimer) {
+                    clearInterval(recordingTimer);
+                    recordingTimer = null;
+                }
+                
+                // 최종 DOM 상태 저장
+                const finalSnapshot = captureInitialDOM();
+                recordEventEnhanced('final_snapshot', document.body, '', { domSnapshot: finalSnapshot });
+                
+                // UI 업데이트
+                updateStatus(`✅ 녹화 완료 - ${recordedEvents.length}개 이벤트 수집`);
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('playBtn').disabled = false;
+                document.getElementById('recordingIndicator').style.display = 'none';
+                
+                // 세션 데이터 생성 (더 상세한 메타데이터 포함)
+                const sessionData = {
+                    id: sessionId,
+                    startTime: startTime,
+                    endTime: Date.now(),
+                    duration: Date.now() - startTime,
+                    events: recordedEvents,
+                    eventCount: recordedEvents.length,
+                    metadata: {
+                        userAgent: navigator.userAgent,
+                        screenResolution: `${screen.width}x${screen.height}`,
+                        windowSize: `${window.innerWidth}x${window.innerHeight}`,
+                        timestamp: new Date().toISOString(),
+                        clickCount: clickCount
+                    }
+                };
+                
+                // 로컬 스토리지에 저장
+                localStorage.setItem(sessionId, JSON.stringify(sessionData));
+                
+                addDebugLog(`✅ 향상된 통합 녹화 완료 - ${recordedEvents.length}개 이벤트 저장`);
+                alert(`✅ 향상된 녹화 완료!\\n${recordedEvents.length}개의 상세 이벤트가 기록되었습니다.\\n클릭 횟수: ${clickCount}`);
+                
+                // 모니터링 상태 업데이트
+                updateMonitoringStatus();
+                
+            } catch (error) {
+                addDebugLog(`❌ 향상된 녹화 중지 실패: ${error.message}`);
+                alert('❌ 녹화 중지에 실패했습니다: ' + error.message);
+            }
+        }
+        
+        // 향상된 재생 함수
+        function playEnhancedRecording() {
+            addDebugLog('=== 향상된 통합 재생 시작 ===');
+            
+            if (!sessionId || recordedEvents.length === 0) {
+                alert('재생할 데이터가 없습니다!');
+                return;
+            }
+            
+            // 향상된 플레이어로 이동 - 검증된 플레이어 사용
+            const playerUrl = `enhanced-player.html?sessionId=${sessionId}`;
+            addDebugLog(`향상된 플레이어 열기: ${playerUrl}`);
+            
+            const playerWindow = window.open(playerUrl, '_blank', 'width=1400,height=900,scrollbars=yes,resizable=yes');
+            
+            if (!playerWindow) {
+                alert('⚠️ 팝업이 차단되었습니다. 브라우저에서 팝업을 허용해주세요.');
+            } else {
+                addDebugLog('✅ 향상된 플레이어 창 열림');
+            }
+        }
+        
+        // 테스트 함수들 (실제 동작하는 버전)
+        function testButtonClick(buttonName) {
+            addDebugLog(`${buttonName} 클릭됨`);
+            
+            // 실제 시각적 변화
+            const button = event.target;
+            const originalColor = button.style.backgroundColor;
+            button.style.backgroundColor = buttonName === '버튼A' ? '#dc3545' : '#28a745';
+            button.textContent = `${buttonName} 클릭됨!`;
+            
+            setTimeout(() => {
+                button.style.backgroundColor = originalColor || '';
+                button.textContent = buttonName === '버튼A' ? '테스트 버튼 A' : '테스트 버튼 B';
+            }, 1000);
+        }
+        
+        function changeColorTest() {
+            const randomColor = `hsl(${Math.random() * 360}, 70%, 90%)`;
+            document.body.style.backgroundColor = randomColor;
+            addDebugLog(`배경색 변경: ${randomColor}`);
+        }
+        
+        function clickTestAreaEnhanced() {
+            clickCount++;
+            const area = document.getElementById('clickTestArea');
+            const counter = document.getElementById('clickCounter');
+            
+            // 색상 변경
+            const randomColor = `hsl(${Math.random() * 360}, 30%, 85%)`;
+            area.style.backgroundColor = randomColor;
+            
+            // 클릭 카운터 업데이트
+            counter.textContent = `클릭 횟수: ${clickCount}`;
+            
+            addDebugLog(`클릭 테스트 영역 클릭됨 (${clickCount}번째)`);
+        }
+        
+        // 녹화 타이머
+        function startRecordingTimer() {
+            recordingTimer = setInterval(() => {
+                if (isRecording) {
+                    updateSessionInfo();
+                }
+            }, 1000);
+        }
+        
+        // 세션 정보 업데이트
+        function updateSessionInfo() {
+            if (!isRecording) return;
+            
+            const duration = Date.now() - startTime;
+            const minutes = Math.floor(duration / 60000);
+            const seconds = Math.floor((duration % 60000) / 1000);
+            
+            document.getElementById('sessionId').textContent = sessionId.substring(17, 30) + '...';
+            document.getElementById('recordingTime').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('eventCount').textContent = recordedEvents.length;
+            
+            const dataSize = JSON.stringify(recordedEvents).length;
+            document.getElementById('dataSize').textContent = (dataSize / 1024).toFixed(1) + ' KB';
+        }
+        
+        // 모니터링 상태 업데이트
+        function updateMonitoringStatus() {
+            // 시뮬레이션된 실시간 데이터
+            if (isRecording) {
+                document.getElementById('currentEvents').textContent = recordedEvents.length;
+                const health = Math.max(85, 100 - Math.floor(Math.random() * 15));
+                document.getElementById('systemHealth').textContent = health + '%';
+            }
+            
+            // 세션 수 업데이트
+            const totalSessions = parseInt(document.getElementById('totalSessions').textContent);
+            if (!isRecording && sessionId) {
+                document.getElementById('totalSessions').textContent = totalSessions + 1;
+            }
+        }
+        
+        // 페이지 로드 완료 후 초기화
+        window.addEventListener('load', function() {
+            addDebugLog('향상된 통합 세션 녹화기 페이지 로드 완료');
+            updateStatus('✅ 향상된 통합 시스템 준비 완료 - 녹화 시작 버튼을 클릭하세요');
+            addDebugLog('✅ 모든 향상된 통합 시스템 준비 완료');
+            
+            // 초기 모니터링 상태 설정
+            updateMonitoringStatus();
+        });
+        
+        // 페이지 언로드 시 정리
+        window.addEventListener('beforeunload', function() {
+            if (isRecording) {
+                // 세션 자동 저장 시도
+                const sessionData = {
+                    id: sessionId,
+                    startTime: startTime,
+                    endTime: Date.now(),
+                    duration: Date.now() - startTime,
+                    events: recordedEvents,
+                    eventCount: recordedEvents.length,
+                    clickCount: clickCount
+                };
+                localStorage.setItem(sessionId, JSON.stringify(sessionData));
+            }
+        });
+        
+        addDebugLog('🎬 AIRIS-MON 향상된 통합 세션 녹화기 로딩 완료');
+    </script>
+</body>
+</html>

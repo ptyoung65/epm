@@ -1,0 +1,218 @@
+{
+  "name": "test-suite",
+  "url": null,
+  "root_path": "/home/ptyoung/work/airis-mon/clickstack-architecture/test-suite",
+  "frontend_framework": "unknown",
+  "backend_framework": "unknown",
+  "components": [],
+  "datastores": [
+    {
+      "id": "clickhouse",
+      "name": "ClickHouse Analytics",
+      "type": "Analytics Database",
+      "engine": "Clickhouse",
+      "connection_pattern": "감지된 연결: 12개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "delete",
+        "create",
+        "update",
+        "read"
+      ]
+    },
+    {
+      "id": "kafka",
+      "name": "Kafka Streams",
+      "type": "Message Queue",
+      "engine": "Kafka",
+      "connection_pattern": "감지된 연결: 9개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "delete",
+        "create",
+        "update",
+        "read"
+      ]
+    },
+    {
+      "id": "mysql",
+      "name": "MySQL Database",
+      "type": "Relational Database",
+      "engine": "Mysql",
+      "connection_pattern": "감지된 연결: 7개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "delete",
+        "create",
+        "update",
+        "read"
+      ]
+    },
+    {
+      "id": "redis",
+      "name": "Redis Cache",
+      "type": "Cache",
+      "engine": "Redis",
+      "connection_pattern": "감지된 연결: 10개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "delete",
+        "create",
+        "update",
+        "read"
+      ]
+    },
+    {
+      "id": "sqlite",
+      "name": "SQLite Database",
+      "type": "Embedded Database",
+      "engine": "Sqlite",
+      "connection_pattern": "감지된 연결: 3개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "delete",
+        "create",
+        "update",
+        "read"
+      ]
+    },
+    {
+      "id": "mongodb",
+      "name": "MongoDB Database",
+      "type": "NoSQL Database",
+      "engine": "Mongodb",
+      "connection_pattern": "감지된 연결: 1개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "delete",
+        "create",
+        "update",
+        "read"
+      ]
+    },
+    {
+      "id": "postgresql",
+      "name": "PostgreSQL Database",
+      "type": "Relational Database",
+      "engine": "Postgresql",
+      "connection_pattern": "감지된 연결: 1개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "delete",
+        "create",
+        "update",
+        "read"
+      ]
+    },
+    {
+      "id": "elasticsearch",
+      "name": "Elasticsearch Index",
+      "type": "Search Engine",
+      "engine": "Elasticsearch",
+      "connection_pattern": "감지된 연결: 2개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "delete",
+        "create",
+        "update",
+        "read"
+      ]
+    },
+    {
+      "id": "firebase",
+      "name": "Firebase Store",
+      "type": "Cloud Database",
+      "engine": "Firebase",
+      "connection_pattern": "감지된 연결: 2개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "delete",
+        "create",
+        "update",
+        "read"
+      ]
+    },
+    {
+      "id": "rabbitmq",
+      "name": "RabbitMQ Queue",
+      "type": "Message Queue",
+      "engine": "Rabbitmq",
+      "connection_pattern": "감지된 연결: 1개",
+      "estimated_size": "분석 불가",
+      "operations": [
+        "delete",
+        "create",
+        "update",
+        "read"
+      ]
+    }
+  ],
+  "crud_matrix": {},
+  "dependencies": {
+    "@clickhouse/client": 1,
+    "@faker-js/faker": 1,
+    "axios": 1,
+    "blessed": 1,
+    "blessed-contrib": 1,
+    "chalk": 1,
+    "cors": 1,
+    "express": 1,
+    "helmet": 1,
+    "ioredis": 1,
+    "kafkajs": 1,
+    "lodash": 1,
+    "moment": 1,
+    "rrweb": 1,
+    "rrweb-player": 1,
+    "socket.io": 1,
+    "socket.io-client": 1,
+    "uuid": 1,
+    "ws": 1,
+    "nodemon": 1
+  },
+  "metrics": {
+    "total_files": 97,
+    "total_lines": 107072,
+    "avg_lines_per_file": 1103.8350515463917,
+    "language_distribution": {
+      "yaml": {
+        "files": 4,
+        "lines": 358
+      },
+      "json": {
+        "files": 35,
+        "lines": 43425
+      },
+      "javascript": {
+        "files": 13,
+        "lines": 20550
+      },
+      "sql": {
+        "files": 3,
+        "lines": 836
+      },
+      "html": {
+        "files": 41,
+        "lines": 41027
+      },
+      "python": {
+        "files": 1,
+        "lines": 876
+      }
+    },
+    "complexity_distribution": {
+      "low": 0,
+      "medium": 0,
+      "high": 0,
+      "very_high": 0
+    },
+    "type_distribution": {
+      "test": {
+        "files": 97,
+        "lines": 107072
+      }
+    },
+    "component_count": 0,
+    "estimated_effort_hours": 2141.44
+  }
+}

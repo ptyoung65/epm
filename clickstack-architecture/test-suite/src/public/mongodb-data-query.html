@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MongoDB 데이터 조회</title>
+    <script src="/components/common-layout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .mongodb-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .mongodb-header h2 {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+        
+        .mongodb-header .subtitle {
+            color: var(--gray-600);
+            font-size: 1rem;
+        }
+
+        .collections-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .collection-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .collection-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .collection-card.selected {
+            border-color: var(--primary);
+            background: #f0f4ff;
+        }
+
+        .collection-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .collection-icon {
+            font-size: 1.25rem;
+        }
+
+        .collection-description {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .collection-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            font-size: 0.75rem;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            color: var(--gray-700);
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .query-panel {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .query-panel.active {
+            display: block;
+        }
+
+        .query-section {
+            margin-bottom: 2rem;
+        }
+
+        .query-section-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .query-filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-weight: 500;
+            color: var(--gray-700);
+            font-size: 0.875rem;
+        }
+
+        .filter-input {
+            padding: 0.75rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            background: var(--white);
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .query-editor {
+            margin-bottom: 1.5rem;
+        }
+
+        .query-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 1rem;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            background: #f8fafc;
+            resize: vertical;
+        }
+
+        .query-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .query-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+
+        .query-btn.primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .query-btn.primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .query-btn.secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 1px solid var(--gray-200);
+        }
+
+        .query-btn.secondary:hover {
+            background: var(--gray-200);
+        }
+
+        .results-section {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .results-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .results-meta {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            flex-wrap: wrap;
+        }
+
+        .query-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .query-status.loading {
+            background: #dbeafe;
+            color: var(--primary);
+        }
+
+        .query-status.success {
+            background: #dcfce7;
+            color: var(--success);
+        }
+
+        .query-status.error {
+            background: #fef2f2;
+            color: var(--error);
+        }
+
+        .spinner {
+            width: 12px;
+            height: 12px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .results-data {
+            margin-top: 1rem;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.875rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-200);
+            vertical-align: top;
+        }
+
+        .data-table th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-700);
+            position: sticky;
+            top: 0;
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--gray-50);
+        }
+
+        .json-viewer {
+            background: #f8fafc;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .toggle-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--gray-200);
+            background: var(--white);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-btn.active {
+            background: var(--primary);
+            color: var(--white);
+            border-color: var(--primary);
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray-500);
+        }
+
+        .stats-overview {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .stats-overview.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--gray-50);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        .indexes-list {
+            margin-top: 1rem;
+        }
+
+        .index-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 0.875rem;
+        }
+
+        .index-name {
+            font-weight: 500;
+            color: var(--gray-900);
+        }
+
+        .index-size {
+            color: var(--gray-600);
+        }
+
+        .export-options {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .collections-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .query-filters {
+                grid-template-columns: 1fr;
+            }
+            
+            .query-actions {
+                flex-direction: column;
+            }
+            
+            .results-meta {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mongodb-header">
+        <h2>🍃 MongoDB 데이터 조회</h2>
+        <p class="subtitle">AIRIS-MON 프로젝트의 MongoDB 컬렉션을 실시간으로 조회하고 분석합니다</p>
+    </div>
+
+    <div class="collections-grid" id="collectionsGrid">
+        <!-- 동적으로 생성됨 -->
+    </div>
+
+    <div class="query-panel" id="queryPanel">
+        <div class="query-section">
+            <div class="query-section-title">
+                🔍 쿼리 설정
+                <span id="selectedCollection" style="color: var(--primary); font-weight: normal;"></span>
+            </div>
+            
+            <div class="query-filters">
+                <div class="filter-group">
+                    <label class="filter-label">제한 개수</label>
+                    <input type="number" class="filter-input" id="limitInput" value="20" min="1" max="1000">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">건너뛸 개수</label>
+                    <input type="number" class="filter-input" id="skipInput" value="0" min="0">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">정렬 필드</label>
+                    <input type="text" class="filter-input" id="sortField" placeholder="예: createdAt">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">정렬 순서</label>
+                    <select class="filter-input" id="sortOrder">
+                        <option value="1">오름차순</option>
+                        <option value="-1" selected>내림차순</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="query-section">
+            <div class="query-section-title">📝 MongoDB 쿼리 (JSON)</div>
+            <div class="query-editor">
+                <textarea class="query-textarea" id="queryEditor" placeholder='{"status": "active"}'></textarea>
+            </div>
+        </div>
+
+        <div class="query-actions">
+            <button class="query-btn primary" id="executeQuery">
+                <span id="queryButtonText">쿼리 실행</span>
+            </button>
+            <button class="query-btn secondary" id="clearQuery">쿼리 초기화</button>
+            <button class="query-btn secondary" id="showStats">컬렉션 통계</button>
+            <button class="query-btn secondary" id="loadSampleQueries">샘플 쿼리</button>
+        </div>
+    </div>
+
+    <div class="stats-overview" id="statsOverview">
+        <div class="query-section-title">📊 컬렉션 통계</div>
+        <div class="stats-grid" id="statsGrid">
+            <!-- 동적으로 생성됨 -->
+        </div>
+        <div class="indexes-list" id="indexesList">
+            <!-- 동적으로 생성됨 -->
+        </div>
+    </div>
+
+    <div class="results-section" id="resultsSection">
+        <div class="results-header">
+            <div>
+                <div class="results-title">조회 결과</div>
+                <div class="query-status" id="queryStatus">
+                    <span>컬렉션을 선택하고 쿼리를 실행하세요</span>
+                </div>
+            </div>
+            <div class="results-meta" id="resultsMeta" style="display: none;">
+                <span id="resultsCount">0개 결과</span>
+                <span id="queryTime">실행 시간: 0ms</span>
+                <div class="export-options">
+                    <button class="query-btn secondary" id="exportJSON">JSON 내보내기</button>
+                    <button class="query-btn secondary" id="exportCSV">CSV 내보내기</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="view-toggle">
+            <button class="toggle-btn active" data-view="table">테이블 뷰</button>
+            <button class="toggle-btn" data-view="json">JSON 뷰</button>
+        </div>
+
+        <div class="results-data" id="resultsData">
+            <div class="no-results">
+                아직 조회된 데이터가 없습니다. 컬렉션을 선택하고 "쿼리 실행" 버튼을 클릭하세요.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let currentCollection = null;
+        let currentResults = [];
+        let currentView = 'table';
+        let collections = [];
+
+        // 컬렉션 목록 로드
+        async function loadCollections() {
+            console.log('MongoDB: loadCollections() 시작');
+            try {
+                console.log('MongoDB: API 호출 시작 - /api/mongodb/collections');
+                const response = await fetch('/api/mongodb/collections');
+                console.log('MongoDB: API 응답 상태:', response.status);
+                
+                const data = await response.json();
+                console.log('MongoDB: API 응답 데이터:', data);
+                
+                if (data.success) {
+                    collections = data.collections;
+                    console.log('MongoDB: 컬렉션 개수:', collections.length);
+                    renderCollections();
+                } else {
+                    console.error('MongoDB: API 응답 실패:', data);
+                }
+            } catch (error) {
+                console.error('MongoDB: 컬렉션 로드 실패:', error);
+            }
+        }
+
+        // 컬렉션 카드 렌더링
+        function renderCollections() {
+            console.log('MongoDB: renderCollections() 시작, 컬렉션 개수:', collections.length);
+            console.log('MongoDB: 현재 DOM 구조 확인...');
+            console.log('MongoDB: document.body.children:', Array.from(document.body.children).map(el => el.className));
+            
+            const container = document.getElementById('collectionsGrid');
+            
+            if (!container) {
+                console.error('MongoDB: collectionsGrid 컨테이너를 찾을 수 없음');
+                console.log('MongoDB: 모든 ID를 가진 요소들:', Array.from(document.querySelectorAll('[id]')).map(el => el.id));
+                return;
+            }
+            
+            console.log('MongoDB: 컨테이너 발견:', container);
+            console.log('MongoDB: 컨테이너 부모:', container.parentElement?.className);
+            
+            const html = collections.map(collection => `
+                <div class="collection-card" onclick="selectCollection('${collection.name}')">
+                    <div class="collection-name">
+                        <span class="collection-icon">${getCollectionIcon(collection.name)}</span>
+                        ${collection.name}
+                    </div>
+                    <div class="collection-description">${collection.description}</div>
+                    <div class="collection-stats">
+                        <div class="stat-item">
+                            <span>문서 수:</span>
+                            <span class="stat-value">${collection.count.toLocaleString()}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>크기:</span>
+                            <span class="stat-value">${collection.size}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>평균 크기:</span>
+                            <span class="stat-value">${collection.avgObjSize}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span>인덱스:</span>
+                            <span class="stat-value">${collection.indexes}개</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            console.log('MongoDB: 생성된 HTML 길이:', html.length);
+            container.innerHTML = html;
+            console.log('MongoDB: 컬렉션 카드 렌더링 완료');
+        }
+
+        // 컬렉션 아이콘 매핑
+        function getCollectionIcon(collectionName) {
+            const icons = {
+                'sessions': '🎬',
+                'analysis_results': '📊',
+                'traces': '🔍',
+                'metrics': '📈',
+                'users': '👥',
+                'alerts': '🚨'
+            };
+            return icons[collectionName] || '📄';
+        }
+
+        // 컬렉션 선택
+        function selectCollection(collectionName) {
+            currentCollection = collectionName;
+            
+            // 선택 상태 업데이트
+            document.querySelectorAll('.collection-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            // 패널 활성화
+            document.getElementById('queryPanel').classList.add('active');
+            document.getElementById('resultsSection').classList.add('active');
+            document.getElementById('selectedCollection').textContent = `(${collectionName})`;
+            
+            // 샘플 쿼리 설정
+            loadSampleQuery(collectionName);
+        }
+
+        // 샘플 쿼리 로드
+        function loadSampleQuery(collectionName) {
+            const sampleQueries = {
+                'sessions': '{"status": "completed"}',
+                'analysis_results': '{"status": "completed", "language": "JavaScript"}',
+                'traces': '{"status": "success"}',
+                'metrics': '{"metricName": "cpu_usage"}',
+                'users': '{"status": "active"}',
+                'alerts': '{"severity": "high"}'
+            };
+            
+            document.getElementById('queryEditor').value = sampleQueries[collectionName] || '{}';
+        }
+
+        // 쿼리 실행
+        async function executeQuery() {
+            if (!currentCollection) {
+                alert('먼저 컬렉션을 선택하세요.');
+                return;
+            }
+
+            const statusEl = document.getElementById('queryStatus');
+            const buttonEl = document.getElementById('queryButtonText');
+            const metaEl = document.getElementById('resultsMeta');
+
+            // 로딩 상태 표시
+            statusEl.className = 'query-status loading';
+            statusEl.innerHTML = '<div class="spinner"></div> 데이터 조회 중...';
+            buttonEl.textContent = '조회 중...';
+
+            const startTime = Date.now();
+
+            try {
+                // 쿼리 파라미터 수집
+                const limit = parseInt(document.getElementById('limitInput').value) || 20;
+                const skip = parseInt(document.getElementById('skipInput').value) || 0;
+                const sortField = document.getElementById('sortField').value.trim();
+                const sortOrder = parseInt(document.getElementById('sortOrder').value);
+                const queryText = document.getElementById('queryEditor').value.trim();
+
+                let filter = {};
+                if (queryText) {
+                    try {
+                        filter = JSON.parse(queryText);
+                    } catch (e) {
+                        throw new Error('잘못된 JSON 형식입니다.');
+                    }
+                }
+
+                let sort = {};
+                if (sortField) {
+                    sort[sortField] = sortOrder;
+                }
+
+                // API 호출
+                const response = await fetch('/api/mongodb/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        collection: currentCollection,
+                        filter,
+                        sort,
+                        limit,
+                        skip
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || '쿼리 실행 실패');
+                }
+
+                currentResults = data.data;
+                const queryTime = Date.now() - startTime;
+
+                // 성공 상태 표시
+                statusEl.className = 'query-status success';
+                statusEl.innerHTML = '✓ 조회 완료';
+                buttonEl.textContent = '쿼리 실행';
+
+                // 결과 메타데이터 표시
+                document.getElementById('resultsCount').textContent = `${currentResults.length}개 결과`;
+                document.getElementById('queryTime').textContent = `실행 시간: ${queryTime}ms`;
+                metaEl.style.display = 'flex';
+
+                // 결과 렌더링
+                renderResults();
+
+            } catch (error) {
+                console.error('쿼리 실행 오류:', error);
+                statusEl.className = 'query-status error';
+                statusEl.innerHTML = `❌ ${error.message}`;
+                buttonEl.textContent = '쿼리 실행';
+                metaEl.style.display = 'none';
+            }
+        }
+
+        // 결과 렌더링
+        function renderResults() {
+            const container = document.getElementById('resultsData');
+
+            if (currentResults.length === 0) {
+                container.innerHTML = `
+                    <div class="no-results">
+                        조건에 맞는 데이터가 없습니다.
+                    </div>
+                `;
+                return;
+            }
+
+            if (currentView === 'table') {
+                renderTableView(container);
+            } else {
+                renderJsonView(container);
+            }
+        }
+
+        // 테이블 뷰 렌더링
+        function renderTableView(container) {
+            if (currentResults.length === 0) return;
+
+            // 모든 키 수집
+            const allKeys = new Set();
+            currentResults.forEach(item => {
+                Object.keys(item).forEach(key => allKeys.add(key));
+            });
+
+            const keys = Array.from(allKeys).slice(0, 10); // 최대 10개 컬럼
+
+            const tableHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            ${keys.map(key => `<th>${key}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${currentResults.map(item => `
+                            <tr>
+                                ${keys.map(key => `
+                                    <td>${formatCellValue(item[key])}</td>
+                                `).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            container.innerHTML = tableHTML;
+        }
+
+        // JSON 뷰 렌더링
+        function renderJsonView(container) {
+            const jsonHTML = `
+                <div class="json-viewer">${JSON.stringify(currentResults, null, 2)}</div>
+            `;
+            container.innerHTML = jsonHTML;
+        }
+
+        // 셀 값 포맷팅
+        function formatCellValue(value) {
+            if (value === null || value === undefined) {
+                return '<span style="color: #999;">null</span>';
+            }
+            if (typeof value === 'object') {
+                return JSON.stringify(value).substring(0, 100) + (JSON.stringify(value).length > 100 ? '...' : '');
+            }
+            if (typeof value === 'string' && value.length > 50) {
+                return value.substring(0, 50) + '...';
+            }
+            return String(value);
+        }
+
+        // 뷰 전환
+        function switchView(view) {
+            currentView = view;
+            
+            // 버튼 상태 업데이트
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === view);
+            });
+            
+            // 결과 재렌더링
+            renderResults();
+        }
+
+        // 컬렉션 통계 조회
+        async function showCollectionStats() {
+            if (!currentCollection) {
+                alert('먼저 컬렉션을 선택하세요.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/mongodb/stats/${currentCollection}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    renderStats(data.stats);
+                    document.getElementById('statsOverview').classList.add('active');
+                }
+            } catch (error) {
+                console.error('통계 로드 실패:', error);
+            }
+        }
+
+        // 통계 렌더링
+        function renderStats(stats) {
+            const statsGrid = document.getElementById('statsGrid');
+            const indexesList = document.getElementById('indexesList');
+
+            // 기본 통계
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-card-value">${stats.totalDocuments.toLocaleString()}</div>
+                    <div class="stat-card-label">총 문서 수</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-value">${(stats.dataSize / 1024 / 1024).toFixed(1)}MB</div>
+                    <div class="stat-card-label">데이터 크기</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-value">${(stats.avgDocumentSize / 1024).toFixed(1)}KB</div>
+                    <div class="stat-card-label">평균 문서 크기</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-value">${stats.indexes.length}</div>
+                    <div class="stat-card-label">인덱스 수</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-value">${stats.queryStats.avgQueryTime}ms</div>
+                    <div class="stat-card-label">평균 쿼리 시간</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card-value">${stats.queryStats.indexHitRatio}%</div>
+                    <div class="stat-card-label">인덱스 적중률</div>
+                </div>
+            `;
+
+            // 인덱스 목록
+            indexesList.innerHTML = `
+                <h4 style="margin-bottom: 1rem; color: var(--gray-900);">인덱스 목록</h4>
+                ${stats.indexes.map(index => `
+                    <div class="index-item">
+                        <span class="index-name">${index.name}</span>
+                        <span class="index-size">${(index.size / 1024 / 1024).toFixed(1)}MB</span>
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        // 데이터 내보내기
+        function exportData(format) {
+            if (currentResults.length === 0) {
+                alert('내보낼 데이터가 없습니다.');
+                return;
+            }
+
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+            const filename = `mongodb_${currentCollection}_${timestamp}`;
+
+            if (format === 'json') {
+                const json = JSON.stringify(currentResults, null, 2);
+                downloadFile(json, `${filename}.json`, 'application/json');
+            } else if (format === 'csv') {
+                const csv = convertToCSV(currentResults);
+                downloadFile(csv, `${filename}.csv`, 'text/csv');
+            }
+        }
+
+        // CSV 변환
+        function convertToCSV(data) {
+            if (data.length === 0) return '';
+            
+            const headers = Object.keys(data[0]);
+            const rows = data.map(row => 
+                headers.map(header => {
+                    const value = row[header];
+                    if (typeof value === 'object') {
+                        return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
+                    }
+                    return `"${String(value).replace(/"/g, '""')}"`;
+                }).join(',')
+            );
+
+            return [headers.join(','), ...rows].join('\n');
+        }
+
+        // 파일 다운로드
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // 쿼리 초기화
+        function clearQuery() {
+            document.getElementById('queryEditor').value = '{}';
+            document.getElementById('limitInput').value = '20';
+            document.getElementById('skipInput').value = '0';
+            document.getElementById('sortField').value = '';
+            document.getElementById('sortOrder').value = '-1';
+        }
+
+        // 이벤트 리스너 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('MongoDB: DOM 로드 완료, 공통 레이아웃 초기화 대기 중...');
+            
+            // 공통 레이아웃 시스템이 DOM을 재구성할 시간을 기다림
+            setTimeout(function() {
+                console.log('MongoDB: 공통 레이아웃 초기화 완료, loadCollections() 호출');
+                loadCollections();
+            }, 100);  // 100ms 지연으로 충분한 시간 확보
+
+            // 쿼리 실행
+            document.getElementById('executeQuery').addEventListener('click', executeQuery);
+
+            // 쿼리 초기화
+            document.getElementById('clearQuery').addEventListener('click', clearQuery);
+
+            // 통계 보기
+            document.getElementById('showStats').addEventListener('click', showCollectionStats);
+
+            // 샘플 쿼리 로드
+            document.getElementById('loadSampleQueries').addEventListener('click', () => {
+                if (currentCollection) {
+                    loadSampleQuery(currentCollection);
+                }
+            });
+
+            // 뷰 전환
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchView(btn.dataset.view));
+            });
+
+            // 내보내기
+            document.getElementById('exportJSON').addEventListener('click', () => exportData('json'));
+            document.getElementById('exportCSV').addEventListener('click', () => exportData('csv'));
+
+            // 엔터 키로 쿼리 실행
+            document.getElementById('queryEditor').addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.key === 'Enter') {
+                    executeQuery();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

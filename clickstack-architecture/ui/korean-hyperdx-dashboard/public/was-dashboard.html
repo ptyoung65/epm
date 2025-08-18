@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIRIS-MON | WAS 모니터링 대시보드</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Noto Sans KR', sans-serif; }
+    .korean-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .was-gradient { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); }
+    .tomcat-gradient { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+    .weblogic-gradient { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); }
+    .websphere-gradient { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
+    .status-good { color: #10b981; }
+    .status-warning { color: #f59e0b; }
+    .status-error { color: #ef4444; }
+    .card { 
+      background: white; 
+      border-radius: 8px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .jvm-card {
+      background: linear-gradient(145deg, #f0f9ff, #dbeafe);
+      border-left: 4px solid #3b82f6;
+    }
+    .gc-card {
+      background: linear-gradient(145deg, #f0fdf4, #dcfce7);
+      border-left: 4px solid #16a34a;
+    }
+    .thread-card {
+      background: linear-gradient(145deg, #fefce8, #fef3c7);
+      border-left: 4px solid #eab308;
+    }
+    .memory-card {
+      background: linear-gradient(145deg, #fdf2f8, #fce7f3);
+      border-left: 4px solid #ec4899;
+    }
+    .pulse-dot {
+      animation: pulse 2s infinite;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Header -->
+  <header class="was-gradient shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-6">
+        <div class="flex items-center">
+          <h1 class="text-3xl font-bold text-white">🏗️ WAS 모니터링</h1>
+          <span class="ml-4 bg-white bg-opacity-20 text-white px-3 py-1 rounded-full text-sm">
+            Tomcat • WebLogic • WebSphere
+          </span>
+        </div>
+        <div class="flex items-center space-x-4 text-white">
+          <nav class="flex space-x-2">
+            <a href="/" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              📊 통합대시보드
+            </a>
+            <a href="/j2ee-dashboard.html" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              ☕ J2EE 모니터링
+            </a>
+            <a href="/was-dashboard.html" class="bg-white bg-opacity-30 px-3 py-1 rounded text-sm">
+              🏗️ WAS 모니터링
+            </a>
+            <a href="/exception-dashboard.html" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              🚨 예외추적
+            </a>
+            <a href="/topology-dashboard.html" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              🗺️ 서비스맵
+            </a>
+            <a href="/alert-dashboard.html" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              🔔 알림관리
+            </a>
+          </nav>
+          <span class="pulse-dot"></span>
+          <span id="current-time" class="text-sm opacity-90"></span>
+          <span class="bg-green-500 px-3 py-1 rounded-full text-xs font-semibold">
+            ✅ 정상
+          </span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- WAS Type Selector -->
+    <div class="card mb-8">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">🎯 WAS 유형 선택</h3>
+      <div class="flex space-x-4">
+        <button id="tomcat-btn" class="tomcat-gradient text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition">
+          🍅 Apache Tomcat
+        </button>
+        <button id="weblogic-btn" class="weblogic-gradient text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition">
+          🌊 Oracle WebLogic
+        </button>
+        <button id="websphere-btn" class="websphere-gradient text-white px-6 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition">
+          🌐 IBM WebSphere
+        </button>
+      </div>
+    </div>
+
+    <!-- WAS Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="card jvm-card">
+        <h3 class="text-lg font-semibold text-blue-800 mb-2">☕ JVM 상태</h3>
+        <p id="jvm-status" class="text-2xl font-bold status-good">✅ 정상</p>
+        <p class="text-sm text-blue-700">힙 사용률: <span id="heap-usage">64%</span></p>
+      </div>
+      <div class="card gc-card">
+        <h3 class="text-lg font-semibold text-green-800 mb-2">🗑️ GC 상태</h3>
+        <p id="gc-count" class="text-2xl font-bold text-green-600">23</p>
+        <p class="text-sm text-green-700">최근 1시간 GC 횟수</p>
+      </div>
+      <div class="card thread-card">
+        <h3 class="text-lg font-semibold text-yellow-800 mb-2">🧵 스레드 풀</h3>
+        <p id="thread-active" class="text-2xl font-bold text-yellow-600">45/200</p>
+        <p class="text-sm text-yellow-700">활성/최대 스레드</p>
+      </div>
+      <div class="card memory-card">
+        <h3 class="text-lg font-semibold text-pink-800 mb-2">💾 메모리</h3>
+        <p id="memory-used" class="text-2xl font-bold text-pink-600">2.8GB</p>
+        <p class="text-sm text-pink-700">사용 중: <span id="memory-usage">70%</span></p>
+      </div>
+    </div>
+
+    <!-- Performance Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="card">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">📊 JVM 힙 메모리 사용률</h3>
+        <canvas id="heapChart" width="400" height="200"></canvas>
+      </div>
+      <div class="card">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">🧵 스레드 풀 상태</h3>
+        <canvas id="threadChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- WAS Specific Configuration -->
+    <div class="card mb-8">
+      <h3 class="text-xl font-bold text-gray-800 mb-4" id="was-config-title">🍅 Tomcat 설정 정보</h3>
+      <div id="was-config-content" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Content will be dynamically loaded based on WAS type -->
+      </div>
+    </div>
+
+    <!-- GC Analysis -->
+    <div class="card mb-8">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">🗑️ GC 분석</h3>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <canvas id="gcChart" width="400" height="200"></canvas>
+        </div>
+        <div class="space-y-4">
+          <div class="p-4 bg-blue-50 rounded-lg">
+            <h4 class="font-semibold text-blue-800">Young Generation GC</h4>
+            <p class="text-sm text-blue-600">횟수: <span id="young-gc-count">156</span> | 평균 시간: <span id="young-gc-time">12ms</span></p>
+          </div>
+          <div class="p-4 bg-green-50 rounded-lg">
+            <h4 class="font-semibold text-green-800">Old Generation GC</h4>
+            <p class="text-sm text-green-600">횟수: <span id="old-gc-count">8</span> | 평균 시간: <span id="old-gc-time">245ms</span></p>
+          </div>
+          <div class="p-4 bg-purple-50 rounded-lg">
+            <h4 class="font-semibold text-purple-800">전체 GC 통계</h4>
+            <p class="text-sm text-purple-600">총 GC 시간: <span id="total-gc-time">3.2초</span> | 처리량: <span id="gc-throughput">99.7%</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thread Pool Monitoring -->
+    <div class="card mb-8">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">🧵 스레드 풀 모니터링</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">풀 이름</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">활성</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">최대</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">큐 크기</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">상태</th>
+            </tr>
+          </thead>
+          <tbody id="thread-pools" class="bg-white divide-y divide-gray-200">
+            <!-- Thread pools will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Performance Recommendations -->
+    <div class="card">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">💡 성능 최적화 권장사항</h3>
+      <div id="recommendations" class="space-y-3">
+        <!-- Recommendations will be loaded here -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script>
+    let heapChart, threadChart, gcChart;
+    let currentWAS = 'tomcat';
+
+    // Mock WAS data
+    const wasData = {
+      tomcat: {
+        title: '🍅 Tomcat 설정 정보',
+        config: {
+          'Server Version': 'Apache Tomcat/9.0.65',
+          'Java Version': 'OpenJDK 11.0.16',
+          'Connector Port': '8080',
+          'Max Threads': '200',
+          'Connection Timeout': '20000ms',
+          'Max Connections': '8192'
+        },
+        recommendations: [
+          { type: 'info', text: 'JVM 힙 메모리 사용률이 70%를 초과했습니다. -Xmx 값 조정을 검토하세요.' },
+          { type: 'warning', text: 'Thread Pool 사용률이 높습니다. maxThreads 값을 250으로 증가 검토하세요.' },
+          { type: 'success', text: 'GC 성능이 양호합니다. 현재 설정을 유지하세요.' }
+        ]
+      },
+      weblogic: {
+        title: '🌊 WebLogic 설정 정보',
+        config: {
+          'Server Version': 'Oracle WebLogic Server 14.1.1',
+          'Java Version': 'Oracle JDK 11.0.15',
+          'Listen Port': '7001',
+          'Execute Threads': '25',
+          'Work Manager': 'default',
+          'Connection Pool': 'jdbc/MyPool'
+        },
+        recommendations: [
+          { type: 'info', text: 'WebLogic Work Manager 설정이 최적화되어 있습니다.' },
+          { type: 'warning', text: 'JDBC Connection Pool 사용률이 높습니다. 최대 연결수 증가를 검토하세요.' },
+          { type: 'error', text: 'Server의 Stuck Thread가 감지되었습니다. 애플리케이션 코드를 점검하세요.' }
+        ]
+      },
+      websphere: {
+        title: '🌐 WebSphere 설정 정보',
+        config: {
+          'Server Version': 'IBM WebSphere 9.0.5.6',
+          'Java Version': 'IBM J9 VM 11.0.14',
+          'HTTP Transport': '9080',
+          'Web Container Pool': 'Default',
+          'ORB Pool Size': '10',
+          'Transaction Timeout': '120s'
+        },
+        recommendations: [
+          { type: 'success', text: 'WebSphere ORB 설정이 적절합니다.' },
+          { type: 'warning', text: 'Web Container Thread Pool 크기 조정이 필요할 수 있습니다.' },
+          { type: 'info', text: 'PMI 모니터링 데이터가 정상적으로 수집되고 있습니다.' }
+        ]
+      }
+    };
+
+    const threadPools = [
+      { name: 'HTTP Connector', active: 45, max: 200, queue: 12, status: '정상' },
+      { name: 'AJP Connector', active: 8, max: 50, queue: 0, status: '정상' },
+      { name: 'Background Process', active: 2, max: 10, queue: 0, status: '정상' },
+      { name: 'Async Timeout', active: 1, max: 5, queue: 0, status: '정상' }
+    ];
+
+    function initCharts() {
+      // Heap Memory Chart
+      const heapCtx = document.getElementById('heapChart').getContext('2d');
+      heapChart = new Chart(heapCtx, {
+        type: 'line',
+        data: {
+          labels: ['10:00', '10:05', '10:10', '10:15', '10:20', '10:25', '10:30'],
+          datasets: [{
+            label: '힙 메모리 사용률 (%)',
+            data: [62, 65, 68, 64, 67, 70, 64],
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4
+          }, {
+            label: '임계치 (80%)',
+            data: [80, 80, 80, 80, 80, 80, 80],
+            borderColor: '#ef4444',
+            borderDash: [5, 5],
+            fill: false
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              title: { display: true, text: '사용률 (%)' }
+            }
+          }
+        }
+      });
+
+      // Thread Pool Chart
+      const threadCtx = document.getElementById('threadChart').getContext('2d');
+      threadChart = new Chart(threadCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['활성 스레드', '대기 스레드', '유휴 스레드'],
+          datasets: [{
+            data: [45, 12, 143],
+            backgroundColor: ['#eab308', '#f97316', '#10b981']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+
+      // GC Chart
+      const gcCtx = document.getElementById('gcChart').getContext('2d');
+      gcChart = new Chart(gcCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Young GC', 'Old GC', 'Full GC'],
+          datasets: [{
+            label: '평균 GC 시간 (ms)',
+            data: [12, 245, 890],
+            backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'GC 시간 (ms)' }
+            }
+          }
+        }
+      });
+    }
+
+    function loadWASConfig(wasType) {
+      const config = wasData[wasType];
+      document.getElementById('was-config-title').textContent = config.title;
+      
+      const configContent = document.getElementById('was-config-content');
+      configContent.innerHTML = Object.entries(config.config).map(([key, value]) => `
+        <div class="p-4 bg-gray-50 rounded-lg">
+          <h4 class="font-semibold text-gray-800">${key}</h4>
+          <p class="text-sm text-gray-600">${value}</p>
+        </div>
+      `).join('');
+
+      // Load recommendations
+      const recommendationsDiv = document.getElementById('recommendations');
+      recommendationsDiv.innerHTML = config.recommendations.map(rec => {
+        const colorClass = rec.type === 'error' ? 'bg-red-50 border-red-200 text-red-800' :
+                          rec.type === 'warning' ? 'bg-yellow-50 border-yellow-200 text-yellow-800' :
+                          rec.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' :
+                          'bg-blue-50 border-blue-200 text-blue-800';
+        return `
+          <div class="p-4 border rounded-lg ${colorClass}">
+            <p class="text-sm">${rec.text}</p>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function loadThreadPools() {
+      const tbody = document.getElementById('thread-pools');
+      tbody.innerHTML = threadPools.map(pool => `
+        <tr>
+          <td class="px-6 py-4 text-sm font-medium text-gray-900">${pool.name}</td>
+          <td class="px-6 py-4 text-sm text-gray-900">${pool.active}</td>
+          <td class="px-6 py-4 text-sm text-gray-900">${pool.max}</td>
+          <td class="px-6 py-4 text-sm text-gray-900">${pool.queue}</td>
+          <td class="px-6 py-4">
+            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+              ${pool.status}
+            </span>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('current-time').textContent = now.toLocaleString('ko-KR');
+    }
+
+    function switchWAS(wasType) {
+      currentWAS = wasType;
+      loadWASConfig(wasType);
+      
+      // Update button states
+      document.querySelectorAll('[id$="-btn"]').forEach(btn => {
+        btn.classList.remove('opacity-50');
+      });
+      document.getElementById(`${wasType}-btn`).classList.add('opacity-50');
+    }
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+      initCharts();
+      loadWASConfig('tomcat');
+      loadThreadPools();
+      updateTime();
+      setInterval(updateTime, 1000);
+      
+      // WAS type switchers
+      document.getElementById('tomcat-btn').addEventListener('click', () => switchWAS('tomcat'));
+      document.getElementById('weblogic-btn').addEventListener('click', () => switchWAS('weblogic'));
+      document.getElementById('websphere-btn').addEventListener('click', () => switchWAS('websphere'));
+      
+      // Simulate real-time updates
+      setInterval(() => {
+        // Update metrics with small random variations
+        const heapUsage = 60 + Math.floor(Math.random() * 20);
+        document.getElementById('heap-usage').textContent = heapUsage + '%';
+        document.getElementById('gc-count').textContent = 20 + Math.floor(Math.random() * 10);
+        document.getElementById('thread-active').textContent = (40 + Math.floor(Math.random() * 20)) + '/200';
+        document.getElementById('memory-used').textContent = (2.5 + Math.random() * 1).toFixed(1) + 'GB';
+        document.getElementById('memory-usage').textContent = (65 + Math.floor(Math.random() * 15)) + '%';
+      }, 5000);
+    });
+  </script>
+
+</body>
+</html>

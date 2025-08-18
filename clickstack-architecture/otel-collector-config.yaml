@@ -1,0 +1,334 @@
+# OpenTelemetry Collector Configuration for AIRIS-MON
+# Korean-optimized observability data collection with ClickHouse export
+
+receivers:
+  # OTLP Receiver for traces, metrics, and logs
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+        max_recv_msg_size_mib: 64
+        max_concurrent_streams: 100
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - "http://localhost:3000"
+            - "http://localhost:3002"
+          allowed_headers: ["*"]
+  
+  # Prometheus metrics scraping
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'airis-mon-services'
+          scrape_interval: 15s
+          static_configs:
+            - targets:
+                - api-gateway:8080
+                - data-ingestion:8080
+                - analytics-engine:8080
+                - alert-manager:8080
+  
+  # Host metrics collection
+  hostmetrics:
+    collection_interval: 10s
+    scrapers:
+      cpu:
+      disk:
+      filesystem:
+      load:
+      memory:
+      network:
+      paging:
+      processes:
+  
+  # Kafka metrics receiver
+  kafka:
+    brokers:
+      - kafka:29092
+    protocol_version: 2.0.0
+    topic: airis-mon-metrics
+    encoding: json
+    group_id: otel-collector
+  
+  # Jaeger receiver for distributed tracing
+  jaeger:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:14250
+      thrift_http:
+        endpoint: 0.0.0.0:14268
+      thrift_compact:
+        endpoint: 0.0.0.0:6831
+      thrift_binary:
+        endpoint: 0.0.0.0:6832
+
+processors:
+  # Batch processor for performance optimization
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+  
+  # Memory limiter to prevent OOM
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
+  
+  # Korean timezone processor
+  attributes:
+    actions:
+      - key: korean_timestamp
+        action: insert
+        value: ${env:TZ}
+      - key: korean_hour
+        action: insert
+        from_attribute: timestamp
+        value: ${timestamp | toHour("Asia/Seoul")}
+      - key: korean_day_of_week
+        action: insert
+        from_attribute: timestamp
+        value: ${timestamp | toDayOfWeek("Asia/Seoul")}
+      - key: korean_business_hours
+        action: insert
+        value: ${korean_hour >= 9 && korean_hour < 18 && korean_day_of_week >= 1 && korean_day_of_week <= 5}
+      - key: time_category
+        action: insert
+        value: |
+          ${
+            korean_day_of_week == 0 || korean_day_of_week == 6 ? "weekend" :
+            korean_hour >= 9 && korean_hour < 18 ? "business_hours" :
+            korean_hour >= 18 && korean_hour < 22 ? "evening" : "night"
+          }
+  
+  # Resource detection
+  resource:
+    attributes:
+      - key: service.name
+        value: airis-mon
+        action: insert
+      - key: environment
+        value: production
+        action: insert
+      - key: region
+        value: kr-seoul
+        action: insert
+      - key: deployment.environment
+        from_attribute: environment
+        action: insert
+  
+  # Span processor for trace enrichment
+  span:
+    name:
+      from_attributes: ["http.method", "http.target"]
+      separator: " "
+  
+  # Filter processor for data reduction
+  filter:
+    error_mode: ignore
+    traces:
+      span:
+        - 'status.code == STATUS_CODE_ERROR'
+        - 'duration >= 1000000000' # 1 second in nanoseconds
+    metrics:
+      metric:
+        - 'name == "http.server.duration" and attributes["http.status_code"] >= 400'
+  
+  # Transform processor for data normalization
+  transform:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          - set(attributes["korean_timestamp"], Now())
+          - set(attributes["processing_time_ms"], duration / 1000000)
+    metric_statements:
+      - context: datapoint
+        statements:
+          - set(attributes["korean_hour"], Hour(time, "Asia/Seoul"))
+    log_statements:
+      - context: log
+        statements:
+          - set(attributes["korean_timestamp"], Now())
+          - set(severity_text, "CRITICAL") where severity_number >= 21
+
+exporters:
+  # ClickHouse exporter for wide events
+  clickhouse:
+    endpoint: tcp://clickhouse:9000?dial_timeout=10s&compress=lz4
+    database: airis_mon
+    ttl_days: 30
+    logs_table_name: otel_logs
+    traces_table_name: otel_traces
+    metrics_table_name: otel_metrics
+    create_schema: true
+    timeout: 10s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+    sending_queue:
+      enabled: true
+      num_consumers: 10
+      queue_size: 5000
+  
+  # Kafka exporter for streaming
+  kafka:
+    brokers:
+      - kafka:29092
+    protocol_version: 2.0.0
+    topic: airis-mon-otel-events
+    encoding: json
+    timeout: 10s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+  
+  # Prometheus exporter for metrics
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    const_labels:
+      environment: production
+      region: kr-seoul
+    send_timestamps: true
+    metric_expiration: 5m
+    enable_open_metrics: true
+  
+  # Jaeger exporter for distributed tracing
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+  
+  # OTLP exporter for backup/forward
+  otlp/backup:
+    endpoint: localhost:4317
+    tls:
+      insecure: true
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 60s
+  
+  # Logging exporter for debugging
+  logging:
+    loglevel: info
+    sampling_initial: 5
+    sampling_thereafter: 100
+
+extensions:
+  # Health check extension
+  health_check:
+    endpoint: 0.0.0.0:13133
+    path: /health
+    check_collector_pipeline:
+      enabled: true
+      interval: 5s
+      exporter_failure_threshold: 5
+  
+  # Performance profiler
+  pprof:
+    endpoint: 0.0.0.0:1777
+  
+  # zPages for debugging
+  zpages:
+    endpoint: 0.0.0.0:55679
+  
+  # Memory ballast for GC optimization
+  memory_ballast:
+    size_mib: 256
+
+service:
+  # Extensions to enable
+  extensions:
+    - health_check
+    - pprof
+    - zpages
+    - memory_ballast
+  
+  # Telemetry configuration
+  telemetry:
+    logs:
+      level: info
+      initial_fields:
+        service: otel-collector
+        environment: production
+    metrics:
+      level: detailed
+      address: 0.0.0.0:8888
+  
+  # Pipeline configurations
+  pipelines:
+    # Traces pipeline
+    traces:
+      receivers:
+        - otlp
+        - jaeger
+      processors:
+        - memory_limiter
+        - attributes
+        - resource
+        - span
+        - filter
+        - transform
+        - batch
+      exporters:
+        - clickhouse
+        - kafka
+        - jaeger
+        - logging
+    
+    # Metrics pipeline
+    metrics:
+      receivers:
+        - otlp
+        - prometheus
+        - hostmetrics
+        - kafka
+      processors:
+        - memory_limiter
+        - attributes
+        - resource
+        - filter
+        - transform
+        - batch
+      exporters:
+        - clickhouse
+        - prometheus
+        - kafka
+        - logging
+    
+    # Logs pipeline
+    logs:
+      receivers:
+        - otlp
+        - kafka
+      processors:
+        - memory_limiter
+        - attributes
+        - resource
+        - filter
+        - transform
+        - batch
+      exporters:
+        - clickhouse
+        - kafka
+        - logging
+    
+    # Korean business metrics pipeline
+    metrics/korean:
+      receivers:
+        - otlp
+        - prometheus
+      processors:
+        - memory_limiter
+        - attributes
+        - filter
+        - batch
+      exporters:
+        - clickhouse
+        - prometheus

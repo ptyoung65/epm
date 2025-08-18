@@ -1,0 +1,139 @@
+{
+  "id": "70e2d919-42eb-425a-a506-d4001790defd",
+  "scenario": "journey_support",
+  "startTime": "2025-08-14T16:12:10.585Z",
+  "lastActivity": "2025-08-14T16:12:10.880Z",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+  "ipAddress": "::1",
+  "events": [
+    {
+      "id": "7a236079-97f7-4ddb-88fc-821ef64c3c14",
+      "sessionId": "70e2d919-42eb-425a-a506-d4001790defd",
+      "timestamp": 1755187930596,
+      "recordedAt": "2025-08-14T16:12:10.636Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187930596,
+        "page_url": "/",
+        "title": "home",
+        "referrer": null,
+        "load_time": 1070
+      }
+    },
+    {
+      "id": "7fc59fe4-9f0c-4a77-be73-2b6fa82db20d",
+      "sessionId": "70e2d919-42eb-425a-a506-d4001790defd",
+      "timestamp": 1755187931646,
+      "recordedAt": "2025-08-14T16:12:10.684Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187931646,
+        "page_url": "/support",
+        "title": "support",
+        "referrer": "/",
+        "load_time": 935
+      }
+    },
+    {
+      "id": "e7652dc1-5b18-4375-98b4-f8114cfbd9a4",
+      "sessionId": "70e2d919-42eb-425a-a506-d4001790defd",
+      "timestamp": 1755187932694,
+      "recordedAt": "2025-08-14T16:12:10.732Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187932694,
+        "page_url": "/support/docs",
+        "title": "docs",
+        "referrer": "/support",
+        "load_time": 2266
+      }
+    },
+    {
+      "id": "a5e2637f-895c-4d72-bdf7-f4550b5c7028",
+      "sessionId": "70e2d919-42eb-425a-a506-d4001790defd",
+      "timestamp": 1755187933743,
+      "recordedAt": "2025-08-14T16:12:10.780Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187933743,
+        "page_url": "/support/faq",
+        "title": "faq",
+        "referrer": "/support/docs",
+        "load_time": 869
+      }
+    },
+    {
+      "id": "08a05b83-99b5-4c16-8ab4-195d2ee74e0f",
+      "sessionId": "70e2d919-42eb-425a-a506-d4001790defd",
+      "timestamp": 1755187934792,
+      "recordedAt": "2025-08-14T16:12:10.832Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187934792,
+        "page_url": "/support/contact",
+        "title": "contact",
+        "referrer": "/support/faq",
+        "load_time": 1542
+      }
+    },
+    {
+      "id": "0a0843ee-5445-4095-addf-bb5ff1f76a51",
+      "sessionId": "70e2d919-42eb-425a-a506-d4001790defd",
+      "timestamp": 1755187935843,
+      "recordedAt": "2025-08-14T16:12:10.880Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187935843,
+        "page_url": "/support/ticket",
+        "title": "ticket",
+        "referrer": "/support/contact",
+        "load_time": 804
+      }
+    }
+  ],
+  "status": "completed",
+  "metadata": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+    "device": {
+      "type": "desktop",
+      "browser": "Chrome",
+      "os": "Windows"
+    }
+  },
+  "endTime": "2025-08-14T16:12:10.928Z",
+  "duration": 343,
+  "endReason": "user_ended",
+  "statistics": {
+    "totalEvents": 6,
+    "eventTypes": {
+      "rrweb_event": 6
+    },
+    "clicks": 0,
+    "formInputs": 0,
+    "pageViews": 0,
+    "errors": 0,
+    "scrollEvents": 0,
+    "userBehavior": {
+      "avgTimeBetweenEvents": 874.5,
+      "hasErrors": false,
+      "hasFormInteraction": false,
+      "hasNavigation": false
+    }
+  }
+}

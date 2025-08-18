@@ -1,0 +1,463 @@
+{
+  "id": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+  "scenario": "enhanced_recording",
+  "startTime": "2025-08-14T17:19:59.564Z",
+  "lastActivity": "2025-08-14T17:19:59.760Z",
+  "userAgent": "curl/8.5.0",
+  "ipAddress": "::1",
+  "events": [
+    {
+      "id": "83eb1727-14eb-4c80-b788-eecb3c4b8164",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 500,
+      "recordedAt": "2025-08-14T17:19:59.574Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 500,
+        "x": 502,
+        "y": 313,
+        "target": {
+          "tagName": "button",
+          "id": "btn-1",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-1",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "d53330a8-7be1-4d53-bd09-2b1662a624f5",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 1000,
+      "recordedAt": "2025-08-14T17:19:59.583Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1000,
+        "x": 854,
+        "y": 477,
+        "target": {
+          "tagName": "button",
+          "id": "btn-2",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-2",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "dc753df8-5043-43bf-a80c-5e42cc1507e4",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 1500,
+      "recordedAt": "2025-08-14T17:19:59.593Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1500,
+        "x": 745,
+        "y": 396,
+        "target": {
+          "tagName": "button",
+          "id": "btn-3",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-3",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "2c562eb5-ce94-4b7c-88fc-90478b22d68f",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 2000,
+      "recordedAt": "2025-08-14T17:19:59.601Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 2000,
+        "x": 769,
+        "y": 441,
+        "target": {
+          "tagName": "button",
+          "id": "btn-4",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-4",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "805ed3bd-4c86-4842-9741-b914ea2464e0",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 2500,
+      "recordedAt": "2025-08-14T17:19:59.609Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 2500,
+        "x": 598,
+        "y": 486,
+        "target": {
+          "tagName": "button",
+          "id": "btn-5",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-5",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "2e507b66-0fc6-4c96-8440-ea5935217666",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 3000,
+      "recordedAt": "2025-08-14T17:19:59.618Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 3000,
+        "x": 645,
+        "y": 365,
+        "target": {
+          "tagName": "button",
+          "id": "btn-6",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-6",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "847f80d8-f1c7-4e34-ae89-22be45052716",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 3500,
+      "recordedAt": "2025-08-14T17:19:59.627Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 3500,
+        "x": 595,
+        "y": 348,
+        "target": {
+          "tagName": "button",
+          "id": "btn-7",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-7",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "68b218ba-223f-4f06-8dbb-2ede8f3e4822",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 4000,
+      "recordedAt": "2025-08-14T17:19:59.642Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 4000,
+        "x": 670,
+        "y": 360,
+        "target": {
+          "tagName": "button",
+          "id": "btn-8",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-8",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "07faf77c-0e48-4595-ab6e-5618af88101e",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 4500,
+      "recordedAt": "2025-08-14T17:19:59.650Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 4500,
+        "x": 514,
+        "y": 325,
+        "target": {
+          "tagName": "button",
+          "id": "btn-9",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-9",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "71162b71-72ca-4343-97b8-e6d93f7bbdad",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 5000,
+      "recordedAt": "2025-08-14T17:19:59.659Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 5000,
+        "x": 704,
+        "y": 381,
+        "target": {
+          "tagName": "button",
+          "id": "btn-10",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-10",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "83ac43e4-4788-44f1-a9c5-1cded817c99f",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 5500,
+      "recordedAt": "2025-08-14T17:19:59.668Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 5500,
+        "x": 589,
+        "y": 371,
+        "target": {
+          "tagName": "button",
+          "id": "btn-11",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-11",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "b522290b-b7fb-42fa-bb81-f4bd3690c19b",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 6000,
+      "recordedAt": "2025-08-14T17:19:59.677Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 6000,
+        "x": 849,
+        "y": 465,
+        "target": {
+          "tagName": "button",
+          "id": "btn-12",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-12",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "e80a064d-a812-4afa-9161-31abcfbff192",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 6500,
+      "recordedAt": "2025-08-14T17:19:59.689Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 6500,
+        "x": 600,
+        "y": 389,
+        "target": {
+          "tagName": "button",
+          "id": "btn-13",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-13",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "c6012b70-67ec-43c8-8712-df69a596fcdb",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 7000,
+      "recordedAt": "2025-08-14T17:19:59.700Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 7000,
+        "x": 657,
+        "y": 321,
+        "target": {
+          "tagName": "button",
+          "id": "btn-14",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-14",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "5d05dbb4-aca3-4213-98af-c391428e63f8",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 7500,
+      "recordedAt": "2025-08-14T17:19:59.711Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 7500,
+        "x": 734,
+        "y": 470,
+        "target": {
+          "tagName": "button",
+          "id": "btn-15",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-15",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "5c31981f-1617-4979-95fc-e0e5af68b331",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 8000,
+      "recordedAt": "2025-08-14T17:19:59.720Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 8000,
+        "x": 608,
+        "y": 437,
+        "target": {
+          "tagName": "button",
+          "id": "btn-16",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-16",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "1475f048-01a5-4b14-b75d-f46beb902a3f",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 8500,
+      "recordedAt": "2025-08-14T17:19:59.731Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 8500,
+        "x": 570,
+        "y": 308,
+        "target": {
+          "tagName": "button",
+          "id": "btn-17",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-17",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "6e6774e5-e263-4646-b399-3426cb311089",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 9000,
+      "recordedAt": "2025-08-14T17:19:59.741Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 9000,
+        "x": 672,
+        "y": 421,
+        "target": {
+          "tagName": "button",
+          "id": "btn-18",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-18",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "c562e087-4ef8-4393-9c49-342bb51496a6",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 9500,
+      "recordedAt": "2025-08-14T17:19:59.751Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 9500,
+        "x": 773,
+        "y": 393,
+        "target": {
+          "tagName": "button",
+          "id": "btn-19",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-19",
+        "page_url": "/enhanced-page"
+      }
+    },
+    {
+      "id": "5520a3f9-d07a-4b3e-b146-fa2da2f81c41",
+      "sessionId": "c5dd2fd8-57bd-4edb-9920-4b7dbbc59dbc",
+      "timestamp": 10000,
+      "recordedAt": "2025-08-14T17:19:59.760Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 10000,
+        "x": 685,
+        "y": 424,
+        "target": {
+          "tagName": "button",
+          "id": "btn-20",
+          "className": "enhanced-btn"
+        },
+        "element_id": "btn-20",
+        "page_url": "/enhanced-page"
+      }
+    }
+  ],
+  "status": "completed",
+  "metadata": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "userAgent": "curl/8.5.0",
+    "device": {
+      "type": "desktop",
+      "browser": "unknown",
+      "os": "unknown"
+    }
+  },
+  "endTime": "2025-08-14T17:19:59.768Z",
+  "duration": 204,
+  "endReason": "user_ended",
+  "statistics": {
+    "totalEvents": 20,
+    "eventTypes": {
+      "rrweb_event": 20
+    },
+    "clicks": 0,
+    "formInputs": 0,
+    "pageViews": 0,
+    "errors": 0,
+    "scrollEvents": 0,
+    "userBehavior": {
+      "avgTimeBetweenEvents": 475,
+      "hasErrors": false,
+      "hasFormInteraction": false,
+      "hasNavigation": false
+    }
+  }
+}

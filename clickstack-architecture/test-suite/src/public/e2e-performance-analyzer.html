@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS-MON E2E 성능 분석기</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="/components/common-layout.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+        }
+
+        .header {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid #334155;
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            color: #f1f5f9;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #94a3b8;
+            font-size: 1rem;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .controls-panel {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid #334155;
+            backdrop-filter: blur(10px);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #f1f5f9;
+            font-size: 0.9rem;
+        }
+
+        select, input {
+            padding: 0.75rem;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: rgba(15, 23, 42, 0.8);
+            color: #e2e8f0;
+            transition: border-color 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .btn.success {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+        }
+
+        .metrics-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+            backdrop-filter: blur(10px);
+            transition: transform 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .metric-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-icon {
+            font-size: 1.5rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-change {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+        }
+
+        .metric-change.positive {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .metric-change.negative {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+            backdrop-filter: blur(10px);
+        }
+
+        .chart-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .trace-timeline {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid #334155;
+            backdrop-filter: blur(10px);
+        }
+
+        .trace-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .trace-filter {
+            padding: 0.5rem 1rem;
+            border: 1px solid #475569;
+            border-radius: 20px;
+            background: rgba(15, 23, 42, 0.8);
+            color: #e2e8f0;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .trace-filter.active {
+            background: rgba(59, 130, 246, 0.3);
+            border-color: #3b82f6;
+            color: #93c5fd;
+        }
+
+        .timeline-container {
+            position: relative;
+            height: 400px;
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .timeline-track {
+            min-width: 1200px;
+            height: 100%;
+            position: relative;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(59, 130, 246, 0.05) 50%, 
+                transparent 100%);
+            border-radius: 8px;
+        }
+
+        .trace-item {
+            position: absolute;
+            height: 30px;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            padding: 0 0.5rem;
+            font-size: 0.8rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .trace-item:hover {
+            transform: scaleY(1.1);
+            z-index: 10;
+        }
+
+        .trace-item.slow {
+            background: linear-gradient(90deg, #f59e0b, #d97706);
+        }
+
+        .trace-item.error {
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+
+        .bottleneck-analysis {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .bottleneck-list {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+            backdrop-filter: blur(10px);
+        }
+
+        .bottleneck-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            background: rgba(15, 23, 42, 0.5);
+            transition: all 0.2s ease;
+        }
+
+        .bottleneck-item:hover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .bottleneck-info h4 {
+            color: #f1f5f9;
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .bottleneck-info p {
+            color: #94a3b8;
+            font-size: 0.8rem;
+        }
+
+        .bottleneck-impact {
+            text-align: right;
+        }
+
+        .impact-score {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ef4444;
+            margin-bottom: 0.25rem;
+        }
+
+        .impact-label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .recommendations {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid #334155;
+            backdrop-filter: blur(10px);
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1rem;
+            border: 1px solid #475569;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        .recommendation-icon {
+            font-size: 1.5rem;
+            margin-top: 0.25rem;
+        }
+
+        .recommendation-content h4 {
+            color: #f1f5f9;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .recommendation-content p {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            line-height: 1.5;
+        }
+
+        .priority-high {
+            border-left: 4px solid #ef4444;
+        }
+
+        .priority-medium {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .priority-low {
+            border-left: 4px solid #22c55e;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .success-message {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .bottleneck-analysis {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="airis-content-wrapper">
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>E2E 성능 데이터를 분석하고 있습니다...</p>
+    </div>
+
+    <div class="header">
+        <div class="header-content">
+            <div>
+                <h1>🔍 AIRIS-MON E2E 성능 분석기</h1>
+                <p>엔드투엔드 트레이스 분석을 통한 성능 병목 지점 식별 및 최적화 권장사항</p>
+            </div>
+            <div class="header-controls">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span>실시간 모니터링</span>
+                </div>
+                <button class="btn" onclick="exportReport()">📊 리포트 내보내기</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 컨트롤 패널 -->
+        <div class="controls-panel">
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label>분석할 세션 선택</label>
+                    <select id="sessionSelect">
+                        <option value="">세션을 선택하세요...</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label>분석 시간 범위</label>
+                    <select id="timeRange">
+                        <option value="5">최근 5분</option>
+                        <option value="15">최근 15분</option>
+                        <option value="30">최근 30분</option>
+                        <option value="60" selected>최근 1시간</option>
+                        <option value="360">최근 6시간</option>
+                        <option value="1440">최근 24시간</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label>성능 임계값 (ms)</label>
+                    <input type="number" id="performanceThreshold" value="1000" min="100" max="10000">
+                </div>
+                
+                <div class="control-group">
+                    <label>트레이스 샘플링 비율</label>
+                    <select id="samplingRate">
+                        <option value="1">100% (전체)</option>
+                        <option value="0.1" selected>10% (권장)</option>
+                        <option value="0.05">5% (경량)</option>
+                        <option value="0.01">1% (최소)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="btn" onclick="startAnalysis()">🔍 분석 시작</button>
+                <button class="btn success" onclick="refreshData()">🔄 데이터 새로고침</button>
+                <button class="btn danger" onclick="clearAnalysis()">🗑️ 분석 초기화</button>
+            </div>
+        </div>
+
+        <!-- 성능 메트릭 개요 -->
+        <div class="metrics-overview">
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">평균 응답 시간</div>
+                    <div class="metric-icon">⏱️</div>
+                </div>
+                <div class="metric-value" id="avgResponseTime">0ms</div>
+                <div class="metric-change positive" id="responseTimeChange">+0%</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">처리량 (RPS)</div>
+                    <div class="metric-icon">🚀</div>
+                </div>
+                <div class="metric-value" id="throughput">0</div>
+                <div class="metric-change negative" id="throughputChange">-0%</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">오류율</div>
+                    <div class="metric-icon">❌</div>
+                </div>
+                <div class="metric-value" id="errorRate">0%</div>
+                <div class="metric-change positive" id="errorRateChange">-0%</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-header">
+                    <div class="metric-title">병목 지점</div>
+                    <div class="metric-icon">🔴</div>
+                </div>
+                <div class="metric-value" id="bottleneckCount">0</div>
+                <div class="metric-change negative" id="bottleneckChange">+0</div>
+            </div>
+        </div>
+
+        <!-- 차트 영역 -->
+        <div class="charts-grid">
+            <div class="chart-container">
+                <h3 class="chart-title">응답 시간 분포</h3>
+                <canvas id="responseTimeChart" width="400" height="200"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <h3 class="chart-title">처리량 트렌드</h3>
+                <canvas id="throughputChart" width="400" height="200"></canvas>
+            </div>
+
+            <div class="chart-container full-width">
+                <h3 class="chart-title">서비스별 성능 히트맵</h3>
+                <canvas id="performanceHeatmap" width="800" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- 트레이스 타임라인 -->
+        <div class="trace-timeline">
+            <h3 class="chart-title">🔍 트레이스 타임라인 분석</h3>
+            
+            <div class="trace-controls">
+                <button class="trace-filter active" onclick="filterTraces('all')">전체</button>
+                <button class="trace-filter" onclick="filterTraces('slow')">느린 요청</button>
+                <button class="trace-filter" onclick="filterTraces('error')">오류</button>
+                <button class="trace-filter" onclick="filterTraces('database')">데이터베이스</button>
+                <button class="trace-filter" onclick="filterTraces('external')">외부 API</button>
+                <button class="trace-filter" onclick="filterTraces('cache')">캐시</button>
+            </div>
+
+            <div class="timeline-container" id="timelineContainer">
+                <div class="timeline-track" id="timelineTrack">
+                    <!-- 트레이스 항목들이 동적으로 생성됩니다 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 병목 지점 분석 -->
+        <div class="bottleneck-analysis">
+            <div class="bottleneck-list">
+                <h3 class="chart-title">🔴 성능 병목 지점</h3>
+                <div id="bottleneckList">
+                    <p style="text-align: center; color: #64748b; padding: 2rem;">
+                        분석을 시작하여 병목 지점을 식별해보세요.
+                    </p>
+                </div>
+            </div>
+
+            <div class="recommendations">
+                <h3 class="chart-title">💡 최적화 권장사항</h3>
+                <div id="recommendationsList">
+                    <p style="text-align: center; color: #64748b; padding: 2rem;">
+                        성능 분석 완료 후 맞춤형 권장사항이 표시됩니다.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 글로벌 변수
+        let performanceData = {};
+        let traceData = [];
+        let charts = {};
+        let currentFilter = 'all';
+        let analysisInterval = null;
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            loadSessions();
+            startRealTimeUpdates();
+            generateMockData(); // 데모용 데이터 생성
+        });
+
+        // 차트 초기화
+        function initializeCharts() {
+            // 응답 시간 분포 차트
+            const responseCtx = document.getElementById('responseTimeChart').getContext('2d');
+            charts.responseTime = new Chart(responseCtx, {
+                type: 'histogram',
+                data: {
+                    labels: ['0-100ms', '100-500ms', '500ms-1s', '1s-3s', '3s-10s', '10s+'],
+                    datasets: [{
+                        label: '요청 수',
+                        data: [0, 0, 0, 0, 0, 0],
+                        backgroundColor: [
+                            '#22c55e',
+                            '#84cc16',
+                            '#f59e0b',
+                            '#f97316',
+                            '#ef4444',
+                            '#dc2626'
+                        ],
+                        borderColor: '#1f2937',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e2e8f0' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: '#334155' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: '#334155' }
+                        }
+                    }
+                }
+            });
+
+            // 처리량 트렌드 차트
+            const throughputCtx = document.getElementById('throughputChart').getContext('2d');
+            charts.throughput = new Chart(throughputCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'RPS',
+                        data: [],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e2e8f0' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: '#334155' }
+                        },
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: '#334155' }
+                        }
+                    }
+                }
+            });
+
+            // 성능 히트맵 차트
+            const heatmapCtx = document.getElementById('performanceHeatmap').getContext('2d');
+            charts.heatmap = new Chart(heatmapCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: '서비스 성능',
+                        data: [],
+                        backgroundColor: function(context) {
+                            const value = context.parsed.y;
+                            if (value < 100) return '#22c55e';
+                            if (value < 500) return '#84cc16';
+                            if (value < 1000) return '#f59e0b';
+                            if (value < 3000) return '#f97316';
+                            return '#ef4444';
+                        },
+                        pointRadius: function(context) {
+                            return Math.max(5, Math.min(15, context.parsed.y / 100));
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e2e8f0' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            title: { display: true, text: '응답시간 (ms)', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: '#334155' }
+                        },
+                        x: {
+                            title: { display: true, text: '시간', color: '#94a3b8' },
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: '#334155' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 세션 목록 로드
+        async function loadSessions() {
+            try {
+                const scenarios = ['bug_payment', 'ux_navigation', 'security_attack', 'performance_slow', 'enhanced_recording', 'mobile_recording'];
+                const select = document.getElementById('sessionSelect');
+                
+                for (const scenario of scenarios) {
+                    try {
+                        const response = await fetch(`/api/session-replay/sessions/${scenario}`);
+                        const data = await response.json();
+                        
+                        if (data.success && data.sessions.length > 0) {
+                            const optgroup = document.createElement('optgroup');
+                            optgroup.label = getScenarioName(scenario);
+                            
+                            data.sessions.forEach(session => {
+                                const option = document.createElement('option');
+                                option.value = session.id;
+                                option.textContent = `${session.id.substring(0, 12)}... (${session.eventCount || 0}개 이벤트)`;
+                                optgroup.appendChild(option);
+                            });
+                            
+                            select.appendChild(optgroup);
+                        }
+                    } catch (error) {
+                        console.warn(`시나리오 ${scenario} 로드 실패:`, error);
+                    }
+                }
+            } catch (error) {
+                console.error('세션 목록 로드 오류:', error);
+            }
+        }
+
+        // 시나리오 이름 변환
+        function getScenarioName(scenario) {
+            const names = {
+                'bug_payment': '🐛 버그 재현 시나리오',
+                'ux_navigation': '📊 UX/UI 개선 시나리오', 
+                'security_attack': '🚨 보안 공격 시나리오',
+                'performance_slow': '⚡ 성능 문제 시나리오',
+                'enhanced_recording': '🎯 향상된 녹화 세션',
+                'mobile_recording': '📱 모바일 녹화 세션'
+            };
+            return names[scenario] || scenario;
+        }
+
+        // 분석 시작
+        async function startAnalysis() {
+            const sessionId = document.getElementById('sessionSelect').value;
+            if (!sessionId) {
+                alert('분석할 세션을 선택해주세요.');
+                return;
+            }
+
+            try {
+                showLoading(true);
+                
+                // 세션 데이터 가져오기
+                const sessionResponse = await fetch(`/api/session-replay/session/${sessionId}`);
+                const sessionData = await sessionResponse.json();
+
+                if (!sessionData.success) {
+                    throw new Error('세션 데이터를 불러올 수 없습니다.');
+                }
+
+                // E2E 성능 데이터 생성 (실제 환경에서는 APM 도구에서 가져옴)
+                await generatePerformanceData(sessionData.session);
+                
+                // 트레이스 데이터 분석
+                await analyzeTraces(sessionData.session);
+                
+                // 병목 지점 식별
+                await identifyBottlenecks();
+                
+                // 권장사항 생성
+                await generateRecommendations();
+                
+                // UI 업데이트
+                updateMetrics();
+                updateCharts();
+                updateTimeline();
+                
+                showSuccess('E2E 성능 분석이 완료되었습니다!');
+                
+            } catch (error) {
+                console.error('분석 오류:', error);
+                showError('성능 분석 중 오류가 발생했습니다: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 성능 데이터 생성 (실제로는 APM 도구에서 수집)
+        async function generatePerformanceData(session) {
+            const events = session.events || [];
+            const duration = session.duration || 60000;
+            
+            performanceData = {
+                avgResponseTime: Math.random() * 2000 + 200,
+                throughput: Math.random() * 100 + 20,
+                errorRate: Math.random() * 5,
+                bottleneckCount: Math.floor(Math.random() * 10) + 1,
+                responseTimeDistribution: [
+                    Math.floor(Math.random() * 50) + 10,  // 0-100ms
+                    Math.floor(Math.random() * 30) + 20,  // 100-500ms
+                    Math.floor(Math.random() * 20) + 15,  // 500ms-1s
+                    Math.floor(Math.random() * 15) + 10,  // 1s-3s
+                    Math.floor(Math.random() * 10) + 5,   // 3s-10s
+                    Math.floor(Math.random() * 5) + 2     // 10s+
+                ],
+                throughputTrend: [],
+                heatmapData: []
+            };
+
+            // 시간별 처리량 트렌드 생성
+            const timePoints = 20;
+            for (let i = 0; i < timePoints; i++) {
+                performanceData.throughputTrend.push({
+                    time: new Date(Date.now() - (timePoints - i) * 60000).toLocaleTimeString(),
+                    value: performanceData.throughput + (Math.random() - 0.5) * 20
+                });
+            }
+
+            // 서비스별 히트맵 데이터 생성
+            const services = ['API Gateway', 'Auth Service', 'User Service', 'Payment Service', 'Database', 'Cache'];
+            services.forEach((service, index) => {
+                for (let i = 0; i < 10; i++) {
+                    performanceData.heatmapData.push({
+                        x: index,
+                        y: Math.random() * 3000 + 100,
+                        service: service,
+                        timestamp: Date.now() - Math.random() * 3600000
+                    });
+                }
+            });
+        }
+
+        // 트레이스 분석
+        async function analyzeTraces(session) {
+            const events = session.events || [];
+            traceData = [];
+
+            // 이벤트를 트레이스로 변환
+            events.forEach((event, index) => {
+                const trace = {
+                    id: `trace-${index}`,
+                    service: getServiceFromEvent(event),
+                    operation: event.type,
+                    startTime: event.timestamp || 0,
+                    duration: Math.random() * 1000 + 50,
+                    status: Math.random() > 0.95 ? 'error' : 'success',
+                    type: categorizeTrace(event)
+                };
+
+                trace.endTime = trace.startTime + trace.duration;
+                traceData.push(trace);
+            });
+
+            // 트레이스 정렬
+            traceData.sort((a, b) => a.startTime - b.startTime);
+        }
+
+        // 이벤트에서 서비스 추론
+        function getServiceFromEvent(event) {
+            if (event.type === 'click') return 'Frontend';
+            if (event.type === 'input') return 'Form Service';
+            if (event.type === 'navigation') return 'Router';
+            if (event.page_url && event.page_url.includes('payment')) return 'Payment Service';
+            if (event.page_url && event.page_url.includes('login')) return 'Auth Service';
+            return 'User Service';
+        }
+
+        // 트레이스 분류
+        function categorizeTrace(event) {
+            if (event.type === 'click' && event.target?.id?.includes('submit')) return 'database';
+            if (event.type === 'input') return 'cache';
+            if (Math.random() > 0.8) return 'external';
+            return 'internal';
+        }
+
+        // 병목 지점 식별
+        async function identifyBottlenecks() {
+            const bottlenecks = [];
+
+            // 느린 트레이스 찾기
+            const slowTraces = traceData.filter(trace => trace.duration > 1000);
+            
+            // 서비스별 평균 응답 시간 계산
+            const serviceStats = {};
+            traceData.forEach(trace => {
+                if (!serviceStats[trace.service]) {
+                    serviceStats[trace.service] = { totalTime: 0, count: 0 };
+                }
+                serviceStats[trace.service].totalTime += trace.duration;
+                serviceStats[trace.service].count++;
+            });
+
+            // 병목 지점 생성
+            Object.entries(serviceStats).forEach(([service, stats]) => {
+                const avgTime = stats.totalTime / stats.count;
+                if (avgTime > 500) {
+                    bottlenecks.push({
+                        service: service,
+                        avgResponseTime: avgTime,
+                        impact: calculateImpact(avgTime, stats.count),
+                        description: `${service}의 평균 응답 시간이 ${Math.round(avgTime)}ms로 높습니다.`,
+                        type: 'performance'
+                    });
+                }
+            });
+
+            // 오류 많은 서비스 찾기
+            const errorCounts = {};
+            traceData.filter(trace => trace.status === 'error').forEach(trace => {
+                errorCounts[trace.service] = (errorCounts[trace.service] || 0) + 1;
+            });
+
+            Object.entries(errorCounts).forEach(([service, errorCount]) => {
+                if (errorCount > 5) {
+                    bottlenecks.push({
+                        service: service,
+                        errorCount: errorCount,
+                        impact: calculateImpact(errorCount * 100, errorCount),
+                        description: `${service}에서 ${errorCount}개의 오류가 발생했습니다.`,
+                        type: 'error'
+                    });
+                }
+            });
+
+            performanceData.bottlenecks = bottlenecks.sort((a, b) => b.impact - a.impact);
+        }
+
+        // 영향도 계산
+        function calculateImpact(responseTime, frequency) {
+            return Math.min(100, (responseTime / 10) * Math.log(frequency + 1));
+        }
+
+        // 권장사항 생성
+        async function generateRecommendations() {
+            const recommendations = [];
+
+            // 병목 지점 기반 권장사항
+            performanceData.bottlenecks?.forEach(bottleneck => {
+                if (bottleneck.type === 'performance') {
+                    if (bottleneck.service === 'Database') {
+                        recommendations.push({
+                            priority: 'high',
+                            title: '데이터베이스 쿼리 최적화',
+                            description: '인덱스 추가, 쿼리 최적화, 커넥션 풀 튜닝을 통해 데이터베이스 성능을 개선하세요.',
+                            icon: '🗄️',
+                            estimatedImprovement: '30-50% 성능 향상'
+                        });
+                    } else if (bottleneck.service === 'Payment Service') {
+                        recommendations.push({
+                            priority: 'high',
+                            title: '결제 서비스 최적화',
+                            description: '외부 결제 API 호출을 비동기 처리하고, 응답 캐싱을 구현하세요.',
+                            icon: '💳',
+                            estimatedImprovement: '40-60% 응답 시간 단축'
+                        });
+                    } else {
+                        recommendations.push({
+                            priority: 'medium',
+                            title: `${bottleneck.service} 성능 튜닝`,
+                            description: '서비스의 리소스 사용량을 모니터링하고 병목 지점을 최적화하세요.',
+                            icon: '⚡',
+                            estimatedImprovement: '20-30% 성능 향상'
+                        });
+                    }
+                } else if (bottleneck.type === 'error') {
+                    recommendations.push({
+                        priority: 'high',
+                        title: `${bottleneck.service} 오류 해결`,
+                        description: '반복되는 오류의 근본 원인을 파악하고 예외 처리를 강화하세요.',
+                        icon: '🚨',
+                        estimatedImprovement: '안정성 크게 개선'
+                    });
+                }
+            });
+
+            // 일반적인 권장사항
+            if (performanceData.avgResponseTime > 1000) {
+                recommendations.push({
+                    priority: 'medium',
+                    title: 'CDN 및 캐싱 전략 구현',
+                    description: '정적 자원은 CDN을 활용하고, 동적 콘텐츠는 Redis 캐싱을 적용하세요.',
+                    icon: '🌐',
+                    estimatedImprovement: '25-40% 로딩 시간 단축'
+                });
+            }
+
+            if (performanceData.errorRate > 2) {
+                recommendations.push({
+                    priority: 'high',
+                    title: '모니터링 및 알림 시스템 강화',
+                    description: '실시간 오류 감지와 자동 알림 시스템을 구축하여 빠른 대응이 가능하도록 하세요.',
+                    icon: '📊',
+                    estimatedImprovement: 'MTTR 50% 단축'
+                });
+            }
+
+            recommendations.push({
+                priority: 'low',
+                title: '성능 모니터링 대시보드 구축',
+                description: '주요 성능 지표를 실시간으로 모니터링할 수 있는 대시보드를 구축하세요.',
+                icon: '📈',
+                estimatedImprovement: '지속적인 성능 관리'
+            });
+
+            performanceData.recommendations = recommendations;
+        }
+
+        // 메트릭 업데이트
+        function updateMetrics() {
+            document.getElementById('avgResponseTime').textContent = Math.round(performanceData.avgResponseTime) + 'ms';
+            document.getElementById('throughput').textContent = Math.round(performanceData.throughput);
+            document.getElementById('errorRate').textContent = performanceData.errorRate.toFixed(1) + '%';
+            document.getElementById('bottleneckCount').textContent = performanceData.bottleneckCount;
+
+            // 변화율 업데이트 (랜덤)
+            const changes = {
+                responseTime: (Math.random() - 0.5) * 20,
+                throughput: (Math.random() - 0.5) * 30,
+                errorRate: (Math.random() - 0.5) * 2,
+                bottleneck: Math.floor((Math.random() - 0.5) * 6)
+            };
+
+            updateMetricChange('responseTimeChange', changes.responseTime, '%', true);
+            updateMetricChange('throughputChange', changes.throughput, '%');
+            updateMetricChange('errorRateChange', changes.errorRate, '%', true);
+            updateMetricChange('bottleneckChange', changes.bottleneck, '');
+        }
+
+        function updateMetricChange(elementId, value, unit, reverse = false) {
+            const element = document.getElementById(elementId);
+            const isPositive = reverse ? value < 0 : value > 0;
+            
+            element.className = `metric-change ${isPositive ? 'positive' : 'negative'}`;
+            element.textContent = (value > 0 ? '+' : '') + value.toFixed(1) + unit;
+        }
+
+        // 차트 업데이트
+        function updateCharts() {
+            // 응답 시간 분포 차트
+            charts.responseTime.data.datasets[0].data = performanceData.responseTimeDistribution;
+            charts.responseTime.update();
+
+            // 처리량 트렌드 차트
+            charts.throughput.data.labels = performanceData.throughputTrend.map(point => point.time);
+            charts.throughput.data.datasets[0].data = performanceData.throughputTrend.map(point => point.value);
+            charts.throughput.update();
+
+            // 히트맵 차트
+            charts.heatmap.data.datasets[0].data = performanceData.heatmapData;
+            charts.heatmap.update();
+        }
+
+        // 타임라인 업데이트
+        function updateTimeline() {
+            const timelineTrack = document.getElementById('timelineTrack');
+            timelineTrack.innerHTML = '';
+
+            if (traceData.length === 0) return;
+
+            const minTime = Math.min(...traceData.map(trace => trace.startTime));
+            const maxTime = Math.max(...traceData.map(trace => trace.endTime));
+            const timeRange = maxTime - minTime || 1;
+
+            traceData.forEach((trace, index) => {
+                if (shouldShowTrace(trace)) {
+                    const traceElement = createTraceElement(trace, index, minTime, timeRange);
+                    timelineTrack.appendChild(traceElement);
+                }
+            });
+
+            // 병목 지점 업데이트
+            updateBottleneckList();
+
+            // 권장사항 업데이트
+            updateRecommendationsList();
+        }
+
+        // 트레이스 필터링
+        function shouldShowTrace(trace) {
+            switch (currentFilter) {
+                case 'slow':
+                    return trace.duration > 1000;
+                case 'error':
+                    return trace.status === 'error';
+                case 'database':
+                    return trace.type === 'database';
+                case 'external':
+                    return trace.type === 'external';
+                case 'cache':
+                    return trace.type === 'cache';
+                default:
+                    return true;
+            }
+        }
+
+        // 트레이스 요소 생성
+        function createTraceElement(trace, index, minTime, timeRange) {
+            const element = document.createElement('div');
+            element.className = `trace-item ${trace.duration > 1000 ? 'slow' : ''} ${trace.status === 'error' ? 'error' : ''}`;
+            
+            const left = ((trace.startTime - minTime) / timeRange) * 100;
+            const width = (trace.duration / timeRange) * 100;
+            
+            element.style.left = left + '%';
+            element.style.width = Math.max(0.5, width) + '%';
+            element.style.top = (index % 10) * 35 + 'px';
+            
+            element.textContent = `${trace.service}: ${trace.operation} (${Math.round(trace.duration)}ms)`;
+            element.title = `Service: ${trace.service}\nOperation: ${trace.operation}\nDuration: ${Math.round(trace.duration)}ms\nStatus: ${trace.status}`;
+            
+            element.addEventListener('click', () => {
+                showTraceDetails(trace);
+            });
+            
+            return element;
+        }
+
+        // 트레이스 상세 정보 표시
+        function showTraceDetails(trace) {
+            alert(`트레이스 상세 정보:
+            
+서비스: ${trace.service}
+작업: ${trace.operation}
+시작 시간: ${new Date(trace.startTime).toLocaleTimeString()}
+지속 시간: ${Math.round(trace.duration)}ms
+상태: ${trace.status}
+타입: ${trace.type}`);
+        }
+
+        // 병목 지점 목록 업데이트
+        function updateBottleneckList() {
+            const bottleneckList = document.getElementById('bottleneckList');
+            
+            if (!performanceData.bottlenecks || performanceData.bottlenecks.length === 0) {
+                bottleneckList.innerHTML = '<p style="text-align: center; color: #64748b; padding: 2rem;">병목 지점이 발견되지 않았습니다.</p>';
+                return;
+            }
+
+            bottleneckList.innerHTML = performanceData.bottlenecks.map(bottleneck => `
+                <div class="bottleneck-item">
+                    <div class="bottleneck-info">
+                        <h4>${bottleneck.service}</h4>
+                        <p>${bottleneck.description}</p>
+                    </div>
+                    <div class="bottleneck-impact">
+                        <div class="impact-score">${Math.round(bottleneck.impact)}</div>
+                        <div class="impact-label">영향도</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 권장사항 목록 업데이트
+        function updateRecommendationsList() {
+            const recommendationsList = document.getElementById('recommendationsList');
+            
+            if (!performanceData.recommendations || performanceData.recommendations.length === 0) {
+                recommendationsList.innerHTML = '<p style="text-align: center; color: #64748b; padding: 2rem;">권장사항을 생성하고 있습니다...</p>';
+                return;
+            }
+
+            recommendationsList.innerHTML = performanceData.recommendations.map(rec => `
+                <div class="recommendation-item priority-${rec.priority}">
+                    <div class="recommendation-icon">${rec.icon}</div>
+                    <div class="recommendation-content">
+                        <h4>${rec.title}</h4>
+                        <p>${rec.description}</p>
+                        <small style="color: #3b82f6; font-weight: 600;">${rec.estimatedImprovement}</small>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 트레이스 필터
+        function filterTraces(filter) {
+            currentFilter = filter;
+            
+            // 버튼 활성화 상태 업데이트
+            document.querySelectorAll('.trace-filter').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 타임라인 업데이트
+            updateTimeline();
+        }
+
+        // 실시간 업데이트
+        function startRealTimeUpdates() {
+            analysisInterval = setInterval(() => {
+                if (Object.keys(performanceData).length > 0) {
+                    // 메트릭 값 약간 변화
+                    performanceData.avgResponseTime += (Math.random() - 0.5) * 50;
+                    performanceData.throughput += (Math.random() - 0.5) * 5;
+                    performanceData.errorRate += (Math.random() - 0.5) * 0.5;
+                    
+                    // 값 범위 제한
+                    performanceData.avgResponseTime = Math.max(100, Math.min(3000, performanceData.avgResponseTime));
+                    performanceData.throughput = Math.max(10, Math.min(150, performanceData.throughput));
+                    performanceData.errorRate = Math.max(0, Math.min(10, performanceData.errorRate));
+                    
+                    updateMetrics();
+                }
+            }, 5000);
+        }
+
+        // 데모용 목 데이터 생성
+        function generateMockData() {
+            performanceData = {
+                avgResponseTime: 1250,
+                throughput: 45,
+                errorRate: 2.3,
+                bottleneckCount: 4,
+                responseTimeDistribution: [25, 35, 20, 15, 8, 3],
+                throughputTrend: [],
+                heatmapData: [],
+                bottlenecks: [
+                    {
+                        service: 'Payment Service',
+                        avgResponseTime: 2300,
+                        impact: 85,
+                        description: 'Payment Service의 평균 응답 시간이 2300ms로 매우 높습니다.',
+                        type: 'performance'
+                    },
+                    {
+                        service: 'Database',
+                        avgResponseTime: 1800,
+                        impact: 72,
+                        description: 'Database 쿼리 응답 시간이 1800ms로 높습니다.',
+                        type: 'performance'
+                    },
+                    {
+                        service: 'Auth Service',
+                        errorCount: 12,
+                        impact: 65,
+                        description: 'Auth Service에서 12개의 오류가 발생했습니다.',
+                        type: 'error'
+                    }
+                ],
+                recommendations: [
+                    {
+                        priority: 'high',
+                        title: '결제 서비스 최적화',
+                        description: '외부 결제 API 호출을 비동기 처리하고, 응답 캐싱을 구현하세요.',
+                        icon: '💳',
+                        estimatedImprovement: '40-60% 응답 시간 단축'
+                    },
+                    {
+                        priority: 'high',
+                        title: '데이터베이스 쿼리 최적화',
+                        description: '인덱스 추가, 쿼리 최적화, 커넥션 풀 튜닝을 통해 데이터베이스 성능을 개선하세요.',
+                        icon: '🗄️',
+                        estimatedImprovement: '30-50% 성능 향상'
+                    },
+                    {
+                        priority: 'medium',
+                        title: 'CDN 및 캐싱 전략 구현',
+                        description: '정적 자원은 CDN을 활용하고, 동적 콘텐츠는 Redis 캐싱을 적용하세요.',
+                        icon: '🌐',
+                        estimatedImprovement: '25-40% 로딩 시간 단축'
+                    }
+                ]
+            };
+
+            // 시간별 처리량 트렌드
+            for (let i = 0; i < 20; i++) {
+                performanceData.throughputTrend.push({
+                    time: new Date(Date.now() - (20 - i) * 60000).toLocaleTimeString(),
+                    value: 45 + Math.sin(i * 0.5) * 10 + (Math.random() - 0.5) * 8
+                });
+            }
+
+            // 서비스 히트맵 데이터
+            const services = ['API Gateway', 'Auth Service', 'User Service', 'Payment Service', 'Database', 'Cache'];
+            services.forEach((service, index) => {
+                for (let i = 0; i < 15; i++) {
+                    performanceData.heatmapData.push({
+                        x: index + (Math.random() - 0.5) * 0.8,
+                        y: Math.random() * 2500 + 200 + (service === 'Payment Service' ? 500 : 0),
+                        service: service
+                    });
+                }
+            });
+
+            updateMetrics();
+            updateCharts();
+            updateBottleneckList();
+            updateRecommendationsList();
+        }
+
+        // 유틸리티 함수들
+        function refreshData() {
+            generateMockData();
+            showSuccess('데이터가 새로고침되었습니다!');
+        }
+
+        function clearAnalysis() {
+            if (confirm('모든 분석 데이터를 초기화하시겠습니까?')) {
+                performanceData = {};
+                traceData = [];
+                
+                Object.values(charts).forEach(chart => {
+                    chart.data.datasets.forEach(dataset => {
+                        dataset.data = [];
+                    });
+                    chart.data.labels = [];
+                    chart.update();
+                });
+
+                document.getElementById('timelineTrack').innerHTML = '';
+                document.getElementById('bottleneckList').innerHTML = '<p style="text-align: center; color: #64748b; padding: 2rem;">분석을 시작하여 병목 지점을 식별해보세요.</p>';
+                document.getElementById('recommendationsList').innerHTML = '<p style="text-align: center; color: #64748b; padding: 2rem;">성능 분석 완료 후 맞춤형 권장사항이 표시됩니다.</p>';
+
+                showSuccess('분석 데이터가 초기화되었습니다.');
+            }
+        }
+
+        function exportReport() {
+            const reportData = {
+                timestamp: new Date().toISOString(),
+                metrics: performanceData,
+                traces: traceData,
+                recommendations: performanceData.recommendations || []
+            };
+
+            const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `e2e-performance-report-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showSuccess('성능 분석 리포트가 다운로드되었습니다!');
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        }
+
+        function showError(message) {
+            const container = document.querySelector('.container');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            container.insertBefore(errorDiv, container.firstChild);
+            
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+
+        function showSuccess(message) {
+            const container = document.querySelector('.container');
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.textContent = message;
+            container.insertBefore(successDiv, container.firstChild);
+            
+            setTimeout(() => successDiv.remove(), 3000);
+        }
+
+        // 정리
+        window.addEventListener('beforeunload', function() {
+            if (analysisInterval) {
+                clearInterval(analysisInterval);
+            }
+        });
+    </script>
+    </div>
+</body>
+</html>

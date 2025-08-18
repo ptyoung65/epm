@@ -1,0 +1,38 @@
+apiVersion: 1
+
+datasources:
+  - name: AIRIS-MON ClickHouse
+    type: grafana-clickhouse-datasource
+    access: proxy
+    url: http://clickhouse:8123
+    isDefault: true
+    jsonData:
+      defaultDatabase: airis_test
+      username: test_user
+      tlsSkipVerify: false
+      secure: false
+      timeout: 30
+      logs:
+        defaultDatabase: airis_test
+        defaultTable: events
+        otelEnabled: true
+        otelVersionColumn: ''
+        timeColumn: timestamp
+        levelColumn: severity
+        messageColumn: message
+      traces:
+        defaultDatabase: airis_test
+        defaultTable: events
+        otelEnabled: true
+        otelVersionColumn: ''
+        timeColumn: timestamp
+        traceIdColumn: trace_id
+        spanIdColumn: span_id
+        operationNameColumn: event_type
+        serviceNameColumn: service
+        durationColumn: ''
+        tagsColumn: tags
+        serviceTagsColumn: ''
+    secureJsonData:
+      password: test_password
+    editable: true

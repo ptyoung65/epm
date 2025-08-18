@@ -1,0 +1,22 @@
+version: '3.8'
+
+# 빠른 테스트를 위한 최소 구성
+services:
+  # AIRIS-MON 테스트 스위트만 실행
+  test-suite:
+    build: .
+    container_name: airis-mon-test-suite-minimal
+    ports:
+      - "3100:3100"
+    environment:
+      - NODE_ENV=production
+      - TEST_PORT=3100
+      - TZ=Asia/Seoul
+      - USE_MOCK_SERVICES=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

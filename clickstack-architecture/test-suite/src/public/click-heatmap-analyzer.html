@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS-MON 클릭 히트맵 분석기</title>
+    <script src="/components/common-layout.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            color: #4c51bf;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #6b7280;
+            font-size: 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .controls {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        select, input {
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .heatmap-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .heatmap-header {
+            background: #f9fafb;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .heatmap-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .heatmap-stats {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+
+        #heatmapCanvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            cursor: crosshair;
+        }
+
+        .intensity-legend {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            min-width: 150px;
+        }
+
+        .legend-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.75rem;
+            text-align: center;
+        }
+
+        .legend-bar {
+            height: 20px;
+            border-radius: 10px;
+            background: linear-gradient(90deg, 
+                rgba(0,0,255,0.2) 0%, 
+                rgba(0,255,255,0.4) 25%, 
+                rgba(0,255,0,0.6) 50%, 
+                rgba(255,255,0,0.8) 75%, 
+                rgba(255,0,0,1) 100%
+            );
+            margin-bottom: 0.5rem;
+        }
+
+        .legend-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem;
+            color: #6b7280;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #fecaca;
+            margin: 1rem 0;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #059669;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #a7f3d0;
+            margin: 1rem 0;
+        }
+
+        .click-info {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            z-index: 10;
+            display: none;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+                margin: 1rem auto;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .heatmap-header {
+                padding: 1rem;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .heatmap-stats {
+                gap: 1rem;
+            }
+            
+            .intensity-legend {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="airis-content-wrapper">
+        <div class="header">
+            <h1>🔥 AIRIS-MON 클릭 히트맵 분석기</h1>
+        <p>사용자 클릭 패턴을 시각적으로 분석하여 UX 개선점을 찾아보세요</p>
+    </div>
+
+    <div class="container">
+        <div class="controls">
+            <div class="control-group">
+                <label>분석할 세션 선택</label>
+                <select id="sessionSelect">
+                    <option value="">세션을 선택하세요...</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>페이지 필터</label>
+                <select id="pageFilter">
+                    <option value="all">모든 페이지</option>
+                    <option value="/checkout">결제 페이지</option>
+                    <option value="/products">상품 페이지</option>
+                    <option value="/dashboard">대시보드</option>
+                    <option value="/login">로그인 페이지</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>시간 범위 (분)</label>
+                <input type="number" id="timeRange" value="60" min="1" max="1440" placeholder="60">
+            </div>
+            
+            <div class="control-group">
+                <label>히트맵 강도</label>
+                <input type="range" id="intensityRange" min="1" max="10" value="5">
+            </div>
+            
+            <div class="control-group">
+                <button class="btn" onclick="generateHeatmap()">🔥 히트맵 생성</button>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn" onclick="exportHeatmap()" style="background: linear-gradient(135deg, #10b981, #059669);">📊 PNG로 내보내기</button>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn" onclick="testHeatmapData()" style="background: linear-gradient(135deg, #f59e0b, #d97706);">🧪 데이터 테스트</button>
+            </div>
+        </div>
+
+        <div class="heatmap-container">
+            <div class="heatmap-header">
+                <div class="heatmap-title">클릭 히트맵 시각화</div>
+                <div class="heatmap-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalClicks">0</div>
+                        <div class="stat-label">총 클릭</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="uniqueElements">0</div>
+                        <div class="stat-label">고유 요소</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="hotspotCount">0</div>
+                        <div class="stat-label">핫스팟</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="avgClicksPerSession">0</div>
+                        <div class="stat-label">세션당 평균</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="canvas-wrapper">
+                <canvas id="heatmapCanvas" width="1200" height="800"></canvas>
+                <div class="click-info" id="clickInfo"></div>
+                
+                <div class="intensity-legend">
+                    <div class="legend-title">클릭 강도</div>
+                    <div class="legend-bar"></div>
+                    <div class="legend-labels">
+                        <span>낮음</span>
+                        <span>높음</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 글로벌 변수
+        let heatmapData = [];
+        let currentSession = null;
+        let canvas, ctx;
+        let isLoading = false;
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            canvas = document.getElementById('heatmapCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // 세션 목록 로드
+            loadSessions();
+            
+            // 캔버스 이벤트 리스너
+            canvas.addEventListener('mousemove', showClickInfo);
+            canvas.addEventListener('mouseleave', hideClickInfo);
+            
+            // 기본 배경 그리기
+            drawDefaultBackground();
+        });
+
+        // 세션 목록 로드
+        async function loadSessions() {
+            try {
+                const response = await fetch('/api/session-replay/stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    populateSessionSelect();
+                }
+            } catch (error) {
+                console.error('세션 로드 오류:', error);
+                showError('세션 목록을 불러올 수 없습니다.');
+            }
+        }
+
+        // 세션 선택 옵션 생성
+        async function populateSessionSelect() {
+            const select = document.getElementById('sessionSelect');
+            
+            try {
+                // 모든 시나리오의 세션 가져오기
+                const scenarios = ['bug_payment', 'ux_navigation', 'security_attack', 'performance_slow', 'enhanced_recording', 'heatmap_test'];
+                
+                for (const scenario of scenarios) {
+                    const response = await fetch(`/api/session-replay/sessions/${scenario}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.sessions.length > 0) {
+                        const optgroup = document.createElement('optgroup');
+                        optgroup.label = getScenarioName(scenario);
+                        
+                        data.sessions.forEach(session => {
+                            const option = document.createElement('option');
+                            option.value = session.id;
+                            option.textContent = `${session.id.substring(0, 8)}... (${session.eventCount || 0}개 이벤트)`;
+                            optgroup.appendChild(option);
+                        });
+                        
+                        select.appendChild(optgroup);
+                    }
+                }
+            } catch (error) {
+                console.error('세션 목록 생성 오류:', error);
+            }
+        }
+
+        // 시나리오 이름 변환
+        function getScenarioName(scenario) {
+            const names = {
+                'bug_payment': '🐛 버그 재현 시나리오',
+                'ux_navigation': '📊 UX/UI 개선 시나리오',
+                'security_attack': '🚨 보안 공격 시나리오',
+                'performance_slow': '⚡ 성능 문제 시나리오',
+                'enhanced_recording': '🎯 향상된 녹화 세션',
+                'heatmap_test': '🔥 히트맵 테스트 세션'
+            };
+            return names[scenario] || scenario;
+        }
+
+        // 히트맵 생성
+        async function generateHeatmap() {
+            const sessionId = document.getElementById('sessionSelect').value;
+            if (!sessionId) {
+                showError('분석할 세션을 선택해주세요.');
+                return;
+            }
+
+            isLoading = true;
+            showLoading();
+
+            try {
+                // 세션 데이터 가져오기
+                const response = await fetch(`/api/session-replay/session/${sessionId}`);
+                const data = await response.json();
+
+                if (!data.success || !data.session) {
+                    throw new Error('세션 데이터를 찾을 수 없습니다.');
+                }
+
+                console.log('Session data loaded:', data.session);
+                console.log('Session events:', data.session.events.length);
+                currentSession = data.session;
+                
+                // 클릭 데이터 필터링 및 집계
+                const clickData = processClickData(data.session.events);
+                
+                // 히트맵 렌더링
+                await renderHeatmap(clickData);
+                
+                // 통계 업데이트
+                updateStats(clickData);
+                
+                showSuccess('히트맵이 성공적으로 생성되었습니다!');
+                
+            } catch (error) {
+                console.error('히트맵 생성 오류:', error);
+                showError('히트맵 생성 중 오류가 발생했습니다: ' + error.message);
+            } finally {
+                isLoading = false;
+                hideLoading();
+            }
+        }
+
+        // 클릭 데이터 처리
+        function processClickData(events) {
+            console.log('Processing click data. Total events:', events.length);
+            const pageFilter = document.getElementById('pageFilter').value;
+            const timeRange = parseInt(document.getElementById('timeRange').value) * 60 * 1000; // 분을 ms로 변환
+            
+            const clickEvents = events.filter(event => {
+                // rrweb 클릭 이벤트 또는 직접 클릭 이벤트 확인
+                const isClickEvent = event.type === 'click' || 
+                    (event.type === 'rrweb_event' && event.rrwebType === 'click') ||
+                    (event.originalEvent && event.originalEvent.type === 'click');
+                
+                if (!isClickEvent) return false;
+                
+                // 실제 이벤트 데이터 추출
+                const eventData = event.originalEvent || event;
+                
+                // 페이지 필터 적용
+                if (pageFilter !== 'all' && eventData.page_url !== pageFilter) return false;
+                
+                // 시간 범위 필터 적용
+                if (timeRange > 0 && event.timestamp > timeRange) return false;
+                
+                // 좌표가 있는 이벤트만
+                return eventData.x !== undefined && eventData.y !== undefined;
+            });
+
+            // 좌표별로 클릭 수 집계
+            const heatmapPoints = {};
+            
+            clickEvents.forEach(event => {
+                // 실제 이벤트 데이터 추출
+                const eventData = event.originalEvent || event;
+                
+                const key = `${Math.round(eventData.x)},${Math.round(eventData.y)}`;
+                if (!heatmapPoints[key]) {
+                    heatmapPoints[key] = {
+                        x: eventData.x,
+                        y: eventData.y,
+                        count: 0,
+                        elements: []
+                    };
+                }
+                heatmapPoints[key].count++;
+                
+                if (eventData.element_id) {
+                    heatmapPoints[key].elements.push(eventData.element_id);
+                }
+            });
+
+            console.log('Filtered click events:', clickEvents.length);
+            console.log('First click event:', clickEvents[0]);
+            
+            const result = Object.values(heatmapPoints);
+            console.log('Processed heatmap points:', result.length);
+            console.log('First heatmap point:', result[0]);
+            
+            return result;
+        }
+
+        // 히트맵 렌더링
+        async function renderHeatmap(clickData) {
+            console.log('Rendering heatmap with data points:', clickData.length);
+            // 캔버스 크기 조정
+            const containerWidth = canvas.parentElement.clientWidth;
+            const canvasHeight = Math.max(800, containerWidth * 0.6);
+            
+            canvas.width = containerWidth;
+            canvas.height = canvasHeight;
+            canvas.style.width = containerWidth + 'px';
+            canvas.style.height = canvasHeight + 'px';
+
+            // 배경 그리기
+            drawBackground();
+
+            // 클릭 데이터가 없으면 종료
+            if (!clickData || clickData.length === 0) {
+                ctx.fillStyle = '#6b7280';
+                ctx.font = '18px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('클릭 데이터가 없습니다', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            // 최대 클릭 수 찾기 (정규화용)
+            const maxClicks = Math.max(...clickData.map(point => point.count));
+            const intensityMultiplier = document.getElementById('intensityRange').value / 5;
+
+            // 각 클릭 지점에 대해 히트맵 그리기
+            clickData.forEach(point => {
+                const intensity = (point.count / maxClicks) * intensityMultiplier;
+                const radius = Math.max(20, 40 * intensity);
+                
+                // 그라디언트 생성
+                const gradient = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, radius);
+                
+                // 강도에 따른 색상 계산
+                const color = getHeatmapColor(intensity);
+                gradient.addColorStop(0, color);
+                gradient.addColorStop(1, 'rgba(0,0,0,0)');
+
+                // 블렌드 모드 설정
+                ctx.globalCompositeOperation = 'multiply';
+                ctx.fillStyle = gradient;
+                
+                ctx.beginPath();
+                ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // 정상 블렌드 모드로 복원
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // 히트맵 데이터 저장 (마우스 오버용)
+            heatmapData = clickData;
+        }
+
+        // 히트맵 색상 계산
+        function getHeatmapColor(intensity) {
+            // 0-1 범위의 intensity를 색상으로 변환
+            if (intensity < 0.2) return `rgba(0, 0, 255, ${0.3 + intensity})`;
+            if (intensity < 0.4) return `rgba(0, 255, 255, ${0.4 + intensity})`;
+            if (intensity < 0.6) return `rgba(0, 255, 0, ${0.5 + intensity})`;
+            if (intensity < 0.8) return `rgba(255, 255, 0, ${0.6 + intensity})`;
+            return `rgba(255, 0, 0, ${0.7 + intensity})`;
+        }
+
+        // 배경 그리기
+        function drawBackground() {
+            // 기본 배경
+            ctx.fillStyle = '#f9fafb';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 가이드 그리드
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 1;
+            
+            // 세로선
+            for (let x = 0; x < canvas.width; x += 100) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            // 가로선
+            for (let y = 0; y < canvas.height; y += 100) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        // 기본 배경 그리기
+        function drawDefaultBackground() {
+            ctx.fillStyle = '#f3f4f6';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '24px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('세션을 선택하고 히트맵 생성 버튼을 클릭하세요', canvas.width / 2, canvas.height / 2 - 20);
+            
+            ctx.font = '16px sans-serif';
+            ctx.fillText('클릭 패턴을 시각적으로 분석할 수 있습니다', canvas.width / 2, canvas.height / 2 + 20);
+        }
+
+        // 클릭 정보 표시
+        function showClickInfo(event) {
+            if (!heatmapData || heatmapData.length === 0) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            
+            // 가장 가까운 클릭 지점 찾기
+            let closestPoint = null;
+            let minDistance = Infinity;
+            
+            heatmapData.forEach(point => {
+                const distance = Math.sqrt((x - point.x) ** 2 + (y - point.y) ** 2);
+                if (distance < 50 && distance < minDistance) {
+                    minDistance = distance;
+                    closestPoint = point;
+                }
+            });
+            
+            const clickInfo = document.getElementById('clickInfo');
+            
+            if (closestPoint) {
+                clickInfo.innerHTML = `
+                    <strong>클릭 수:</strong> ${closestPoint.count}회<br>
+                    <strong>좌표:</strong> (${Math.round(closestPoint.x)}, ${Math.round(closestPoint.y)})<br>
+                    <strong>요소:</strong> ${closestPoint.elements.slice(0, 2).join(', ') || '없음'}
+                `;
+                clickInfo.style.display = 'block';
+                clickInfo.style.left = (event.clientX + 10) + 'px';
+                clickInfo.style.top = (event.clientY - 10) + 'px';
+            } else {
+                clickInfo.style.display = 'none';
+            }
+        }
+
+        // 클릭 정보 숨기기
+        function hideClickInfo() {
+            document.getElementById('clickInfo').style.display = 'none';
+        }
+
+        // 통계 업데이트
+        function updateStats(clickData) {
+            const totalClicks = clickData.reduce((sum, point) => sum + point.count, 0);
+            const uniqueElements = new Set();
+            
+            clickData.forEach(point => {
+                point.elements.forEach(element => uniqueElements.add(element));
+            });
+            
+            // 핫스팟 계산 (상위 20% 클릭 지점)
+            const sortedPoints = clickData.sort((a, b) => b.count - a.count);
+            const hotspotCount = Math.ceil(sortedPoints.length * 0.2);
+            
+            document.getElementById('totalClicks').textContent = totalClicks.toLocaleString();
+            document.getElementById('uniqueElements').textContent = uniqueElements.size;
+            document.getElementById('hotspotCount').textContent = hotspotCount;
+            document.getElementById('avgClicksPerSession').textContent = Math.round(totalClicks / Math.max(1, clickData.length));
+        }
+
+        // 히트맵 내보내기
+        function exportHeatmap() {
+            if (!heatmapData || heatmapData.length === 0) {
+                showError('먼저 히트맵을 생성해주세요.');
+                return;
+            }
+            
+            const link = document.createElement('a');
+            link.download = `heatmap-${currentSession?.id || 'unknown'}-${Date.now()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+            
+            showSuccess('히트맵 이미지가 다운로드되었습니다!');
+        }
+
+        // UI 헬퍼 함수들
+        function showLoading() {
+            const container = canvas.parentElement;
+            if (!document.getElementById('loadingOverlay')) {
+                const overlay = document.createElement('div');
+                overlay.id = 'loadingOverlay';
+                overlay.className = 'loading';
+                overlay.innerHTML = `
+                    <div class="loading-spinner"></div>
+                    <p>히트맵을 생성하고 있습니다...</p>
+                `;
+                container.appendChild(overlay);
+            }
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        function showError(message) {
+            const container = document.querySelector('.container');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            container.insertBefore(errorDiv, container.firstChild);
+            
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+
+        function showSuccess(message) {
+            const container = document.querySelector('.container');
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.textContent = message;
+            container.insertBefore(successDiv, container.firstChild);
+            
+            setTimeout(() => successDiv.remove(), 3000);
+        }
+
+        // 히트맵 데이터 테스트
+        async function testHeatmapData() {
+            try {
+                // 하드코딩된 세션 ID로 테스트
+                const testSessionId = 'ee8de3e4-8ce7-4545-ab09-7c85b62621ea';
+                
+                console.log('Testing with session ID:', testSessionId);
+                
+                const response = await fetch(`/api/session-replay/session/${testSessionId}`);
+                const data = await response.json();
+                
+                console.log('Raw session data:', data);
+                
+                if (data.success && data.session) {
+                    const clickData = processClickData(data.session.events);
+                    showSuccess(`테스트 성공! ${clickData.length}개의 클릭 지점을 찾았습니다.`);
+                    
+                    // 세션 선택 드롭다운에 값 설정
+                    document.getElementById('sessionSelect').value = testSessionId;
+                    
+                    // 즉시 히트맵 생성
+                    generateHeatmap();
+                } else {
+                    showError('테스트 세션 데이터를 찾을 수 없습니다.');
+                }
+            } catch (error) {
+                console.error('테스트 오류:', error);
+                showError('테스트 중 오류 발생: ' + error.message);
+            }
+        }
+    </script>
+    </div>
+</body>
+</html>

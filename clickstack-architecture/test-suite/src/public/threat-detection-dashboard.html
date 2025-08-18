@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS-MON 실시간 이상 탐지 시스템</title>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/components/common-layout.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 2px solid #dc2626;
+        }
+
+        .header h1 {
+            color: #ef4444;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.alert {
+            background: #ef4444;
+            animation: pulse-danger 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes pulse-danger {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+        }
+
+        .header p {
+            color: #9ca3af;
+            font-size: 1rem;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .controls {
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #e5e7eb;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        select, input {
+            padding: 0.75rem;
+            border: 2px solid #374151;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            transition: border-color 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #ef4444;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn.success {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .btn.warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--card-color, #6b7280);
+        }
+
+        .stat-card.normal::before { --card-color: #10b981; }
+        .stat-card.warning::before { --card-color: #f59e0b; }
+        .stat-card.danger::before { --card-color: #ef4444; }
+        .stat-card.critical::before { --card-color: #dc2626; }
+
+        .stat-title {
+            font-size: 0.9rem;
+            color: #9ca3af;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-change {
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-change.positive {
+            color: #10b981;
+        }
+
+        .stat-change.negative {
+            color: #ef4444;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .main-panel {
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .panel-controls {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .panel-content {
+            padding: 2rem;
+            min-height: 400px;
+        }
+
+        .threat-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .threat-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--threat-color);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .threat-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(4px);
+        }
+
+        .threat-item.high { --threat-color: #ef4444; }
+        .threat-item.medium { --threat-color: #f59e0b; }
+        .threat-item.low { --threat-color: #3b82f6; }
+        .threat-item.critical { --threat-color: #dc2626; }
+
+        .threat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .threat-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .threat-severity {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .threat-severity.critical {
+            background: #dc2626;
+            color: #fff;
+        }
+
+        .threat-severity.high {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .threat-severity.medium {
+            background: #f59e0b;
+            color: #fff;
+        }
+
+        .threat-severity.low {
+            background: #3b82f6;
+            color: #fff;
+        }
+
+        .threat-description {
+            color: #d1d5db;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .threat-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .threat-detail {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .threat-detail-label {
+            color: #9ca3af;
+            font-size: 0.8rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .threat-detail-value {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .alert-controls {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 6px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 2rem;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem;
+            color: #9ca3af;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #ef4444;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .toast {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            background: #10b981;
+        }
+
+        .toast.error {
+            background: #ef4444;
+        }
+
+        .toast.warning {
+            background: #f59e0b;
+        }
+
+        .real-time-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .real-time-indicator.offline {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: #ef4444;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+                margin: 1rem auto;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="airis-content-wrapper">
+    <div class="header">
+        <h1>
+            🚨 AIRIS-MON 실시간 이상 탐지 시스템
+            <div class="status-indicator" id="systemStatus"></div>
+        </h1>
+        <p>AI 기반 실시간 보안 위협 탐지 및 모니터링</p>
+    </div>
+
+    <div class="container">
+        <div class="controls">
+            <div class="control-group">
+                <label>탐지 모드</label>
+                <select id="detectionMode">
+                    <option value="all">전체 탐지</option>
+                    <option value="high-severity">고위험도만</option>
+                    <option value="brute-force">무차별 대입 공격</option>
+                    <option value="unusual-behavior">비정상 행동</option>
+                    <option value="bot-detection">봇 탐지</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>민감도 레벨</label>
+                <input type="range" id="sensitivityLevel" min="1" max="10" value="5">
+                <span id="sensitivityValue">5 (보통)</span>
+            </div>
+            
+            <div class="control-group">
+                <label>모니터링 세션</label>
+                <select id="sessionSelect">
+                    <option value="">실시간 모니터링...</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn" onclick="startDetection()">🔍 탐지 시작</button>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn success" onclick="simulateThreats()">⚡ 위협 시뮬레이션</button>
+            </div>
+            
+            <div class="control-group">
+                <div class="real-time-indicator" id="connectionStatus">
+                    <div class="status-indicator"></div>
+                    실시간 연결됨
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card normal" id="totalThreatsCard">
+                <div class="stat-title">총 탐지된 위협</div>
+                <div class="stat-value" id="totalThreats">0</div>
+                <div class="stat-change positive">
+                    <span>↑</span> <span id="threatsChange">+0</span> 지난 1시간
+                </div>
+            </div>
+            
+            <div class="stat-card warning" id="activeThreatsCard">
+                <div class="stat-title">활성 위협</div>
+                <div class="stat-value" id="activeThreats">0</div>
+                <div class="stat-change negative">
+                    <span>🔥</span> <span id="activeChange">처리 대기</span>
+                </div>
+            </div>
+            
+            <div class="stat-card danger" id="criticalThreatsCard">
+                <div class="stat-title">긴급 위협</div>
+                <div class="stat-value" id="criticalThreats">0</div>
+                <div class="stat-change negative">
+                    <span>⚠️</span> <span id="criticalChange">즉시 대응 필요</span>
+                </div>
+            </div>
+            
+            <div class="stat-card normal" id="blockedAttacksCard">
+                <div class="stat-title">차단된 공격</div>
+                <div class="stat-value" id="blockedAttacks">0</div>
+                <div class="stat-change positive">
+                    <span>🛡️</span> <span id="blockedChange">자동 차단됨</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="main-panel">
+                <div class="panel-header">
+                    <div class="panel-title">실시간 위협 분석</div>
+                    <div class="panel-controls">
+                        <button class="btn btn-small" onclick="refreshThreats()">새로고침</button>
+                        <button class="btn btn-small warning" onclick="exportThreats()">내보내기</button>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="chart-container">
+                        <canvas id="threatsChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="patternsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="main-panel">
+                <div class="panel-header">
+                    <div class="panel-title">위협 알림</div>
+                    <div class="panel-controls">
+                        <button class="btn btn-small" onclick="clearAlerts()">모두 지우기</button>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div class="threat-list" id="threatList">
+                        <!-- 동적으로 생성됨 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 글로벌 변수
+        let socket = null;
+        let detectionActive = false;
+        let threatsChart = null;
+        let patternsChart = null;
+        let threatData = [];
+        let statsData = {
+            totalThreats: 0,
+            activeThreats: 0,
+            criticalThreats: 0,
+            blockedAttacks: 0
+        };
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            setupEventListeners();
+            loadSessions();
+            connectWebSocket();
+            
+            // 민감도 슬라이더 업데이트
+            updateSensitivityDisplay();
+        });
+
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            document.getElementById('sensitivityLevel').addEventListener('input', function() {
+                updateSensitivityDisplay();
+                if (detectionActive) {
+                    updateDetectionSettings();
+                }
+            });
+
+            document.getElementById('detectionMode').addEventListener('change', function() {
+                if (detectionActive) {
+                    updateDetectionSettings();
+                }
+            });
+        }
+
+        // WebSocket 연결
+        function connectWebSocket() {
+            try {
+                socket = io();
+                
+                socket.on('connect', () => {
+                    updateConnectionStatus(true);
+                    showToast('실시간 모니터링에 연결되었습니다', 'success');
+                });
+
+                socket.on('disconnect', () => {
+                    updateConnectionStatus(false);
+                    showToast('연결이 끊어졌습니다. 재연결 중...', 'error');
+                });
+
+                socket.on('threat-detected', (threat) => {
+                    handleNewThreat(threat);
+                });
+
+                socket.on('stats-update', (stats) => {
+                    updateStats(stats);
+                });
+
+            } catch (error) {
+                console.error('WebSocket 연결 실패:', error);
+                updateConnectionStatus(false);
+            }
+        }
+
+        // 연결 상태 업데이트
+        function updateConnectionStatus(connected) {
+            const indicator = document.getElementById('connectionStatus');
+            const systemStatus = document.getElementById('systemStatus');
+            
+            if (connected) {
+                indicator.classList.remove('offline');
+                indicator.innerHTML = '<div class="status-indicator"></div> 실시간 연결됨';
+                systemStatus.classList.remove('alert');
+            } else {
+                indicator.classList.add('offline');
+                indicator.innerHTML = '<div class="status-indicator"></div> 연결 끊어짐';
+                systemStatus.classList.add('alert');
+            }
+        }
+
+        // 민감도 표시 업데이트
+        function updateSensitivityDisplay() {
+            const level = document.getElementById('sensitivityLevel').value;
+            const display = document.getElementById('sensitivityValue');
+            
+            const levels = {
+                '1': '1 (매우 낮음)', '2': '2 (낮음)', '3': '3 (낮음)',
+                '4': '4 (보통)', '5': '5 (보통)', '6': '6 (보통)',
+                '7': '7 (높음)', '8': '8 (높음)', '9': '9 (매우 높음)', '10': '10 (최고)'
+            };
+            
+            display.textContent = levels[level];
+        }
+
+        // 차트 초기화
+        function initializeCharts() {
+            // 위협 타임라인 차트
+            const threatsCtx = document.getElementById('threatsChart').getContext('2d');
+            threatsChart = new Chart(threatsCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '위협 탐지 수',
+                        data: [],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '실시간 위협 탐지 현황',
+                            color: '#fff'
+                        },
+                        legend: {
+                            labels: {
+                                color: '#fff'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        y: {
+                            ticks: { color: '#9ca3af' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    }
+                }
+            });
+
+            // 위협 패턴 차트
+            const patternsCtx = document.getElementById('patternsChart').getContext('2d');
+            patternsChart = new Chart(patternsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['무차별 대입', '봇 탐지', '비정상 행동', '기타'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#ef4444', '#f59e0b', '#8b5cf6', '#6b7280']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '위협 유형별 분포',
+                            color: '#fff'
+                        },
+                        legend: {
+                            labels: {
+                                color: '#fff'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 세션 목록 로드
+        async function loadSessions() {
+            try {
+                const scenarios = ['bug_payment', 'ux_navigation', 'security_attack', 'performance_slow', 'enhanced_recording'];
+                const select = document.getElementById('sessionSelect');
+                
+                for (const scenario of scenarios) {
+                    const response = await fetch(`/api/session-replay/sessions/${scenario}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.sessions.length > 0) {
+                        const optgroup = document.createElement('optgroup');
+                        optgroup.label = getScenarioName(scenario);
+                        
+                        data.sessions.forEach(session => {
+                            const option = document.createElement('option');
+                            option.value = session.id;
+                            option.textContent = `${session.id.substring(0, 8)}... (${session.eventCount || 0}개 이벤트)`;
+                            optgroup.appendChild(option);
+                        });
+                        
+                        select.appendChild(optgroup);
+                    }
+                }
+            } catch (error) {
+                console.error('세션 로드 오류:', error);
+            }
+        }
+
+        // 시나리오 이름 변환
+        function getScenarioName(scenario) {
+            const names = {
+                'bug_payment': '🐛 버그 재현 시나리오',
+                'ux_navigation': '📊 UX/UI 개선 시나리오',
+                'security_attack': '🚨 보안 공격 시나리오',
+                'performance_slow': '⚡ 성능 문제 시나리오',
+                'enhanced_recording': '🎯 향상된 녹화 세션'
+            };
+            return names[scenario] || scenario;
+        }
+
+        // 탐지 시작
+        async function startDetection() {
+            const sessionId = document.getElementById('sessionSelect').value;
+            
+            if (!sessionId) {
+                // 실시간 모니터링 모드
+                detectionActive = true;
+                showToast('실시간 위협 탐지를 시작합니다', 'success');
+                updateSystemStatus('active');
+                startRealTimeDetection();
+            } else {
+                // 세션 기반 분석
+                try {
+                    const response = await fetch(`/api/threat-detection/analyze-session/${sessionId}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        displaySessionAnalysis(data.analysis);
+                        showToast('세션 분석이 완료되었습니다', 'success');
+                    } else {
+                        throw new Error(data.error);
+                    }
+                } catch (error) {
+                    console.error('세션 분석 오류:', error);
+                    showToast('세션 분석 중 오류가 발생했습니다: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // 실시간 탐지 시작
+        function startRealTimeDetection() {
+            // 실시간 데이터 시뮬레이션
+            const detectThreats = () => {
+                if (!detectionActive) return;
+                
+                // 랜덤 위협 생성
+                const threatTypes = ['brute-force', 'bot-detection', 'unusual-behavior', 'sql-injection', 'xss-attempt'];
+                const severities = ['low', 'medium', 'high', 'critical'];
+                
+                if (Math.random() > 0.7) { // 30% 확률로 위협 생성
+                    const threat = {
+                        id: Date.now().toString(),
+                        type: threatTypes[Math.floor(Math.random() * threatTypes.length)],
+                        severity: severities[Math.floor(Math.random() * severities.length)],
+                        timestamp: Date.now(),
+                        source: `192.168.1.${Math.floor(Math.random() * 255)}`,
+                        description: generateThreatDescription(),
+                        details: generateThreatDetails()
+                    };
+                    
+                    handleNewThreat(threat);
+                }
+                
+                // 다음 탐지
+                setTimeout(detectThreats, Math.random() * 3000 + 1000); // 1-4초 간격
+            };
+            
+            detectThreats();
+        }
+
+        // 위협 시뮬레이션
+        function simulateThreats() {
+            const threats = [
+                {
+                    id: Date.now() + '_1',
+                    type: 'brute-force',
+                    severity: 'high',
+                    timestamp: Date.now(),
+                    source: '203.104.144.72',
+                    description: '관리자 계정에 대한 무차별 대입 공격 탐지',
+                    details: {
+                        attempts: 45,
+                        timeWindow: '5분',
+                        targetAccount: 'admin',
+                        successRate: '0%'
+                    }
+                },
+                {
+                    id: Date.now() + '_2',
+                    type: 'bot-detection',
+                    severity: 'medium',
+                    timestamp: Date.now() + 1000,
+                    source: '185.220.100.241',
+                    description: '자동화된 스크래핑 봇 활동 감지',
+                    details: {
+                        requestRate: '200 req/min',
+                        userAgent: 'Python-urllib/3.8',
+                        pattern: '순차적 페이지 크롤링'
+                    }
+                },
+                {
+                    id: Date.now() + '_3',
+                    type: 'unusual-behavior',
+                    severity: 'critical',
+                    timestamp: Date.now() + 2000,
+                    source: '10.0.0.15',
+                    description: '비정상적인 권한 상승 시도 탐지',
+                    details: {
+                        userId: 'user123',
+                        attempts: 'sudo 명령어 15회',
+                        timeWindow: '2분',
+                        previousBehavior: '일반 사용자'
+                    }
+                }
+            ];
+            
+            threats.forEach((threat, index) => {
+                setTimeout(() => {
+                    handleNewThreat(threat);
+                }, index * 1500);
+            });
+            
+            showToast('위협 시뮬레이션을 시작합니다', 'warning');
+        }
+
+        // 새로운 위협 처리
+        function handleNewThreat(threat) {
+            threatData.unshift(threat);
+            addThreatToList(threat);
+            updateStatsFromThreat(threat);
+            updateCharts();
+            
+            // 높은 심각도일 경우 알림
+            if (threat.severity === 'high' || threat.severity === 'critical') {
+                showThreatAlert(threat);
+            }
+        }
+
+        // 위협 목록에 추가
+        function addThreatToList(threat) {
+            const threatList = document.getElementById('threatList');
+            const threatElement = document.createElement('div');
+            threatElement.className = `threat-item ${threat.severity}`;
+            threatElement.onclick = () => showThreatDetails(threat);
+            
+            threatElement.innerHTML = `
+                <div class="threat-header">
+                    <div class="threat-title">${getThreatTypeText(threat.type)}</div>
+                    <div class="threat-severity ${threat.severity}">${getSeverityText(threat.severity)}</div>
+                </div>
+                <div class="threat-description">${threat.description}</div>
+                <div class="threat-details">
+                    <div class="threat-detail">
+                        <div class="threat-detail-label">소스 IP</div>
+                        <div class="threat-detail-value">${threat.source}</div>
+                    </div>
+                    <div class="threat-detail">
+                        <div class="threat-detail-label">탐지 시각</div>
+                        <div class="threat-detail-value">${formatTime(threat.timestamp)}</div>
+                    </div>
+                    <div class="threat-detail">
+                        <div class="threat-detail-label">위협 점수</div>
+                        <div class="threat-detail-value">${getThreatScore(threat.severity)}/100</div>
+                    </div>
+                </div>
+                <div class="alert-controls">
+                    <button class="btn btn-small" onclick="acknowledgeThreat('${threat.id}'); event.stopPropagation();">확인</button>
+                    <button class="btn btn-small warning" onclick="blockThreat('${threat.id}'); event.stopPropagation();">차단</button>
+                    ${threat.severity === 'critical' ? '<button class="btn btn-small" style="background: #dc2626;" onclick="emergencyBlock(\'' + threat.id + '\'); event.stopPropagation();">긴급 차단</button>' : ''}
+                </div>
+            `;
+            
+            threatList.insertBefore(threatElement, threatList.firstChild);
+            
+            // 최대 50개 항목만 유지
+            while (threatList.children.length > 50) {
+                threatList.removeChild(threatList.lastChild);
+            }
+        }
+
+        // 통계 업데이트
+        function updateStatsFromThreat(threat) {
+            statsData.totalThreats++;
+            
+            if (threat.severity === 'critical' || threat.severity === 'high') {
+                statsData.activeThreats++;
+                
+                if (threat.severity === 'critical') {
+                    statsData.criticalThreats++;
+                }
+            }
+            
+            updateStatsDisplay();
+        }
+
+        // 통계 표시 업데이트
+        function updateStatsDisplay() {
+            document.getElementById('totalThreats').textContent = statsData.totalThreats;
+            document.getElementById('activeThreats').textContent = statsData.activeThreats;
+            document.getElementById('criticalThreats').textContent = statsData.criticalThreats;
+            document.getElementById('blockedAttacks').textContent = statsData.blockedAttacks;
+            
+            // 카드 색상 업데이트
+            updateCardStatus('activeThreatsCard', statsData.activeThreats > 0 ? 'warning' : 'normal');
+            updateCardStatus('criticalThreatsCard', statsData.criticalThreats > 0 ? 'danger' : 'normal');
+        }
+
+        // 카드 상태 업데이트
+        function updateCardStatus(cardId, status) {
+            const card = document.getElementById(cardId);
+            card.className = `stat-card ${status}`;
+        }
+
+        // 차트 업데이트
+        function updateCharts() {
+            // 타임라인 차트 업데이트
+            const now = new Date();
+            const timeLabel = now.toLocaleTimeString();
+            
+            threatsChart.data.labels.push(timeLabel);
+            threatsChart.data.datasets[0].data.push(threatData.length);
+            
+            // 최대 20개 데이터 포인트 유지
+            if (threatsChart.data.labels.length > 20) {
+                threatsChart.data.labels.shift();
+                threatsChart.data.datasets[0].data.shift();
+            }
+            
+            threatsChart.update();
+            
+            // 패턴 차트 업데이트
+            const patternCounts = {
+                'brute-force': 0,
+                'bot-detection': 0,
+                'unusual-behavior': 0,
+                'other': 0
+            };
+            
+            threatData.forEach(threat => {
+                if (patternCounts.hasOwnProperty(threat.type)) {
+                    patternCounts[threat.type]++;
+                } else {
+                    patternCounts.other++;
+                }
+            });
+            
+            patternsChart.data.datasets[0].data = Object.values(patternCounts);
+            patternsChart.update();
+        }
+
+        // 시스템 상태 업데이트
+        function updateSystemStatus(status) {
+            const indicator = document.getElementById('systemStatus');
+            
+            if (status === 'active') {
+                indicator.classList.add('alert');
+            } else {
+                indicator.classList.remove('alert');
+            }
+        }
+
+        // 위협 알림 표시
+        function showThreatAlert(threat) {
+            // 브라우저 알림 (권한이 있는 경우)
+            if (Notification.permission === 'granted') {
+                new Notification(`${getSeverityText(threat.severity)} 위협 탐지`, {
+                    body: threat.description,
+                    icon: '/favicon.ico',
+                    tag: threat.id
+                });
+            }
+            
+            // Toast 알림
+            showToast(`${getSeverityText(threat.severity)}: ${threat.description}`, 'error');
+        }
+
+        // 위협 세부 정보 표시
+        function showThreatDetails(threat) {
+            alert(`위협 세부 정보:\n\n${JSON.stringify(threat.details, null, 2)}`);
+        }
+
+        // 위협 확인
+        function acknowledgeThreat(threatId) {
+            const threat = threatData.find(t => t.id === threatId);
+            if (threat) {
+                statsData.activeThreats = Math.max(0, statsData.activeThreats - 1);
+                updateStatsDisplay();
+                showToast('위협이 확인되었습니다', 'success');
+            }
+        }
+
+        // 위협 차단
+        function blockThreat(threatId) {
+            const threat = threatData.find(t => t.id === threatId);
+            if (threat) {
+                statsData.blockedAttacks++;
+                statsData.activeThreats = Math.max(0, statsData.activeThreats - 1);
+                updateStatsDisplay();
+                showToast(`IP ${threat.source}가 차단되었습니다`, 'success');
+            }
+        }
+
+        // 긴급 차단
+        function emergencyBlock(threatId) {
+            blockThreat(threatId);
+            showToast('긴급 차단이 실행되었습니다', 'warning');
+        }
+
+        // 위협 새로고침
+        function refreshThreats() {
+            showToast('위협 데이터를 새로고침합니다', 'success');
+            // 실제로는 서버에서 최신 데이터를 가져와야 함
+        }
+
+        // 위협 내보내기
+        function exportThreats() {
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + "ID,Type,Severity,Timestamp,Source,Description\n"
+                + threatData.map(t => `${t.id},${t.type},${t.severity},${new Date(t.timestamp).toISOString()},${t.source},"${t.description}"`).join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `threats_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast('위협 데이터가 CSV로 내보내졌습니다', 'success');
+        }
+
+        // 알림 모두 지우기
+        function clearAlerts() {
+            document.getElementById('threatList').innerHTML = '';
+            threatData = [];
+            statsData = {
+                totalThreats: 0,
+                activeThreats: 0,
+                criticalThreats: 0,
+                blockedAttacks: 0
+            };
+            updateStatsDisplay();
+            showToast('모든 알림이 지워졌습니다', 'success');
+        }
+
+        // 헬퍼 함수들
+        function getThreatTypeText(type) {
+            const types = {
+                'brute-force': '🔓 무차별 대입 공격',
+                'bot-detection': '🤖 봇 탐지',
+                'unusual-behavior': '⚠️ 비정상 행동',
+                'sql-injection': '💉 SQL 인젝션',
+                'xss-attempt': '🎯 XSS 시도'
+            };
+            return types[type] || type;
+        }
+
+        function getSeverityText(severity) {
+            const severities = {
+                'low': '낮음',
+                'medium': '보통',
+                'high': '높음',
+                'critical': '긴급'
+            };
+            return severities[severity] || severity;
+        }
+
+        function getThreatScore(severity) {
+            const scores = {
+                'low': 25,
+                'medium': 50,
+                'high': 75,
+                'critical': 95
+            };
+            return scores[severity] || 0;
+        }
+
+        function formatTime(timestamp) {
+            return new Date(timestamp).toLocaleString('ko-KR');
+        }
+
+        function generateThreatDescription() {
+            const descriptions = [
+                '의심스러운 로그인 패턴이 감지되었습니다',
+                '비정상적인 데이터베이스 쿼리 시도',
+                '권한 없는 파일 접근 시도',
+                '알려진 악성 IP에서 접근',
+                '과도한 API 요청 패턴 탐지'
+            ];
+            return descriptions[Math.floor(Math.random() * descriptions.length)];
+        }
+
+        function generateThreatDetails() {
+            return {
+                attempts: Math.floor(Math.random() * 50) + 1,
+                timeWindow: `${Math.floor(Math.random() * 10) + 1}분`,
+                pattern: '의심스러운 활동',
+                riskLevel: '중간'
+            };
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => document.body.removeChild(toast), 300);
+            }, 3000);
+        }
+
+        // 알림 권한 요청
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    </script>
+    </div>
+</body>
+</html>

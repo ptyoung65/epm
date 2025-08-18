@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Settings - AIRIS-MON 알림 설정</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 700;
+        }
+
+        .header-left h1 .icon {
+            font-size: 36px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 16px;
+            padding: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            text-align: center;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .settings-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .provider-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .provider-card:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+
+        .provider-card.active {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        }
+
+        .provider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .provider-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .provider-icon {
+            font-size: 32px;
+        }
+
+        .provider-details h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .provider-details p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 32px;
+            background: #e5e7eb;
+            border-radius: 32px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #3b82f6;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch.active::after {
+            left: 30px;
+        }
+
+        .provider-config {
+            display: none;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .provider-config.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .rule-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3b82f6;
+            transition: all 0.3s ease;
+        }
+
+        .rule-item:hover {
+            background: #f1f5f9;
+            transform: translateX(5px);
+        }
+
+        .rule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .rule-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .rule-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .btn-edit {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+        }
+
+        .rule-conditions {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .rule-targets {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .target-badge {
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .template-item {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .template-item:hover {
+            border-color: #3b82f6;
+            background: #f8fafc;
+        }
+
+        .template-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .template-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 16px;
+        }
+
+        .template-preview {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            color: #374151;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .save-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .save-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(16, 185, 129, 0.4);
+        }
+
+        @media (max-width: 1200px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                max-height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <h1>
+                    <span class="icon">⚙️</span>
+                    Notification Settings
+                </h1>
+                <p class="subtitle">알림 전송 방법 및 규칙 설정</p>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-secondary" onclick="goBack()">
+                    ← 알림 관리로 돌아가기
+                </button>
+                <button class="btn btn-primary" onclick="testAllProviders()">
+                    🧪 전체 테스트
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('providers')">
+                📧 알림 제공업체
+            </div>
+            <div class="tab" onclick="switchTab('rules')">
+                📋 알림 규칙
+            </div>
+            <div class="tab" onclick="switchTab('templates')">
+                📝 메시지 템플릿
+            </div>
+            <div class="tab" onclick="switchTab('escalation')">
+                📈 에스컬레이션
+            </div>
+        </div>
+
+        <!-- Providers Tab -->
+        <div id="providers" class="tab-content active">
+            <div class="settings-grid">
+                <!-- Email Settings -->
+                <div class="settings-card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <span>📧</span>
+                            이메일 설정
+                        </h3>
+                    </div>
+
+                    <!-- SMTP Provider -->
+                    <div class="provider-card" id="smtpProvider">
+                        <div class="provider-header">
+                            <div class="provider-info">
+                                <div class="provider-icon">📨</div>
+                                <div class="provider-details">
+                                    <h3>SMTP 서버</h3>
+                                    <p>사용자 정의 SMTP 서버를 통한 이메일 전송</p>
+                                </div>
+                            </div>
+                            <div class="toggle-switch active" onclick="toggleProvider(this, 'smtp')"></div>
+                        </div>
+                        <div class="provider-config show">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">SMTP 서버</label>
+                                    <input type="text" class="form-input" id="smtpHost" value="smtp.company.com" placeholder="smtp.example.com">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">포트</label>
+                                    <input type="number" class="form-input" id="smtpPort" value="587" placeholder="587">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">사용자명</label>
+                                    <input type="email" class="form-input" id="smtpUsername" value="noreply@company.com" placeholder="your-email@example.com">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">비밀번호</label>
+                                    <input type="password" class="form-input" id="smtpPassword" placeholder="••••••••">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">보내는 사람 이름</label>
+                                <input type="text" class="form-input" id="smtpFromName" value="AIRIS-MON 알림" placeholder="Your Company">
+                            </div>
+                            <button class="test-button" onclick="testProvider('smtp')">📧 이메일 테스트 전송</button>
+                        </div>
+                    </div>
+
+                    <!-- Gmail Provider -->
+                    <div class="provider-card" id="gmailProvider">
+                        <div class="provider-header">
+                            <div class="provider-info">
+                                <div class="provider-icon">📮</div>
+                                <div class="provider-details">
+                                    <h3>Gmail</h3>
+                                    <p>Google Gmail을 통한 이메일 전송</p>
+                                </div>
+                            </div>
+                            <div class="toggle-switch" onclick="toggleProvider(this, 'gmail')"></div>
+                        </div>
+                        <div class="provider-config">
+                            <div class="form-group">
+                                <label class="form-label">Gmail 주소</label>
+                                <input type="email" class="form-input" id="gmailEmail" placeholder="your-email@gmail.com">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">앱 비밀번호</label>
+                                <input type="password" class="form-input" id="gmailPassword" placeholder="••••••••••••••••">
+                                <small style="color: #666; font-size: 12px;">Gmail 2단계 인증이 활성화된 경우 앱 비밀번호를 사용하세요</small>
+                            </div>
+                            <button class="test-button" onclick="testProvider('gmail')">📮 Gmail 테스트 전송</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SMS Settings -->
+                <div class="settings-card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <span>📱</span>
+                            SMS 설정
+                        </h3>
+                    </div>
+
+                    <!-- Twilio Provider -->
+                    <div class="provider-card" id="twilioProvider">
+                        <div class="provider-header">
+                            <div class="provider-info">
+                                <div class="provider-icon">📲</div>
+                                <div class="provider-details">
+                                    <h3>Twilio SMS</h3>
+                                    <p>Twilio API를 통한 SMS 전송</p>
+                                </div>
+                            </div>
+                            <div class="toggle-switch" onclick="toggleProvider(this, 'twilio')"></div>
+                        </div>
+                        <div class="provider-config">
+                            <div class="form-group">
+                                <label class="form-label">Account SID</label>
+                                <input type="text" class="form-input" id="twilioSid" placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Auth Token</label>
+                                <input type="password" class="form-input" id="twilioToken" placeholder="••••••••••••••••••••••••••••••••">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">발신 번호</label>
+                                <input type="tel" class="form-input" id="twilioFrom" placeholder="+1234567890">
+                            </div>
+                            <button class="test-button" onclick="testProvider('twilio')">📲 SMS 테스트 전송</button>
+                        </div>
+                    </div>
+
+                    <!-- Korean SMS Provider -->
+                    <div class="provider-card" id="koreaProvider">
+                        <div class="provider-header">
+                            <div class="provider-info">
+                                <div class="provider-icon">🇰🇷</div>
+                                <div class="provider-details">
+                                    <h3>국내 SMS</h3>
+                                    <p>국내 SMS 서비스 (알리고, 문자나라 등)</p>
+                                </div>
+                            </div>
+                            <div class="toggle-switch active" onclick="toggleProvider(this, 'korea')"></div>
+                        </div>
+                        <div class="provider-config show">
+                            <div class="form-group">
+                                <label class="form-label">서비스 제공업체</label>
+                                <select class="form-select" id="koreaProvider">
+                                    <option value="aligo">알리고 (Aligo)</option>
+                                    <option value="munjanara">문자나라</option>
+                                    <option value="ppurio">뿌리오</option>
+                                    <option value="coolsms">쿨SMS</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">API Key</label>
+                                    <input type="text" class="form-input" id="koreaApiKey" placeholder="API 키를 입력하세요">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">발신 번호</label>
+                                    <input type="tel" class="form-input" id="koreaFrom" value="010-1234-5678" placeholder="010-1234-5678">
+                                </div>
+                            </div>
+                            <button class="test-button" onclick="testProvider('korea')">🇰🇷 SMS 테스트 전송</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-grid">
+                <!-- Slack Settings -->
+                <div class="settings-card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <span>💬</span>
+                            Slack 설정
+                        </h3>
+                    </div>
+
+                    <div class="provider-card" id="slackProvider">
+                        <div class="provider-header">
+                            <div class="provider-info">
+                                <div class="provider-icon">💬</div>
+                                <div class="provider-details">
+                                    <h3>Slack Webhook</h3>
+                                    <p>Slack 채널로 알림 전송</p>
+                                </div>
+                            </div>
+                            <div class="toggle-switch" onclick="toggleProvider(this, 'slack')"></div>
+                        </div>
+                        <div class="provider-config">
+                            <div class="form-group">
+                                <label class="form-label">Webhook URL</label>
+                                <input type="url" class="form-input" id="slackWebhook" placeholder="https://hooks.slack.com/services/...">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">채널</label>
+                                <input type="text" class="form-input" id="slackChannel" placeholder="#alerts" value="#alerts">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">사용자명</label>
+                                <input type="text" class="form-input" id="slackUsername" placeholder="AIRIS-MON" value="AIRIS-MON">
+                            </div>
+                            <button class="test-button" onclick="testProvider('slack')">💬 Slack 테스트 전송</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teams Settings -->
+                <div class="settings-card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <span>👥</span>
+                            Teams 설정
+                        </h3>
+                    </div>
+
+                    <div class="provider-card" id="teamsProvider">
+                        <div class="provider-header">
+                            <div class="provider-info">
+                                <div class="provider-icon">👥</div>
+                                <div class="provider-details">
+                                    <h3>Microsoft Teams</h3>
+                                    <p>Teams 채널로 알림 전송</p>
+                                </div>
+                            </div>
+                            <div class="toggle-switch" onclick="toggleProvider(this, 'teams')"></div>
+                        </div>
+                        <div class="provider-config">
+                            <div class="form-group">
+                                <label class="form-label">Webhook URL</label>
+                                <input type="url" class="form-input" id="teamsWebhook" placeholder="https://outlook.office.com/webhook/...">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">카드 제목</label>
+                                <input type="text" class="form-input" id="teamsTitle" placeholder="AIRIS-MON 알림" value="AIRIS-MON 알림">
+                            </div>
+                            <button class="test-button" onclick="testProvider('teams')">👥 Teams 테스트 전송</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rules Tab -->
+        <div id="rules" class="tab-content">
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <span>📋</span>
+                        알림 규칙 관리
+                    </h3>
+                    <button class="btn btn-primary" onclick="addNewRule()">
+                        ➕ 새 규칙 추가
+                    </button>
+                </div>
+
+                <div id="rulesList">
+                    <!-- Rules will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Templates Tab -->
+        <div id="templates" class="tab-content">
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <span>📝</span>
+                        메시지 템플릿 관리
+                    </h3>
+                    <button class="btn btn-primary" onclick="addNewTemplate()">
+                        ➕ 새 템플릿 추가
+                    </button>
+                </div>
+
+                <div id="templatesList">
+                    <!-- Templates will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Escalation Tab -->
+        <div id="escalation" class="tab-content">
+            <div class="settings-card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <span>📈</span>
+                        에스컬레이션 규칙
+                    </h3>
+                    <button class="btn btn-primary" onclick="addEscalationRule()">
+                        ➕ 에스컬레이션 규칙 추가
+                    </button>
+                </div>
+
+            <div id="escalationRulesList">
+                <div class="rule-item">
+                    <div class="rule-header">
+                        <div class="rule-title">위험 알림 즉시 에스컬레이션</div>
+                        <div class="rule-actions">
+                            <button class="btn-small btn-edit" onclick="editEscalationRule('esc-001')">수정</button>
+                            <button class="btn-small btn-delete" onclick="deleteEscalationRule('esc-001')">삭제</button>
+                        </div>
+                    </div>
+                    <div class="rule-conditions">
+                        조건: 심각도가 '위험'인 경우 → 5분 후 관리자에게 SMS 전송
+                    </div>
+                    <div class="rule-targets">
+                        <span class="target-badge">📧 admin@company.com</span>
+                        <span class="target-badge">📱 010-1234-5678</span>
+                        <span class="target-badge">💬 #critical-alerts</span>
+                    </div>
+                </div>
+
+                <div class="rule-item">
+                    <div class="rule-header">
+                        <div class="rule-title">미해결 알림 재전송</div>
+                        <div class="rule-actions">
+                            <button class="btn-small btn-edit" onclick="editEscalationRule('esc-002')">수정</button>
+                            <button class="btn-small btn-delete" onclick="deleteEscalationRule('esc-002')">삭제</button>
+                        </div>
+                    </div>
+                    <div class="rule-conditions">
+                        조건: 30분간 미해결인 경우 → 담당자 및 팀장에게 재전송
+                    </div>
+                    <div class="rule-targets">
+                        <span class="target-badge">📧 devops-team@company.com</span>
+                        <span class="target-badge">💬 #ops-escalation</span>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Button -->
+    <button class="save-button" onclick="saveAllSettings()">
+        💾 설정 저장
+    </button>
+
+    <script>
+        // Global settings data
+        const notificationSettings = {
+            providers: {
+                smtp: {
+                    enabled: true,
+                    host: 'smtp.company.com',
+                    port: 587,
+                    username: 'noreply@company.com',
+                    password: '',
+                    fromName: 'AIRIS-MON 알림'
+                },
+                gmail: {
+                    enabled: false,
+                    email: '',
+                    password: ''
+                },
+                twilio: {
+                    enabled: false,
+                    sid: '',
+                    token: '',
+                    from: ''
+                },
+                korea: {
+                    enabled: true,
+                    provider: 'aligo',
+                    apiKey: '',
+                    from: '010-1234-5678'
+                },
+                slack: {
+                    enabled: false,
+                    webhook: '',
+                    channel: '#alerts',
+                    username: 'AIRIS-MON'
+                },
+                teams: {
+                    enabled: false,
+                    webhook: '',
+                    title: 'AIRIS-MON 알림'
+                }
+            },
+            rules: [
+                {
+                    id: 'rule-001',
+                    name: 'DB 연결 실패 즉시 알림',
+                    conditions: {
+                        severity: 'critical',
+                        source: 'database',
+                        keywords: ['연결', '실패']
+                    },
+                    targets: ['email', 'sms'],
+                    delay: 0
+                },
+                {
+                    id: 'rule-002',
+                    name: '고부하 상태 모니터링',
+                    conditions: {
+                        severity: 'warning',
+                        source: 'infrastructure',
+                        keywords: ['CPU', '메모리', '사용률']
+                    },
+                    targets: ['email', 'slack'],
+                    delay: 300
+                }
+            ],
+            templates: [
+                {
+                    id: 'template-001',
+                    name: '위험 알림 템플릿',
+                    subject: '[CRITICAL] {{title}}',
+                    body: '긴급 알림이 발생했습니다.\n\n제목: {{title}}\n내용: {{description}}\n시간: {{timestamp}}\n\n즉시 확인이 필요합니다.'
+                },
+                {
+                    id: 'template-002',
+                    name: '경고 알림 템플릿',
+                    subject: '[WARNING] {{title}}',
+                    body: '경고 알림입니다.\n\n제목: {{title}}\n내용: {{description}}\n시간: {{timestamp}}\n\n검토가 필요합니다.'
+                }
+            ]
+        };
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Remove active class from all tabs and contents
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // Add active class to selected tab and content
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+
+            // Load tab-specific content
+            if (tabName === 'rules') {
+                populateRules();
+            } else if (tabName === 'templates') {
+                populateTemplates();
+            }
+        }
+
+        // Provider toggle
+        function toggleProvider(toggle, providerName) {
+            toggle.classList.toggle('active');
+            const isEnabled = toggle.classList.contains('active');
+            const config = toggle.closest('.provider-card').querySelector('.provider-config');
+            
+            if (isEnabled) {
+                config.classList.add('show');
+            } else {
+                config.classList.remove('show');
+            }
+
+            // Update settings
+            notificationSettings.providers[providerName].enabled = isEnabled;
+            
+            showNotification(
+                `${providerName.toUpperCase()} 제공업체가 ${isEnabled ? '활성화' : '비활성화'}되었습니다`,
+                isEnabled ? 'success' : 'info'
+            );
+        }
+
+        // Test provider
+        function testProvider(providerName) {
+            showNotification(`${providerName.toUpperCase()} 테스트 메시지를 전송하고 있습니다...`, 'info');
+            
+            // Simulate test
+            setTimeout(() => {
+                const success = Math.random() > 0.3; // 70% success rate
+                
+                if (success) {
+                    showNotification(`${providerName.toUpperCase()} 테스트 전송이 성공했습니다!`, 'success');
+                } else {
+                    showNotification(`${providerName.toUpperCase()} 테스트 전송이 실패했습니다. 설정을 확인해주세요.`, 'error');
+                }
+            }, 2000);
+        }
+
+        function testAllProviders() {
+            const enabledProviders = Object.keys(notificationSettings.providers)
+                .filter(key => notificationSettings.providers[key].enabled);
+            
+            if (enabledProviders.length === 0) {
+                showNotification('활성화된 알림 제공업체가 없습니다', 'warning');
+                return;
+            }
+
+            showNotification(`${enabledProviders.length}개 제공업체로 테스트 메시지를 전송하고 있습니다...`, 'info');
+            
+            setTimeout(() => {
+                showNotification('모든 테스트 전송이 완료되었습니다', 'success');
+            }, 3000);
+        }
+
+        // Populate rules
+        function populateRules() {
+            const container = document.getElementById('rulesList');
+            
+            container.innerHTML = notificationSettings.rules.map(rule => `
+                <div class="rule-item">
+                    <div class="rule-header">
+                        <div class="rule-title">${rule.name}</div>
+                        <div class="rule-actions">
+                            <button class="btn-small btn-edit" onclick="editRule('${rule.id}')">수정</button>
+                            <button class="btn-small btn-delete" onclick="deleteRule('${rule.id}')">삭제</button>
+                        </div>
+                    </div>
+                    <div class="rule-conditions">
+                        조건: 심각도 '${rule.conditions.severity}', 소스 '${rule.conditions.source}'
+                        ${rule.delay > 0 ? `→ ${rule.delay}초 후 전송` : '→ 즉시 전송'}
+                    </div>
+                    <div class="rule-targets">
+                        ${rule.targets.map(target => `<span class="target-badge">${getTargetIcon(target)} ${target}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getTargetIcon(target) {
+            const icons = {
+                'email': '📧',
+                'sms': '📱',
+                'slack': '💬',
+                'teams': '👥'
+            };
+            return icons[target] || '📢';
+        }
+
+        // Populate templates
+        function populateTemplates() {
+            const container = document.getElementById('templatesList');
+            
+            container.innerHTML = notificationSettings.templates.map(template => `
+                <div class="template-item">
+                    <div class="template-header">
+                        <div class="template-title">${template.name}</div>
+                        <div class="rule-actions">
+                            <button class="btn-small btn-edit" onclick="editTemplate('${template.id}')">수정</button>
+                            <button class="btn-small btn-delete" onclick="deleteTemplate('${template.id}')">삭제</button>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>제목:</strong> ${template.subject}
+                    </div>
+                    <div class="template-preview">
+${template.body}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // CRUD operations with working modal functionality
+        function addNewRule() {
+            showModal('규칙 추가', `
+                <form id="ruleForm">
+                    <div class="form-group">
+                        <label class="form-label">규칙 이름</label>
+                        <input type="text" class="form-input" id="ruleName" placeholder="예: DB 연결 실패 알림" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">심각도</label>
+                            <select class="form-select" id="ruleSeverity" required>
+                                <option value="info">정보</option>
+                                <option value="warning">경고</option>
+                                <option value="critical">위험</option>
+                                <option value="error">오류</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">소스</label>
+                            <select class="form-select" id="ruleSource" required>
+                                <option value="database">데이터베이스</option>
+                                <option value="infrastructure">인프라</option>
+                                <option value="application">애플리케이션</option>
+                                <option value="security">보안</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">키워드 (쉼표로 구분)</label>
+                        <input type="text" class="form-input" id="ruleKeywords" placeholder="예: 연결, 실패, 타임아웃">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">지연 시간 (초)</label>
+                            <input type="number" class="form-input" id="ruleDelay" value="0" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">알림 방법</label>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px;">
+                                <label><input type="checkbox" value="email"> 📧 이메일</label>
+                                <label><input type="checkbox" value="sms"> 📱 SMS</label>
+                                <label><input type="checkbox" value="slack"> 💬 Slack</label>
+                                <label><input type="checkbox" value="teams"> 👥 Teams</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            `, () => {
+                const form = document.getElementById('ruleForm');
+                if (form.checkValidity()) {
+                    const targets = Array.from(form.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+                    if (targets.length === 0) {
+                        showNotification('최소 하나의 알림 방법을 선택해주세요', 'warning');
+                        return;
+                    }
+                    
+                    const newRule = {
+                        id: `rule-${Date.now()}`,
+                        name: document.getElementById('ruleName').value,
+                        conditions: {
+                            severity: document.getElementById('ruleSeverity').value,
+                            source: document.getElementById('ruleSource').value,
+                            keywords: document.getElementById('ruleKeywords').value.split(',').map(k => k.trim()).filter(k => k)
+                        },
+                        targets: targets,
+                        delay: parseInt(document.getElementById('ruleDelay').value)
+                    };
+                    
+                    notificationSettings.rules.push(newRule);
+                    populateRules();
+                    closeModal();
+                    showNotification('새 규칙이 추가되었습니다', 'success');
+                } else {
+                    showNotification('모든 필수 필드를 입력해주세요', 'warning');
+                }
+            });
+        }
+
+        function editRule(ruleId) {
+            const rule = notificationSettings.rules.find(r => r.id === ruleId);
+            if (!rule) return;
+            
+            showModal('규칙 편집', `
+                <form id="editRuleForm">
+                    <div class="form-group">
+                        <label class="form-label">규칙 이름</label>
+                        <input type="text" class="form-input" id="editRuleName" value="${rule.name}" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">심각도</label>
+                            <select class="form-select" id="editRuleSeverity" required>
+                                <option value="info" ${rule.conditions.severity === 'info' ? 'selected' : ''}>정보</option>
+                                <option value="warning" ${rule.conditions.severity === 'warning' ? 'selected' : ''}>경고</option>
+                                <option value="critical" ${rule.conditions.severity === 'critical' ? 'selected' : ''}>위험</option>
+                                <option value="error" ${rule.conditions.severity === 'error' ? 'selected' : ''}>오류</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">소스</label>
+                            <select class="form-select" id="editRuleSource" required>
+                                <option value="database" ${rule.conditions.source === 'database' ? 'selected' : ''}>데이터베이스</option>
+                                <option value="infrastructure" ${rule.conditions.source === 'infrastructure' ? 'selected' : ''}>인프라</option>
+                                <option value="application" ${rule.conditions.source === 'application' ? 'selected' : ''}>애플리케이션</option>
+                                <option value="security" ${rule.conditions.source === 'security' ? 'selected' : ''}>보안</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">키워드 (쉼표로 구분)</label>
+                        <input type="text" class="form-input" id="editRuleKeywords" value="${rule.conditions.keywords.join(', ')}">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">지연 시간 (초)</label>
+                            <input type="number" class="form-input" id="editRuleDelay" value="${rule.delay}" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">알림 방법</label>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px;">
+                                <label><input type="checkbox" value="email" ${rule.targets.includes('email') ? 'checked' : ''}> 📧 이메일</label>
+                                <label><input type="checkbox" value="sms" ${rule.targets.includes('sms') ? 'checked' : ''}> 📱 SMS</label>
+                                <label><input type="checkbox" value="slack" ${rule.targets.includes('slack') ? 'checked' : ''}> 💬 Slack</label>
+                                <label><input type="checkbox" value="teams" ${rule.targets.includes('teams') ? 'checked' : ''}> 👥 Teams</label>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            `, () => {
+                const form = document.getElementById('editRuleForm');
+                if (form.checkValidity()) {
+                    const targets = Array.from(form.querySelectorAll('input[type="checkbox"]:checked')).map(cb => cb.value);
+                    if (targets.length === 0) {
+                        showNotification('최소 하나의 알림 방법을 선택해주세요', 'warning');
+                        return;
+                    }
+                    
+                    const ruleIndex = notificationSettings.rules.findIndex(r => r.id === ruleId);
+                    notificationSettings.rules[ruleIndex] = {
+                        ...rule,
+                        name: document.getElementById('editRuleName').value,
+                        conditions: {
+                            severity: document.getElementById('editRuleSeverity').value,
+                            source: document.getElementById('editRuleSource').value,
+                            keywords: document.getElementById('editRuleKeywords').value.split(',').map(k => k.trim()).filter(k => k)
+                        },
+                        targets: targets,
+                        delay: parseInt(document.getElementById('editRuleDelay').value)
+                    };
+                    
+                    populateRules();
+                    closeModal();
+                    showNotification('규칙이 수정되었습니다', 'success');
+                } else {
+                    showNotification('모든 필수 필드를 입력해주세요', 'warning');
+                }
+            });
+        }
+
+        function deleteRule(ruleId) {
+            showConfirmModal(
+                '규칙 삭제',
+                '정말로 이 규칙을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+                () => {
+                    notificationSettings.rules = notificationSettings.rules.filter(r => r.id !== ruleId);
+                    populateRules();
+                    showNotification('규칙이 삭제되었습니다', 'success');
+                }
+            );
+        }
+
+        function addNewTemplate() {
+            showModal('템플릿 추가', `
+                <form id="templateForm">
+                    <div class="form-group">
+                        <label class="form-label">템플릿 이름</label>
+                        <input type="text" class="form-input" id="templateName" placeholder="예: 위험 알림 템플릿" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">제목 템플릿</label>
+                        <input type="text" class="form-input" id="templateSubject" placeholder="예: [CRITICAL] {{title}}" required>
+                        <small style="color: #666; font-size: 12px;">사용 가능한 변수: {{title}}, {{severity}}, {{source}}, {{timestamp}}</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">내용 템플릿</label>
+                        <textarea class="form-textarea" id="templateBody" placeholder="예: 긴급 알림이 발생했습니다.\n\n제목: {{title}}\n내용: {{description}}\n시간: {{timestamp}}" rows="8" required></textarea>
+                        <small style="color: #666; font-size: 12px;">사용 가능한 변수: {{title}}, {{description}}, {{severity}}, {{source}}, {{timestamp}}</small>
+                    </div>
+                </form>
+            `, () => {
+                const form = document.getElementById('templateForm');
+                if (form.checkValidity()) {
+                    const newTemplate = {
+                        id: `template-${Date.now()}`,
+                        name: document.getElementById('templateName').value,
+                        subject: document.getElementById('templateSubject').value,
+                        body: document.getElementById('templateBody').value
+                    };
+                    
+                    notificationSettings.templates.push(newTemplate);
+                    populateTemplates();
+                    closeModal();
+                    showNotification('새 템플릿이 추가되었습니다', 'success');
+                } else {
+                    showNotification('모든 필드를 입력해주세요', 'warning');
+                }
+            });
+        }
+
+        function editTemplate(templateId) {
+            const template = notificationSettings.templates.find(t => t.id === templateId);
+            if (!template) return;
+            
+            showModal('템플릿 편집', `
+                <form id="editTemplateForm">
+                    <div class="form-group">
+                        <label class="form-label">템플릿 이름</label>
+                        <input type="text" class="form-input" id="editTemplateName" value="${template.name}" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">제목 템플릿</label>
+                        <input type="text" class="form-input" id="editTemplateSubject" value="${template.subject}" required>
+                        <small style="color: #666; font-size: 12px;">사용 가능한 변수: {{title}}, {{severity}}, {{source}}, {{timestamp}}</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">내용 템플릿</label>
+                        <textarea class="form-textarea" id="editTemplateBody" rows="8" required>${template.body}</textarea>
+                        <small style="color: #666; font-size: 12px;">사용 가능한 변수: {{title}}, {{description}}, {{severity}}, {{source}}, {{timestamp}}</small>
+                    </div>
+                </form>
+            `, () => {
+                const form = document.getElementById('editTemplateForm');
+                if (form.checkValidity()) {
+                    const templateIndex = notificationSettings.templates.findIndex(t => t.id === templateId);
+                    notificationSettings.templates[templateIndex] = {
+                        ...template,
+                        name: document.getElementById('editTemplateName').value,
+                        subject: document.getElementById('editTemplateSubject').value,
+                        body: document.getElementById('editTemplateBody').value
+                    };
+                    
+                    populateTemplates();
+                    closeModal();
+                    showNotification('템플릿이 수정되었습니다', 'success');
+                } else {
+                    showNotification('모든 필드를 입력해주세요', 'warning');
+                }
+            });
+        }
+
+        function deleteTemplate(templateId) {
+            showConfirmModal(
+                '템플릿 삭제',
+                '정말로 이 템플릿을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+                () => {
+                    notificationSettings.templates = notificationSettings.templates.filter(t => t.id !== templateId);
+                    populateTemplates();
+                    showNotification('템플릿이 삭제되었습니다', 'success');
+                }
+            );
+        }
+
+        function addEscalationRule() {
+            showModal('에스컬레이션 규칙 추가', `
+                <form id="escalationForm">
+                    <div class="form-group">
+                        <label class="form-label">규칙 이름</label>
+                        <input type="text" class="form-input" id="escalationName" placeholder="예: 위험 알림 즉시 에스컬레이션" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">에스컬레이션 조건</label>
+                            <select class="form-select" id="escalationCondition" required>
+                                <option value="severity">심각도 기준</option>
+                                <option value="duration">미해결 시간 기준</option>
+                                <option value="frequency">발생 빈도 기준</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">임계값</label>
+                            <input type="text" class="form-input" id="escalationThreshold" placeholder="예: critical, 30분, 5회" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">에스컬레이션 대상 (쉼표로 구분)</label>
+                        <input type="text" class="form-input" id="escalationTargets" placeholder="예: admin@company.com, 010-1234-5678, #critical-alerts" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">에스컬레이션 메시지</label>
+                        <textarea class="form-textarea" id="escalationMessage" placeholder="에스컬레이션 시 전송할 메시지를 입력하세요" rows="4" required></textarea>
+                    </div>
+                </form>
+            `, () => {
+                const form = document.getElementById('escalationForm');
+                if (form.checkValidity()) {
+                    showNotification('에스컬레이션 규칙이 추가되었습니다', 'success');
+                    closeModal();
+                } else {
+                    showNotification('모든 필드를 입력해주세요', 'warning');
+                }
+            });
+        }
+        
+        function editEscalationRule(ruleId) {
+            showNotification(`에스컬레이션 규칙 ${ruleId} 편집 기능을 준비 중입니다`, 'info');
+        }
+        
+        function deleteEscalationRule(ruleId) {
+            showConfirmModal(
+                '에스컬레이션 규칙 삭제',
+                '정말로 이 에스컬레이션 규칙을 삭제하시겠습니까?',
+                () => {
+                    showNotification('에스컬레이션 규칙이 삭제되었습니다', 'success');
+                }
+            );
+        }
+
+        // Save all settings
+        function saveAllSettings() {
+            showNotification('설정을 저장하고 있습니다...', 'info');
+            
+            // Collect form data
+            const formData = {
+                smtp: {
+                    host: document.getElementById('smtpHost').value,
+                    port: document.getElementById('smtpPort').value,
+                    username: document.getElementById('smtpUsername').value,
+                    fromName: document.getElementById('smtpFromName').value
+                },
+                korea: {
+                    provider: document.getElementById('koreaProvider').value,
+                    from: document.getElementById('koreaFrom').value
+                }
+                // Add other providers...
+            };
+
+            setTimeout(() => {
+                showNotification('모든 설정이 성공적으로 저장되었습니다!', 'success');
+            }, 1500);
+        }
+
+        function goBack() {
+            window.location.href = '/alert-management';
+        }
+
+        // Utility notification function
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            const colors = {
+                success: '#10b981',
+                error: '#ef4444',
+                warning: '#f59e0b',
+                info: '#3b82f6'
+            };
+
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${colors[type] || colors.info};
+                color: white;
+                padding: 15px 25px;
+                border-radius: 12px;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+                z-index: 10001;
+                font-size: 14px;
+                font-weight: 600;
+                max-width: 400px;
+                animation: slideInRight 0.3s ease;
+            `;
+
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideInRight 0.3s ease reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        // Add CSS for notification animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            populateRules();
+            populateTemplates();
+        });
+    </script>
+</body>
+</html>

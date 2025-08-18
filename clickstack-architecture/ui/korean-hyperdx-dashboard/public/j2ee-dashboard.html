@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIRIS-MON | J2EE 모니터링 대시보드</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Noto Sans KR', sans-serif; }
+    .korean-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .j2ee-gradient { background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); }
+    .status-good { color: #10b981; }
+    .status-warning { color: #f59e0b; }
+    .status-error { color: #ef4444; }
+    .card { 
+      background: white; 
+      border-radius: 8px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .j2ee-card {
+      background: linear-gradient(145deg, #fff7ed, #fed7aa);
+      border-left: 4px solid #f97316;
+    }
+    .servlet-card {
+      background: linear-gradient(145deg, #ecfdf5, #bbf7d0);
+      border-left: 4px solid #10b981;
+    }
+    .jsp-card {
+      background: linear-gradient(145deg, #fef3c7, #fde68a);
+      border-left: 4px solid #f59e0b;
+    }
+    .ejb-card {
+      background: linear-gradient(145deg, #fce7f3, #fbcfe8);
+      border-left: 4px solid #ec4899;
+    }
+    .pulse-dot {
+      animation: pulse 2s infinite;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    .coffee-icon { color: #8B4513; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <!-- Header -->
+  <header class="j2ee-gradient shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-6">
+        <div class="flex items-center">
+          <h1 class="text-3xl font-bold text-white">☕ J2EE 모니터링</h1>
+          <span class="ml-4 bg-white bg-opacity-20 text-white px-3 py-1 rounded-full text-sm">
+            AIRIS-APM Enterprise
+          </span>
+        </div>
+        <div class="flex items-center space-x-4 text-white">
+          <nav class="flex space-x-2">
+            <a href="/" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              📊 통합대시보드
+            </a>
+            <a href="/j2ee-dashboard.html" class="bg-white bg-opacity-30 px-3 py-1 rounded text-sm">
+              ☕ J2EE 모니터링
+            </a>
+            <a href="/was-dashboard.html" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              🏗️ WAS 모니터링
+            </a>
+            <a href="/exception-dashboard.html" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              🚨 예외추적
+            </a>
+            <a href="/topology-dashboard.html" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              🗺️ 서비스맵
+            </a>
+            <a href="/alert-dashboard.html" class="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition text-sm">
+              🔔 알림관리
+            </a>
+          </nav>
+          <span class="pulse-dot"></span>
+          <span id="current-time" class="text-sm opacity-90"></span>
+          <span class="bg-green-500 px-3 py-1 rounded-full text-xs font-semibold">
+            ✅ 정상
+          </span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    
+    <!-- J2EE Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="card j2ee-card">
+        <h3 class="text-lg font-semibold text-orange-800 mb-2">☕ J2EE 상태</h3>
+        <p id="j2ee-status" class="text-2xl font-bold status-good">✅ 정상</p>
+        <p class="text-sm text-orange-700">모든 컴포넌트 활성화</p>
+      </div>
+      <div class="card servlet-card">
+        <h3 class="text-lg font-semibold text-green-800 mb-2">🌐 Servlet</h3>
+        <p id="servlet-count" class="text-2xl font-bold text-green-600">42</p>
+        <p class="text-sm text-green-700">활성 서블릿 개수</p>
+      </div>
+      <div class="card jsp-card">
+        <h3 class="text-lg font-semibold text-yellow-800 mb-2">📄 JSP</h3>
+        <p id="jsp-count" class="text-2xl font-bold text-yellow-600">28</p>
+        <p class="text-sm text-yellow-700">활성 JSP 페이지</p>
+      </div>
+      <div class="card ejb-card">
+        <h3 class="text-lg font-semibold text-pink-800 mb-2">🏢 EJB</h3>
+        <p id="ejb-count" class="text-2xl font-bold text-pink-600">15</p>
+        <p class="text-sm text-pink-700">활성 EJB 빈</p>
+      </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="card">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">📊 Servlet 성능 현황</h3>
+        <canvas id="servletChart" width="400" height="200"></canvas>
+      </div>
+      <div class="card">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">📈 JSP 응답시간 추세</h3>
+        <canvas id="jspChart" width="400" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Active Components Table -->
+    <div class="card">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">🔍 활성 J2EE 컴포넌트</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">컴포넌트</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">이름</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">상태</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">응답시간</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">요청수</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">에러율</th>
+            </tr>
+          </thead>
+          <tbody id="j2ee-components" class="bg-white divide-y divide-gray-200">
+            <!-- Components will be loaded here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EJB Details -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
+      <div class="card">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">🎯 Session Bean</h3>
+        <div id="session-beans" class="space-y-2">
+          <!-- Session beans will be loaded here -->
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">📊 Entity Bean</h3>
+        <div id="entity-beans" class="space-y-2">
+          <!-- Entity beans will be loaded here -->
+        </div>
+      </div>
+      <div class="card">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">✉️ Message Bean</h3>
+        <div id="message-beans" class="space-y-2">
+          <!-- Message beans will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Transaction Monitoring -->
+    <div class="card mt-8">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">🔄 트랜잭션 모니터링</h3>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="text-center p-4 bg-blue-50 rounded-lg">
+          <h4 class="text-lg font-semibold text-blue-800">활성 트랜잭션</h4>
+          <p id="active-tx" class="text-2xl font-bold text-blue-600">23</p>
+        </div>
+        <div class="text-center p-4 bg-green-50 rounded-lg">
+          <h4 class="text-lg font-semibold text-green-800">완료된 트랜잭션</h4>
+          <p id="completed-tx" class="text-2xl font-bold text-green-600">1,247</p>
+        </div>
+        <div class="text-center p-4 bg-red-50 rounded-lg">
+          <h4 class="text-lg font-semibold text-red-800">실패한 트랜잭션</h4>
+          <p id="failed-tx" class="text-2xl font-bold text-red-600">12</p>
+        </div>
+        <div class="text-center p-4 bg-yellow-50 rounded-lg">
+          <h4 class="text-lg font-semibold text-yellow-800">평균 처리시간</h4>
+          <p id="avg-tx-time" class="text-2xl font-bold text-yellow-600">1.2s</p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script>
+    // Initialize charts and data loading
+    let servletChart, jspChart;
+    
+    // Mock J2EE data
+    const j2eeData = {
+      components: [
+        { type: 'Servlet', name: 'LoginServlet', status: '정상', responseTime: '45ms', requests: 1247, errorRate: '0.1%' },
+        { type: 'Servlet', name: 'UserServlet', status: '정상', responseTime: '38ms', requests: 892, errorRate: '0.0%' },
+        { type: 'JSP', name: 'dashboard.jsp', status: '정상', responseTime: '120ms', requests: 634, errorRate: '0.2%' },
+        { type: 'JSP', name: 'login.jsp', status: '정상', responseTime: '89ms', requests: 445, errorRate: '0.0%' },
+        { type: 'EJB', name: 'UserSessionBean', status: '정상', responseTime: '67ms', requests: 234, errorRate: '0.1%' },
+        { type: 'EJB', name: 'OrderEntityBean', status: '경고', responseTime: '156ms', requests: 156, errorRate: '1.2%' }
+      ],
+      sessionBeans: ['UserSessionBean', 'OrderSessionBean', 'CartSessionBean'],
+      entityBeans: ['UserEntityBean', 'OrderEntityBean', 'ProductEntityBean'],
+      messageBeans: ['NotificationMDB', 'EmailMDB', 'LogMDB']
+    };
+
+    function initCharts() {
+      // Servlet Performance Chart
+      const servletCtx = document.getElementById('servletChart').getContext('2d');
+      servletChart = new Chart(servletCtx, {
+        type: 'line',
+        data: {
+          labels: ['10:00', '10:05', '10:10', '10:15', '10:20', '10:25', '10:30'],
+          datasets: [{
+            label: '응답시간 (ms)',
+            data: [45, 38, 52, 41, 44, 39, 42],
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: '응답시간 (ms)' }
+            }
+          }
+        }
+      });
+
+      // JSP Response Time Chart
+      const jspCtx = document.getElementById('jspChart').getContext('2d');
+      jspChart = new Chart(jspCtx, {
+        type: 'bar',
+        data: {
+          labels: ['login.jsp', 'dashboard.jsp', 'profile.jsp', 'settings.jsp'],
+          datasets: [{
+            label: '평균 응답시간 (ms)',
+            data: [89, 120, 95, 102],
+            backgroundColor: ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: '응답시간 (ms)' }
+            }
+          }
+        }
+      });
+    }
+
+    function loadJ2EEComponents() {
+      const tbody = document.getElementById('j2ee-components');
+      tbody.innerHTML = j2eeData.components.map(comp => `
+        <tr>
+          <td class="px-6 py-4 text-sm font-medium text-gray-900">${comp.type}</td>
+          <td class="px-6 py-4 text-sm text-gray-900">${comp.name}</td>
+          <td class="px-6 py-4">
+            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${comp.status === '정상' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+              ${comp.status}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-sm text-gray-900">${comp.responseTime}</td>
+          <td class="px-6 py-4 text-sm text-gray-900">${comp.requests.toLocaleString()}</td>
+          <td class="px-6 py-4 text-sm text-gray-900">${comp.errorRate}</td>
+        </tr>
+      `).join('');
+    }
+
+    function loadEJBBeans() {
+      // Session Beans
+      document.getElementById('session-beans').innerHTML = j2eeData.sessionBeans.map(bean => 
+        `<div class="flex justify-between items-center p-2 bg-blue-50 rounded">
+          <span class="text-sm">${bean}</span>
+          <span class="text-xs bg-blue-500 text-white px-2 py-1 rounded">활성</span>
+        </div>`
+      ).join('');
+
+      // Entity Beans
+      document.getElementById('entity-beans').innerHTML = j2eeData.entityBeans.map(bean => 
+        `<div class="flex justify-between items-center p-2 bg-green-50 rounded">
+          <span class="text-sm">${bean}</span>
+          <span class="text-xs bg-green-500 text-white px-2 py-1 rounded">활성</span>
+        </div>`
+      ).join('');
+
+      // Message Beans
+      document.getElementById('message-beans').innerHTML = j2eeData.messageBeans.map(bean => 
+        `<div class="flex justify-between items-center p-2 bg-purple-50 rounded">
+          <span class="text-sm">${bean}</span>
+          <span class="text-xs bg-purple-500 text-white px-2 py-1 rounded">대기</span>
+        </div>`
+      ).join('');
+    }
+
+    function updateTime() {
+      const now = new Date();
+      document.getElementById('current-time').textContent = now.toLocaleString('ko-KR');
+    }
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+      initCharts();
+      loadJ2EEComponents();
+      loadEJBBeans();
+      updateTime();
+      setInterval(updateTime, 1000);
+      
+      // Simulate real-time updates
+      setInterval(() => {
+        // Update metrics with small random variations
+        document.getElementById('servlet-count').textContent = 42 + Math.floor(Math.random() * 10);
+        document.getElementById('jsp-count').textContent = 28 + Math.floor(Math.random() * 5);
+        document.getElementById('ejb-count').textContent = 15 + Math.floor(Math.random() * 3);
+        
+        // Update transaction counts
+        document.getElementById('active-tx').textContent = 20 + Math.floor(Math.random() * 10);
+        document.getElementById('completed-tx').textContent = (1247 + Math.floor(Math.random() * 100)).toLocaleString();
+        document.getElementById('failed-tx').textContent = 12 + Math.floor(Math.random() * 5);
+        document.getElementById('avg-tx-time').textContent = (1.0 + Math.random() * 0.5).toFixed(1) + 's';
+      }, 5000);
+    });
+  </script>
+
+</body>
+</html>

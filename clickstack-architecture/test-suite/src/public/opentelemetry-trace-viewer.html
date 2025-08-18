@@ -1,0 +1,1509 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenTelemetry 추적 뷰어 | AIRIS-MON</title>
+    <script src="/components/common-layout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --white: #ffffff;
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --border-radius: 8px;
+        }
+
+        .trace-header {
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            padding: var(--spacing-lg) 0;
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--spacing-md);
+        }
+
+        .header-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: 10px 16px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-300);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: var(--white);
+        }
+
+        .btn-danger {
+            background: var(--error);
+            color: var(--white);
+        }
+
+        .filter-panel {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .filter-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .filter-label {
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .form-input {
+            padding: 10px 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-select {
+            padding: 10px 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            background-color: var(--white);
+        }
+
+        .filter-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: var(--spacing-xs);
+            margin-top: var(--spacing-sm);
+        }
+
+        .filter-tag {
+            background: var(--primary);
+            color: var(--white);
+            padding: 4px 8px;
+            border-radius: 16px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .filter-tag-remove {
+            background: none;
+            border: none;
+            color: var(--white);
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .metrics-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .metric-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: var(--spacing-lg);
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .metric-change {
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .metric-change.positive { color: var(--success); }
+        .metric-change.negative { color: var(--error); }
+
+        .traces-container {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .traces-header {
+            padding: var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .traces-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .traces-controls {
+            display: flex;
+            gap: var(--spacing-sm);
+            align-items: center;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .traces-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .traces-table th,
+        .traces-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .traces-table th {
+            background: var(--gray-50);
+            font-weight: 600;
+            color: var(--gray-700);
+            position: sticky;
+            top: 0;
+        }
+
+        .traces-table tr:hover {
+            background: var(--gray-50);
+        }
+
+        .trace-id {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            color: var(--primary);
+            cursor: pointer;
+        }
+
+        .trace-id:hover {
+            text-decoration: underline;
+        }
+
+        .service-name {
+            font-weight: 500;
+            color: var(--gray-900);
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-error {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .status-warning {
+            background: #fefce8;
+            color: #ca8a04;
+        }
+
+        .duration-bar {
+            height: 20px;
+            background: var(--gray-100);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            min-width: 100px;
+        }
+
+        .duration-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--warning), var(--error));
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .duration-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--gray-700);
+        }
+
+        .anomaly-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 6px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .anomaly-high {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .anomaly-medium {
+            background: #fefce8;
+            color: #ca8a04;
+        }
+
+        .anomaly-low {
+            background: #f0fdf4;
+            color: #166534;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--gray-200);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: var(--border-radius);
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: var(--primary);
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: var(--success);
+        }
+
+        .alert-warning {
+            background: #fffbeb;
+            border: 1px solid #fed7aa;
+            color: var(--warning);
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: var(--error);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            padding: var(--spacing-lg);
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .pagination-info {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: var(--spacing-xs);
+        }
+
+        .page-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--gray-200);
+            background: var(--white);
+            color: var(--gray-700);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .page-btn:hover {
+            background: var(--gray-50);
+        }
+
+        .page-btn.active {
+            background: var(--primary);
+            color: var(--white);
+            border-color: var(--primary);
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .realtime-indicator {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            font-size: 0.875rem;
+        }
+
+        .realtime-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .chart-container {
+            height: 200px;
+            margin: var(--spacing-lg) 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--spacing-xl) * 2;
+            color: var(--gray-500);
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .saved-filters {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+            flex-wrap: wrap;
+        }
+
+        .saved-filter {
+            padding: 6px 12px;
+            background: var(--gray-100);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+
+        .saved-filter:hover {
+            background: var(--gray-200);
+        }
+
+        .saved-filter.active {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        @media (max-width: 1024px) {
+            .filter-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+            
+            .metrics-panel {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-panel {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .table-container {
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="airis-content-wrapper">
+        <!-- 헤더 -->
+        <div class="trace-header">
+            <div class="header-content">
+                <h1 class="header-title">
+                    🔍 OpenTelemetry 추적 뷰어
+                </h1>
+                <div class="header-actions">
+                    <div class="realtime-indicator">
+                        <div class="realtime-dot"></div>
+                        <span>실시간 모니터링</span>
+                    </div>
+                    <button class="btn btn-secondary" onclick="exportTraces()">📥 내보내기</button>
+                    <button class="btn btn-primary" onclick="refreshTraces()">🔄 새로고침</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 알림 영역 -->
+        <div id="alertContainer"></div>
+
+        <!-- 저장된 필터 -->
+        <div class="saved-filters" id="savedFilters">
+            <div class="saved-filter active" onclick="applySavedFilter('all')">
+                📊 전체 추적
+            </div>
+            <div class="saved-filter" onclick="applySavedFilter('errors')">
+                ❌ 오류 추적
+            </div>
+            <div class="saved-filter" onclick="applySavedFilter('slow')">
+                🐌 느린 요청
+            </div>
+            <div class="saved-filter" onclick="applySavedFilter('recent')">
+                ⏰ 최근 1시간
+            </div>
+        </div>
+
+        <!-- 필터 패널 -->
+        <div class="filter-panel">
+            <div class="filter-header">
+                <h2 class="filter-title">고급 필터링</h2>
+                <div>
+                    <button class="btn btn-secondary" onclick="clearFilters()">초기화</button>
+                    <button class="btn btn-primary" onclick="saveCurrentFilter()">필터 저장</button>
+                </div>
+            </div>
+            
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label class="filter-label">서비스 이름</label>
+                    <input type="text" class="form-input" id="serviceFilter" 
+                           placeholder="서비스명 검색 (정규식 지원)" 
+                           oninput="applyFilters()">
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">작업 유형</label>
+                    <select class="form-select" id="operationFilter" onchange="applyFilters()">
+                        <option value="">모든 작업</option>
+                        <option value="http">HTTP 요청</option>
+                        <option value="database">데이터베이스</option>
+                        <option value="cache">캐시</option>
+                        <option value="queue">메시지 큐</option>
+                        <option value="external">외부 API</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">상태 코드</label>
+                    <select class="form-select" id="statusFilter" onchange="applyFilters()">
+                        <option value="">모든 상태</option>
+                        <option value="success">성공 (2xx)</option>
+                        <option value="error">오류 (4xx, 5xx)</option>
+                        <option value="timeout">타임아웃</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">지연 시간 범위</label>
+                    <select class="form-select" id="durationFilter" onchange="applyFilters()">
+                        <option value="">모든 범위</option>
+                        <option value="fast">빠름 (< 100ms)</option>
+                        <option value="normal">보통 (100ms - 1s)</option>
+                        <option value="slow">느림 (1s - 10s)</option>
+                        <option value="very-slow">매우 느림 (> 10s)</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">시간 범위</label>
+                    <select class="form-select" id="timeRangeFilter" onchange="applyFilters()">
+                        <option value="1h">최근 1시간</option>
+                        <option value="6h">최근 6시간</option>
+                        <option value="24h">최근 24시간</option>
+                        <option value="7d">최근 7일</option>
+                        <option value="custom">사용자 정의</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">이상 징후</label>
+                    <select class="form-select" id="anomalyFilter" onchange="applyFilters()">
+                        <option value="">모든 추적</option>
+                        <option value="high">높음 위험</option>
+                        <option value="medium">중간 위험</option>
+                        <option value="low">낮은 위험</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-tags" id="activeFilters"></div>
+        </div>
+
+        <!-- 메트릭 패널 -->
+        <div class="metrics-panel">
+            <div class="metric-card">
+                <div class="metric-value" style="color: var(--primary);" id="totalTraces">0</div>
+                <div class="metric-label">총 추적</div>
+                <div class="metric-change positive" id="tracesChange">+0%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" style="color: var(--success);" id="avgLatency">0ms</div>
+                <div class="metric-label">평균 지연시간</div>
+                <div class="metric-change" id="latencyChange">+0%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" style="color: var(--error);" id="errorRate">0%</div>
+                <div class="metric-label">오류율</div>
+                <div class="metric-change" id="errorRateChange">+0%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" style="color: var(--warning);" id="anomalies">0</div>
+                <div class="metric-label">이상 징후</div>
+                <div class="metric-change" id="anomaliesChange">+0%</div>
+            </div>
+        </div>
+
+        <!-- 추적 테이블 -->
+        <div class="traces-container">
+            <div class="traces-header">
+                <h2 class="traces-title">추적 목록</h2>
+                <div class="traces-controls">
+                    <select class="form-select" id="sortBy" onchange="sortTraces()">
+                        <option value="timestamp">시간순</option>
+                        <option value="duration">지연시간순</option>
+                        <option value="service">서비스순</option>
+                        <option value="status">상태순</option>
+                    </select>
+                    <select class="form-select" id="pageSize" onchange="changePageSize()">
+                        <option value="25">25개씩</option>
+                        <option value="50">50개씩</option>
+                        <option value="100">100개씩</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table class="traces-table">
+                    <thead>
+                        <tr>
+                            <th>추적 ID</th>
+                            <th>서비스</th>
+                            <th>작업</th>
+                            <th>상태</th>
+                            <th>지연시간</th>
+                            <th>스팬 수</th>
+                            <th>시작 시간</th>
+                            <th>이상 징후</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tracesTableBody">
+                        <!-- 추적 데이터가 여기에 동적으로 삽입됩니다 -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="pagination">
+                <div class="pagination-info" id="paginationInfo">
+                    1-25 / 총 0개 추적
+                </div>
+                <div class="pagination-controls" id="paginationControls">
+                    <button class="page-btn" id="prevBtn" onclick="prevPage()" disabled>이전</button>
+                    <button class="page-btn" id="nextBtn" onclick="nextPage()" disabled>다음</button>
+                </div>
+            </div>
+
+            <!-- 로딩 오버레이 -->
+            <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+                <div class="spinner"></div>
+            </div>
+
+            <!-- 빈 상태 -->
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="empty-state-icon">📊</div>
+                <h3>추적 데이터가 없습니다</h3>
+                <p>필터 조건을 조정하거나 새로운 추적이 생성될 때까지 기다려주세요.</p>
+            </div>
+        </div>
+
+        <!-- 성능 차트 -->
+        <div class="chart-container">
+            <canvas id="performanceChart" width="800" height="200"></canvas>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let allTraces = [];
+        let filteredTraces = [];
+        let currentPage = 1;
+        let pageSize = 25;
+        let performanceChart = null;
+        let anomalyDetector = null;
+        let realtimeUpdateInterval = null;
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeTraceViewer();
+            loadInitialData();
+            startRealtimeUpdates();
+            initializeAnomalyDetection();
+        });
+
+        // 추적 뷰어 초기화
+        function initializeTraceViewer() {
+            console.log('OpenTelemetry 추적 뷰어 초기화 중...');
+            
+            // 성능 차트 초기화
+            initializePerformanceChart();
+            
+            // 키보드 단축키 설정
+            setupKeyboardShortcuts();
+            
+            // 이벤트 리스너 설정
+            setupEventListeners();
+        }
+
+        // 초기 데이터 로드
+        async function loadInitialData() {
+            showLoading(true);
+            
+            try {
+                await loadTraces();
+                applyFilters();
+                updateMetrics();
+                showAlert('추적 데이터가 로드되었습니다.', 'success');
+            } catch (error) {
+                console.error('초기 데이터 로드 실패:', error);
+                showAlert('데이터 로드에 실패했습니다. 샘플 데이터를 생성합니다.', 'warning');
+                generateSampleData();
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // 추적 데이터 로드
+        async function loadTraces() {
+            try {
+                const response = await fetch('/api/opentelemetry/traces/list');
+                const data = await response.json();
+                
+                if (data.success) {
+                    allTraces = data.traces;
+                } else {
+                    throw new Error(data.error || '추적 데이터를 가져올 수 없습니다');
+                }
+            } catch (error) {
+                console.error('추적 로드 오류:', error);
+                generateSampleData();
+            }
+        }
+
+        // 샘플 데이터 생성
+        function generateSampleData() {
+            const services = ['user-service', 'order-service', 'payment-service', 'inventory-service', 'notification-service'];
+            const operations = ['GET /users', 'POST /orders', 'PUT /payment', 'GET /inventory', 'POST /notify'];
+            const statuses = ['success', 'error', 'timeout'];
+            
+            allTraces = [];
+            
+            for (let i = 0; i < 150; i++) {
+                const service = services[Math.floor(Math.random() * services.length)];
+                const operation = operations[Math.floor(Math.random() * operations.length)];
+                const status = statuses[Math.floor(Math.random() * statuses.length)];
+                const duration = Math.floor(Math.random() * 5000) + 50;
+                const spanCount = Math.floor(Math.random() * 15) + 3;
+                const timestamp = new Date(Date.now() - Math.random() * 86400000);
+                
+                // 이상 징후 점수 계산 (시뮬레이션)
+                let anomalyScore = 0;
+                if (duration > 2000) anomalyScore += 0.3;
+                if (status === 'error') anomalyScore += 0.5;
+                if (spanCount > 10) anomalyScore += 0.2;
+                anomalyScore += Math.random() * 0.3;
+                
+                let anomalyLevel = 'low';
+                if (anomalyScore > 0.7) anomalyLevel = 'high';
+                else if (anomalyScore > 0.4) anomalyLevel = 'medium';
+                
+                const trace = {
+                    traceId: `trace_${i.toString().padStart(6, '0')}_${Date.now()}`,
+                    service: service,
+                    operation: operation,
+                    status: status,
+                    duration: duration,
+                    spanCount: spanCount,
+                    timestamp: timestamp.toISOString(),
+                    anomalyScore: anomalyScore,
+                    anomalyLevel: anomalyLevel,
+                    tags: {
+                        environment: Math.random() > 0.5 ? 'production' : 'staging',
+                        region: ['us-east-1', 'eu-west-1', 'ap-northeast-1'][Math.floor(Math.random() * 3)],
+                        version: ['v1.2.3', 'v1.2.4', 'v1.3.0'][Math.floor(Math.random() * 3)]
+                    }
+                };
+                
+                allTraces.push(trace);
+            }
+            
+            // 시간순 정렬
+            allTraces.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        }
+
+        // 필터 적용
+        function applyFilters() {
+            const serviceFilter = document.getElementById('serviceFilter').value.toLowerCase();
+            const operationFilter = document.getElementById('operationFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const durationFilter = document.getElementById('durationFilter').value;
+            const timeRangeFilter = document.getElementById('timeRangeFilter').value;
+            const anomalyFilter = document.getElementById('anomalyFilter').value;
+            
+            filteredTraces = allTraces.filter(trace => {
+                // 서비스 이름 필터
+                if (serviceFilter && !trace.service.toLowerCase().includes(serviceFilter)) {
+                    return false;
+                }
+                
+                // 작업 유형 필터
+                if (operationFilter) {
+                    switch (operationFilter) {
+                        case 'http':
+                            if (!trace.operation.includes('GET') && !trace.operation.includes('POST') && 
+                                !trace.operation.includes('PUT') && !trace.operation.includes('DELETE')) {
+                                return false;
+                            }
+                            break;
+                        case 'database':
+                            if (!trace.operation.toLowerCase().includes('db') && 
+                                !trace.operation.toLowerCase().includes('query')) {
+                                return false;
+                            }
+                            break;
+                        // 추가 필터 로직...
+                    }
+                }
+                
+                // 상태 필터
+                if (statusFilter) {
+                    switch (statusFilter) {
+                        case 'success':
+                            if (trace.status !== 'success') return false;
+                            break;
+                        case 'error':
+                            if (trace.status !== 'error') return false;
+                            break;
+                        case 'timeout':
+                            if (trace.status !== 'timeout') return false;
+                            break;
+                    }
+                }
+                
+                // 지연시간 필터
+                if (durationFilter) {
+                    switch (durationFilter) {
+                        case 'fast':
+                            if (trace.duration >= 100) return false;
+                            break;
+                        case 'normal':
+                            if (trace.duration < 100 || trace.duration >= 1000) return false;
+                            break;
+                        case 'slow':
+                            if (trace.duration < 1000 || trace.duration >= 10000) return false;
+                            break;
+                        case 'very-slow':
+                            if (trace.duration < 10000) return false;
+                            break;
+                    }
+                }
+                
+                // 시간 범위 필터
+                if (timeRangeFilter && timeRangeFilter !== 'custom') {
+                    const now = new Date();
+                    const traceTime = new Date(trace.timestamp);
+                    const timeDiff = now - traceTime;
+                    
+                    switch (timeRangeFilter) {
+                        case '1h':
+                            if (timeDiff > 60 * 60 * 1000) return false;
+                            break;
+                        case '6h':
+                            if (timeDiff > 6 * 60 * 60 * 1000) return false;
+                            break;
+                        case '24h':
+                            if (timeDiff > 24 * 60 * 60 * 1000) return false;
+                            break;
+                        case '7d':
+                            if (timeDiff > 7 * 24 * 60 * 60 * 1000) return false;
+                            break;
+                    }
+                }
+                
+                // 이상 징후 필터
+                if (anomalyFilter && trace.anomalyLevel !== anomalyFilter) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            currentPage = 1;
+            updateTracesTable();
+            updateActiveFilters();
+            updateMetrics();
+        }
+
+        // 추적 테이블 업데이트
+        function updateTracesTable() {
+            const tbody = document.getElementById('tracesTableBody');
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = startIndex + pageSize;
+            const pageTraces = filteredTraces.slice(startIndex, endIndex);
+            
+            if (pageTraces.length === 0) {
+                tbody.innerHTML = '';
+                showEmptyState(true);
+                updatePagination();
+                return;
+            }
+            
+            showEmptyState(false);
+            
+            tbody.innerHTML = pageTraces.map(trace => `
+                <tr onclick="viewTraceDetails('${trace.traceId}')" style="cursor: pointer;">
+                    <td>
+                        <span class="trace-id">${trace.traceId.substring(0, 8)}...</span>
+                    </td>
+                    <td>
+                        <span class="service-name">${trace.service}</span>
+                    </td>
+                    <td>${trace.operation}</td>
+                    <td>
+                        <span class="status-badge status-${trace.status}">${trace.status.toUpperCase()}</span>
+                    </td>
+                    <td>
+                        <div class="duration-bar">
+                            <div class="duration-fill" style="width: ${Math.min(trace.duration / 50, 100)}%"></div>
+                            <div class="duration-text">${trace.duration}ms</div>
+                        </div>
+                    </td>
+                    <td>${trace.spanCount}</td>
+                    <td>${new Date(trace.timestamp).toLocaleString()}</td>
+                    <td>
+                        <span class="anomaly-indicator anomaly-${trace.anomalyLevel}">
+                            ${trace.anomalyLevel === 'high' ? '🔴' : trace.anomalyLevel === 'medium' ? '🟡' : '🟢'}
+                            ${trace.anomalyLevel.toUpperCase()}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-secondary" onclick="event.stopPropagation(); viewTraceDetails('${trace.traceId}')">상세</button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            updatePagination();
+        }
+
+        // 페이지네이션 업데이트
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredTraces.length / pageSize);
+            const startIndex = (currentPage - 1) * pageSize + 1;
+            const endIndex = Math.min(currentPage * pageSize, filteredTraces.length);
+            
+            document.getElementById('paginationInfo').textContent = 
+                `${startIndex}-${endIndex} / 총 ${filteredTraces.length}개 추적`;
+            
+            document.getElementById('prevBtn').disabled = currentPage <= 1;
+            document.getElementById('nextBtn').disabled = currentPage >= totalPages;
+        }
+
+        // 메트릭 업데이트
+        function updateMetrics() {
+            const total = filteredTraces.length;
+            const avgLatency = total > 0 ? 
+                Math.round(filteredTraces.reduce((sum, t) => sum + t.duration, 0) / total) : 0;
+            const errorRate = total > 0 ? 
+                Math.round((filteredTraces.filter(t => t.status === 'error').length / total) * 100) : 0;
+            const anomalies = filteredTraces.filter(t => t.anomalyLevel === 'high' || t.anomalyLevel === 'medium').length;
+            
+            document.getElementById('totalTraces').textContent = total.toLocaleString();
+            document.getElementById('avgLatency').textContent = `${avgLatency}ms`;
+            document.getElementById('errorRate').textContent = `${errorRate}%`;
+            document.getElementById('anomalies').textContent = anomalies.toLocaleString();
+            
+            // 변화율 계산 (시뮬레이션)
+            updateMetricChanges();
+        }
+
+        // 메트릭 변화율 업데이트
+        function updateMetricChanges() {
+            // 실제로는 이전 데이터와 비교하여 계산
+            const changes = [
+                Math.floor(Math.random() * 20) - 10,
+                Math.floor(Math.random() * 20) - 10,
+                Math.floor(Math.random() * 10) - 5,
+                Math.floor(Math.random() * 15) - 7
+            ];
+            
+            const changeElements = ['tracesChange', 'latencyChange', 'errorRateChange', 'anomaliesChange'];
+            
+            changes.forEach((change, index) => {
+                const element = document.getElementById(changeElements[index]);
+                element.textContent = `${change > 0 ? '+' : ''}${change}%`;
+                element.className = `metric-change ${change > 0 ? 'positive' : 'negative'}`;
+            });
+        }
+
+        // 활성 필터 업데이트
+        function updateActiveFilters() {
+            const container = document.getElementById('activeFilters');
+            const filters = [];
+            
+            const serviceFilter = document.getElementById('serviceFilter').value;
+            const operationFilter = document.getElementById('operationFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const durationFilter = document.getElementById('durationFilter').value;
+            const anomalyFilter = document.getElementById('anomalyFilter').value;
+            
+            if (serviceFilter) filters.push({ key: 'service', value: serviceFilter });
+            if (operationFilter) filters.push({ key: 'operation', value: operationFilter });
+            if (statusFilter) filters.push({ key: 'status', value: statusFilter });
+            if (durationFilter) filters.push({ key: 'duration', value: durationFilter });
+            if (anomalyFilter) filters.push({ key: 'anomaly', value: anomalyFilter });
+            
+            container.innerHTML = filters.map(filter => `
+                <div class="filter-tag">
+                    ${filter.key}: ${filter.value}
+                    <button class="filter-tag-remove" onclick="removeFilter('${filter.key}')">&times;</button>
+                </div>
+            `).join('');
+        }
+
+        // 필터 제거
+        function removeFilter(filterKey) {
+            switch (filterKey) {
+                case 'service':
+                    document.getElementById('serviceFilter').value = '';
+                    break;
+                case 'operation':
+                    document.getElementById('operationFilter').value = '';
+                    break;
+                case 'status':
+                    document.getElementById('statusFilter').value = '';
+                    break;
+                case 'duration':
+                    document.getElementById('durationFilter').value = '';
+                    break;
+                case 'anomaly':
+                    document.getElementById('anomalyFilter').value = '';
+                    break;
+            }
+            applyFilters();
+        }
+
+        // 필터 초기화
+        function clearFilters() {
+            document.getElementById('serviceFilter').value = '';
+            document.getElementById('operationFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('durationFilter').value = '';
+            document.getElementById('timeRangeFilter').value = '24h';
+            document.getElementById('anomalyFilter').value = '';
+            applyFilters();
+        }
+
+        // 저장된 필터 적용
+        function applySavedFilter(filterName) {
+            // 모든 저장된 필터에서 active 클래스 제거
+            document.querySelectorAll('.saved-filter').forEach(el => el.classList.remove('active'));
+            
+            // 클릭된 필터에 active 클래스 추가
+            event.target.classList.add('active');
+            
+            clearFilters();
+            
+            switch (filterName) {
+                case 'all':
+                    // 기본 상태
+                    break;
+                case 'errors':
+                    document.getElementById('statusFilter').value = 'error';
+                    break;
+                case 'slow':
+                    document.getElementById('durationFilter').value = 'slow';
+                    break;
+                case 'recent':
+                    document.getElementById('timeRangeFilter').value = '1h';
+                    break;
+            }
+            
+            applyFilters();
+        }
+
+        // 현재 필터 저장
+        function saveCurrentFilter() {
+            const filterName = prompt('필터 이름을 입력하세요:');
+            if (filterName) {
+                // 실제로는 로컬 스토리지나 서버에 저장
+                showAlert(`필터 "${filterName}"이 저장되었습니다.`, 'success');
+            }
+        }
+
+        // 추적 상세 보기
+        function viewTraceDetails(traceId) {
+            window.open(`/trace-detail-analyzer.html?trace=${traceId}`, '_blank');
+        }
+
+        // 페이지 이동
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                updateTracesTable();
+            }
+        }
+
+        function nextPage() {
+            const totalPages = Math.ceil(filteredTraces.length / pageSize);
+            if (currentPage < totalPages) {
+                currentPage++;
+                updateTracesTable();
+            }
+        }
+
+        // 페이지 크기 변경
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('pageSize').value);
+            currentPage = 1;
+            updateTracesTable();
+        }
+
+        // 정렬
+        function sortTraces() {
+            const sortBy = document.getElementById('sortBy').value;
+            
+            filteredTraces.sort((a, b) => {
+                switch (sortBy) {
+                    case 'timestamp':
+                        return new Date(b.timestamp) - new Date(a.timestamp);
+                    case 'duration':
+                        return b.duration - a.duration;
+                    case 'service':
+                        return a.service.localeCompare(b.service);
+                    case 'status':
+                        return a.status.localeCompare(b.status);
+                    default:
+                        return 0;
+                }
+            });
+            
+            updateTracesTable();
+        }
+
+        // 성능 차트 초기화
+        function initializePerformanceChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '평균 응답시간 (ms)',
+                        data: [],
+                        borderColor: 'rgb(37, 99, 235)',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        tension: 0.1
+                    }, {
+                        label: '오류율 (%)',
+                        data: [],
+                        borderColor: 'rgb(239, 68, 68)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.1,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    }
+                }
+            });
+            
+            updatePerformanceChart();
+        }
+
+        // 성능 차트 업데이트
+        function updatePerformanceChart() {
+            // 시간별 데이터 생성 (실제로는 서버에서 가져옴)
+            const now = new Date();
+            const labels = [];
+            const latencyData = [];
+            const errorRateData = [];
+            
+            for (let i = 23; i >= 0; i--) {
+                const time = new Date(now - i * 60 * 60 * 1000);
+                labels.push(time.getHours() + ':00');
+                latencyData.push(Math.floor(Math.random() * 500) + 100);
+                errorRateData.push(Math.floor(Math.random() * 10));
+            }
+            
+            performanceChart.data.labels = labels;
+            performanceChart.data.datasets[0].data = latencyData;
+            performanceChart.data.datasets[1].data = errorRateData;
+            performanceChart.update();
+        }
+
+        // 이상 징후 감지 초기화
+        async function initializeAnomalyDetection() {
+            try {
+                console.log('이상 징후 감지 시스템 초기화 중...');
+                // TensorFlow.js 모델 로드 (시뮬레이션)
+                anomalyDetector = {
+                    predict: function(trace) {
+                        // 실제로는 훈련된 ML 모델 사용
+                        let score = 0;
+                        if (trace.duration > 2000) score += 0.4;
+                        if (trace.status === 'error') score += 0.5;
+                        if (trace.spanCount > 10) score += 0.3;
+                        return Math.min(score + Math.random() * 0.2, 1.0);
+                    }
+                };
+                console.log('이상 징후 감지 시스템 준비 완료');
+            } catch (error) {
+                console.error('이상 징후 감지 시스템 초기화 실패:', error);
+            }
+        }
+
+        // 실시간 업데이트 시작
+        function startRealtimeUpdates() {
+            realtimeUpdateInterval = setInterval(() => {
+                // 실제로는 WebSocket이나 Server-Sent Events 사용
+                updateRealtimeData();
+            }, 30000); // 30초마다 업데이트
+        }
+
+        // 실시간 데이터 업데이트
+        function updateRealtimeData() {
+            // 새로운 추적 데이터 시뮬레이션
+            const newTraces = generateNewTraces(5);
+            allTraces = [...newTraces, ...allTraces];
+            
+            // 최신 1000개만 유지
+            if (allTraces.length > 1000) {
+                allTraces = allTraces.slice(0, 1000);
+            }
+            
+            applyFilters();
+            updatePerformanceChart();
+        }
+
+        // 새로운 추적 생성
+        function generateNewTraces(count) {
+            const services = ['user-service', 'order-service', 'payment-service', 'inventory-service'];
+            const operations = ['GET /users', 'POST /orders', 'PUT /payment', 'GET /inventory'];
+            const newTraces = [];
+            
+            for (let i = 0; i < count; i++) {
+                const trace = {
+                    traceId: `trace_${Date.now()}_${i}`,
+                    service: services[Math.floor(Math.random() * services.length)],
+                    operation: operations[Math.floor(Math.random() * operations.length)],
+                    status: Math.random() > 0.1 ? 'success' : 'error',
+                    duration: Math.floor(Math.random() * 2000) + 50,
+                    spanCount: Math.floor(Math.random() * 12) + 3,
+                    timestamp: new Date().toISOString(),
+                    anomalyScore: Math.random(),
+                    anomalyLevel: 'low',
+                    tags: { environment: 'production' }
+                };
+                
+                if (anomalyDetector) {
+                    trace.anomalyScore = anomalyDetector.predict(trace);
+                    if (trace.anomalyScore > 0.7) trace.anomalyLevel = 'high';
+                    else if (trace.anomalyScore > 0.4) trace.anomalyLevel = 'medium';
+                }
+                
+                newTraces.push(trace);
+            }
+            
+            return newTraces;
+        }
+
+        // 키보드 단축키 설정
+        function setupKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    switch (e.key) {
+                        case 'r':
+                            e.preventDefault();
+                            refreshTraces();
+                            break;
+                        case 'f':
+                            e.preventDefault();
+                            document.getElementById('serviceFilter').focus();
+                            break;
+                        case 'e':
+                            e.preventDefault();
+                            exportTraces();
+                            break;
+                    }
+                }
+            });
+        }
+
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            // 필터 입력 디바운스
+            let filterTimeout;
+            document.getElementById('serviceFilter').addEventListener('input', () => {
+                clearTimeout(filterTimeout);
+                filterTimeout = setTimeout(applyFilters, 300);
+            });
+        }
+
+        // 유틸리티 함수들
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        }
+
+        function showEmptyState(show) {
+            document.getElementById('emptyState').style.display = show ? 'block' : 'none';
+        }
+
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.innerHTML = `
+                <span>${message}</span>
+                <button style="background: none; border: none; color: inherit; cursor: pointer; font-size: 1.2rem;" onclick="this.parentElement.remove()">&times;</button>
+            `;
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                if (alert.parentElement) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+
+        function refreshTraces() {
+            loadInitialData();
+        }
+
+        function exportTraces() {
+            const csvData = filteredTraces.map(trace => ({
+                traceId: trace.traceId,
+                service: trace.service,
+                operation: trace.operation,
+                status: trace.status,
+                duration: trace.duration,
+                spanCount: trace.spanCount,
+                timestamp: trace.timestamp,
+                anomalyLevel: trace.anomalyLevel
+            }));
+            
+            const csv = convertToCSV(csvData);
+            downloadCSV(csv, 'opentelemetry_traces.csv');
+            showAlert('추적 데이터가 CSV로 내보내졌습니다.', 'success');
+        }
+
+        function convertToCSV(data) {
+            const headers = Object.keys(data[0]);
+            const csvContent = [
+                headers.join(','),
+                ...data.map(row => headers.map(header => row[header]).join(','))
+            ].join('\n');
+            return csvContent;
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        // 페이지 언로드 시 정리
+        window.addEventListener('beforeunload', () => {
+            if (realtimeUpdateInterval) {
+                clearInterval(realtimeUpdateInterval);
+            }
+        });
+    </script>
+</body>
+</html>

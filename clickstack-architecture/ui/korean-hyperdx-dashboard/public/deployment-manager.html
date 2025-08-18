@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIRIS-MON | 운영서버 배포 관리</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Noto Sans KR', sans-serif; }
+    .korean-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .status-good { color: #10b981; }
+    .status-warning { color: #f59e0b; }
+    .status-error { color: #ef4444; }
+    .card { 
+      background: white; 
+      border-radius: 8px; 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .deployment-card {
+      background: linear-gradient(145deg, #f8fafc, #e2e8f0);
+      border-left: 4px solid #3b82f6;
+    }
+    .pulse-dot {
+      animation: pulse 2s infinite;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+    }
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+    .env-tab {
+      transition: all 0.3s ease;
+    }
+    .env-tab.active {
+      background: #3b82f6;
+      color: white;
+    }
+    .image-item {
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+    .image-item:hover {
+      border-color: #3b82f6;
+      transform: translateY(-2px);
+    }
+    .image-item.selected {
+      border-color: #10b981;
+      background: #f0fdf4;
+    }
+    .deployment-status-good { 
+      background: #dcfce7; 
+      color: #166534; 
+      border: 1px solid #bbf7d0;
+    }
+    .deployment-status-warning { 
+      background: #fef3c7; 
+      color: #92400e; 
+      border: 1px solid #fed7aa;
+    }
+    .deployment-status-error { 
+      background: #fee2e2; 
+      color: #dc2626; 
+      border: 1px solid #fecaca;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div id="root">
+    <!-- Header -->
+    <header class="korean-gradient shadow-lg">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center py-6">
+          <div class="flex items-center">
+            <h1 class="text-3xl font-bold text-white">🚀 운영서버 배포 관리</h1>
+            <span class="ml-4 bg-white bg-opacity-20 text-white px-3 py-1 rounded-full text-sm">
+              AIRIS-MON Deployment Center
+            </span>
+          </div>
+          <div class="flex items-center space-x-4 text-white">
+            <button onclick="goHome()" class="bg-white bg-opacity-20 px-4 py-2 rounded hover:bg-opacity-30 transition">
+              ← 대시보드로 돌아가기
+            </button>
+            <span class="pulse-dot"></span>
+            <span id="current-time" class="text-sm opacity-90"></span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      
+      <!-- Environment Tabs -->
+      <div class="mb-8">
+        <div class="flex space-x-1 bg-gray-200 rounded-lg p-1">
+          <button onclick="switchEnvironment('development')" id="env-development" class="env-tab flex-1 py-2 px-4 rounded-md text-sm font-medium">
+            🛠️ 개발 환경
+          </button>
+          <button onclick="switchEnvironment('test')" id="env-test" class="env-tab flex-1 py-2 px-4 rounded-md text-sm font-medium">
+            🧪 테스트 환경
+          </button>
+          <button onclick="switchEnvironment('production')" id="env-production" class="env-tab flex-1 py-2 px-4 rounded-md text-sm font-medium active">
+            🏭 운영 환경
+          </button>
+        </div>
+      </div>
+
+      <!-- Environment Info -->
+      <div id="environment-info" class="card deployment-card mb-8">
+        <div class="flex justify-between items-start">
+          <div>
+            <h2 class="text-xl font-bold text-gray-800 mb-2">🏭 운영 환경 설정</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+              <div>
+                <span class="font-semibold">Kubernetes 클러스터:</span>
+                <span class="ml-2" id="k8s-cluster">production-cluster</span>
+              </div>
+              <div>
+                <span class="font-semibold">네임스페이스:</span>
+                <span class="ml-2" id="k8s-namespace">airis-mon-prod</span>
+              </div>
+              <div>
+                <span class="font-semibold">레지스트리:</span>
+                <span class="ml-2" id="registry-url">localhost:5000</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-right">
+            <span id="env-status" class="deployment-status-good px-3 py-1 rounded-full text-sm font-semibold">
+              ✅ 준비됨
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Deployment Settings -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        
+        <!-- Container Images -->
+        <div class="card">
+          <h2 class="text-xl font-bold text-gray-800 mb-4">📦 컨테이너 이미지 목록</h2>
+          
+          <!-- Registry Status -->
+          <div class="bg-gray-50 p-3 rounded-lg mb-4">
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium">레지스트리 상태:</span>
+              <span id="registry-status" class="status-good">🔄 확인 중...</span>
+            </div>
+            <div class="flex justify-between items-center mt-1">
+              <span class="text-sm text-gray-600">URL:</span>
+              <a href="http://localhost:5000/v2/_catalog" target="_blank" class="text-blue-600 hover:underline text-sm">
+                http://localhost:5000/v2/_catalog
+              </a>
+            </div>
+          </div>
+
+          <!-- Images List -->
+          <div id="images-container" class="space-y-2 max-h-96 overflow-y-auto">
+            <div class="text-center py-4">
+              <div class="korean-gradient w-8 h-8 rounded-full mx-auto mb-2 animate-spin flex items-center justify-center">
+                <span class="text-white text-xs">📦</span>
+              </div>
+              <p class="text-gray-500 text-sm">이미지 목록 로딩 중...</p>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-4 border-t">
+            <button onclick="refreshImages()" class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition">
+              🔄 이미지 목록 새로고침
+            </button>
+          </div>
+        </div>
+
+        <!-- Deployment Configuration -->
+        <div class="card">
+          <h2 class="text-xl font-bold text-gray-800 mb-4">⚙️ 배포 설정</h2>
+          
+          <!-- Deployment Strategy -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">배포 전략</label>
+            <select id="deployment-strategy" class="w-full border border-gray-300 rounded-md px-3 py-2">
+              <option value="rolling">Rolling Update (무중단 배포)</option>
+              <option value="blue-green">Blue-Green Deployment</option>
+              <option value="canary">Canary Release</option>
+            </select>
+          </div>
+
+          <!-- Resource Settings -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">리소스 설정</label>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-xs text-gray-600">CPU 요청</label>
+                <input type="text" id="cpu-request" value="500m" class="w-full border border-gray-300 rounded px-2 py-1 text-sm">
+              </div>
+              <div>
+                <label class="text-xs text-gray-600">CPU 제한</label>
+                <input type="text" id="cpu-limit" value="2" class="w-full border border-gray-300 rounded px-2 py-1 text-sm">
+              </div>
+              <div>
+                <label class="text-xs text-gray-600">메모리 요청</label>
+                <input type="text" id="memory-request" value="512Mi" class="w-full border border-gray-300 rounded px-2 py-1 text-sm">
+              </div>
+              <div>
+                <label class="text-xs text-gray-600">메모리 제한</label>
+                <input type="text" id="memory-limit" value="2Gi" class="w-full border border-gray-300 rounded px-2 py-1 text-sm">
+              </div>
+            </div>
+          </div>
+
+          <!-- Replicas -->
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">레플리카 수</label>
+            <input type="number" id="replicas" value="3" min="1" max="10" class="w-full border border-gray-300 rounded-md px-3 py-2">
+          </div>
+
+          <!-- Health Check -->
+          <div class="mb-4">
+            <label class="flex items-center">
+              <input type="checkbox" id="health-check" checked class="mr-2">
+              <span class="text-sm font-medium text-gray-700">헬스 체크 활성화</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Current Deployments -->
+      <div class="card">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">🎯 현재 배포 상태</h2>
+        
+        <div id="current-deployments" class="space-y-4">
+          <!-- Deployments will be populated by JavaScript -->
+        </div>
+
+        <div class="mt-6 pt-6 border-t">
+          <div class="flex space-x-4">
+            <button onclick="deploySelected()" id="deploy-btn" class="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+              🚀 선택된 이미지 배포
+            </button>
+            <button onclick="validateDeployment()" class="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition font-semibold">
+              ✅ 배포 설정 검증
+            </button>
+            <button onclick="rollbackDeployment()" class="bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700 transition font-semibold">
+              ↩️ 롤백
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Deployment Logs -->
+      <div class="card">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">📋 배포 로그</h2>
+        <div id="deployment-logs" class="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm max-h-64 overflow-y-auto">
+          <div>🔧 배포 관리 시스템 초기화됨</div>
+          <div>📡 레지스트리 연결 상태 확인 중...</div>
+          <div>🔍 이미지 목록 조회 중...</div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script>
+    // Global state
+    let currentEnvironment = 'production';
+    let selectedImages = new Set();
+    let registryImages = [];
+    const API_BASE_URL = 'http://localhost:3000/api/v1';
+
+    // Korean time display
+    function updateTime() {
+      const now = new Date();
+      const options = {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      };
+      document.getElementById('current-time').textContent = 
+        '🇰🇷 ' + now.toLocaleDateString('ko-KR', options);
+    }
+
+    // Navigation
+    function goHome() {
+      window.location.href = '/';
+    }
+
+    // Environment switching
+    function switchEnvironment(env) {
+      currentEnvironment = env;
+      
+      // Update tab styles
+      document.querySelectorAll('.env-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.getElementById(`env-${env}`).classList.add('active');
+      
+      // Update environment info
+      updateEnvironmentInfo(env);
+      
+      // Update deployments
+      updateCurrentDeployments();
+      
+      logMessage(`🔄 환경 전환: ${getEnvironmentName(env)}`);
+    }
+
+    function getEnvironmentName(env) {
+      const names = {
+        'development': '🛠️ 개발 환경',
+        'test': '🧪 테스트 환경',
+        'production': '🏭 운영 환경'
+      };
+      return names[env] || env;
+    }
+
+    function updateEnvironmentInfo(env) {
+      const envInfo = {
+        'development': {
+          cluster: 'local-docker',
+          namespace: 'default',
+          registry: 'localhost:5000',
+          status: 'deployment-status-good',
+          statusText: '✅ 준비됨'
+        },
+        'test': {
+          cluster: 'test-cluster',
+          namespace: 'airis-mon-test',
+          registry: 'localhost:5000',
+          status: 'deployment-status-warning',
+          statusText: '⚠️ 설정 필요'
+        },
+        'production': {
+          cluster: 'production-cluster',
+          namespace: 'airis-mon-prod',
+          registry: 'localhost:5000',
+          status: 'deployment-status-good',
+          statusText: '✅ 준비됨'
+        }
+      };
+
+      const info = envInfo[env];
+      document.getElementById('k8s-cluster').textContent = info.cluster;
+      document.getElementById('k8s-namespace').textContent = info.namespace;
+      document.getElementById('registry-url').textContent = info.registry;
+      
+      const statusEl = document.getElementById('env-status');
+      statusEl.className = `${info.status} px-3 py-1 rounded-full text-sm font-semibold`;
+      statusEl.textContent = info.statusText;
+
+      // Update title
+      const title = document.querySelector('h2');
+      title.textContent = getEnvironmentName(env) + ' 설정';
+    }
+
+    // Registry and image management
+    async function checkRegistryStatus() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/deployment/registry/status`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.connected) {
+            document.getElementById('registry-status').innerHTML = '✅ 연결됨';
+            document.getElementById('registry-status').className = 'status-good';
+            logMessage(`📡 레지스트리 연결 확인: ${data.imageCount}개 이미지, 총 ${data.totalSize}MB`);
+            return true;
+          }
+        }
+      } catch (error) {
+        console.error('Registry check failed:', error);
+      }
+      
+      document.getElementById('registry-status').innerHTML = '❌ 연결 실패';
+      document.getElementById('registry-status').className = 'status-error';
+      return false;
+    }
+
+    async function loadImages() {
+      logMessage('🔍 컨테이너 이미지 목록 조회 중...');
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/deployment/registry/images`);
+        if (!response.ok) throw new Error('API connection failed');
+        
+        const data = await response.json();
+        registryImages = data.images || [];
+        
+        renderImages();
+        logMessage(`✅ ${registryImages.length}개 이미지 로드 완료`);
+        
+      } catch (error) {
+        console.error('Failed to load images:', error);
+        logMessage('❌ 이미지 로드 실패');
+        renderImagesError();
+      }
+    }
+
+    async function getImageSize(repo, tag) {
+      try {
+        const response = await fetch(`http://localhost:5000/v2/${repo}/manifests/${tag}`, {
+          headers: {
+            'Accept': 'application/vnd.docker.distribution.manifest.v2+json'
+          }
+        });
+        
+        if (response.ok) {
+          const manifest = await response.json();
+          const configSize = manifest.config?.size || 0;
+          const layersSize = (manifest.layers || []).reduce((sum, layer) => sum + (layer.size || 0), 0);
+          return Math.round((configSize + layersSize) / 1024 / 1024); // MB
+        }
+      } catch (error) {
+        console.error(`Failed to get size for ${repo}:${tag}`, error);
+      }
+      return 0;
+    }
+
+    function renderImages() {
+      const container = document.getElementById('images-container');
+      
+      if (registryImages.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8">
+            <div class="text-gray-400 mb-2">📦</div>
+            <p class="text-gray-500">등록된 이미지가 없습니다</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = registryImages.map(image => {
+        const serviceName = image.name.replace('airis-mon/', '');
+        const latestTag = image.tags.find(tag => tag === 'latest') || image.tags[0];
+        const gitTag = image.tags.find(tag => tag !== 'latest') || 'N/A';
+        
+        return `
+          <div class="image-item p-3 border rounded-lg cursor-pointer" 
+               onclick="toggleImageSelection('${image.name}', '${latestTag}')"
+               id="image-${image.name.replace('/', '-')}">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <div class="flex items-center mb-1">
+                  <span class="font-semibold text-gray-800">${serviceName}</span>
+                  <span class="ml-2 bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">${latestTag}</span>
+                </div>
+                <div class="text-sm text-gray-600 mb-2">
+                  📦 ${image.fullName}
+                </div>
+                <div class="flex items-center space-x-4 text-xs text-gray-500">
+                  <span>🏷️ Git: ${gitTag}</span>
+                  <span>📏 크기: ~${image.size}MB</span>
+                  <span>🏠 Registry: ${image.registry}</span>
+                  <span>🕒 ${image.korean_time}</span>
+                </div>
+              </div>
+              <div class="ml-4">
+                <input type="checkbox" class="image-checkbox" value="${image.name}:${latestTag}">
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderImagesError() {
+      const container = document.getElementById('images-container');
+      container.innerHTML = `
+        <div class="text-center py-8">
+          <div class="text-red-400 mb-2">❌</div>
+          <p class="text-red-500 mb-2">이미지 로드 실패</p>
+          <button onclick="refreshImages()" class="text-blue-600 hover:underline text-sm">
+            다시 시도
+          </button>
+        </div>
+      `;
+    }
+
+    function toggleImageSelection(imageName, tag) {
+      const imageKey = `${imageName}:${tag}`;
+      const element = document.getElementById(`image-${imageName.replace('/', '-')}`);
+      const checkbox = element.querySelector('.image-checkbox');
+      
+      if (selectedImages.has(imageKey)) {
+        selectedImages.delete(imageKey);
+        element.classList.remove('selected');
+        checkbox.checked = false;
+      } else {
+        selectedImages.add(imageKey);
+        element.classList.add('selected');
+        checkbox.checked = true;
+      }
+      
+      updateDeployButton();
+      logMessage(`📦 이미지 선택: ${imageName}:${tag} ${selectedImages.has(imageKey) ? '선택됨' : '해제됨'}`);
+    }
+
+    function updateDeployButton() {
+      const deployBtn = document.getElementById('deploy-btn');
+      const count = selectedImages.size;
+      
+      if (count === 0) {
+        deployBtn.textContent = '🚀 선택된 이미지 배포';
+        deployBtn.disabled = true;
+      } else {
+        deployBtn.textContent = `🚀 선택된 ${count}개 이미지 배포`;
+        deployBtn.disabled = false;
+      }
+    }
+
+    function refreshImages() {
+      selectedImages.clear();
+      updateDeployButton();
+      loadImages();
+    }
+
+    // Deployment management
+    function updateCurrentDeployments() {
+      const container = document.getElementById('current-deployments');
+      
+      // Mock deployment data based on environment
+      const deployments = {
+        'development': [
+          { name: 'api-gateway', status: 'running', replicas: '1/1', image: 'localhost:5000/airis-mon/api-gateway:latest', lastUpdate: '2024-08-18 14:30:15' },
+          { name: 'ui', status: 'running', replicas: '1/1', image: 'localhost:5000/airis-mon/ui:latest', lastUpdate: '2024-08-18 14:30:10' }
+        ],
+        'test': [
+          { name: 'api-gateway', status: 'pending', replicas: '0/2', image: 'localhost:5000/airis-mon/api-gateway:9635ce5', lastUpdate: '2024-08-18 13:45:22' },
+          { name: 'data-ingestion', status: 'pending', replicas: '0/2', image: 'localhost:5000/airis-mon/data-ingestion:9635ce5', lastUpdate: '2024-08-18 13:45:20' }
+        ],
+        'production': [
+          { name: 'clickhouse', status: 'ready', replicas: '3/3', image: 'clickhouse/clickhouse-server:23.12', lastUpdate: '2024-08-18 12:00:00' },
+          { name: 'kafka', status: 'ready', replicas: '3/3', image: 'confluentinc/cp-kafka:latest', lastUpdate: '2024-08-18 12:00:00' },
+          { name: 'redis', status: 'ready', replicas: '1/1', image: 'redis:7-alpine', lastUpdate: '2024-08-18 12:00:00' }
+        ]
+      };
+
+      const currentDeployments = deployments[currentEnvironment] || [];
+      
+      if (currentDeployments.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-8">
+            <div class="text-gray-400 mb-2">🎯</div>
+            <p class="text-gray-500">현재 배포된 서비스가 없습니다</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = currentDeployments.map(deployment => {
+        const statusClass = {
+          'running': 'deployment-status-good',
+          'ready': 'deployment-status-good',
+          'pending': 'deployment-status-warning',
+          'error': 'deployment-status-error'
+        }[deployment.status] || 'deployment-status-warning';
+
+        const statusText = {
+          'running': '✅ 실행 중',
+          'ready': '✅ 준비됨',
+          'pending': '⚠️ 대기 중',
+          'error': '❌ 오류'
+        }[deployment.status] || '❓ 알 수 없음';
+
+        return `
+          <div class="border rounded-lg p-4">
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <h3 class="font-semibold text-gray-800">${deployment.name}</h3>
+                <p class="text-sm text-gray-600">${deployment.image}</p>
+              </div>
+              <span class="${statusClass} px-3 py-1 rounded-full text-sm font-semibold">
+                ${statusText}
+              </span>
+            </div>
+            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+              <div>
+                <span class="font-medium">레플리카:</span>
+                <span class="ml-1">${deployment.replicas}</span>
+              </div>
+              <div>
+                <span class="font-medium">마지막 업데이트:</span>
+                <span class="ml-1">${deployment.lastUpdate}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Deployment actions
+    function deploySelected() {
+      if (selectedImages.size === 0) {
+        alert('배포할 이미지를 선택해주세요.');
+        return;
+      }
+
+      const strategy = document.getElementById('deployment-strategy').value;
+      const replicas = document.getElementById('replicas').value;
+      
+      logMessage(`🚀 배포 시작: ${currentEnvironment} 환경`);
+      logMessage(`📋 배포 전략: ${strategy}`);
+      logMessage(`📊 레플리카 수: ${replicas}`);
+      
+      selectedImages.forEach(image => {
+        logMessage(`📦 배포 중: ${image}`);
+      });
+
+      // Simulate deployment process
+      setTimeout(() => {
+        logMessage('✅ 배포 완료!');
+        updateCurrentDeployments();
+      }, 3000);
+
+      // Reset selection
+      selectedImages.clear();
+      updateDeployButton();
+      document.querySelectorAll('.image-item').forEach(item => {
+        item.classList.remove('selected');
+        item.querySelector('.image-checkbox').checked = false;
+      });
+    }
+
+    function validateDeployment() {
+      logMessage('🔍 배포 설정 검증 중...');
+      
+      const strategy = document.getElementById('deployment-strategy').value;
+      const cpuRequest = document.getElementById('cpu-request').value;
+      const memoryRequest = document.getElementById('memory-request').value;
+      const replicas = document.getElementById('replicas').value;
+      
+      setTimeout(() => {
+        logMessage('✅ 검증 완료: 모든 설정이 유효합니다');
+        logMessage(`  - 배포 전략: ${strategy}`);
+        logMessage(`  - CPU 요청: ${cpuRequest}`);
+        logMessage(`  - 메모리 요청: ${memoryRequest}`);
+        logMessage(`  - 레플리카: ${replicas}`);
+      }, 1500);
+    }
+
+    function rollbackDeployment() {
+      if (confirm('이전 버전으로 롤백하시겠습니까?')) {
+        logMessage('↩️ 롤백 시작...');
+        setTimeout(() => {
+          logMessage('✅ 롤백 완료: 이전 안정 버전으로 복원됨');
+          updateCurrentDeployments();
+        }, 2000);
+      }
+    }
+
+    // Logging
+    function logMessage(message) {
+      const logsContainer = document.getElementById('deployment-logs');
+      const timestamp = new Date().toLocaleTimeString('ko-KR');
+      const logEntry = document.createElement('div');
+      logEntry.textContent = `[${timestamp}] ${message}`;
+      logsContainer.appendChild(logEntry);
+      logsContainer.scrollTop = logsContainer.scrollHeight;
+    }
+
+    // Initialize
+    function init() {
+      updateTime();
+      setInterval(updateTime, 1000);
+      
+      // Initialize environment
+      updateEnvironmentInfo(currentEnvironment);
+      updateCurrentDeployments();
+      
+      // Check registry and load images
+      checkRegistryStatus().then(isConnected => {
+        if (isConnected) {
+          loadImages();
+        }
+      });
+      
+      // Auto-refresh every 30 seconds
+      setInterval(() => {
+        checkRegistryStatus();
+        updateCurrentDeployments();
+      }, 30000);
+      
+      logMessage('🎛️ 배포 관리 시스템 초기화 완료');
+    }
+
+    // Start the application
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS-MON Sidebar Navigation</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --primary-blue-light: #3b82f6;
+            --primary-blue-dark: #1d4ed8;
+            --accent-blue: #60a5fa;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--gray-50);
+            color: var(--gray-800);
+            line-height: 1.6;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 280px;
+            height: 100vh;
+            background: white;
+            border-right: 1px solid var(--gray-200);
+            transition: transform 0.3s ease-in-out;
+            z-index: 1000;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-220px);
+            width: 60px;
+        }
+
+        .sidebar-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--gray-200);
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-dark) 100%);
+            color: white;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed .sidebar-logo .logo-text {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-section-title {
+            padding: 0.5rem 1.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--gray-500);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed .nav-section-title {
+            opacity: 0;
+            height: 0;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-item {
+            margin: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            color: var(--gray-700);
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            background-color: var(--gray-100);
+            color: var(--primary-blue);
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-light) 100%) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+        }
+
+        .nav-link.active:hover {
+            transform: translateX(2px) !important;
+            box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4) !important;
+        }
+
+        /* 강제 활성화된 것만 active 스타일 적용 */
+        .nav-link.force-active {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-light) 100%) !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3) !important;
+        }
+
+        /* 메인 대시보드 강제 비활성화 */
+        .nav-link[href="/index.html"]:not(.force-active),
+        .nav-link[href="/"]:not(.force-active) {
+            background: transparent !important;
+            color: var(--gray-700) !important;
+            box-shadow: none !important;
+        }
+
+        .nav-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-text {
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed .nav-text {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--primary-blue);
+            color: white;
+            font-size: 0.75rem;
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed .nav-badge {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            top: 1.5rem;
+            right: -12px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 1001;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--gray-100);
+            border-color: var(--gray-300);
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem 1.25rem;
+            border-top: 1px solid var(--gray-200);
+            background: var(--gray-50);
+        }
+
+        .sidebar-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .sidebar.collapsed .sidebar-status .status-text {
+            opacity: 0;
+            width: 0;
+            overflow: hidden;
+        }
+
+        /* 모바일 반응형 */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            
+            .sidebar.collapsed {
+                transform: translateX(-100%);
+            }
+        }
+
+        /* 다크 모드 지원 */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --gray-50: #0f172a;
+                --gray-100: #1e293b;
+                --gray-200: #334155;
+                --gray-800: #f1f5f9;
+                --gray-900: #ffffff;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar" id="sidebar">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="nav-icon">🔍</div>
+                <span class="logo-text">AIRIS-MON</span>
+            </div>
+        </div>
+
+        <!-- Sidebar Toggle Button -->
+        <button class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 18l-6-6 6-6"></path>
+            </svg>
+        </button>
+
+        <!-- Sidebar Navigation -->
+        <div class="sidebar-nav">
+            <!-- 대시보드 -->
+            <div class="nav-section">
+                <div class="nav-section-title">대시보드</div>
+                <div class="nav-item">
+                    <a href="/index.html" class="nav-link">
+                        <div class="nav-icon">📊</div>
+                        <span class="nav-text">메인 대시보드</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/integrated-dashboard.html" class="nav-link">
+                        <div class="nav-icon">🎯</div>
+                        <span class="nav-text">통합 대시보드</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 세션 리플레이 -->
+            <div class="nav-section">
+                <div class="nav-section-title">세션 리플레이</div>
+                <div class="nav-item">
+                    <a href="/integrated-session-recorder-fixed.html" class="nav-link">
+                        <div class="nav-icon">🎬</div>
+                        <span class="nav-text">통합 녹화기</span>
+                        <span class="nav-badge">NEW</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/enhanced-recorder.html" class="nav-link">
+                        <div class="nav-icon">📹</div>
+                        <span class="nav-text">향상된 녹화기</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/enhanced-player.html" class="nav-link">
+                        <div class="nav-icon">▶️</div>
+                        <span class="nav-text">향상된 플레이어</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/session-replay-scenarios.html" class="nav-link">
+                        <div class="nav-icon">🎭</div>
+                        <span class="nav-text">시나리오 테스트</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 프로젝트 분석 -->
+            <div class="nav-section">
+                <div class="nav-section-title">프로젝트 분석</div>
+                <div class="nav-item">
+                    <a href="/project-analysis.html" class="nav-link">
+                        <div class="nav-icon">🐍</div>
+                        <span class="nav-text">프로젝트 분석기</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/application-analysis.html" class="nav-link">
+                        <div class="nav-icon">📊</div>
+                        <span class="nav-text">CRUD 매트릭스</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 모니터링 -->
+            <div class="nav-section">
+                <div class="nav-section-title">모니터링</div>
+                <div class="nav-item">
+                    <a href="/application-apm.html" class="nav-link">
+                        <div class="nav-icon">⚡</div>
+                        <span class="nav-text">Application APM</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/database-apm.html" class="nav-link">
+                        <div class="nav-icon">🗄️</div>
+                        <span class="nav-text">Database APM</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/infrastructure-monitoring.html" class="nav-link">
+                        <div class="nav-icon">🏗️</div>
+                        <span class="nav-text">인프라 모니터링</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 분석 도구 -->
+            <div class="nav-section">
+                <div class="nav-section-title">분석 도구</div>
+                <div class="nav-item">
+                    <a href="/click-heatmap-analyzer.html" class="nav-link">
+                        <div class="nav-icon">🔥</div>
+                        <span class="nav-text">클릭 히트맵</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/trace-sequence-diagram.html" class="nav-link">
+                        <div class="nav-icon">🔍</div>
+                        <span class="nav-text">시퀀스 다이어그램</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/user-journey-map.html" class="nav-link">
+                        <div class="nav-icon">🗺️</div>
+                        <span class="nav-text">사용자 여정 맵</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/e2e-performance-analyzer.html" class="nav-link">
+                        <div class="nav-icon">📈</div>
+                        <span class="nav-text">E2E 성능 분석</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- AIOps/MLOps -->
+            <div class="nav-section">
+                <div class="nav-section-title">AIOps/MLOps</div>
+                <div class="nav-item">
+                    <a href="/aiops-dashboard.html" class="nav-link">
+                        <div class="nav-icon">🤖</div>
+                        <span class="nav-text">AIOps 대시보드</span>
+                        <span class="nav-badge">NEW</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/mlops-pipeline.html" class="nav-link">
+                        <div class="nav-icon">🧠</div>
+                        <span class="nav-text">MLOps 파이프라인</span>
+                        <span class="nav-badge">NEW</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/ai-models.html" class="nav-link">
+                        <div class="nav-icon">🔮</div>
+                        <span class="nav-text">AI 모델 관리</span>
+                        <span class="nav-badge">NEW</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/knowledge-base.html" class="nav-link">
+                        <div class="nav-icon">📚</div>
+                        <span class="nav-text">지식 베이스</span>
+                        <span class="nav-badge">NEW</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- 알림 및 설정 -->
+            <div class="nav-section">
+                <div class="nav-section-title">관리</div>
+                <div class="nav-item">
+                    <a href="/system-installation.html" class="nav-link">
+                        <div class="nav-icon">🖥️</div>
+                        <span class="nav-text">시스템 설치</span>
+                        <span class="nav-badge">NEW</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/server-management.html" class="nav-link">
+                        <div class="nav-icon">🌐</div>
+                        <span class="nav-text">서버 관리</span>
+                        <span class="nav-badge">NEW</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/alert-management.html" class="nav-link">
+                        <div class="nav-icon">🚨</div>
+                        <span class="nav-text">알림 관리</span>
+                        <span class="nav-badge">3</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/admin-settings.html" class="nav-link">
+                        <div class="nav-icon">⚙️</div>
+                        <span class="nav-text">관리자 설정</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <div class="sidebar-status">
+                <div class="status-indicator"></div>
+                <span class="status-text">시스템 정상</span>
+            </div>
+        </div>
+    </nav>
+
+    <script>
+        // 사이드바 토글 기능
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            
+            if (isCollapsed) {
+                sidebar.classList.remove('collapsed');
+                toggle.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"></path></svg>';
+                localStorage.setItem('sidebarCollapsed', 'false');
+            } else {
+                sidebar.classList.add('collapsed');
+                toggle.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>';
+                localStorage.setItem('sidebarCollapsed', 'true');
+            }
+        }
+
+        // 모바일 사이드바 토글
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('mobile-open');
+        }
+
+        // 현재 페이지 활성화 상태 설정
+        function setActiveNavItem() {
+            const currentPath = window.location.pathname;
+            console.log('Sidebar: Setting active nav item for path:', currentPath);
+            
+            const navLinks = document.querySelectorAll('#sidebar .nav-link');
+            
+            // 먼저 모든 링크에서 active 클래스와 force-active 클래스 강제 제거
+            navLinks.forEach(link => {
+                link.classList.remove('active', 'force-active');
+                link.style.background = '';
+                link.style.color = '';
+                link.style.boxShadow = '';
+            });
+            
+            // 정확한 매칭을 위한 로직
+            navLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                let isMatch = false;
+                
+                if (href === currentPath) {
+                    isMatch = true;
+                } else if (currentPath === '/' && href === '/index.html') {
+                    isMatch = true;
+                } else if (currentPath === '/index.html' && href === '/') {
+                    isMatch = true;
+                } else if (href && href !== '/' && href !== '/index.html' && currentPath.includes(href.replace('.html', ''))) {
+                    isMatch = true;
+                }
+                
+                if (isMatch) {
+                    link.classList.add('active', 'force-active');
+                    console.log('Sidebar: Activated link:', href);
+                } else if (href === '/index.html' || href === '/') {
+                    // 메인 대시보드는 명시적으로 비활성화
+                    link.classList.remove('active', 'force-active');
+                }
+            });
+            
+            // 강제로 스타일 재적용
+            setTimeout(() => {
+                const activeLinks = document.querySelectorAll('#sidebar .nav-link.active');
+                console.log('Sidebar: Active links found:', activeLinks.length);
+            }, 10);
+        }
+
+        // 사이드바 상태 복원
+        function restoreSidebarState() {
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+                toggle.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"></path></svg>';
+            }
+        }
+
+        // 외부 클릭시 모바일 사이드바 닫기
+        function handleOutsideClick(event) {
+            const sidebar = document.getElementById('sidebar');
+            const isMobile = window.innerWidth <= 768;
+            
+            if (isMobile && sidebar.classList.contains('mobile-open') && 
+                !sidebar.contains(event.target)) {
+                sidebar.classList.remove('mobile-open');
+            }
+        }
+
+        // 리사이즈 이벤트 처리
+        function handleResize() {
+            const sidebar = document.getElementById('sidebar');
+            const isMobile = window.innerWidth <= 768;
+            
+            if (!isMobile) {
+                sidebar.classList.remove('mobile-open');
+            }
+        }
+
+        // 이벤트 리스너 등록
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Sidebar: DOM Content Loaded');
+            setActiveNavItem();
+            restoreSidebarState();
+            
+            document.addEventListener('click', handleOutsideClick);
+            window.addEventListener('resize', handleResize);
+            
+            // 키보드 단축키 (Ctrl + B로 사이드바 토글)
+            document.addEventListener('keydown', function(event) {
+                if (event.ctrlKey && event.key === 'b') {
+                    event.preventDefault();
+                    toggleSidebar();
+                }
+            });
+            
+            // 추가 안전장치: 약간의 지연 후 다시 실행
+            setTimeout(setActiveNavItem, 100);
+            setTimeout(setActiveNavItem, 500);
+        });
+
+        // 페이지 로드 완료 후에도 실행
+        window.addEventListener('load', function() {
+            console.log('Sidebar: Window loaded');
+            setActiveNavItem();
+        });
+
+        // 전역 함수로 내보내기 (다른 페이지에서 사용 가능)
+        window.AIRIS_SIDEBAR = {
+            toggle: toggleSidebar,
+            toggleMobile: toggleMobileSidebar,
+            setActive: setActiveNavItem
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+{
+  "id": "67d42120-9178-4801-b8d2-67711ad025b9",
+  "scenario": "journey_e-commerce",
+  "startTime": "2025-08-14T16:12:09.007Z",
+  "lastActivity": "2025-08-14T16:12:09.331Z",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+  "ipAddress": "::1",
+  "events": [
+    {
+      "id": "e195b8f0-cccb-43b2-b765-4f32680ed6dc",
+      "sessionId": "67d42120-9178-4801-b8d2-67711ad025b9",
+      "timestamp": 1755187929002,
+      "recordedAt": "2025-08-14T16:12:09.055Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187929002,
+        "page_url": "/",
+        "title": "home",
+        "referrer": null,
+        "load_time": 1062
+      }
+    },
+    {
+      "id": "c9902a00-6914-48ed-b45b-df95b79ee812",
+      "sessionId": "67d42120-9178-4801-b8d2-67711ad025b9",
+      "timestamp": 1755187930050,
+      "recordedAt": "2025-08-14T16:12:09.103Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187930050,
+        "page_url": "/products",
+        "title": "products",
+        "referrer": "/",
+        "load_time": 837
+      }
+    },
+    {
+      "id": "d54f4a79-b264-49a7-88ab-a041ffd43302",
+      "sessionId": "67d42120-9178-4801-b8d2-67711ad025b9",
+      "timestamp": 1755187931099,
+      "recordedAt": "2025-08-14T16:12:09.151Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187931099,
+        "page_url": "/products/item1",
+        "title": "item1",
+        "referrer": "/products",
+        "load_time": 1538
+      }
+    },
+    {
+      "id": "b4bd0a94-344c-4004-a5f5-2907fbd1a9a7",
+      "sessionId": "67d42120-9178-4801-b8d2-67711ad025b9",
+      "timestamp": 1755187932149,
+      "recordedAt": "2025-08-14T16:12:09.199Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187932149,
+        "page_url": "/cart",
+        "title": "cart",
+        "referrer": "/products/item1",
+        "load_time": 802
+      }
+    },
+    {
+      "id": "42eccd0a-9306-406d-beaa-83e603f085be",
+      "sessionId": "67d42120-9178-4801-b8d2-67711ad025b9",
+      "timestamp": 1755187933195,
+      "recordedAt": "2025-08-14T16:12:09.243Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187933195,
+        "page_url": "/checkout",
+        "title": "checkout",
+        "referrer": "/cart",
+        "load_time": 1228
+      }
+    },
+    {
+      "id": "90bcec2e-b76f-4bc0-8d8f-ba0ef333f867",
+      "sessionId": "67d42120-9178-4801-b8d2-67711ad025b9",
+      "timestamp": 1755187934240,
+      "recordedAt": "2025-08-14T16:12:09.287Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187934240,
+        "page_url": "/payment",
+        "title": "payment",
+        "referrer": "/checkout",
+        "load_time": 1478
+      }
+    },
+    {
+      "id": "5f0617a2-dbed-4137-baa3-279dfb7fcf28",
+      "sessionId": "67d42120-9178-4801-b8d2-67711ad025b9",
+      "timestamp": 1755187935284,
+      "recordedAt": "2025-08-14T16:12:09.331Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755187935284,
+        "page_url": "/confirmation",
+        "title": "confirmation",
+        "referrer": "/payment",
+        "load_time": 2420
+      }
+    }
+  ],
+  "status": "completed",
+  "metadata": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+    "device": {
+      "type": "desktop",
+      "browser": "Chrome",
+      "os": "Windows"
+    }
+  },
+  "endTime": "2025-08-14T16:12:09.376Z",
+  "duration": 369,
+  "endReason": "user_ended",
+  "statistics": {
+    "totalEvents": 7,
+    "eventTypes": {
+      "rrweb_event": 7
+    },
+    "clicks": 0,
+    "formInputs": 0,
+    "pageViews": 0,
+    "errors": 0,
+    "scrollEvents": 0,
+    "userBehavior": {
+      "avgTimeBetweenEvents": 897.4285714285714,
+      "hasErrors": false,
+      "hasFormInteraction": false,
+      "hasNavigation": false
+    }
+  }
+}

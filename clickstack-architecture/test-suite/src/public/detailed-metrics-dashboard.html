@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상세 메트릭 대시보드 - AIRIS-MON</title>
+    
+    <!-- 라이브러리 -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/components/common-layout.js"></script>
+    
+    <style>
+        /* 투명 라이트 테마 */
+        :root {
+            --grafana-bg: transparent;
+            --grafana-panel: rgba(255, 255, 255, 0.05);
+            --grafana-text: #212529;
+            --grafana-text-secondary: #6c757d;
+            --grafana-border: rgba(0, 0, 0, 0.1);
+            --grafana-accent: #0d6efd;
+            --grafana-success: #198754;
+            --grafana-warning: #ffc107;
+            --grafana-danger: #dc3545;
+            --grafana-info: #0dcaf0;
+        }
+
+        body {
+            background: var(--grafana-bg);
+            color: var(--grafana-text);
+            font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 대시보드 헤더 */
+        .dashboard-header {
+            background: var(--grafana-panel);
+            border-bottom: 1px solid var(--grafana-border);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .dashboard-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--grafana-text);
+            margin: 0;
+        }
+
+        .dashboard-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .time-picker {
+            background: var(--grafana-panel);
+            border: 1px solid var(--grafana-border);
+            color: var(--grafana-text);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .refresh-btn {
+            background: transparent;
+            color: var(--grafana-text);
+            border: 1px solid var(--grafana-border);
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .refresh-btn:hover {
+            background: var(--grafana-accent);
+            color: white;
+            border-color: var(--grafana-accent);
+        }
+
+        /* 그리드 레이아웃 */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 16px;
+            padding: 24px;
+            max-width: 100%;
+        }
+
+        /* 섹션 헤더 */
+        .section-header {
+            grid-column: 1 / -1;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--grafana-text);
+            padding: 12px 0;
+            border-bottom: 2px solid var(--grafana-border);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-icon {
+            font-size: 20px;
+        }
+
+        /* 메트릭 패널 (Grafana 스타일) */
+        .metric-panel {
+            background: var(--grafana-panel);
+            border: 1px solid var(--grafana-border);
+            border-radius: 8px;
+            padding: 0;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .metric-panel:hover {
+            border-color: var(--grafana-accent);
+            box-shadow: 0 0 20px rgba(31, 119, 180, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--grafana-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--grafana-text);
+            margin: 0;
+        }
+
+        .panel-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--grafana-success);
+        }
+
+        .panel-body {
+            padding: 16px;
+            height: 280px;
+            position: relative;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .chart-canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* 스탯 패널 */
+        .stat-panel {
+            background: var(--grafana-panel);
+            border: 1px solid var(--grafana-border);
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .stat-panel:hover {
+            border-color: var(--grafana-accent);
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--grafana-text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .change-positive {
+            color: var(--grafana-success);
+            background: rgba(115, 191, 105, 0.1);
+        }
+
+        .change-negative {
+            color: var(--grafana-danger);
+            background: rgba(224, 47, 68, 0.1);
+        }
+
+        .change-neutral {
+            color: var(--grafana-text-secondary);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* 로딩 스피너 */
+        .loading-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--grafana-border);
+            border-top: 3px solid var(--grafana-accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* 모달 팝업 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 1200px;
+            height: 80%;
+            background: #ffffff;
+            border: 1px solid var(--grafana-border);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--grafana-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--grafana-text);
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--grafana-text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(0, 0, 0, 0.1);
+            color: var(--grafana-text);
+        }
+
+        .modal-body {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            gap: 24px;
+            overflow: auto;
+            background: #ffffff;
+        }
+
+        .modal-chart {
+            flex: 2;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+            border: 1px solid var(--grafana-border);
+        }
+
+        .modal-data {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            overflow: auto;
+            border: 1px solid var(--grafana-border);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--grafana-border);
+        }
+
+        .data-table th {
+            background: #e9ecef;
+            font-weight: 600;
+            color: var(--grafana-text);
+        }
+
+        .data-table td {
+            color: var(--grafana-text-secondary);
+        }
+
+        /* 상태 표시기 */
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-healthy { background: var(--grafana-success); }
+        .status-warning { background: var(--grafana-warning); }
+        .status-critical { background: var(--grafana-danger); }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+                padding: 16px;
+            }
+            
+            .modal-content {
+                width: 95%;
+                height: 90%;
+            }
+            
+            .modal-body {
+                flex-direction: column;
+            }
+            
+            .dashboard-controls {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+
+        /* 차트별 색상 테마 */
+        .chart-cpu { border-left: 4px solid #ff6b6b; }
+        .chart-memory { border-left: 4px solid #4ecdc4; }
+        .chart-disk { border-left: 4px solid #45b7d1; }
+        .chart-network { border-left: 4px solid #96ceb4; }
+        .chart-app { border-left: 4px solid #feca57; }
+        .chart-db { border-left: 4px solid #ff9ff3; }
+        .chart-service { border-left: 4px solid #54a0ff; }
+        .chart-logs { border-left: 4px solid #5f27cd; }
+    </style>
+</head>
+<body>
+    <!-- 대시보드 헤더 -->
+    <div class="dashboard-header">
+        <h1 class="dashboard-title">📊 상세 메트릭 대시보드</h1>
+        <div class="dashboard-controls">
+            <select class="time-picker" id="timeRange">
+                <option value="5m">최근 5분</option>
+                <option value="15m">최근 15분</option>
+                <option value="1h" selected>최근 1시간</option>
+                <option value="6h">최근 6시간</option>
+                <option value="24h">최근 24시간</option>
+                <option value="7d">최근 7일</option>
+                <option value="30d">최근 30일</option>
+            </select>
+            <button class="refresh-btn" id="refreshBtn">
+                🔄 새로고침
+            </button>
+            <div style="color: var(--grafana-text-secondary); font-size: 12px;" id="lastUpdate">
+                마지막 업데이트: --
+            </div>
+        </div>
+    </div>
+
+    <!-- 메트릭 그리드 -->
+    <div class="metrics-grid">
+        <!-- H/W 메트릭 섹션 -->
+        <div class="section-header">
+            <span class="section-icon">🖥️</span>
+            H/W 메트릭 (Hardware Metrics)
+        </div>
+
+        <!-- CPU 메트릭 -->
+        <div class="metric-panel chart-cpu" onclick="openDetailModal('cpu')">
+            <div class="panel-header">
+                <h3 class="panel-title">CPU 사용률</h3>
+                <div class="panel-value" id="cpuValue">--</div>
+            </div>
+            <div class="panel-body">
+                <div class="chart-container">
+                    <canvas class="chart-canvas" id="cpuChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 메모리 메트릭 -->
+        <div class="metric-panel chart-memory" onclick="openDetailModal('memory')">
+            <div class="panel-header">
+                <h3 class="panel-title">메모리 사용률</h3>
+                <div class="panel-value" id="memoryValue">--</div>
+            </div>
+            <div class="panel-body">
+                <div class="chart-container">
+                    <canvas class="chart-canvas" id="memoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 디스크 I/O -->
+        <div class="metric-panel chart-disk" onclick="openDetailModal('disk')">
+            <div class="panel-header">
+                <h3 class="panel-title">디스크 I/O</h3>
+                <div class="panel-value" id="diskValue">--</div>
+            </div>
+            <div class="panel-body">
+                <div class="chart-container">
+                    <canvas class="chart-canvas" id="diskChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 네트워크 I/O -->
+        <div class="metric-panel chart-network" onclick="openDetailModal('network')">
+            <div class="panel-header">
+                <h3 class="panel-title">네트워크 I/O</h3>
+                <div class="panel-value" id="networkValue">--</div>
+            </div>
+            <div class="panel-body">
+                <div class="chart-container">
+                    <canvas class="chart-canvas" id="networkChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- S/W 메트릭 섹션 -->
+        <div class="section-header">
+            <span class="section-icon">⚙️</span>
+            S/W 메트릭 (Software Metrics)
+        </div>
+
+        <!-- 애플리케이션 성능 -->
+        <div class="metric-panel chart-app" onclick="openDetailModal('application')">
+            <div class="panel-header">
+                <h3 class="panel-title">애플리케이션 성능</h3>
+                <div class="panel-value" id="applicationValue">--</div>
+            </div>
+            <div class="panel-body">
+                <div class="chart-container">
+                    <canvas class="chart-canvas" id="applicationChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 데이터베이스 성능 -->
+        <div class="metric-panel chart-db" onclick="openDetailModal('database')">
+            <div class="panel-header">
+                <h3 class="panel-title">데이터베이스 성능</h3>
+                <div class="panel-value" id="databaseValue">--</div>
+            </div>
+            <div class="panel-body">
+                <div class="chart-container">
+                    <canvas class="chart-canvas" id="databaseChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 서비스 가용성 -->
+        <div class="metric-panel chart-service" onclick="openDetailModal('service')">
+            <div class="panel-header">
+                <h3 class="panel-title">서비스 가용성</h3>
+                <div class="panel-value" id="serviceValue">--</div>
+            </div>
+            <div class="panel-body">
+                <div class="chart-container">
+                    <canvas class="chart-canvas" id="serviceChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- JVM/런타임 메트릭 -->
+        <div class="metric-panel chart-app" onclick="openDetailModal('jvm')">
+            <div class="panel-header">
+                <h3 class="panel-title">JVM/런타임</h3>
+                <div class="panel-value" id="jvmValue">--</div>
+            </div>
+            <div class="panel-body">
+                <div class="chart-container">
+                    <canvas class="chart-canvas" id="jvmChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 로그 데이터 섹션 -->
+        <div class="section-header">
+            <span class="section-icon">📝</span>
+            로그 데이터 (Log Data Metrics)
+        </div>
+
+        <!-- 에러 로그 -->
+        <div class="metric-panel chart-logs" onclick="openDetailModal('errorLogs')">
+            <div class="panel-header">
+                <h3 class="panel-title">에러 로그</h3>
+                <div class="panel-value" id="errorLogsValue">--</div>
+            </div>
+            <div class="panel-body">
+                <div class="chart-container">
+                    <canvas class="chart-canvas" id="errorLogsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 액세스 로그 -->
+        <div class="metric-panel chart-logs" onclick="openDetailModal('accessLogs')">
+            <div class="panel-header">
+                <h3 class="panel-title">액세스 로그</h3>
+                <div class="panel-value" id="accessLogsValue">--</div>
+            </div>
+            <div class="panel-body">
+                <div class="chart-container">
+                    <canvas class="chart-canvas" id="accessLogsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 시스템 로그 -->
+        <div class="metric-panel chart-logs" onclick="openDetailModal('systemLogs')">
+            <div class="panel-header">
+                <h3 class="panel-title">시스템 로그</h3>
+                <div class="panel-value" id="systemLogsValue">--</div>
+            </div>
+            <div class="panel-body">
+                <div class="chart-container">
+                    <canvas class="chart-canvas" id="systemLogsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 보안 로그 -->
+        <div class="metric-panel chart-logs" onclick="openDetailModal('securityLogs')">
+            <div class="panel-header">
+                <h3 class="panel-title">보안 로그</h3>
+                <div class="panel-value" id="securityLogsValue">--</div>
+            </div>
+            <div class="panel-body">
+                <div class="chart-container">
+                    <canvas class="chart-canvas" id="securityLogsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 상세 모달 팝업 -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">메트릭 상세 정보</h2>
+                <button class="modal-close" onclick="closeDetailModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-chart">
+                    <canvas id="modalChart"></canvas>
+                </div>
+                <div class="modal-data">
+                    <h3 style="margin-top: 0; color: var(--grafana-text);">실시간 데이터</h3>
+                    <table class="data-table" id="modalDataTable">
+                        <thead>
+                            <tr>
+                                <th>시간</th>
+                                <th>값</th>
+                                <th>상태</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let charts = {};
+        let modalChart = null;
+        let updateInterval = null;
+        let currentMetric = null;
+
+        // 메트릭 설정 (먼저 선언)
+        const metricConfigs = {
+            cpu: {
+                title: 'CPU 사용률',
+                unit: '%',
+                color: '#ff6b6b',
+                threshold: { warning: 70, critical: 90 },
+                api: '/api/analytics/infra-metrics?metric=cpu'
+            },
+            memory: {
+                title: '메모리 사용률',
+                unit: '%',
+                color: '#4ecdc4',
+                threshold: { warning: 80, critical: 95 },
+                api: '/api/analytics/infra-metrics?metric=memory'
+            },
+            disk: {
+                title: '디스크 I/O',
+                unit: 'MB/s',
+                color: '#45b7d1',
+                threshold: { warning: 100, critical: 200 },
+                api: '/api/analytics/infra-metrics?metric=disk'
+            },
+            network: {
+                title: '네트워크 I/O',
+                unit: 'Mbps',
+                color: '#96ceb4',
+                threshold: { warning: 800, critical: 950 },
+                api: '/api/analytics/network-metrics'
+            },
+            application: {
+                title: '애플리케이션 성능',
+                unit: 'ms',
+                color: '#feca57',
+                threshold: { warning: 500, critical: 1000 },
+                api: '/api/analytics/app-metrics'
+            },
+            database: {
+                title: '데이터베이스 성능',
+                unit: 'ms',
+                color: '#ff9ff3',
+                threshold: { warning: 200, critical: 500 },
+                api: '/api/analytics/db-metrics'
+            },
+            service: {
+                title: '서비스 가용성',
+                unit: '%',
+                color: '#54a0ff',
+                threshold: { warning: 99, critical: 95 },
+                api: '/api/analytics/service-metrics'
+            },
+            jvm: {
+                title: 'JVM 메모리',
+                unit: 'MB',
+                color: '#feca57',
+                threshold: { warning: 1024, critical: 2048 },
+                api: '/api/analytics/jvm-metrics'
+            },
+            errorLogs: {
+                title: '에러 로그',
+                unit: '건/분',
+                color: '#5f27cd',
+                threshold: { warning: 10, critical: 50 },
+                api: '/api/analytics/error-logs'
+            },
+            accessLogs: {
+                title: '액세스 로그',
+                unit: '요청/분',
+                color: '#5f27cd',
+                threshold: { warning: 1000, critical: 5000 },
+                api: '/api/analytics/access-logs'
+            },
+            systemLogs: {
+                title: '시스템 로그',
+                unit: '건/분',
+                color: '#5f27cd',
+                threshold: { warning: 100, critical: 500 },
+                api: '/api/analytics/system-logs'
+            },
+            securityLogs: {
+                title: '보안 로그',
+                unit: '이벤트/분',
+                color: '#5f27cd',
+                threshold: { warning: 5, critical: 20 },
+                api: '/api/analytics/security-logs'
+            }
+        };
+
+        // Chart.js 글로벌 설정 함수 (Grafana 스타일)
+        function setupChartDefaults() {
+            try {
+                console.log('🎨 Chart.js 버전:', Chart.version);
+                
+                // Chart.js 2.x vs 3.x vs 4.x 버전 호환성 처리
+                const majorVersion = parseInt(Chart.version.split('.')[0]);
+                
+                if (majorVersion >= 3) {
+                    // Chart.js 3.x 이상
+                    Chart.defaults.color = '#c9d1d9';
+                    
+                    if (Chart.defaults.plugins && Chart.defaults.plugins.legend) {
+                        Chart.defaults.plugins.legend.display = false;
+                    }
+                    
+                    // v3+ 방식 (직접 설정하지 않고 getChartConfig에서 처리)
+                    console.log('✅ Chart.js v3+ 글로벌 설정 완료');
+                } else {
+                    // Chart.js 2.x
+                    Chart.defaults.global.defaultColor = '#c9d1d9';
+                    Chart.defaults.global.legend.display = false;
+                    
+                    if (Chart.defaults.global.elements) {
+                        Chart.defaults.global.elements.line.borderColor = '#3b82f6';
+                        Chart.defaults.global.elements.point.backgroundColor = '#3b82f6';
+                    }
+                    
+                    console.log('✅ Chart.js v2.x 글로벌 설정 완료');
+                }
+                
+            } catch (error) {
+                console.warn('⚠️ Chart.js 글로벌 설정 실패:', error.message);
+                console.log('📝 Chart.js 개별 인스턴스에서 스타일 적용 예정');
+            }
+        }
+
+        // 테스트 데이터 생성
+        function generateTestData(count = 50, type = 'cpu') {
+            const data = [];
+            const now = Date.now();
+            const baseValue = type === 'service' ? 99.5 : type === 'errorLogs' ? 5 : 50;
+            
+            for (let i = count - 1; i >= 0; i--) {
+                const timestamp = new Date(now - i * 60000);
+                let value;
+                
+                switch(type) {
+                    case 'cpu':
+                    case 'memory':
+                        value = Math.max(0, Math.min(100, baseValue + Math.sin(i * 0.1) * 20 + (Math.random() - 0.5) * 15));
+                        break;
+                    case 'disk':
+                    case 'network':
+                        value = Math.max(0, baseValue * 2 + Math.sin(i * 0.1) * 30 + (Math.random() - 0.5) * 20);
+                        break;
+                    case 'application':
+                    case 'database':
+                        value = Math.max(10, 200 + Math.sin(i * 0.1) * 100 + (Math.random() - 0.5) * 50);
+                        break;
+                    case 'service':
+                        value = Math.max(95, Math.min(100, 99.5 + (Math.random() - 0.5) * 3));
+                        break;
+                    case 'jvm':
+                        value = Math.max(100, 800 + Math.sin(i * 0.1) * 200 + (Math.random() - 0.5) * 100);
+                        break;
+                    case 'errorLogs':
+                    case 'accessLogs':
+                    case 'systemLogs':
+                    case 'securityLogs':
+                        value = Math.max(0, baseValue + Math.sin(i * 0.1) * 10 + (Math.random() - 0.5) * 8);
+                        break;
+                    default:
+                        value = Math.max(0, baseValue + (Math.random() - 0.5) * 20);
+                }
+                
+                data.push({
+                    timestamp: timestamp,
+                    value: parseFloat(value.toFixed(2))
+                });
+            }
+            return data;
+        }
+
+        // Chart.js 버전 호환성 함수
+        function getCompatibleScales(config) {
+            try {
+                const majorVersion = parseInt(Chart.version.split('.')[0]);
+                
+                if (majorVersion >= 3) {
+                    // Chart.js 3.x+ 방식
+                    return {
+                        x: {
+                            display: true,
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                maxTicksLimit: 6,
+                                color: '#6c757d'
+                            }
+                        },
+                        y: {
+                            display: true,
+                            grid: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                color: '#6c757d',
+                                callback: function(value) {
+                                    return value + config.unit;
+                                }
+                            }
+                        }
+                    };
+                } else {
+                    // Chart.js 2.x 방식
+                    return {
+                        xAxes: [{
+                            display: true,
+                            gridLines: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                maxTicksLimit: 6,
+                                fontColor: '#6c757d'
+                            }
+                        }],
+                        yAxes: [{
+                            display: true,
+                            gridLines: {
+                                display: true,
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                fontColor: '#6c757d',
+                                callback: function(value) {
+                                    return value + config.unit;
+                                }
+                            }
+                        }]
+                    };
+                }
+            } catch (error) {
+                console.warn('⚠️ 스케일 설정 실패, 기본값 사용:', error.message);
+                return {};
+            }
+        }
+
+        // 차트 생성
+        function createChart(canvasId, metricType) {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return null;
+
+            const config = metricConfigs[metricType];
+            const data = generateTestData(30, metricType);
+            
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.timestamp.toLocaleTimeString()),
+                    datasets: [{
+                        data: data.map(d => d.value),
+                        borderColor: config.color,
+                        backgroundColor: config.color + '20',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        pointHoverRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    scales: getCompatibleScales(config),
+                    plugins: {
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#212529',
+                            bodyColor: '#6c757d',
+                            borderColor: config.color,
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    return config.title + ': ' + context.parsed.y + config.unit;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 값 업데이트
+            const latest = data[data.length - 1];
+            const valueElement = document.getElementById(metricType + 'Value');
+            if (valueElement) {
+                valueElement.textContent = latest.value + config.unit;
+                
+                // 상태에 따른 색상 변경
+                if (latest.value >= config.threshold.critical) {
+                    valueElement.style.color = '#e02f44';
+                } else if (latest.value >= config.threshold.warning) {
+                    valueElement.style.color = '#ff9830';
+                } else {
+                    valueElement.style.color = '#73bf69';
+                }
+            }
+
+            return chart;
+        }
+
+        // 모든 차트 초기화
+        function initializeCharts() {
+            console.log('📊 차트 초기화 시작...');
+            
+            Object.keys(metricConfigs).forEach(metricType => {
+                const chartId = metricType + 'Chart';
+                charts[metricType] = createChart(chartId, metricType);
+            });
+            
+            console.log('✅ 모든 차트 초기화 완료');
+            updateLastUpdateTime();
+        }
+
+        // 모든 메트릭 새로고침
+        async function refreshAllMetrics() {
+            console.log('🔄 메트릭 새로고침 시작...');
+            
+            Object.keys(metricConfigs).forEach(metricType => {
+                if (charts[metricType]) {
+                    const data = generateTestData(30, metricType);
+                    const chart = charts[metricType];
+                    
+                    // 차트 데이터 업데이트
+                    chart.data.labels = data.map(d => d.timestamp.toLocaleTimeString());
+                    chart.data.datasets[0].data = data.map(d => d.value);
+                    chart.update('none');
+                    
+                    // 값 업데이트
+                    const latest = data[data.length - 1];
+                    const valueElement = document.getElementById(metricType + 'Value');
+                    if (valueElement) {
+                        valueElement.textContent = latest.value + metricConfigs[metricType].unit;
+                        
+                        // 상태에 따른 색상 변경
+                        const config = metricConfigs[metricType];
+                        if (latest.value >= config.threshold.critical) {
+                            valueElement.style.color = '#e02f44';
+                        } else if (latest.value >= config.threshold.warning) {
+                            valueElement.style.color = '#ff9830';
+                        } else {
+                            valueElement.style.color = '#73bf69';
+                        }
+                    }
+                }
+            });
+            
+            updateLastUpdateTime();
+            console.log('✅ 메트릭 새로고침 완료');
+        }
+
+        // 마지막 업데이트 시간 갱신
+        function updateLastUpdateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('ko-KR');
+            document.getElementById('lastUpdate').textContent = `마지막 업데이트: ${timeString}`;
+        }
+
+        // 상세 모달 열기
+        function openDetailModal(metricType) {
+            currentMetric = metricType;
+            const config = metricConfigs[metricType];
+            
+            // 모달 제목 설정
+            document.getElementById('modalTitle').textContent = config.title + ' 상세 정보';
+            
+            // 모달 차트 생성
+            const modalCanvas = document.getElementById('modalChart');
+            const ctx = modalCanvas.getContext('2d');
+            
+            // 기존 차트 제거
+            if (modalChart) {
+                modalChart.destroy();
+            }
+            
+            // 더 많은 데이터로 상세 차트 생성
+            const detailData = generateTestData(100, metricType);
+            
+            modalChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: detailData.map(d => d.timestamp.toLocaleTimeString()),
+                    datasets: [{
+                        label: config.title,
+                        data: detailData.map(d => d.value),
+                        borderColor: config.color,
+                        backgroundColor: config.color + '10',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 1,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    scales: getCompatibleScales(config),
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: {
+                                color: '#c9d1d9'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#c9d1d9',
+                            borderColor: config.color,
+                            borderWidth: 1
+                        }
+                    }
+                }
+            });
+            
+            // 데이터 테이블 업데이트
+            updateModalDataTable(detailData, config);
+            
+            // 모달 표시
+            document.getElementById('detailModal').style.display = 'block';
+        }
+
+        // 모달 데이터 테이블 업데이트
+        function updateModalDataTable(data, config) {
+            const tbody = document.querySelector('#modalDataTable tbody');
+            tbody.innerHTML = '';
+            
+            // 최근 20개 데이터만 표시
+            const recentData = data.slice(-20);
+            
+            recentData.forEach(item => {
+                const row = document.createElement('tr');
+                const status = getStatus(item.value, config.threshold);
+                
+                row.innerHTML = `
+                    <td>${item.timestamp.toLocaleTimeString()}</td>
+                    <td>${item.value}${config.unit}</td>
+                    <td>
+                        <span class="status-indicator status-${status}"></span>
+                        ${status === 'healthy' ? '정상' : status === 'warning' ? '경고' : '위험'}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 상태 판정
+        function getStatus(value, threshold) {
+            if (value >= threshold.critical) return 'critical';
+            if (value >= threshold.warning) return 'warning';
+            return 'healthy';
+        }
+
+        // 상세 모달 닫기
+        function closeDetailModal() {
+            document.getElementById('detailModal').style.display = 'none';
+            if (modalChart) {
+                modalChart.destroy();
+                modalChart = null;
+            }
+            currentMetric = null;
+        }
+
+        // 실시간 업데이트 시작
+        function startRealTimeUpdates() {
+            updateInterval = setInterval(() => {
+                refreshAllMetrics();
+                
+                // 모달이 열려있으면 모달 차트도 업데이트
+                if (currentMetric && modalChart) {
+                    const newData = generateTestData(100, currentMetric);
+                    modalChart.data.labels = newData.map(d => d.timestamp.toLocaleTimeString());
+                    modalChart.data.datasets[0].data = newData.map(d => d.value);
+                    modalChart.update('none');
+                    
+                    updateModalDataTable(newData, metricConfigs[currentMetric]);
+                }
+            }, 5000); // 5초마다 업데이트
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 상세 메트릭 대시보드 초기화...');
+            
+            // Chart.js 로드 확인
+            if (typeof Chart === 'undefined') {
+                console.error('❌ Chart.js가 로드되지 않았습니다!');
+                return;
+            }
+            
+            // Chart.js 글로벌 설정 적용
+            setupChartDefaults();
+            console.log('✅ Chart.js 설정 완료');
+            
+            // 차트 초기화
+            setTimeout(() => {
+                initializeCharts();
+                startRealTimeUpdates();
+            }, 500);
+            
+            // 모달 클릭 이벤트 (배경 클릭 시 닫기)
+            document.getElementById('detailModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeDetailModal();
+                }
+            });
+            
+            // 새로고침 버튼 이벤트 리스너
+            document.getElementById('refreshBtn').addEventListener('click', function() {
+                refreshAllMetrics();
+            });
+            
+            // 시간 범위 변경 이벤트 리스너
+            document.getElementById('timeRange').addEventListener('change', function() {
+                console.log('⏱️ 시간 범위 변경:', this.value);
+                refreshAllMetrics();
+            });
+            
+            // ESC 키로 모달 닫기
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && document.getElementById('detailModal').style.display === 'block') {
+                    closeDetailModal();
+                }
+            });
+            
+            console.log('✅ 상세 메트릭 대시보드 초기화 완료');
+        });
+
+        // 페이지 언로드 시 정리
+        window.addEventListener('beforeunload', function() {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            if (modalChart) {
+                modalChart.destroy();
+            }
+        });
+    </script>
+</body>
+</html>

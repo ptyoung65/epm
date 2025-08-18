@@ -1,0 +1,75 @@
+{
+  "id": "01889eaf-2218-47c4-8bbe-13ae489b592c",
+  "scenario": "journey_e-commerce",
+  "startTime": "2025-08-14T15:54:37.327Z",
+  "lastActivity": "2025-08-14T15:55:47.054Z",
+  "userAgent": "curl/8.5.0",
+  "ipAddress": "::1",
+  "events": [
+    {
+      "id": "c5e1863f-5d44-4644-b94f-e5d97c8ed07d",
+      "sessionId": "01889eaf-2218-47c4-8bbe-13ae489b592c",
+      "timestamp": 1000,
+      "recordedAt": "2025-08-14T15:55:12.914Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1000,
+        "page_url": "/",
+        "title": "home",
+        "referrer": null,
+        "load_time": 800
+      }
+    },
+    {
+      "id": "f5e8e9d8-3b07-4e1e-88f6-73e6dc254bb9",
+      "sessionId": "01889eaf-2218-47c4-8bbe-13ae489b592c",
+      "timestamp": 3000,
+      "recordedAt": "2025-08-14T15:55:47.054Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 3000,
+        "page_url": "/products",
+        "title": "products",
+        "referrer": "/",
+        "load_time": 1200
+      }
+    }
+  ],
+  "status": "completed",
+  "metadata": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "userAgent": "curl/8.5.0",
+    "device": {
+      "type": "desktop",
+      "browser": "unknown",
+      "os": "unknown"
+    }
+  },
+  "endTime": "2025-08-14T15:56:16.521Z",
+  "duration": 99194,
+  "endReason": "user_ended",
+  "statistics": {
+    "totalEvents": 2,
+    "eventTypes": {
+      "rrweb_event": 2
+    },
+    "clicks": 0,
+    "formInputs": 0,
+    "pageViews": 0,
+    "errors": 0,
+    "scrollEvents": 0,
+    "userBehavior": {
+      "avgTimeBetweenEvents": 1000,
+      "hasErrors": false,
+      "hasFormInteraction": false,
+      "hasNavigation": false
+    }
+  }
+}

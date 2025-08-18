@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS-MON 메인 대시보드 | AI 기반 실시간 모니터링 시스템</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    
+    <!-- 스타일시트 -->
+    <link href="/styles/theme.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    
+    <!-- 스크립트 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    
+    <style>
+        .terminal {
+            background: var(--neutral-900);
+            color: var(--success-500);
+            font-family: var(--font-mono);
+            padding: var(--space-6);
+            border-radius: var(--radius-lg);
+            height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            border: 1px solid var(--neutral-200);
+        }
+        
+        .metric-card {
+            background: var(--neutral-0);
+            border: 1px solid var(--neutral-200);
+            border-left: 4px solid var(--primary-500);
+            transition: all var(--transition-normal);
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-left-color: var(--primary-600);
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--space-2);
+            padding: var(--space-2) var(--space-3);
+            border-radius: var(--radius-full);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+        }
+        
+        .status-success {
+            background: var(--success-50);
+            color: var(--success-600);
+        }
+        
+        .status-warning {
+            background: var(--warning-50);
+            color: var(--warning-600);
+        }
+        
+        .status-error {
+            background: var(--error-50);
+            color: var(--error-600);
+        }
+        
+        .quick-action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-6);
+        }
+        
+        .feature-card {
+            background: var(--neutral-0);
+            border: 1px solid var(--neutral-200);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-500), var(--primary-600));
+            transform: scaleX(0);
+            transition: transform var(--transition-normal);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--primary-200);
+        }
+        
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: var(--space-4);
+        }
+        
+        .chart-container {
+            background: var(--neutral-0);
+            border: 1px solid var(--neutral-200);
+            border-radius: var(--radius-xl);
+            padding: var(--space-6);
+            height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 사이드바 컨테이너 -->
+    <div id="sidebar-container"></div>
+    
+    <!-- 메인 애플리케이션 -->
+    <div class="app-layout">
+        <!-- 메인 컨텐츠 -->
+        <main class="main-content" id="mainContent">
+            <!-- 상단 헤더 -->
+            <header class="main-header">
+                <div class="header-content">
+                    <div class="header-left">
+                        <button class="header-btn" id="mobileMenuToggle" style="display: none;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 12h18M3 6h18M3 18h18"></path>
+                            </svg>
+                            <span>메뉴</span>
+                        </button>
+                        <div>
+                            <h1 class="page-title">AIRIS-MON 메인 대시보드</h1>
+                            <nav class="breadcrumb">
+                                <span>홈</span>
+                                <span class="breadcrumb-separator">›</span>
+                                <span>대시보드</span>
+                            </nav>
+                        </div>
+                    </div>
+                    <div class="header-right">
+                        <div class="header-actions">
+                            <div class="status-indicator status-success">
+                                <div class="animate-pulse" style="width: 8px; height: 8px; background: var(--success-500); border-radius: 50%;"></div>
+                                <span>시스템 정상</span>
+                            </div>
+                            <div class="korean-time" id="koreanTime">
+                                <!-- 실시간 시간 표시 -->
+                            </div>
+                            <a href="/admin-settings.html" class="header-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                </svg>
+                                설정
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 컨텐츠 영역 -->
+            <div class="content-wrapper">
+                <!-- 페이지 헤더 -->
+                <div class="content-header">
+                    <h2 class="content-title">AIRIS-MON 메인 대시보드</h2>
+                    <p class="content-description">
+                        AI 기반 실시간 모니터링 시스템으로 세션 리플레이, 프로젝트 분석, 성능 모니터링을 통합 관리합니다.
+                    </p>
+                </div>
+
+                <!-- 빠른 접근 패널 -->
+                <div class="feature-card bg-gradient-primary text-white mb-8" style="background: var(--primary-600); color: white;">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-2xl font-bold mb-2 text-white">🚀 AIRIS-MON 통합 플랫폼</h2>
+                            <p style="color: rgba(255, 255, 255, 0.9);">
+                                세션 리플레이, 프로젝트 분석, 실시간 모니터링을 한 곳에서 통합 관리
+                            </p>
+                        </div>
+                        <div class="flex gap-4">
+                            <a href="/integrated-dashboard.html" class="btn bg-white text-primary-600 hover:bg-neutral-100">
+                                📊 통합 대시보드
+                            </a>
+                            <a href="/admin-settings.html" class="btn" style="background: rgba(255, 255, 255, 0.2); color: white; border-color: rgba(255, 255, 255, 0.3);">
+                                ⚙️ 관리자 설정
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 제어 패널 -->
+                <div class="card mb-8">
+                    <div class="card-header">
+                        <h3 class="card-title">🎮 시스템 제어판</h3>
+                        <p class="card-subtitle">테스트 및 모니터링 기능을 중앙에서 제어</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <button id="start-all-tests" class="btn btn-primary">
+                                🚀 모든 테스트 실행
+                            </button>
+                            <button id="stop-all-tests" class="btn btn-error">
+                                ⏹️ 모든 테스트 중지
+                            </button>
+                            <button id="generate-test-data" class="btn btn-success">
+                                📊 테스트 데이터 생성
+                            </button>
+                            <button id="view-real-time" class="btn btn-warning">
+                                📈 실시간 모니터링
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 시스템 상태 개요 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="metric-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-2">실행 중인 세션</h3>
+                        <p id="running-tests" class="text-3xl font-bold text-primary">12</p>
+                        <p class="text-sm text-secondary">Active Sessions</p>
+                    </div>
+                    <div class="metric-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-2">API 응답 시간</h3>
+                        <p id="completed-tests" class="text-3xl font-bold text-success">45ms</p>
+                        <p class="text-sm text-secondary">Average Response</p>
+                    </div>
+                    <div class="metric-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-2">시스템 상태</h3>
+                        <div id="failed-tests" class="text-3xl font-bold text-success mb-2">정상</div>
+                        <p class="text-sm text-secondary">System Health</p>
+                    </div>
+                    <div class="metric-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold mb-2">미확인 알림</h3>
+                        <p id="success-rate" class="text-3xl font-bold text-warning">3</p>
+                        <p class="text-sm text-secondary">Pending Alerts</p>
+                    </div>
+                </div>
+
+                <!-- 주요 기능 -->
+                <div class="quick-action-grid mb-8">
+                    <!-- 세션 리플레이 -->
+                    <div class="feature-card">
+                        <div class="feature-icon">🎬</div>
+                        <h3 class="text-xl font-semibold mb-2">세션 리플레이</h3>
+                        <p class="text-secondary mb-4">사용자 행동을 픽셀 단위로 정확하게 녹화하고 재생합니다.</p>
+                        <div class="flex gap-2">
+                            <a href="/integrated-session-recorder-fixed.html" class="btn btn-primary">통합 녹화기</a>
+                            <a href="/enhanced-player.html" class="btn btn-secondary">플레이어</a>
+                        </div>
+                    </div>
+
+                    <!-- 프로젝트 분석 -->
+                    <div class="feature-card">
+                        <div class="feature-icon">🐍</div>
+                        <h3 class="text-xl font-semibold mb-2">프로젝트 분석</h3>
+                        <p class="text-secondary mb-4">GitHub 저장소나 로컬 프로젝트를 자동으로 분석합니다.</p>
+                        <div class="flex gap-2">
+                            <a href="/project-analysis.html" class="btn btn-primary">분석 시작</a>
+                            <a href="/application-analysis.html" class="btn btn-secondary">CRUD 매트릭스</a>
+                        </div>
+                    </div>
+
+                    <!-- 실시간 모니터링 -->
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3 class="text-xl font-semibold mb-2">실시간 모니터링</h3>
+                        <p class="text-secondary mb-4">시스템 성능과 상태를 실시간으로 추적합니다.</p>
+                        <div class="flex gap-2">
+                            <a href="/application-apm.html" class="btn btn-primary">APM</a>
+                            <a href="/infrastructure-monitoring.html" class="btn btn-secondary">인프라</a>
+                        </div>
+                    </div>
+
+                    <!-- 분석 도구 -->
+                    <div class="feature-card">
+                        <div class="feature-icon">🔍</div>
+                        <h3 class="text-xl font-semibold mb-2">분석 도구</h3>
+                        <p class="text-secondary mb-4">고급 데이터 시각화 및 분석 도구를 제공합니다.</p>
+                        <div class="flex gap-2">
+                            <a href="/click-heatmap-analyzer.html" class="btn btn-primary">히트맵</a>
+                            <a href="/trace-sequence-diagram.html" class="btn btn-secondary">시퀀스</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 차트 및 로그 섹션 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="chart-container">
+                        <h3 class="text-xl font-semibold mb-4">📊 실시간 메트릭</h3>
+                        <canvas id="real-time-chart" width="400" height="300"></canvas>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">🖥️ 시스템 로그</h3>
+                            <button id="clear-logs" class="btn btn-secondary text-sm">
+                                로그 지우기
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="system-logs" class="terminal">
+AIRIS-MON 시스템 준비됨...
+시스템 초기화 완료
+모든 서비스 정상 작동 중...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 시뮬레이션 도구 -->
+                <div class="card mb-8">
+                    <div class="card-header">
+                        <h3 class="card-title">🔬 데이터 시뮬레이션</h3>
+                        <p class="card-subtitle">테스트 데이터 생성 및 시뮬레이션 도구</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                            <div class="text-center">
+                                <button class="simulate-btn btn btn-primary w-full mb-2" data-type="metrics">
+                                    📊 메트릭 시뮬레이션
+                                </button>
+                                <p class="text-sm text-secondary">시스템 메트릭 생성</p>
+                            </div>
+                            <div class="text-center">
+                                <button class="simulate-btn btn btn-warning w-full mb-2" data-type="events">
+                                    🎯 이벤트 시뮬레이션
+                                </button>
+                                <p class="text-sm text-secondary">시스템 이벤트 생성</p>
+                            </div>
+                            <div class="text-center">
+                                <button class="simulate-btn btn btn-error w-full mb-2" data-type="alerts">
+                                    🚨 알림 시뮬레이션
+                                </button>
+                                <p class="text-sm text-secondary">알림 및 경고 생성</p>
+                            </div>
+                            <div class="text-center">
+                                <button class="simulate-btn btn btn-info w-full mb-2" data-type="sessions">
+                                    👥 세션 시뮬레이션
+                                </button>
+                                <p class="text-sm text-secondary">사용자 세션 생성</p>
+                            </div>
+                        </div>
+                        
+                        <!-- 시뮬레이션 설정 -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-neutral-50 rounded-lg">
+                            <div>
+                                <label class="block text-sm font-medium mb-2">지속 시간 (초)</label>
+                                <input id="sim-duration" type="number" value="60" class="w-full">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">강도</label>
+                                <select id="sim-intensity" class="w-full">
+                                    <option value="low">낮음</option>
+                                    <option value="medium" selected>보통</option>
+                                    <option value="high">높음</option>
+                                    <option value="extreme">극한</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">모드</label>
+                                <select id="sim-mode" class="w-full">
+                                    <option value="normal">정상</option>
+                                    <option value="anomaly">이상 데이터 포함</option>
+                                    <option value="stress">스트레스 테스트</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 레이아웃 및 사이드바 로드 스크립트 -->
+    <script src="/components/layout.html" type="text/javascript"></script>
+    <script>
+        // 레이아웃 매니저 초기화
+        class DashboardManager {
+            constructor() {
+                this.socket = null;
+                this.realtimeChart = null;
+                this.isRealTimeActive = false;
+                this.testResults = {};
+                this.init();
+            }
+
+            async init() {
+                await this.loadSidebar();
+                this.initializeWebSocket();
+                this.setupEventListeners();
+                this.initializeChart();
+                this.updateTime();
+                this.addLog('🚀 AIRIS-MON 메인 대시보드 시작됨');
+            }
+
+            // 사이드바 로드
+            async loadSidebar() {
+                try {
+                    const response = await fetch('/components/sidebar.html');
+                    const sidebarHTML = await response.text();
+                    
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(sidebarHTML, 'text/html');
+                    const sidebar = doc.querySelector('.sidebar');
+                    
+                    if (sidebar) {
+                        document.getElementById('sidebar-container').appendChild(sidebar);
+                        
+                        // 사이드바 스크립트 실행
+                        const scripts = doc.querySelectorAll('script');
+                        scripts.forEach(script => {
+                            if (script.textContent) {
+                                const newScript = document.createElement('script');
+                                newScript.textContent = script.textContent;
+                                document.head.appendChild(newScript);
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.warn('사이드바 로드 실패:', error);
+                    this.adjustLayoutWithoutSidebar();
+                }
+            }
+
+            // 사이드바 없이 레이아웃 조정
+            adjustLayoutWithoutSidebar() {
+                const mainContent = document.getElementById('mainContent');
+                if (mainContent) {
+                    mainContent.style.marginLeft = '0';
+                }
+                
+                const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+                if (mobileMenuToggle) {
+                    mobileMenuToggle.style.display = 'flex';
+                }
+            }
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="text-center">
+                            <a href="/enhanced-recorder" class="block w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold py-3 px-4 rounded transition duration-300">
+                                🎯 향상된 녹화기
+                            </a>
+                            <p class="text-xs text-gray-600 mt-1">DOM 스냅샷 + 타이핑 애니메이션</p>
+                        </div>
+                        <div class="text-center">
+                            <a href="/enhanced-player" class="block w-full bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white font-bold py-3 px-4 rounded transition duration-300">
+                                🎬 향상된 플레이어
+                            </a>
+                            <p class="text-xs text-gray-600 mt-1">정확한 DOM 재구성 + 시각 효과</p>
+                        </div>
+                        <div class="text-center">
+                            <a href="/real-scenarios" class="block w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-3 px-4 rounded transition duration-300">
+                                🌐 기본 시나리오
+                            </a>
+                            <p class="text-xs text-gray-600 mt-1">rrweb 기반 실제 화면 녹화</p>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 mt-4">
+                        <div class="text-center">
+                            <a href="/trace-sequence-diagram" class="block w-full bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded transition duration-300">
+                                🔍 트레이스 시퀀스 다이어그램
+                            </a>
+                            <p class="text-xs text-gray-600 mt-1">프로세스 ID부터 완료까지 플로우 추적</p>
+                        </div>
+                        <div class="text-center">
+                            <a href="/click-heatmap" class="block w-full bg-gradient-to-r from-yellow-500 to-red-600 hover:from-yellow-600 hover:to-red-700 text-white font-bold py-3 px-4 rounded transition duration-300">
+                                🔥 클릭 히트맵 분석기
+                            </a>
+                            <p class="text-xs text-gray-600 mt-1">사용자 클릭 패턴 시각화 및 분석</p>
+                        </div>
+                        <div class="text-center">
+                            <a href="/database-apm" class="block w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-3 px-4 rounded transition duration-300">
+                                🗄️ Database APM
+                            </a>
+                            <p class="text-xs text-gray-600 mt-1">실시간 DB 성능 모니터링</p>
+                        </div>
+                        <div class="text-center">
+                            <a href="/application-apm" class="block w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white font-bold py-3 px-4 rounded transition duration-300">
+                                ⚡ Application APM
+                            </a>
+                            <p class="text-xs text-gray-600 mt-1">애플리케이션 성능 모니터링</p>
+                        </div>
+                        <div class="text-center">
+                            <a href="/infrastructure-monitoring" class="block w-full bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-800 hover:to-black text-white font-bold py-3 px-4 rounded transition duration-300">
+                                🏗️ Infrastructure Monitoring
+                            </a>
+                            <p class="text-xs text-gray-600 mt-1">WEB/WAS/DB/NETWORK 통합 모니터링</p>
+                        </div>
+                        <div class="text-center">
+                            <a href="/alert-management" class="block w-full bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white font-bold py-3 px-4 rounded transition duration-300">
+                                🚨 Alert Management
+                            </a>
+                            <p class="text-xs text-gray-600 mt-1">통합 알림 관리 및 대응 시스템</p>
+                        </div>
+                        <div class="text-center">
+                            <a href="/application-analysis" class="block w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold py-3 px-4 rounded transition duration-300">
+                                📊 애플리케이션 분석
+                            </a>
+                            <p class="text-xs text-gray-600 mt-1">프로그램-테이블 상관도 및 클래스 다이어그램</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-center">
+                        <p class="text-sm text-blue-700 bg-blue-100 rounded p-2">
+                            🆕 <strong>프로덕션 레벨</strong>: 실시간 모니터링과 세션 리플레이의 완벽한 통합
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Legacy Session Replay (for comparison) -->
+                <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <h3 class="font-semibold mb-3 text-yellow-800">📋 기존 시스템 (참고용)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="text-center">
+                            <a href="/session-replay-scenarios" class="block w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded transition duration-300">
+                                🎭 목업 기반 시나리오
+                            </a>
+                            <p class="text-xs text-gray-600 mt-1">시뮬레이션 데이터 기반</p>
+                        </div>
+                        <div class="text-center">
+                            <a href="/session-replay-player" class="block w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded transition duration-300">
+                                🎪 목업 기반 플레이어
+                            </a>
+                            <p class="text-xs text-gray-600 mt-1">가상 화면 목업 재생</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Simulation Settings -->
+                <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <h3 class="font-semibold mb-3">시뮬레이션 설정</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">지속 시간 (초)</label>
+                            <input id="sim-duration" type="number" value="60" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">강도</label>
+                            <select id="sim-intensity" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="low">낮음</option>
+                                <option value="medium" selected>보통</option>
+                                <option value="high">높음</option>
+                                <option value="extreme">극한</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">모드</label>
+                            <select id="sim-mode" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="normal">정상</option>
+                                <option value="anomaly">이상 데이터 포함</option>
+                                <option value="stress">스트레스 테스트</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Results and Logs -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">📊 테스트 결과</h2>
+                    <div id="test-results" class="max-h-96 overflow-y-auto">
+                        <p class="text-gray-500 text-center py-8">테스트 결과가 여기에 표시됩니다</p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-gray-800">🖥️ 시스템 로그</h2>
+                        <button id="clear-logs" class="text-sm bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded">
+                            로그 지우기
+                        </button>
+                    </div>
+                    <div id="system-logs" class="terminal">
+                        AIRIS-MON 테스트 스위트 준비됨...
+시스템 초기화 완료
+테스트 시나리오 로딩 중...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let socket;
+        let testResults = {};
+        let realtimeChart;
+        let isRealTimeActive = false;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', async function() {
+            initializeWebSocket();
+            initializeUI();
+            loadTestScenarios();
+            setupEventListeners();
+            startTimeUpdater();
+            initializeChart();
+            
+            addLog('🚀 AIRIS-MON 테스트 스위트 시작됨');
+            addLog('📡 WebSocket 연결 초기화 중...');
+        });
+
+        // WebSocket initialization
+        function initializeWebSocket() {
+            socket = io();
+            
+            socket.on('connect', () => {
+                addLog('✅ WebSocket 연결 성공');
+                updateConnectionStatus(true);
+            });
+            
+            socket.on('disconnect', () => {
+                addLog('❌ WebSocket 연결 끊김');
+                updateConnectionStatus(false);
+            });
+            
+            socket.on('scenario-started', (data) => {
+                addLog(`🧪 시나리오 시작: ${data.name}`);
+                updateTestScenarioStatus(data.id, 'running');
+                updateTestStats();
+            });
+            
+            socket.on('scenario-completed', (data) => {
+                addLog(`✅ 시나리오 완료: ${data.name} (${data.successRate?.toFixed(1)}% 성공률)`);
+                updateTestScenarioStatus(data.id, data.status);
+                testResults[data.id] = data;
+                updateTestResults();
+                updateTestStats();
+            });
+            
+            socket.on('step-completed', (data) => {
+                addLog(`  📋 단계 완료: ${data.step.name} ${data.step.success ? '✅' : '❌'}`);
+            });
+            
+            socket.on('real-time-data', (data) => {
+                if (isRealTimeActive) {
+                    updateRealtimeChart(data);
+                    updateRealtimeMetrics(data);
+                }
+            });
+        }
+
+        // UI initialization
+        function initializeUI() {
+            updateTestStats();
+        }
+
+        // Load test scenarios
+        async function loadTestScenarios() {
+            try {
+                const response = await fetch('/api/scenarios');
+                const scenarios = await response.json();
+                
+                renderTestScenarios(scenarios);
+                addLog(`📋 ${scenarios.length}개 테스트 시나리오 로드됨`);
+            } catch (error) {
+                addLog(`❌ 시나리오 로드 실패: ${error.message}`);
+            }
+        }
+
+        // Render test scenarios
+        function renderTestScenarios(scenarios) {
+            const container = document.getElementById('test-scenarios');
+            container.innerHTML = '';
+            
+            scenarios.forEach(scenario => {
+                const scenarioElement = document.createElement('div');
+                scenarioElement.className = 'test-card bg-gray-50 p-4 rounded-lg border-l-4 border-blue-500';
+                scenarioElement.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="font-semibold text-gray-800">${scenario.name}</h3>
+                            <p class="text-sm text-gray-600">${scenario.description}</p>
+                            <div class="mt-2 flex items-center space-x-4">
+                                <span class="text-xs bg-${getCategoryColor(scenario.category)}-100 text-${getCategoryColor(scenario.category)}-800 px-2 py-1 rounded">
+                                    ${scenario.category}
+                                </span>
+                                <span class="text-xs text-gray-500">⏱️ ${scenario.duration}초</span>
+                                <span class="text-xs text-gray-500">📋 ${scenario.steps?.length || 0}단계</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end">
+                            <span id="status-${scenario.id}" class="status-pending text-sm font-semibold">⏳ 대기중</span>
+                            <button onclick="runScenario('${scenario.id}')" class="mt-2 bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded">
+                                실행
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(scenarioElement);
+            });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Control buttons
+            document.getElementById('start-all-tests').addEventListener('click', startAllTests);
+            document.getElementById('stop-all-tests').addEventListener('click', stopAllTests);
+            document.getElementById('generate-test-data').addEventListener('click', generateTestData);
+            document.getElementById('view-real-time').addEventListener('click', toggleRealTime);
+            document.getElementById('clear-logs').addEventListener('click', clearLogs);
+            
+            // Simulation buttons
+            document.querySelectorAll('.simulate-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const type = e.target.getAttribute('data-type');
+                    runSimulation(type);
+                });
+            });
+        }
+
+        // Run a single scenario
+        async function runScenario(scenarioId) {
+            try {
+                addLog(`🧪 시나리오 실행 시작: ${scenarioId}`);
+                const response = await fetch(`/api/scenarios/${scenarioId}/run`, {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                addLog(`✅ 시나리오 실행 요청 성공: ${scenarioId}`);
+            } catch (error) {
+                addLog(`❌ 시나리오 실행 실패: ${error.message}`);
+            }
+        }
+
+        // Start all tests
+        async function startAllTests() {
+            addLog('🚀 모든 테스트 시나리오 실행 시작');
+            
+            try {
+                const response = await fetch('/api/scenarios');
+                const scenarios = await response.json();
+                
+                for (const scenario of scenarios) {
+                    await runScenario(scenario.id);
+                    // 시나리오 간 짧은 딜레이
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+            } catch (error) {
+                addLog(`❌ 전체 테스트 실행 실패: ${error.message}`);
+            }
+        }
+
+        // Stop all tests
+        function stopAllTests() {
+            addLog('⏹️ 모든 테스트 중지 요청');
+            // 실제 구현에서는 서버에 중지 신호를 보내야 함
+        }
+
+        // Generate test data
+        async function generateTestData() {
+            addLog('📊 테스트 데이터 생성 시작');
+            
+            const types = ['metrics', 'events', 'sessions'];
+            
+            for (const type of types) {
+                try {
+                    const response = await fetch(`/api/simulate/${type}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            duration: 30,
+                            intensity: 'medium'
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    addLog(`✅ ${type} 데이터 생성 완료`);
+                } catch (error) {
+                    addLog(`❌ ${type} 데이터 생성 실패: ${error.message}`);
+                }
+            }
+        }
+
+        // Run simulation
+        async function runSimulation(type) {
+            const duration = document.getElementById('sim-duration').value;
+            const intensity = document.getElementById('sim-intensity').value;
+            const mode = document.getElementById('sim-mode').value;
+            
+            addLog(`🔬 ${type} 시뮬레이션 시작 (${intensity}, ${duration}초)`);
+            
+            try {
+                const response = await fetch(`/api/simulate/${type}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        duration: parseInt(duration),
+                        intensity: intensity,
+                        mode: mode
+                    })
+                });
+                
+                const result = await response.json();
+                addLog(`✅ ${type} 시뮬레이션 시작됨`);
+            } catch (error) {
+                addLog(`❌ ${type} 시뮬레이션 실패: ${error.message}`);
+            }
+        }
+
+        // Toggle real-time monitoring
+        function toggleRealTime() {
+            isRealTimeActive = !isRealTimeActive;
+            const button = document.getElementById('view-real-time');
+            
+            if (isRealTimeActive) {
+                button.textContent = '⏹️ 실시간 모니터링 중지';
+                button.className = 'bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition duration-300';
+                socket.emit('start-real-time-test', { interval: 1000 });
+                addLog('📈 실시간 모니터링 시작');
+            } else {
+                button.textContent = '📈 실시간 모니터링';
+                button.className = 'bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded transition duration-300';
+                socket.emit('stop-real-time-test');
+                addLog('⏹️ 실시간 모니터링 중지');
+            }
+        }
+
+        // Update connection status
+        function updateConnectionStatus(connected) {
+            const status = document.getElementById('connection-status');
+            if (connected) {
+                status.className = 'bg-green-500 px-3 py-1 rounded-full text-xs font-semibold';
+                status.textContent = '🔌 연결됨';
+            } else {
+                status.className = 'bg-red-500 px-3 py-1 rounded-full text-xs font-semibold';
+                status.textContent = '❌ 연결 끊김';
+            }
+        }
+
+        // Update test scenario status
+        function updateTestScenarioStatus(scenarioId, status) {
+            const statusElement = document.getElementById(`status-${scenarioId}`);
+            if (!statusElement) return;
+            
+            const statusMap = {
+                'running': { text: '🔄 실행중', class: 'status-running' },
+                'completed': { text: '✅ 완료', class: 'status-completed' },
+                'failed': { text: '❌ 실패', class: 'status-failed' },
+                'pending': { text: '⏳ 대기중', class: 'status-pending' }
+            };
+            
+            const statusInfo = statusMap[status] || statusMap['pending'];
+            statusElement.textContent = statusInfo.text;
+            statusElement.className = `${statusInfo.class} text-sm font-semibold`;
+        }
+
+        // Update test statistics
+        function updateTestStats() {
+            const results = Object.values(testResults);
+            const running = results.filter(r => r.status === 'running').length;
+            const completed = results.filter(r => r.status === 'completed').length;
+            const failed = results.filter(r => r.status === 'failed').length;
+            const total = results.length;
+            const successRate = total > 0 ? (completed / total * 100).toFixed(1) : 0;
+            
+            document.getElementById('running-tests').textContent = running;
+            document.getElementById('completed-tests').textContent = completed;
+            document.getElementById('failed-tests').textContent = failed;
+            document.getElementById('success-rate').textContent = successRate + '%';
+        }
+
+        // Update test results display
+        function updateTestResults() {
+            const container = document.getElementById('test-results');
+            const results = Object.values(testResults);
+            
+            if (results.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">테스트 결과가 여기에 표시됩니다</p>';
+                return;
+            }
+            
+            container.innerHTML = results.map(result => `
+                <div class="mb-4 p-4 border-l-4 ${result.status === 'completed' ? 'border-green-500 bg-green-50' : result.status === 'failed' ? 'border-red-500 bg-red-50' : 'border-blue-500 bg-blue-50'} rounded">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-semibold">${result.name}</h4>
+                        <span class="text-sm ${result.status === 'completed' ? 'text-green-600' : result.status === 'failed' ? 'text-red-600' : 'text-blue-600'}">
+                            ${result.status === 'completed' ? '✅ 완료' : result.status === 'failed' ? '❌ 실패' : '🔄 실행중'}
+                        </span>
+                    </div>
+                    ${result.duration ? `<p class="text-sm text-gray-600">실행 시간: ${(result.duration / 1000).toFixed(1)}초</p>` : ''}
+                    ${result.successRate ? `<p class="text-sm text-gray-600">성공률: ${result.successRate.toFixed(1)}%</p>` : ''}
+                    ${result.steps && result.steps.length > 0 ? `<p class="text-sm text-gray-600">완료된 단계: ${result.steps.filter(s => s.success).length}/${result.steps.length}</p>` : ''}
+                    ${result.error ? `<p class="text-sm text-red-600">오류: ${result.error}</p>` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Add log entry
+        function addLog(message) {
+            const logsContainer = document.getElementById('system-logs');
+            const timestamp = new Date().toLocaleTimeString('ko-KR');
+            logsContainer.textContent += `\\n[${timestamp}] ${message}`;
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        // Clear logs
+        function clearLogs() {
+            document.getElementById('system-logs').textContent = 'AIRIS-MON 테스트 스위트 준비됨...\\n시스템 초기화 완료\\n테스트 시나리오 로딩 중...';
+        }
+
+        // Start time updater
+        function startTimeUpdater() {
+            setInterval(() => {
+                const now = new Date();
+                const timeString = now.toLocaleDateString('ko-KR', {
+                    timeZone: 'Asia/Seoul',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                document.getElementById('current-time').textContent = '🇰🇷 ' + timeString;
+            }, 1000);
+        }
+
+        // Initialize real-time chart
+        function initializeChart() {
+            const ctx = document.getElementById('real-time-chart').getContext('2d');
+            realtimeChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'CPU 사용률',
+                        data: [],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: '메모리 사용률',
+                        data: [],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: '응답 시간',
+                        data: [],
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    animation: {
+                        duration: 0
+                    }
+                }
+            });
+        }
+
+        // Update realtime chart
+        function updateRealtimeChart(data) {
+            if (!data.metrics) return;
+            
+            const time = new Date().toLocaleTimeString('ko-KR');
+            
+            realtimeChart.data.labels.push(time);
+            realtimeChart.data.datasets[0].data.push(data.metrics.cpu);
+            realtimeChart.data.datasets[1].data.push(data.metrics.memory);
+            realtimeChart.data.datasets[2].data.push(data.metrics.responseTime);
+            
+            // Keep only last 20 data points
+            if (realtimeChart.data.labels.length > 20) {
+                realtimeChart.data.labels.shift();
+                realtimeChart.data.datasets.forEach(dataset => {
+                    dataset.data.shift();
+                });
+            }
+            
+            realtimeChart.update('none');
+        }
+
+        // Update realtime metrics display
+        function updateRealtimeMetrics(data) {
+            if (data.alerts) {
+                addLog(`🚨 실시간 알림: ${data.alerts.message} (${data.alerts.severity})`);
+            }
+            
+            if (data.events && data.events.length > 0) {
+                addLog(`📊 실시간 이벤트: ${data.events.length}개 이벤트 처리됨`);
+            }
+        }
+
+        // Get category color
+        function getCategoryColor(category) {
+            const colors = {
+                'infrastructure': 'blue',
+                'ai-ml': 'purple',
+                'user-experience': 'green',
+                'alerting': 'red',
+                'performance': 'yellow',
+                'integration': 'indigo'
+            };
+            return colors[category] || 'gray';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1617 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 AIRIS-MON 세션 리플레이 시나리오 테스트</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .scenarios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .scenario-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .scenario-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+        
+        .scenario-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .scenario-icon {
+            font-size: 2.5rem;
+            margin-right: 15px;
+        }
+        
+        .scenario-title {
+            font-size: 1.4rem;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+        
+        .scenario-description {
+            color: #7f8c8d;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .test-interface {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px dashed #e9ecef;
+            min-height: 200px;
+            position: relative;
+        }
+        
+        .interface-label {
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-weight: bold;
+        }
+        
+        .bug-interface {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .payment-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .form-group input, .form-group select {
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .payment-button {
+            grid-column: 1 / -1;
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .payment-button:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .payment-button.broken {
+            background: #dc3545;
+            cursor: not-allowed;
+        }
+        
+        .ux-interface {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .navigation-menu {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-item {
+            padding: 10px 15px;
+            background: #6f42c1;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-item:hover {
+            background: #5a32a3;
+            transform: scale(1.05);
+        }
+        
+        .content-area {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+        }
+        
+        .security-interface {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .login-input {
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .login-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .login-button:hover {
+            background: #0056b3;
+        }
+        
+        .attack-simulator {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .attack-button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
+        .performance-interface {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        
+        .dashboard-item {
+            background: #17a2b8;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .dashboard-item:hover {
+            background: #138496;
+            transform: scale(1.05);
+        }
+        
+        .load-simulator {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .load-button {
+            background: #ffc107;
+            color: #212529;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+        }
+        
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .btn-info:hover {
+            background: #138496;
+            transform: translateY(-2px);
+        }
+        
+        .status-display {
+            background: #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 3px 0;
+        }
+        
+        .log-success { color: #28a745; }
+        .log-error { color: #dc3545; }
+        .log-warning { color: #ffc107; }
+        .log-info { color: #17a2b8; }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .scenarios-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .payment-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎬 세션 리플레이 시나리오 테스트</h1>
+            <p>실제 사용자 상황을 시뮬레이션하여 세션 리플레이 기능을 테스트합니다</p>
+        </div>
+
+        <div class="scenarios-grid">
+            <!-- 1. 버그 재현 및 디버깅 시나리오 -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <span class="scenario-icon">🐛</span>
+                    <div>
+                        <div class="scenario-title">버그 재현 및 디버깅</div>
+                    </div>
+                </div>
+                <div class="scenario-description">
+                    "결제 버튼을 눌렀는데 아무 반응이 없어요" - 이런 사용자 신고 상황을 재현하고 세션 리플레이로 원인을 분석합니다.
+                </div>
+                
+                <div class="test-interface">
+                    <div class="interface-label">🛒 결제 페이지 시뮬레이션</div>
+                    <div class="bug-interface">
+                        <div class="payment-form">
+                            <div class="form-group">
+                                <label>카드 번호</label>
+                                <input type="text" id="cardNumber" placeholder="1234-5678-9012-3456" maxlength="19">
+                            </div>
+                            <div class="form-group">
+                                <label>만료일</label>
+                                <input type="text" id="expiry" placeholder="MM/YY" maxlength="5">
+                            </div>
+                            <div class="form-group">
+                                <label>CVV</label>
+                                <input type="text" id="cvv" placeholder="123" maxlength="3">
+                            </div>
+                            <div class="form-group">
+                                <label>카드 타입</label>
+                                <select id="cardType">
+                                    <option value="">선택하세요</option>
+                                    <option value="visa">Visa</option>
+                                    <option value="master">MasterCard</option>
+                                    <option value="amex">American Express</option>
+                                </select>
+                            </div>
+                            <button class="payment-button" id="paymentButton">💳 결제하기 (₩50,000)</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-buttons">
+                    <button class="btn btn-primary" onclick="startBugScenario()">🎬 버그 시나리오 시작</button>
+                    <button class="btn btn-success" onclick="fixBugScenario()">🔧 버그 수정 적용</button>
+                    <button class="btn btn-warning" onclick="viewBugReplay()">📺 세션 리플레이 보기</button>
+                </div>
+                
+                <div class="status-display" id="bugStatus"></div>
+            </div>
+
+            <!-- 2. UX/UI 개선 시나리오 -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <span class="scenario-icon">📊</span>
+                    <div>
+                        <div class="scenario-title">UX/UI 개선 분석</div>
+                    </div>
+                </div>
+                <div class="scenario-description">
+                    사용자가 특정 페이지에서 헤매는 패턴을 발견하고, 네비게이션 개선 방향을 결정하는 시나리오입니다.
+                </div>
+                
+                <div class="test-interface">
+                    <div class="interface-label">🧭 복잡한 네비게이션 페이지</div>
+                    <div class="ux-interface">
+                        <div class="navigation-menu">
+                            <button class="nav-item" onclick="navigateTo('home')">홈</button>
+                            <button class="nav-item" onclick="navigateTo('products')">상품</button>
+                            <button class="nav-item" onclick="navigateTo('categories')">카테고리</button>
+                            <button class="nav-item" onclick="navigateTo('brands')">브랜드</button>
+                            <button class="nav-item" onclick="navigateTo('deals')">특가</button>
+                            <button class="nav-item" onclick="navigateTo('support')">고객지원</button>
+                            <button class="nav-item" onclick="navigateTo('account')">내 계정</button>
+                            <button class="nav-item" onclick="navigateTo('cart')">장바구니</button>
+                            <button class="nav-item" onclick="navigateTo('wishlist')">찜목록</button>
+                            <button class="nav-item" onclick="navigateTo('orders')">주문내역</button>
+                        </div>
+                        <div class="content-area" id="uxContent">
+                            여기에서 사용자가 원하는 메뉴를 찾아보세요...
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-buttons">
+                    <button class="btn btn-primary" onclick="startUXScenario()">🎬 UX 분석 시작</button>
+                    <button class="btn btn-success" onclick="improveNavigation()">✨ 네비게이션 개선</button>
+                    <button class="btn btn-warning" onclick="viewUXReplay()">📺 세션 리플레이 보기</button>
+                    <button class="btn btn-info" onclick="viewUXAnalytics()">📈 사용자 분석 보기</button>
+                </div>
+                
+                <div class="status-display" id="uxStatus"></div>
+            </div>
+
+            <!-- 3. 보안 사고 분석 시나리오 -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <span class="scenario-icon">🚨</span>
+                    <div>
+                        <div class="scenario-title">보안 사고 분석</div>
+                    </div>
+                </div>
+                <div class="scenario-description">
+                    의심스러운 로그인 시도를 감지하고, 세션 리플레이로 실제 공격 패턴을 분석하는 시나리오입니다.
+                </div>
+                
+                <div class="test-interface">
+                    <div class="interface-label">🔐 로그인 페이지</div>
+                    <div class="security-interface">
+                        <div class="login-form">
+                            <input type="text" class="login-input" id="username" placeholder="사용자명">
+                            <input type="password" class="login-input" id="password" placeholder="비밀번호">
+                            <button class="login-button" onclick="attemptLogin()">🔓 로그인</button>
+                        </div>
+                        <div class="attack-simulator">
+                            <span>공격 시뮬레이션:</span>
+                            <button class="attack-button" onclick="simulateBruteForce()">무차별 대입</button>
+                            <button class="attack-button" onclick="simulateCredentialStuffing()">크리덴셜 스터핑</button>
+                            <button class="attack-button" onclick="simulateBot()">봇 공격</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-buttons">
+                    <button class="btn btn-primary" onclick="startSecurityScenario()">🎬 보안 분석 시작</button>
+                    <button class="btn btn-success" onclick="applySecurity()">🛡️ 보안 강화 적용</button>
+                    <button class="btn btn-warning" onclick="viewSecurityReplay()">📺 세션 리플레이 보기</button>
+                    <button class="btn btn-info" onclick="viewSecurityReport()">📋 보안 리포트 보기</button>
+                </div>
+                
+                <div class="status-display" id="securityStatus"></div>
+            </div>
+
+            <!-- 4. 성능 문제 진단 시나리오 -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <span class="scenario-icon">⚡</span>
+                    <div>
+                        <div class="scenario-title">성능 문제 진단</div>
+                    </div>
+                </div>
+                <div class="scenario-description">
+                    "대시보드 페이지가 너무 느려요" - 성능 문제를 재현하고 세션 리플레이로 병목 지점을 찾는 시나리오입니다.
+                </div>
+                
+                <div class="test-interface">
+                    <div class="interface-label">📊 느린 대시보드 페이지</div>
+                    <div class="performance-interface">
+                        <div class="dashboard-grid">
+                            <div class="dashboard-item" onclick="loadChart('sales')">💰 매출 차트</div>
+                            <div class="dashboard-item" onclick="loadChart('users')">👥 사용자 통계</div>
+                            <div class="dashboard-item" onclick="loadChart('performance')">⚡ 성능 지표</div>
+                            <div class="dashboard-item" onclick="loadChart('traffic')">🌐 트래픽 분석</div>
+                            <div class="dashboard-item" onclick="loadChart('errors')">🚨 오류 현황</div>
+                            <div class="dashboard-item" onclick="loadChart('system')">🖥️ 시스템 상태</div>
+                        </div>
+                        <div class="load-simulator">
+                            <span>부하 시뮬레이션:</span>
+                            <button class="load-button" onclick="simulateHighLoad()">높은 부하</button>
+                            <button class="load-button" onclick="simulateSlowQuery()">느린 쿼리</button>
+                            <button class="load-button" onclick="simulateMemoryLeak()">메모리 누수</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-buttons">
+                    <button class="btn btn-primary" onclick="startPerformanceScenario()">🎬 성능 분석 시작</button>
+                    <button class="btn btn-success" onclick="optimizePerformance()">🚀 성능 최적화</button>
+                    <button class="btn btn-warning" onclick="viewPerformanceReplay()">📺 세션 리플레이 보기</button>
+                    <button class="btn btn-info" onclick="viewPerformanceReport()">📊 성능 리포트 보기</button>
+                </div>
+                
+                <div class="status-display" id="performanceStatus"></div>
+            </div>
+        </div>
+
+        <!-- 세션 상태 표시 -->
+        <div class="session-status-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+            <div class="session-status-card" style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+                <h3 style="color: #2c3e50; margin-bottom: 15px;">🎬 활성 세션 상태</h3>
+                <div id="sessionStatusList" style="font-family: 'Courier New', monospace; font-size: 0.9rem;">
+                    <div style="color: #666;">세션이 시작되지 않았습니다</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 실시간 메트릭 표시 -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="sessionCount">0</div>
+                <div class="metric-label">생성된 세션 수</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="eventCount">0</div>
+                <div class="metric-label">기록된 이벤트 수</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="errorCount">0</div>
+                <div class="metric-label">발견된 이슈 수</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="insightCount">0</div>
+                <div class="metric-label">도출된 인사이트</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let currentScenario = null;
+        let sessionData = {
+            sessions: 0,
+            events: 0,
+            errors: 0,
+            insights: 0
+        };
+        
+        // 세션 녹화 전역 변수 - 시나리오별 통합 관리
+        let scenarioSessions = {
+            bug_payment: null,
+            ux_navigation: null,
+            security_attack: null,
+            performance_slow: null
+        };
+        let activeScenario = null;
+
+        // 세션 녹화 관련 함수들 - 통합 관리 버전
+        async function startSessionRecording(scenario) {
+            try {
+                // 기존 세션이 있으면 종료
+                if (scenarioSessions[scenario]) {
+                    await endSessionRecording(scenarioSessions[scenario], 'scenario_restart');
+                }
+                
+                const response = await fetch('/api/session-replay/start-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        scenario: scenario,
+                        userAgent: navigator.userAgent,
+                        ipAddress: 'unified_test_session'
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    scenarioSessions[scenario] = data.sessionId;
+                    activeScenario = scenario;
+                    updateSessionStatus(); // 세션 상태 UI 업데이트
+                    console.log(`🎬 통합 세션 시작 [${scenario}]:`, data.sessionId);
+                    return data.sessionId;
+                }
+                throw new Error(data.error || '세션 시작 실패');
+            } catch (error) {
+                console.error('세션 녹화 시작 실패:', error);
+                return null;
+            }
+        }
+
+        async function recordEvent(sessionId, eventData) {
+            if (!sessionId) return false;
+            
+            try {
+                const response = await fetch('/api/session-replay/add-event', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        eventData: eventData
+                    })
+                });
+                
+                const data = await response.json();
+                return data.success;
+            } catch (error) {
+                console.error('이벤트 기록 실패:', error);
+                return false;
+            }
+        }
+
+        async function endSessionRecording(sessionId, reason = 'test_completed') {
+            if (!sessionId) return false;
+            
+            try {
+                const response = await fetch('/api/session-replay/end-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        reason: reason
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    // 종료된 세션을 시나리오 목록에서 제거
+                    for (let scenario in scenarioSessions) {
+                        if (scenarioSessions[scenario] === sessionId) {
+                            scenarioSessions[scenario] = null;
+                            break;
+                        }
+                    }
+                    updateSessionStatus(); // 세션 상태 UI 업데이트
+                    console.log(`⏹️ 통합 세션 종료: ${sessionId} (${reason})`);
+                    return data.session;
+                }
+                return false;
+            } catch (error) {
+                console.error('세션 종료 실패:', error);
+                return false;
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // 세션 상태 표시 업데이트
+        function updateSessionStatus() {
+            const statusList = document.getElementById('sessionStatusList');
+            statusList.innerHTML = '';
+            
+            let hasActiveSessions = false;
+            
+            for (let [scenario, sessionId] of Object.entries(scenarioSessions)) {
+                if (sessionId) {
+                    hasActiveSessions = true;
+                    const statusItem = document.createElement('div');
+                    statusItem.style.cssText = 'margin-bottom: 8px; padding: 8px; background: #e3f2fd; border-radius: 4px; border-left: 4px solid #2196f3;';
+                    
+                    const scenarioNames = {
+                        bug_payment: '🐛 버그 재현',
+                        ux_navigation: '📊 UX 분석',
+                        security_attack: '🚨 보안 분석',
+                        performance_slow: '⚡ 성능 진단'
+                    };
+                    
+                    statusItem.innerHTML = `
+                        <div style="font-weight: bold; color: #1976d2;">${scenarioNames[scenario] || scenario}</div>
+                        <div style="font-size: 0.8em; color: #666;">세션 ID: ${sessionId.substring(0, 8)}...</div>
+                        <div style="font-size: 0.8em; color: #4caf50;">● 활성 상태</div>
+                    `;
+                    
+                    statusList.appendChild(statusItem);
+                }
+            }
+            
+            if (!hasActiveSessions) {
+                const noSessionDiv = document.createElement('div');
+                noSessionDiv.style.color = '#666';
+                noSessionDiv.textContent = '활성 세션이 없습니다';
+                statusList.appendChild(noSessionDiv);
+            }
+        }
+        
+        // 웹소켓 연결
+        const ws = new WebSocket(`ws://${window.location.host}`);
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            updateMetrics(data);
+        };
+
+        // 메트릭 업데이트
+        function updateMetrics(data) {
+            if (data.sessionCount !== undefined) {
+                document.getElementById('sessionCount').textContent = data.sessionCount;
+            }
+            if (data.eventCount !== undefined) {
+                document.getElementById('eventCount').textContent = data.eventCount;
+            }
+            if (data.errorCount !== undefined) {
+                document.getElementById('errorCount').textContent = data.errorCount;
+            }
+            if (data.insightCount !== undefined) {
+                document.getElementById('insightCount').textContent = data.insightCount;
+            }
+        }
+
+        // 로그 추가 함수
+        function addLog(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            logEntry.innerHTML = `[${new Date().toLocaleTimeString()}] ${message}`;
+            container.appendChild(logEntry);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 1. 버그 재현 시나리오 - 통합 세션 버전
+        async function startBugScenario() {
+            currentScenario = 'bug';
+            const sessionId = await startSessionRecording('bug_payment');
+            
+            addLog('bugStatus', '🎬 통합 버그 시나리오 시작 (단일 세션으로 관리)', 'info');
+            addLog('bugStatus', '💳 결제 페이지 로딩...', 'info');
+            
+            if (!sessionId) {
+                addLog('bugStatus', '❌ 세션 녹화 시작 실패', 'error');
+                return;
+            }
+            
+            addLog('bugStatus', `📋 세션 ID: ${sessionId.substring(0, 8)}...`, 'info');
+
+            // 실제 사용자 이벤트들을 순차적으로 기록
+            await recordEvent(sessionId, {
+                type: 'page_load',
+                page_url: '/checkout',
+                page_title: '결제 페이지',
+                load_time: 2300
+            });
+            
+            await sleep(1500);
+            await recordEvent(sessionId, {
+                type: 'form_input',
+                element_id: 'cardNumber',
+                element_type: 'input',
+                value_masked: '****-****-****-1234',
+                x: 450, y: 320
+            });
+            addLog('bugStatus', '📝 신용카드 번호 입력 완료', 'info');
+
+            await sleep(800);
+            await recordEvent(sessionId, {
+                type: 'form_input',
+                element_id: 'expiry',
+                element_type: 'input',
+                value_masked: '12/25',
+                x: 600, y: 320
+            });
+            addLog('bugStatus', '📅 유효기간 입력 완료', 'info');
+
+            await sleep(800);
+            await recordEvent(sessionId, {
+                type: 'form_input',
+                element_id: 'cvv',
+                element_type: 'input',
+                value_masked: '***',
+                x: 750, y: 320
+            });
+            addLog('bugStatus', '🔐 CVV 입력 완료', 'info');
+
+            await sleep(1000);
+            await recordEvent(sessionId, {
+                type: 'click',
+                element_id: 'paymentButton',
+                element_type: 'button',
+                element_text: '결제하기',
+                x: 550, y: 420
+            });
+            addLog('bugStatus', '👆 결제 버튼 클릭', 'info');
+
+            // 버그 상황 시뮬레이션
+            setTimeout(async () => {
+                const button = document.getElementById('paymentButton');
+                button.classList.add('broken');
+                button.textContent = '❌ 결제 처리 중... (응답없음)';
+                button.disabled = true;
+                
+                await recordEvent(sessionId, {
+                    type: 'javascript_error',
+                    error_message: 'Cannot read property validate of undefined',
+                    error_stack: 'at PaymentValidator.validate (payment.js:245:12)',
+                    error_line: 245,
+                    error_file: '/static/js/payment.js'
+                });
+                
+                addLog('bugStatus', '🐛 버그 발생: JavaScript 오류 - payment.validate() 함수 실패', 'error');
+                
+                // 사용자 재시도 시뮬레이션
+                await sleep(2000);
+                await recordEvent(sessionId, {
+                    type: 'click',
+                    element_id: 'paymentButton',
+                    element_type: 'button',
+                    element_text: '결제하기',
+                    x: 550, y: 420,
+                    notes: '두 번째 클릭 시도'
+                });
+                addLog('bugStatus', '🔄 사용자 재시도: 버튼 두 번째 클릭', 'warning');
+
+                await sleep(3000);
+                await recordEvent(sessionId, {
+                    type: 'page_unload',
+                    page_url: '/checkout',
+                    reason: 'user_frustration'
+                });
+                
+                await endSessionRecording(sessionId, 'payment_error');
+                addLog('bugStatus', '📊 세션 완료: 결제 실패로 인한 사용자 이탈', 'error');
+                addLog('bugStatus', `✅ 세션 데이터 저장 완료 (ID: ${sessionId})`, 'success');
+                
+                sessionData.sessions++;
+                sessionData.events += 7;
+                sessionData.errors++;
+                updateMetrics(sessionData);
+            }, 2000);
+        }
+
+        function fixBugScenario() {
+            addLog('bugStatus', '🔧 버그 수정 적용 중...', 'warning');
+            
+            setTimeout(() => {
+                const button = document.getElementById('paymentButton');
+                button.classList.remove('broken');
+                button.textContent = '✅ 결제 완료!';
+                button.disabled = false;
+                button.style.background = '#28a745';
+                addLog('bugStatus', '✅ 버그 수정 완료: 결제 기능 정상화', 'success');
+                
+                // 수정 후 세션 데이터
+                sendSessionData('bug_fixed', {
+                    event_type: 'payment_success',
+                    user_action: 'click_payment_button',
+                    fix_applied: true,
+                    response_time: '250ms'
+                });
+                
+                sessionData.insights++;
+                updateMetrics(sessionData);
+            }, 1500);
+        }
+
+        function viewBugReplay() {
+            addLog('bugStatus', '📺 세션 리플레이 플레이어로 이동합니다...', 'info');
+            setTimeout(() => {
+                window.open('/session-replay-player', '_blank');
+            }, 1000);
+        }
+
+        // 2. UX/UI 개선 시나리오
+        function navigateTo(page) {
+            const content = document.getElementById('uxContent');
+            const pages = {
+                'home': '🏠 홈페이지 - 메인 콘텐츠',
+                'products': '📦 상품 목록 - 전체 상품',
+                'categories': '📂 카테고리 - 상품 분류',
+                'brands': '🏷️ 브랜드 - 제조사별',
+                'deals': '🎉 특가 상품 - 할인 중',
+                'support': '🎧 고객지원 - 문의하기',
+                'account': '👤 내 계정 - 프로필',
+                'cart': '🛒 장바구니 - 담은 상품',
+                'wishlist': '❤️ 찜목록 - 관심 상품',
+                'orders': '📋 주문내역 - 구매 기록'
+            };
+            
+            content.textContent = pages[page] || '페이지를 찾을 수 없습니다';
+            
+            // 실제 클릭 이벤트를 세션에 기록 (UX 시나리오용)
+            if (scenarioSessions['ux_navigation']) {
+                const button = event.target;
+                const rect = button.getBoundingClientRect();
+                recordEvent(scenarioSessions['ux_navigation'], {
+                    type: 'click',
+                    element_id: button.id || 'nav-' + page,
+                    element_type: 'button',
+                    element_text: button.textContent,
+                    x: Math.round(rect.left + rect.width / 2),
+                    y: Math.round(rect.top + rect.height / 2),
+                    page_url: '/products',
+                    timestamp: Date.now()
+                });
+            }
+            
+            // 사용자 행동 기록
+            sendSessionData('navigation', {
+                event_type: 'page_view',
+                page: page,
+                user_action: 'click_navigation',
+                timestamp: new Date().toISOString()
+            });
+            
+            sessionData.events++;
+            updateMetrics(sessionData);
+        }
+
+        async function startUXScenario() {
+            currentScenario = 'ux';
+            const sessionId = await startSessionRecording('ux_navigation');
+            
+            addLog('uxStatus', '🎬 통합 UX 분석 시나리오 시작', 'info');
+            addLog('uxStatus', '📊 사용자 행동 패턴 수집 중...', 'info');
+            
+            if (!sessionId) {
+                addLog('uxStatus', '❌ 세션 녹화 시작 실패', 'error');
+                return;
+            }
+            
+            addLog('uxStatus', `📋 세션 ID: ${sessionId.substring(0, 8)}...`, 'info');
+            
+            // 페이지 로드 이벤트 기록
+            await recordEvent(sessionId, {
+                type: 'page_load',
+                page_url: '/products',
+                page_title: '상품 목록 페이지',
+                load_time: 1800
+            });
+            
+            // 사용자 헤매는 패턴 시뮬레이션
+            setTimeout(async () => {
+                // 여러 네비게이션 클릭 시뮬레이션
+                const navItems = ['categories', 'brands', 'deals', 'products', 'support', 'account', 'cart'];
+                for (let i = 0; i < navItems.length; i++) {
+                    await sleep(500);
+                    await recordEvent(sessionId, {
+                        type: 'click',
+                        element_id: 'nav-' + navItems[i],
+                        element_type: 'button',
+                        element_text: navItems[i],
+                        x: 200 + i * 50, y: 100,
+                        notes: 'navigation_confusion'
+                    });
+                }
+                
+                addLog('uxStatus', '⚠️ 패턴 발견: 사용자가 메뉴에서 7회 클릭 후 이탈', 'warning');
+                addLog('uxStatus', '📈 분석: 찾는 메뉴를 찾지 못해 혼란', 'warning');
+                
+                // 이탈 이벤트 기록
+                await recordEvent(sessionId, {
+                    type: 'page_unload',
+                    page_url: '/products',
+                    reason: 'user_confusion'
+                });
+                
+                sessionData.sessions++;
+                sessionData.events += 8;
+                sessionData.errors++;
+                updateMetrics(sessionData);
+                
+                // 세션 일시 종료 (개선 테스트를 위해)
+                await endSessionRecording(sessionId, 'ux_analysis_complete');
+                addLog('uxStatus', '✅ UX 분석 완료 - 세션 종료', 'success');
+            }, 2000);
+        }
+
+        function improveNavigation() {
+            addLog('uxStatus', '✨ 네비게이션 개선 적용 중...', 'warning');
+            
+            // 메뉴 항목들을 더 논리적으로 그룹화
+            setTimeout(() => {
+                addLog('uxStatus', '✅ 개선 완료: 메뉴를 3개 그룹으로 재정렬', 'success');
+                addLog('uxStatus', '📊 예상 효과: 클릭 수 50% 감소, 이탈률 30% 개선', 'success');
+                
+                sessionData.insights++;
+                updateMetrics(sessionData);
+            }, 2000);
+        }
+
+        function viewUXReplay() {
+            const sessionId = scenarioSessions['ux_navigation'];
+            if (sessionId) {
+                addLog('uxStatus', '📺 UX 분석 세션 리플레이로 이동합니다...', 'info');
+                addLog('uxStatus', `📋 세션 ID: ${sessionId.substring(0, 8)}...`, 'info');
+                setTimeout(() => {
+                    const url = `/session-replay-player?scenario=ux_navigation&session=${sessionId}`;
+                    window.open(url, '_blank');
+                }, 1000);
+            } else {
+                addLog('uxStatus', '⚠️ 먼저 UX 분석 시나리오를 실행하세요', 'warning');
+            }
+        }
+
+        function viewUXAnalytics() {
+            addLog('uxStatus', '📈 사용자 분석 결과 표시', 'info');
+            addLog('uxStatus', '┌─ 평균 클릭 수: 7.2회 → 3.4회', 'info');
+            addLog('uxStatus', '├─ 이탈률: 45% → 28%', 'info');
+            addLog('uxStatus', '├─ 만족도: 6.2/10 → 8.7/10', 'info');
+            addLog('uxStatus', '└─ 전환율: 12% → 18%', 'info');
+        }
+
+        // 3. 보안 분석 시나리오
+        function attemptLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // 실제 로그인 시도 이벤트를 세션에 기록
+            if (scenarioSessions['security_attack']) {
+                recordEvent(scenarioSessions['security_attack'], {
+                    type: 'login_attempt',
+                    username: username,
+                    password_masked: password ? '***' + password.slice(-1) : '',
+                    ip_address: '192.168.1.100',
+                    user_agent: navigator.userAgent,
+                    page_url: '/login',
+                    x: 400, y: 300,
+                    success: username && password ? true : false,
+                    timestamp: Date.now()
+                });
+            }
+            
+            if (username && password) {
+                addLog('securityStatus', `🔓 로그인 시도: ${username}`, 'info');
+                
+                // 정상 로그인 시뮬레이션
+                setTimeout(() => {
+                    addLog('securityStatus', '✅ 로그인 성공', 'success');
+                }, 1000);
+            } else {
+                addLog('securityStatus', '❌ 사용자명과 비밀번호를 입력하세요', 'error');
+            }
+        }
+
+        function simulateBruteForce() {
+            if (scenarioSessions['security_attack']) {
+                simulateBruteForceWithSession(scenarioSessions['security_attack']);
+            } else {
+                addLog('securityStatus', '⚠️ 보안 시나리오를 먼저 시작하세요', 'warning');
+            }
+        }
+        
+        async function simulateBruteForceWithSession(sessionId) {
+            addLog('securityStatus', '🚨 무차별 대입 공격 시뮬레이션 시작', 'error');
+            
+            const commonPasswords = ['123456', 'password', 'admin', '123456789', 'qwerty'];
+            let attemptCount = 0;
+            
+            const interval = setInterval(async () => {
+                attemptCount++;
+                addLog('securityStatus', `🔴 시도 ${attemptCount}: admin/${commonPasswords[attemptCount % 5]} - 실패`, 'error');
+                
+                // 세션에 로그인 시도 이벤트 기록
+                await recordEvent(sessionId, {
+                    type: 'login_attempt',
+                    username: 'admin',
+                    password_masked: commonPasswords[attemptCount % 5],
+                    attempt_count: attemptCount,
+                    ip_address: '192.168.1.100',
+                    user_agent: 'automated_bot',
+                    success: false,
+                    x: 400, y: 300
+                });
+                
+                sessionData.events++;
+                sessionData.errors++;
+                updateMetrics(sessionData);
+                
+                if (attemptCount >= 10) {
+                    clearInterval(interval);
+                    addLog('securityStatus', '🛡️ 계정 잠금: 10회 실패로 인한 자동 차단', 'warning');
+                    
+                    // 계정 잠금 이벤트 기록
+                    await recordEvent(sessionId, {
+                        type: 'account_lockout',
+                        reason: 'excessive_failed_attempts',
+                        attempts: attemptCount,
+                        lockout_duration: '1 hour'
+                    });
+                    
+                    // 공격 시나리오 종료
+                    setTimeout(async () => {
+                        await endSessionRecording(sessionId, 'security_attack_blocked');
+                        addLog('securityStatus', '✅ 보안 분석 완료 - 세션 종료', 'success');
+                    }, 2000);
+                }
+            }, 500);
+        }
+
+        function simulateCredentialStuffing() {
+            addLog('securityStatus', '🚨 크리덴셜 스터핑 공격 시뮬레이션', 'error');
+            addLog('securityStatus', '📊 유출된 계정 정보로 대량 로그인 시도 감지', 'error');
+            
+            sessionData.sessions++;
+            sessionData.events += 50;
+            sessionData.errors += 5;
+            updateMetrics(sessionData);
+        }
+
+        function simulateBot() {
+            addLog('securityStatus', '🤖 봇 공격 시뮬레이션', 'error');
+            addLog('securityStatus', '🔍 비정상적인 행동 패턴 감지: 초당 10회 요청', 'error');
+            
+            sessionData.events += 20;
+            sessionData.errors += 2;
+            updateMetrics(sessionData);
+        }
+
+        async function startSecurityScenario() {
+            currentScenario = 'security';
+            const sessionId = await startSessionRecording('security_attack');
+            
+            addLog('securityStatus', '🎬 통합 보안 분석 시나리오 시작', 'info');
+            addLog('securityStatus', '🔍 의심스러운 활동 모니터링 활성화', 'info');
+            
+            if (!sessionId) {
+                addLog('securityStatus', '❌ 세션 녹화 시작 실패', 'error');
+                return;
+            }
+            
+            addLog('securityStatus', `📋 세션 ID: ${sessionId.substring(0, 8)}...`, 'info');
+            
+            // 페이지 로드 이벤트 기록
+            await recordEvent(sessionId, {
+                type: 'page_load',
+                page_url: '/login',
+                page_title: '로그인 페이지',
+                load_time: 1200
+            });
+            
+            // 무차별 대입 공격 시뮬레이션을 자동으로 시작
+            setTimeout(() => {
+                simulateBruteForceWithSession(sessionId);
+            }, 1000);
+            
+            sessionData.sessions++;
+            updateMetrics(sessionData);
+        }
+
+        function applySecurity() {
+            addLog('securityStatus', '🛡️ 보안 강화 조치 적용', 'warning');
+            addLog('securityStatus', '✅ CAPTCHA 활성화', 'success');
+            addLog('securityStatus', '✅ 로그인 시도 제한 (5회/시간)', 'success');
+            addLog('securityStatus', '✅ 의심 IP 자동 차단', 'success');
+            
+            sessionData.insights++;
+            updateMetrics(sessionData);
+        }
+
+        function viewSecurityReplay() {
+            const sessionId = scenarioSessions['security_attack'];
+            if (sessionId) {
+                addLog('securityStatus', '📺 보안 사고 분석 세션 리플레이로 이동합니다...', 'info');
+                addLog('securityStatus', `📋 세션 ID: ${sessionId.substring(0, 8)}...`, 'info');
+                setTimeout(() => {
+                    const url = `/session-replay-player?scenario=security_attack&session=${sessionId}`;
+                    window.open(url, '_blank');
+                }, 1000);
+            } else {
+                addLog('securityStatus', '⚠️ 먼저 보안 분석 시나리오를 실행하세요', 'warning');
+            }
+        }
+
+        function viewSecurityReport() {
+            addLog('securityStatus', '📋 보안 분석 리포트', 'info');
+            addLog('securityStatus', '┌─ 탐지된 공격: 무차별 대입 공격', 'info');
+            addLog('securityStatus', '├─ 공격 횟수: 247회', 'info');
+            addLog('securityStatus', '├─ 차단된 IP: 15개', 'info');
+            addLog('securityStatus', '└─ 보안 강화 후 공격 감소: 95%', 'info');
+        }
+
+        // 4. 성능 진단 시나리오
+        function loadChart(type) {
+            // 실제 클릭 이벤트를 세션에 기록 (성능 시나리오용)
+            if (scenarioSessions['performance_slow']) {
+                const button = event.target;
+                const rect = button.getBoundingClientRect();
+                recordEvent(scenarioSessions['performance_slow'], {
+                    type: 'click',
+                    element_id: 'chart-' + type,
+                    element_type: 'dashboard_item',
+                    element_text: button.textContent,
+                    x: Math.round(rect.left + rect.width / 2),
+                    y: Math.round(rect.top + rect.height / 2),
+                    page_url: '/dashboard',
+                    timestamp: Date.now()
+                });
+                
+                loadChartWithSession(scenarioSessions['performance_slow'], type);
+            } else {
+                addLog('performanceStatus', '⚠️ 성능 시나리오를 먼저 시작하세요', 'warning');
+            }
+        }
+        
+        async function loadChartWithSession(sessionId, type) {
+            const chartTypes = {
+                'sales': '💰 매출 차트 로딩',
+                'users': '👥 사용자 통계 로딩',
+                'performance': '⚡ 성능 지표 로딩',
+                'traffic': '🌐 트래픽 분석 로딩',
+                'errors': '🚨 오류 현황 로딩',
+                'system': '🖥️ 시스템 상태 로딩'
+            };
+            
+            addLog('performanceStatus', chartTypes[type] || '차트 로딩', 'info');
+            
+            // 차트 클릭 이벤트 기록
+            await recordEvent(sessionId, {
+                type: 'click',
+                element_id: 'chart-' + type,
+                element_type: 'dashboard_item',
+                element_text: chartTypes[type],
+                x: 300 + Math.random() * 200, 
+                y: 200 + Math.random() * 100
+            });
+            
+            // API 요청 시작 이벤트 기록
+            await recordEvent(sessionId, {
+                type: 'api_request',
+                endpoint: `/api/charts/${type}`,
+                method: 'GET',
+                status: 'started'
+            });
+            
+            // 느린 로딩 시뮬레이션
+            setTimeout(async () => {
+                const loadTime = 7500 + Math.random() * 2000; // 7.5~9.5초
+                
+                addLog('performanceStatus', `⏱️ ${type} 차트 로딩 완료 (${(loadTime/1000).toFixed(1)}초 소요)`, 'warning');
+                
+                // API 요청 완료 이벤트 기록
+                await recordEvent(sessionId, {
+                    type: 'api_request',
+                    endpoint: `/api/charts/${type}`,
+                    method: 'GET',
+                    status: 'completed',
+                    duration: loadTime,
+                    performance_issue: true
+                });
+                
+                // 차트 렌더링 이벤트 기록
+                await recordEvent(sessionId, {
+                    type: 'chart_render_complete',
+                    chart_type: type,
+                    render_time: loadTime,
+                    chart_id: 'chart-' + type
+                });
+                
+                sessionData.events++;
+                if (loadTime > 8000) {
+                    sessionData.errors++;
+                }
+                updateMetrics(sessionData);
+                
+                // 여러 차트를 로딩한 후 세션 종료
+                if (type === 'sales') {
+                    setTimeout(async () => {
+                        await endSessionRecording(sessionId, 'performance_test_complete');
+                        addLog('performanceStatus', '✅ 성능 분석 완료 - 세션 종료', 'success');
+                    }, 2000);
+                }
+            }, 3000);
+        }
+
+        function simulateHighLoad() {
+            addLog('performanceStatus', '🔥 높은 부하 시뮬레이션', 'warning');
+            addLog('performanceStatus', '📊 CPU 사용률: 95%, 메모리: 88%', 'error');
+            
+            sessionData.events += 10;
+            sessionData.errors += 2;
+            updateMetrics(sessionData);
+        }
+
+        function simulateSlowQuery() {
+            addLog('performanceStatus', '🐌 느린 데이터베이스 쿼리 시뮬레이션', 'warning');
+            addLog('performanceStatus', '⏱️ 쿼리 실행 시간: 15.7초', 'error');
+            
+            sessionData.events += 5;
+            sessionData.errors++;
+            updateMetrics(sessionData);
+        }
+
+        function simulateMemoryLeak() {
+            addLog('performanceStatus', '🕳️ 메모리 누수 시뮬레이션', 'warning');
+            addLog('performanceStatus', '📈 메모리 사용량이 지속적으로 증가 중', 'error');
+            
+            sessionData.events += 3;
+            sessionData.errors++;
+            updateMetrics(sessionData);
+        }
+
+        async function startPerformanceScenario() {
+            currentScenario = 'performance';
+            const sessionId = await startSessionRecording('performance_slow');
+            
+            addLog('performanceStatus', '🎬 통합 성능 분석 시나리오 시작', 'info');
+            addLog('performanceStatus', '📊 대시보드 성능 모니터링 활성화', 'info');
+            
+            if (!sessionId) {
+                addLog('performanceStatus', '❌ 세션 녹화 시작 실패', 'error');
+                return;
+            }
+            
+            addLog('performanceStatus', `📋 세션 ID: ${sessionId.substring(0, 8)}...`, 'info');
+            
+            // 페이지 로드 이벤트 기록 (느린 로딩)
+            await recordEvent(sessionId, {
+                type: 'page_load',
+                page_url: '/dashboard',
+                page_title: '대시보드',
+                load_time: 7500
+            });
+            
+            // 자동으로 차트 로딩 시뮬레이션 시작
+            setTimeout(() => {
+                loadChartWithSession(sessionId, 'sales');
+            }, 1000);
+            
+            sessionData.sessions++;
+            updateMetrics(sessionData);
+        }
+
+        function optimizePerformance() {
+            addLog('performanceStatus', '🚀 성능 최적화 적용', 'warning');
+            addLog('performanceStatus', '✅ 데이터베이스 인덱스 최적화', 'success');
+            addLog('performanceStatus', '✅ 캐싱 레이어 추가', 'success');
+            addLog('performanceStatus', '✅ 레이지 로딩 구현', 'success');
+            addLog('performanceStatus', '📈 로딩 시간: 8.5초 → 2.1초 (75% 개선)', 'success');
+            
+            sessionData.insights++;
+            updateMetrics(sessionData);
+        }
+
+        function viewPerformanceReplay() {
+            const sessionId = scenarioSessions['performance_slow'];
+            if (sessionId) {
+                addLog('performanceStatus', '📺 성능 문제 진단 세션 리플레이로 이동합니다...', 'info');
+                addLog('performanceStatus', `📋 세션 ID: ${sessionId.substring(0, 8)}...`, 'info');
+                setTimeout(() => {
+                    const url = `/session-replay-player?scenario=performance_slow&session=${sessionId}`;
+                    window.open(url, '_blank');
+                }, 1000);
+            } else {
+                addLog('performanceStatus', '⚠️ 먼저 성능 분석 시나리오를 실행하세요', 'warning');
+            }
+        }
+
+        function viewPerformanceReport() {
+            addLog('performanceStatus', '📊 성능 분석 리포트', 'info');
+            addLog('performanceStatus', '┌─ 평균 로딩 시간: 8.5초 → 2.1초', 'info');
+            addLog('performanceStatus', '├─ CPU 사용률: 95% → 45%', 'info');
+            addLog('performanceStatus', '├─ 메모리 사용률: 88% → 52%', 'info');
+            addLog('performanceStatus', '└─ 사용자 만족도: +40% 향상', 'info');
+        }
+
+        // 공통 함수들
+        function getPaymentFormData() {
+            return {
+                cardNumber: document.getElementById('cardNumber').value,
+                expiry: document.getElementById('expiry').value,
+                cvv: document.getElementById('cvv').value,
+                cardType: document.getElementById('cardType').value
+            };
+        }
+
+        function sendSessionData(eventType, data) {
+            // API로 세션 데이터 전송
+            fetch('/api/session-replay/record', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    session_id: 'session_' + Date.now(),
+                    event_type: eventType,
+                    timestamp: new Date().toISOString(),
+                    data: data,
+                    scenario: currentScenario
+                })
+            }).catch(err => console.log('Session data sent (simulated)'));
+        }
+
+        // 카드 번호 자동 포맷팅
+        document.getElementById('cardNumber').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+            let matches = value.match(/\d{4,16}/g);
+            let match = matches && matches[0] || '';
+            let parts = [];
+            
+            for (let i = 0, len = match.length; i < len; i += 4) {
+                parts.push(match.substring(i, i + 4));
+            }
+            
+            if (parts.length) {
+                e.target.value = parts.join('-');
+            } else {
+                e.target.value = value;
+            }
+        });
+
+        // 만료일 자동 포맷팅
+        document.getElementById('expiry').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            e.target.value = value;
+        });
+
+        // 실제 마우스 및 키보드 이벤트 리스너 추가
+        function setupEventListeners() {
+            // UX 시나리오 네비게이션 버튼들에 실제 클릭 이벤트 리스너 추가
+            document.querySelectorAll('.nav-item').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    if (scenarioSessions['ux_navigation']) {
+                        const rect = button.getBoundingClientRect();
+                        recordEvent(scenarioSessions['ux_navigation'], {
+                            type: 'click',
+                            element_id: button.id || button.textContent.trim(),
+                            element_type: 'navigation_button',
+                            element_text: button.textContent,
+                            x: Math.round(rect.left + rect.width / 2),
+                            y: Math.round(rect.top + rect.height / 2),
+                            page_url: '/products',
+                            timestamp: Date.now()
+                        });
+                    }
+                });
+            });
+
+            // 보안 시나리오 입력 필드들에 키보드 이벤트 리스너 추가
+            const securityInputs = ['username', 'password'];
+            securityInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('input', function(e) {
+                        if (scenarioSessions['security_attack']) {
+                            const rect = input.getBoundingClientRect();
+                            recordEvent(scenarioSessions['security_attack'], {
+                                type: 'form_input',
+                                element_id: inputId,
+                                element_type: 'input',
+                                value_masked: inputId === 'password' ? '*'.repeat(e.target.value.length) : e.target.value,
+                                x: Math.round(rect.left + rect.width / 2),
+                                y: Math.round(rect.top + rect.height / 2),
+                                page_url: '/login',
+                                timestamp: Date.now()
+                            });
+                        }
+                    });
+                }
+            });
+
+            // 성능 시나리오 차트 버튼들에 클릭 이벤트 리스너 추가
+            document.querySelectorAll('.dashboard-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    if (scenarioSessions['performance_slow']) {
+                        const rect = item.getBoundingClientRect();
+                        recordEvent(scenarioSessions['performance_slow'], {
+                            type: 'click',
+                            element_id: item.id || item.textContent.trim(),
+                            element_type: 'dashboard_item',
+                            element_text: item.textContent,
+                            x: Math.round(rect.left + rect.width / 2),
+                            y: Math.round(rect.top + rect.height / 2),
+                            page_url: '/dashboard',
+                            timestamp: Date.now()
+                        });
+                    }
+                });
+            });
+
+            // 버그 시나리오 결제 폼 입력 필드들에 이벤트 리스너 추가 (이미 있지만 보강)
+            const paymentInputs = ['cardNumber', 'expiry', 'cvv', 'cardType'];
+            paymentInputs.forEach(inputId => {
+                const input = document.getElementById(inputId);
+                if (input) {
+                    input.addEventListener('input', function(e) {
+                        if (scenarioSessions['bug_payment']) {
+                            const rect = input.getBoundingClientRect();
+                            recordEvent(scenarioSessions['bug_payment'], {
+                                type: 'form_input',
+                                element_id: inputId,
+                                element_type: input.type === 'select-one' ? 'select' : 'input',
+                                value_masked: inputId === 'cardNumber' ? 
+                                    e.target.value.replace(/\d(?=\d{4})/g, '*') : 
+                                    e.target.value,
+                                x: Math.round(rect.left + rect.width / 2),
+                                y: Math.round(rect.top + rect.height / 2),
+                                page_url: '/checkout',
+                                timestamp: Date.now()
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        // 페이지 로드 시 이벤트 리스너 설정
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+        });
+
+        // 초기 메트릭 로드
+        updateMetrics(sessionData);
+        
+        // 초기 세션 상태 표시
+        updateSessionStatus();
+        
+        // 페이지가 이미 로드된 경우를 위해 즉시 실행
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupEventListeners);
+        } else {
+            setupEventListeners();
+        }
+    </script>
+</body>
+</html>

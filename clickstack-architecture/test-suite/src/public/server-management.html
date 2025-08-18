@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>서버 관리 - AIRIS-MON</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/components/common-layout.js"></script>
+    <style>
+        .server-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .server-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+        }
+
+        .server-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .server-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .server-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .server-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .server-status.online {
+            background: #ecfdf5;
+            color: #10b981;
+        }
+
+        .server-status.offline {
+            background: #fef2f2;
+            color: #ef4444;
+        }
+
+        .server-status.installing {
+            background: #fef3c7;
+            color: #f59e0b;
+        }
+
+        .server-status.unknown {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .server-info {
+            margin: 1rem 0;
+        }
+
+        .server-info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .server-info-label {
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .server-info-value {
+            color: #1e293b;
+            text-align: right;
+        }
+
+        .server-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #64748b;
+            border-color: #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #64748b;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            background: white;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            padding: 0.5rem 0.5rem 0.5rem 2.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            width: 250px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #2563eb;
+            transition: width 0.3s ease;
+        }
+
+        .log-viewer {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-dot.online {
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.offline {
+            background: #ef4444;
+        }
+
+        .status-dot.installing {
+            background: #f59e0b;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.unknown {
+            background: #64748b;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: #ecfdf5;
+            color: #10b981;
+            border: 1px solid #a7f3d0;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            color: #ef4444;
+            border: 1px solid #fca5a5;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #f59e0b;
+            border: 1px solid #fcd34d;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="airis-content-wrapper">
+        <!-- 통계 카드 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalServers">0</div>
+                <div class="stat-label">총 서버</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="onlineServers">0</div>
+                <div class="stat-label">온라인</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="offlineServers">0</div>
+                <div class="stat-label">오프라인</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="installingServers">0</div>
+                <div class="stat-label">설치 중</div>
+            </div>
+        </div>
+
+        <!-- 툴바 -->
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" id="searchInput" placeholder="서버 검색...">
+                </div>
+                <select class="form-select" id="typeFilter" style="width: auto;">
+                    <option value="">모든 타입</option>
+                    <option value="app">애플리케이션</option>
+                    <option value="db">데이터베이스</option>
+                    <option value="web">웹서버</option>
+                    <option value="was">WAS</option>
+                    <option value="system">시스템</option>
+                </select>
+                <select class="form-select" id="statusFilter" style="width: auto;">
+                    <option value="">모든 상태</option>
+                    <option value="online">온라인</option>
+                    <option value="offline">오프라인</option>
+                    <option value="installing">설치 중</option>
+                    <option value="unknown">알 수 없음</option>
+                </select>
+            </div>
+            <div>
+                <button class="btn btn-secondary" onclick="refreshServers()">🔄 새로고침</button>
+                <button class="btn btn-primary" onclick="showAddServerModal()">➕ 서버 추가</button>
+            </div>
+        </div>
+
+        <!-- 알림 영역 -->
+        <div id="alertContainer"></div>
+
+        <!-- 서버 그리드 -->
+        <div class="server-grid" id="serverGrid">
+            <!-- 서버 카드들이 여기에 동적으로 추가됩니다 -->
+        </div>
+
+        <!-- 로딩 상태 -->
+        <div id="loadingIndicator" style="text-align: center; padding: 2rem; display: none;">
+            <div>서버 목록을 불러오는 중...</div>
+        </div>
+
+        <!-- 빈 상태 -->
+        <div id="emptyState" style="text-align: center; padding: 3rem; display: none;">
+            <h3>등록된 서버가 없습니다</h3>
+            <p style="color: #64748b; margin: 1rem 0;">첫 번째 서버를 추가하여 모니터링을 시작하세요.</p>
+            <button class="btn btn-primary" onclick="showAddServerModal()">서버 추가</button>
+        </div>
+    </div>
+
+    <!-- 서버 추가/수정 모달 -->
+    <div id="serverModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">서버 추가</h2>
+                <button class="modal-close" onclick="closeModal('serverModal')">&times;</button>
+            </div>
+            <form id="serverForm">
+                <div class="form-group">
+                    <label class="form-label">서버 이름 *</label>
+                    <input type="text" class="form-input" id="serverName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">호스트 주소 *</label>
+                    <input type="text" class="form-input" id="serverHost" required placeholder="예: 192.168.1.100 또는 server.example.com">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">SSH 포트</label>
+                        <input type="number" class="form-input" id="serverPort" value="22">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">사용자명 *</label>
+                        <input type="text" class="form-input" id="serverUsername" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">SSH 키 파일 경로</label>
+                    <input type="text" class="form-input" id="serverKeyPath" placeholder="예: /home/user/.ssh/id_rsa (선택사항)">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">서버 타입 *</label>
+                        <select class="form-select" id="serverType" required>
+                            <option value="">타입 선택</option>
+                            <option value="app">애플리케이션 서버</option>
+                            <option value="db">데이터베이스 서버</option>
+                            <option value="web">웹서버</option>
+                            <option value="was">WAS 서버</option>
+                            <option value="system">시스템 서버</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">세부 타입</label>
+                        <select class="form-select" id="serverSubtype">
+                            <option value="">선택하세요</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">AIRIS-MON 서버 엔드포인트</label>
+                    <input type="text" class="form-input" id="airisEndpoint" value="http://localhost:4317" placeholder="예: http://airis-server:4317">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">설치할 컴포넌트</label>
+                    <div class="checkbox-group" id="componentsContainer">
+                        <!-- 컴포넌트 체크박스들이 여기에 동적으로 추가됩니다 -->
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('serverModal')">취소</button>
+                    <button type="submit" class="btn btn-primary">저장</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 설치 진행 모달 -->
+    <div id="installModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">모니터링 에이전트 설치</h2>
+                <button class="modal-close" onclick="closeModal('installModal')">&times;</button>
+            </div>
+            <div id="installContent">
+                <div class="form-group">
+                    <label class="form-label">서버: <span id="installServerName"></span></label>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="installProgress" style="width: 0%"></div>
+                    </div>
+                    <div style="text-align: center; margin: 0.5rem 0;">
+                        <span id="installProgressText">0%</span>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">설치 로그</label>
+                    <div class="log-viewer" id="installLogs">설치를 시작합니다...</div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 1rem;">
+                    <button class="btn btn-secondary" id="installCloseBtn" onclick="closeModal('installModal')" disabled>닫기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let servers = [];
+        let currentEditingServer = null;
+
+        // 서버 타입별 세부 타입 옵션
+        const subtypeOptions = {
+            app: ['nodejs', 'java', 'python', 'go', 'php', 'ruby', 'dotnet'],
+            db: ['mysql', 'postgresql', 'mongodb', 'redis', 'oracle', 'mssql'],
+            web: ['nginx', 'apache', 'lighttpd', 'caddy'],
+            was: ['tomcat', 'jetty', 'jboss', 'websphere', 'weblogic'],
+            system: ['linux', 'windows', 'unix']
+        };
+
+        // 타입별 기본 컴포넌트
+        const defaultComponents = {
+            app: ['otel', 'node'],
+            db: ['otel', 'node'],
+            web: ['otel', 'node', 'nginx'],
+            was: ['otel', 'node', 'java'],
+            system: ['node']
+        };
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            loadServers();
+        });
+
+        function setupEventListeners() {
+            // 검색 및 필터링
+            document.getElementById('searchInput').addEventListener('input', filterServers);
+            document.getElementById('typeFilter').addEventListener('change', filterServers);
+            document.getElementById('statusFilter').addEventListener('change', filterServers);
+
+            // 서버 타입 변경 시 세부 타입 업데이트
+            document.getElementById('serverType').addEventListener('change', updateSubtypeOptions);
+
+            // 폼 제출
+            document.getElementById('serverForm').addEventListener('submit', handleServerSubmit);
+        }
+
+        async function loadServers() {
+            try {
+                showLoading(true);
+                const response = await fetch('/api/servers');
+                const result = await response.json();
+
+                if (result.success) {
+                    servers = result.data;
+                    updateStats();
+                    renderServers();
+                } else {
+                    showAlert('서버 목록 로드에 실패했습니다: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Failed to load servers:', error);
+                showAlert('서버 목록 로드 중 오류가 발생했습니다', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function updateStats() {
+            const total = servers.length;
+            const online = servers.filter(s => s.status === 'online').length;
+            const offline = servers.filter(s => s.status === 'offline').length;
+            const installing = servers.filter(s => s.status === 'installing').length;
+
+            document.getElementById('totalServers').textContent = total;
+            document.getElementById('onlineServers').textContent = online;
+            document.getElementById('offlineServers').textContent = offline;
+            document.getElementById('installingServers').textContent = installing;
+        }
+
+        function renderServers() {
+            const container = document.getElementById('serverGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            if (servers.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            container.style.display = 'grid';
+            emptyState.style.display = 'none';
+
+            container.innerHTML = servers.map(server => createServerCard(server)).join('');
+        }
+
+        function createServerCard(server) {
+            const lastCheck = server.lastCheck ? new Date(server.lastCheck).toLocaleString('ko-KR') : '확인 안됨';
+            const components = server.components ? server.components.join(', ') : '없음';
+
+            return `
+                <div class="server-card">
+                    <div class="server-header">
+                        <h3 class="server-name">${server.name}</h3>
+                        <span class="server-status ${server.status}">
+                            <span class="status-dot ${server.status}"></span>
+                            ${getStatusText(server.status)}
+                        </span>
+                    </div>
+                    
+                    <div class="server-info">
+                        <div class="server-info-item">
+                            <span class="server-info-label">호스트</span>
+                            <span class="server-info-value">${server.host}:${server.port}</span>
+                        </div>
+                        <div class="server-info-item">
+                            <span class="server-info-label">타입</span>
+                            <span class="server-info-value">${getTypeText(server.type)} ${server.subtype ? `(${server.subtype})` : ''}</span>
+                        </div>
+                        <div class="server-info-item">
+                            <span class="server-info-label">사용자</span>
+                            <span class="server-info-value">${server.username}</span>
+                        </div>
+                        <div class="server-info-item">
+                            <span class="server-info-label">컴포넌트</span>
+                            <span class="server-info-value">${components}</span>
+                        </div>
+                        <div class="server-info-item">
+                            <span class="server-info-label">마지막 확인</span>
+                            <span class="server-info-value">${lastCheck}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="server-actions">
+                        <button class="btn btn-secondary" onclick="checkConnection('${server.id}')">
+                            🔍 연결 확인
+                        </button>
+                        <button class="btn btn-success" onclick="installAgents('${server.id}')">
+                            🤖 에이전트 설치
+                        </button>
+                        <button class="btn btn-secondary" onclick="editServer('${server.id}')">
+                            ✏️ 수정
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteServer('${server.id}')">
+                            🗑️ 삭제
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                online: '온라인',
+                offline: '오프라인',
+                installing: '설치 중',
+                unknown: '알 수 없음',
+                error: '오류'
+            };
+            return statusMap[status] || status;
+        }
+
+        function getTypeText(type) {
+            const typeMap = {
+                app: '애플리케이션',
+                db: '데이터베이스',
+                web: '웹서버',
+                was: 'WAS',
+                system: '시스템'
+            };
+            return typeMap[type] || type;
+        }
+
+        function filterServers() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const typeFilter = document.getElementById('typeFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            const filteredServers = servers.filter(server => {
+                const matchesSearch = server.name.toLowerCase().includes(searchTerm) ||
+                                    server.host.toLowerCase().includes(searchTerm);
+                const matchesType = !typeFilter || server.type === typeFilter;
+                const matchesStatus = !statusFilter || server.status === statusFilter;
+
+                return matchesSearch && matchesType && matchesStatus;
+            });
+
+            const container = document.getElementById('serverGrid');
+            container.innerHTML = filteredServers.map(server => createServerCard(server)).join('');
+        }
+
+        function showAddServerModal() {
+            currentEditingServer = null;
+            document.getElementById('modalTitle').textContent = '서버 추가';
+            document.getElementById('serverForm').reset();
+            document.getElementById('airisEndpoint').value = 'http://localhost:4317';
+            updateComponentsContainer();
+            showModal('serverModal');
+        }
+
+        function editServer(serverId) {
+            const server = servers.find(s => s.id === serverId);
+            if (!server) return;
+
+            currentEditingServer = server;
+            document.getElementById('modalTitle').textContent = '서버 수정';
+            
+            // 폼 필드 채우기
+            document.getElementById('serverName').value = server.name;
+            document.getElementById('serverHost').value = server.host;
+            document.getElementById('serverPort').value = server.port;
+            document.getElementById('serverUsername').value = server.username;
+            document.getElementById('serverKeyPath').value = server.keyPath || '';
+            document.getElementById('serverType').value = server.type;
+            document.getElementById('airisEndpoint').value = server.airisEndpoint || 'http://localhost:4317';
+            
+            updateSubtypeOptions();
+            document.getElementById('serverSubtype').value = server.subtype || '';
+            
+            updateComponentsContainer();
+            // 기존 컴포넌트 선택
+            if (server.components) {
+                server.components.forEach(component => {
+                    const checkbox = document.querySelector(`input[name="components"][value="${component}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+            
+            showModal('serverModal');
+        }
+
+        function updateSubtypeOptions() {
+            const type = document.getElementById('serverType').value;
+            const subtypeSelect = document.getElementById('serverSubtype');
+            
+            subtypeSelect.innerHTML = '<option value="">선택하세요</option>';
+            
+            if (type && subtypeOptions[type]) {
+                subtypeOptions[type].forEach(subtype => {
+                    const option = document.createElement('option');
+                    option.value = subtype;
+                    option.textContent = subtype.toUpperCase();
+                    subtypeSelect.appendChild(option);
+                });
+            }
+            
+            updateComponentsContainer();
+        }
+
+        function updateComponentsContainer() {
+            const type = document.getElementById('serverType').value;
+            const container = document.getElementById('componentsContainer');
+            
+            const allComponents = ['otel', 'node', 'nginx', 'apache', 'mysql', 'postgresql', 'mongodb', 'redis', 'java', 'nodejs', 'python'];
+            const recommended = defaultComponents[type] || ['otel', 'node'];
+            
+            container.innerHTML = allComponents.map(component => {
+                const isRecommended = recommended.includes(component);
+                return `
+                    <div class="checkbox-item">
+                        <input type="checkbox" name="components" value="${component}" id="comp-${component}" ${isRecommended ? 'checked' : ''}>
+                        <label for="comp-${component}">${component.toUpperCase()}</label>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function handleServerSubmit(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('serverName').value,
+                host: document.getElementById('serverHost').value,
+                port: parseInt(document.getElementById('serverPort').value),
+                username: document.getElementById('serverUsername').value,
+                keyPath: document.getElementById('serverKeyPath').value || null,
+                type: document.getElementById('serverType').value,
+                subtype: document.getElementById('serverSubtype').value || null,
+                airisEndpoint: document.getElementById('airisEndpoint').value,
+                components: Array.from(document.querySelectorAll('input[name="components"]:checked')).map(cb => cb.value)
+            };
+
+            try {
+                const url = currentEditingServer ? `/api/servers/${currentEditingServer.id}` : '/api/servers';
+                const method = currentEditingServer ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert(result.message, 'success');
+                    closeModal('serverModal');
+                    loadServers();
+                } else {
+                    showAlert(result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Failed to save server:', error);
+                showAlert('서버 저장 중 오류가 발생했습니다', 'error');
+            }
+        }
+
+        async function checkConnection(serverId) {
+            try {
+                const response = await fetch(`/api/servers/${serverId}/check-connection`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    if (result.connected) {
+                        showAlert('서버 연결에 성공했습니다', 'success');
+                    } else {
+                        showAlert('서버 연결에 실패했습니다: ' + result.message, 'error');
+                    }
+                    loadServers(); // 상태 업데이트를 위해 다시 로드
+                } else {
+                    showAlert('연결 테스트에 실패했습니다: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Failed to check connection:', error);
+                showAlert('연결 테스트 중 오류가 발생했습니다', 'error');
+            }
+        }
+
+        async function installAgents(serverId) {
+            const server = servers.find(s => s.id === serverId);
+            if (!server) return;
+
+            document.getElementById('installServerName').textContent = server.name;
+            document.getElementById('installProgress').style.width = '0%';
+            document.getElementById('installProgressText').textContent = '0%';
+            document.getElementById('installLogs').textContent = '설치를 시작합니다...';
+            document.getElementById('installCloseBtn').disabled = true;
+            
+            showModal('installModal');
+
+            try {
+                const response = await fetch(`/api/servers/${serverId}/install`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        components: server.components
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // 설치 진행 상황 모니터링 시작
+                    monitorInstallation(serverId, result.jobId);
+                } else {
+                    showAlert('설치 시작에 실패했습니다: ' + result.message, 'error');
+                    closeModal('installModal');
+                }
+            } catch (error) {
+                console.error('Failed to start installation:', error);
+                showAlert('설치 시작 중 오류가 발생했습니다', 'error');
+                closeModal('installModal');
+            }
+        }
+
+        function monitorInstallation(serverId, jobId) {
+            const pollInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/servers/${serverId}/install-status/${jobId}`);
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // 진행률 업데이트
+                        document.getElementById('installProgress').style.width = result.progress + '%';
+                        document.getElementById('installProgressText').textContent = result.progress + '%';
+
+                        // 로그 업데이트
+                        if (result.logs && result.logs.length > 0) {
+                            document.getElementById('installLogs').textContent = result.logs.join('\n');
+                            // 로그 뷰어를 맨 아래로 스크롤
+                            const logViewer = document.getElementById('installLogs');
+                            logViewer.scrollTop = logViewer.scrollHeight;
+                        }
+
+                        // 완료 또는 실패 시 모니터링 중지
+                        if (result.status === 'completed' || result.status === 'failed') {
+                            clearInterval(pollInterval);
+                            document.getElementById('installCloseBtn').disabled = false;
+                            
+                            if (result.status === 'completed') {
+                                showAlert('모니터링 에이전트 설치가 완료되었습니다', 'success');
+                            } else {
+                                showAlert('모니터링 에이전트 설치에 실패했습니다', 'error');
+                            }
+                            
+                            loadServers(); // 서버 상태 업데이트
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to get install status:', error);
+                    clearInterval(pollInterval);
+                    document.getElementById('installCloseBtn').disabled = false;
+                }
+            }, 2000); // 2초마다 상태 확인
+        }
+
+        async function deleteServer(serverId) {
+            const server = servers.find(s => s.id === serverId);
+            if (!server) return;
+
+            if (!confirm(`정말로 "${server.name}" 서버를 삭제하시겠습니까?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/servers/${serverId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('서버가 성공적으로 삭제되었습니다', 'success');
+                    loadServers();
+                } else {
+                    showAlert('서버 삭제에 실패했습니다: ' + result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Failed to delete server:', error);
+                showAlert('서버 삭제 중 오류가 발생했습니다', 'error');
+            }
+        }
+
+        function refreshServers() {
+            loadServers();
+            showAlert('서버 목록을 새로고침했습니다', 'success');
+        }
+
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').style.display = show ? 'block' : 'none';
+        }
+
+        function showAlert(message, type = 'success') {
+            const container = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            container.appendChild(alert);
+            
+            // 3초 후 자동 제거
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            }, 3000);
+        }
+
+        // 모달 외부 클릭 시 닫기
+        window.onclick = function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

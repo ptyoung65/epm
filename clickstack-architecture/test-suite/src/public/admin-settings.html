@@ -1,0 +1,1774 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS-MON 관리자 설정</title>
+    <script src="/components/common-layout.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 0;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .breadcrumb {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .back-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .page-title {
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .page-subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 30px;
+        }
+
+        .settings-nav {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            height: fit-content;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .settings-nav-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .settings-nav-item {
+            display: block;
+            padding: 12px 16px;
+            color: #666;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .settings-nav-item:hover {
+            background: #f0f2ff;
+            color: #667eea;
+        }
+
+        .settings-nav-item.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .settings-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .settings-section {
+            display: none;
+        }
+
+        .settings-section.active {
+            display: block;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .section-description {
+            color: #666;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e7ff;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e7ff;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e7ff;
+            border-radius: 8px;
+            font-size: 14px;
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-checkbox {
+            margin-right: 8px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .user-table th,
+        .user-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .user-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .user-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .badge-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 16px;
+            width: 80%;
+            max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: black;
+        }
+
+        @media (max-width: 768px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="airis-content-wrapper">
+    <header class="header">
+        <div class="nav-container">
+            <a href="/integrated-dashboard.html" class="logo">🔍 AIRIS-MON</a>
+            <div class="breadcrumb">
+                <a href="/integrated-dashboard.html">홈</a> > 관리자 설정
+            </div>
+            <a href="/integrated-dashboard.html" class="back-btn">
+                ← 대시보드로 돌아가기
+            </a>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1 class="page-title">관리자 설정</h1>
+        <p class="page-subtitle">AIRIS-MON 시스템을 구성하고 관리합니다</p>
+
+        <div class="settings-grid">
+            <nav class="settings-nav">
+                <h3 class="settings-nav-title">설정 메뉴</h3>
+                <a href="#general" class="settings-nav-item active" onclick="showSection('general')">
+                    ⚙️ 일반 설정
+                </a>
+                <a href="#alerts" class="settings-nav-item" onclick="showSection('alerts')">
+                    🚨 알림 설정
+                </a>
+                <a href="#users" class="settings-nav-item" onclick="showSection('users')">
+                    👥 사용자 관리
+                </a>
+                <a href="#monitoring" class="settings-nav-item" onclick="showSection('monitoring')">
+                    📊 모니터링 설정
+                </a>
+                <a href="#security" class="settings-nav-item" onclick="showSection('security')">
+                    🔒 보안 설정
+                </a>
+                <a href="#backup" class="settings-nav-item" onclick="showSection('backup')">
+                    💾 백업 및 복원
+                </a>
+                <a href="#notices" class="settings-nav-item" onclick="showSection('notices')">
+                    📢 공지사항 관리
+                </a>
+                <a href="#system" class="settings-nav-item" onclick="showSection('system')">
+                    🖥️ 시스템 정보
+                </a>
+            </nav>
+
+            <div class="settings-content">
+                <!-- 일반 설정 -->
+                <div id="general" class="settings-section active">
+                    <h2 class="section-title">일반 설정</h2>
+                    <p class="section-description">시스템의 기본 구성을 관리합니다</p>
+
+                    <div class="form-group">
+                        <label class="form-label">시스템 이름</label>
+                        <input type="text" class="form-input" value="AIRIS-MON Production" placeholder="시스템 이름을 입력하세요">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">시간대</label>
+                            <select class="form-select">
+                                <option value="Asia/Seoul" selected>Asia/Seoul (KST)</option>
+                                <option value="UTC">UTC</option>
+                                <option value="America/New_York">America/New_York (EST)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">언어</label>
+                            <select class="form-select">
+                                <option value="ko" selected>한국어</option>
+                                <option value="en">English</option>
+                                <option value="ja">日本語</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">데이터 보존 기간</label>
+                        <select class="form-select">
+                            <option value="7">7일</option>
+                            <option value="30" selected>30일</option>
+                            <option value="90">90일</option>
+                            <option value="365">1년</option>
+                        </select>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="autoRefresh" class="form-checkbox" checked>
+                        <label for="autoRefresh">자동 새로고침 활성화</label>
+                    </div>
+
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="darkMode" class="form-checkbox">
+                        <label for="darkMode">다크 모드 사용</label>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="saveGeneralSettings()">💾 저장</button>
+                        <button class="btn btn-secondary" onclick="resetGeneralSettings()">🔄 초기화</button>
+                    </div>
+                </div>
+
+                <!-- 알림 설정 -->
+                <div id="alerts" class="settings-section">
+                    <h2 class="section-title">알림 설정</h2>
+                    <p class="section-description">알림 채널 및 에스컬레이션 규칙을 구성합니다</p>
+
+                    <div class="card">
+                        <h3 class="card-title">알림 채널</h3>
+                        
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="emailEnabled" class="form-checkbox" checked>
+                                <label for="emailEnabled">이메일 알림</label>
+                            </div>
+                            <input type="email" class="form-input" placeholder="admin@company.com" style="margin-top: 10px;">
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="slackEnabled" class="form-checkbox">
+                                <label for="slackEnabled">Slack 알림</label>
+                            </div>
+                            <input type="text" class="form-input" placeholder="Webhook URL" style="margin-top: 10px;">
+                        </div>
+
+                        <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="teamsEnabled" class="form-checkbox">
+                                <label for="teamsEnabled">Microsoft Teams 알림</label>
+                            </div>
+                            <input type="text" class="form-input" placeholder="Teams Webhook URL" style="margin-top: 10px;">
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">에스컬레이션 규칙</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">1단계 에스컬레이션 (분)</label>
+                                <input type="number" class="form-input" value="15" min="1" max="120">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">2단계 에스컬레이션 (분)</label>
+                                <input type="number" class="form-input" value="30" min="1" max="240">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">긴급 알림 대상</label>
+                            <textarea class="form-textarea" placeholder="oncall@company.com, manager@company.com"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="saveAlertSettings()">💾 저장</button>
+                        <button class="btn btn-secondary" onclick="testNotifications()">🧪 알림 테스트</button>
+                    </div>
+                </div>
+
+                <!-- 사용자 관리 -->
+                <div id="users" class="settings-section">
+                    <h2 class="section-title">사용자 관리</h2>
+                    <p class="section-description">시스템 사용자를 추가, 수정, 삭제합니다</p>
+
+                    <div class="btn-group" style="margin-bottom: 20px;">
+                        <button class="btn btn-primary" onclick="showAddUserModal()">👤 사용자 추가</button>
+                        <button class="btn btn-secondary" onclick="exportUsers()">📤 내보내기</button>
+                    </div>
+
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>사용자명</th>
+                                <th>이메일</th>
+                                <th>역할</th>
+                                <th>상태</th>
+                                <th>마지막 접속</th>
+                                <th>작업</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody">
+                            <tr>
+                                <td>관리자</td>
+                                <td>admin@company.com</td>
+                                <td><span class="badge badge-danger">Admin</span></td>
+                                <td><span class="badge badge-success">활성</span></td>
+                                <td>방금 전</td>
+                                <td>
+                                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="editUser('admin')">수정</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>모니터링팀</td>
+                                <td>monitor@company.com</td>
+                                <td><span class="badge badge-warning">Operator</span></td>
+                                <td><span class="badge badge-success">활성</span></td>
+                                <td>5분 전</td>
+                                <td>
+                                    <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="editUser('monitor')">수정</button>
+                                    <button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="deleteUser('monitor')">삭제</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 모니터링 설정 -->
+                <div id="monitoring" class="settings-section">
+                    <h2 class="section-title">모니터링 설정</h2>
+                    <p class="section-description">데이터 수집 및 메트릭 구성을 관리합니다</p>
+
+                    <div class="card">
+                        <h3 class="card-title">수집 간격</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">메트릭 수집 간격 (초)</label>
+                                <select class="form-select">
+                                    <option value="30" selected>30초</option>
+                                    <option value="60">1분</option>
+                                    <option value="300">5분</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">로그 수집 간격 (초)</label>
+                                <select class="form-select">
+                                    <option value="10" selected>10초</option>
+                                    <option value="30">30초</option>
+                                    <option value="60">1분</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">임계값 설정</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">CPU 경고 임계값 (%)</label>
+                                <input type="number" class="form-input" value="80" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">CPU 위험 임계값 (%)</label>
+                                <input type="number" class="form-input" value="90" min="0" max="100">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">메모리 경고 임계값 (%)</label>
+                                <input type="number" class="form-input" value="85" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">메모리 위험 임계값 (%)</label>
+                                <input type="number" class="form-input" value="95" min="0" max="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="saveMonitoringSettings()">💾 저장</button>
+                        <button class="btn btn-secondary" onclick="testMonitoring()">🧪 연결 테스트</button>
+                    </div>
+                </div>
+
+                <!-- 보안 설정 -->
+                <div id="security" class="settings-section">
+                    <h2 class="section-title">보안 설정</h2>
+                    <p class="section-description">인증, 권한 및 보안 정책을 구성합니다</p>
+
+                    <div class="card">
+                        <h3 class="card-title">인증 설정</h3>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="ssoEnabled" class="form-checkbox">
+                            <label for="ssoEnabled">Single Sign-On (SSO) 활성화</label>
+                        </div>
+
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="mfaEnabled" class="form-checkbox" checked>
+                            <label for="mfaEnabled">다중 인증 (MFA) 필수</label>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">세션 만료 시간 (분)</label>
+                            <select class="form-select">
+                                <option value="30">30분</option>
+                                <option value="60" selected>1시간</option>
+                                <option value="480">8시간</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">접근 제어</h3>
+                        
+                        <div class="form-group">
+                            <label class="form-label">허용 IP 대역</label>
+                            <textarea class="form-textarea" placeholder="192.168.1.0/24&#10;10.0.0.0/8"></textarea>
+                        </div>
+
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="apiKeyRequired" class="form-checkbox" checked>
+                            <label for="apiKeyRequired">API 접근 시 키 인증 필수</label>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="saveSecuritySettings()">💾 저장</button>
+                        <button class="btn btn-danger" onclick="generateNewApiKey()">🔑 API 키 재생성</button>
+                    </div>
+                </div>
+
+                <!-- 백업 및 복원 -->
+                <div id="backup" class="settings-section">
+                    <h2 class="section-title">백업 및 복원</h2>
+                    <p class="section-description">시스템 데이터를 백업하고 복원합니다</p>
+
+                    <div class="card">
+                        <h3 class="card-title">자동 백업 설정</h3>
+                        
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="autoBackupEnabled" class="form-checkbox" checked>
+                            <label for="autoBackupEnabled">자동 백업 활성화</label>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">백업 주기</label>
+                                <select class="form-select">
+                                    <option value="daily" selected>매일</option>
+                                    <option value="weekly">매주</option>
+                                    <option value="monthly">매월</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">백업 보존 기간</label>
+                                <select class="form-select">
+                                    <option value="7">7일</option>
+                                    <option value="30" selected>30일</option>
+                                    <option value="90">90일</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">백업 작업</h3>
+                        
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="createBackup()">💾 즉시 백업</button>
+                            <button class="btn btn-secondary" onclick="showBackupList()">📂 백업 목록</button>
+                            <button class="btn btn-warning" onclick="showRestoreModal()">🔄 복원</button>
+                        </div>
+
+                        <div id="backupStatus" class="alert alert-success" style="display: none;">
+                            백업이 성공적으로 완료되었습니다.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 공지사항 관리 -->
+                <div id="notices" class="settings-section">
+                    <h2 class="section-title">공지사항 관리</h2>
+                    <p class="section-description">시스템 공지사항을 등록, 수정, 삭제하고 자동 공지사항을 관리합니다</p>
+
+                    <!-- 공지사항 등록 -->
+                    <div class="card">
+                        <h3 class="card-title">새 공지사항 등록</h3>
+                        
+                        <form id="noticeForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">공지사항 제목 *</label>
+                                    <input type="text" id="noticeTitle" class="form-input" placeholder="공지사항 제목을 입력하세요" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">우선순위 *</label>
+                                    <select id="noticePriority" class="form-select" required>
+                                        <option value="low">일반 (낮음)</option>
+                                        <option value="medium" selected>중요 (보통)</option>
+                                        <option value="high">긴급 (높음)</option>
+                                        <option value="critical">매우 긴급</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">상세 공지 내용 *</label>
+                                <textarea id="noticeContent" class="form-textarea" rows="5" placeholder="공지사항의 상세 내용을 입력하세요" required style="min-height: 120px;"></textarea>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">공지 범위 *</label>
+                                    <select id="noticeScope" class="form-select" required>
+                                        <option value="all" selected>전체 사용자</option>
+                                        <option value="admin">관리자만</option>
+                                        <option value="operator">운영자 이상</option>
+                                        <option value="team">특정 팀</option>
+                                        <option value="system">시스템 공지</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">공지 유형</label>
+                                    <select id="noticeType" class="form-select">
+                                        <option value="general" selected>일반 공지</option>
+                                        <option value="maintenance">점검 안내</option>
+                                        <option value="update">업데이트 알림</option>
+                                        <option value="security">보안 공지</option>
+                                        <option value="emergency">긴급 공지</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">공지 시작일 *</label>
+                                    <input type="datetime-local" id="noticeStartDate" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">공지 종료일</label>
+                                    <input type="datetime-local" id="noticeEndDate" class="form-input">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">대상 팀 (공지 범위가 '특정 팀'인 경우)</label>
+                                <input type="text" id="noticeTargetTeam" class="form-input" placeholder="예: 개발팀, 운영팀, 보안팀">
+                            </div>
+
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="noticePopup" class="form-checkbox">
+                                <label for="noticePopup">로그인 시 팝업으로 표시</label>
+                            </div>
+
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="noticeEmail" class="form-checkbox">
+                                <label for="noticeEmail">이메일로도 발송</label>
+                            </div>
+
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="noticePinned" class="form-checkbox">
+                                <label for="noticePinned">상단 고정</label>
+                            </div>
+
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-primary">📝 공지사항 등록</button>
+                                <button type="button" class="btn btn-secondary" onclick="resetNoticeForm()">🔄 초기화</button>
+                                <button type="button" class="btn btn-success" onclick="previewNotice()">👁️ 미리보기</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- 공지사항 목록 -->
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 class="card-title" style="margin-bottom: 0;">등록된 공지사항</h3>
+                            <div style="display: flex; gap: 10px;">
+                                <select id="noticeFilter" class="form-select" style="width: auto;" onchange="filterNotices()">
+                                    <option value="all">전체</option>
+                                    <option value="active">활성</option>
+                                    <option value="expired">만료</option>
+                                    <option value="system">시스템 자동</option>
+                                </select>
+                                <button class="btn btn-secondary" onclick="refreshNoticeList()">🔄 새로고침</button>
+                            </div>
+                        </div>
+
+                        <div style="overflow-x: auto;">
+                            <table class="user-table" id="noticeTable">
+                                <thead>
+                                    <tr>
+                                        <th>제목</th>
+                                        <th>우선순위</th>
+                                        <th>유형</th>
+                                        <th>범위</th>
+                                        <th>기간</th>
+                                        <th>상태</th>
+                                        <th>작성자</th>
+                                        <th>작업</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="noticeTableBody">
+                                    <!-- 공지사항 목록이 동적으로 로드됩니다 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 시스템 자동 공지사항 설정 -->
+                    <div class="card">
+                        <h3 class="card-title">시스템 자동 공지사항 설정</h3>
+                        <p style="color: #666; margin-bottom: 15px;">시스템에서 특정 이벤트 발생 시 자동으로 공지사항을 생성하는 규칙을 설정합니다.</p>
+                        
+                        <div class="form-row">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="autoNoticeUpdate" class="form-checkbox" checked>
+                                <label for="autoNoticeUpdate">시스템 업데이트 시 자동 공지</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="autoNoticeMaintenance" class="form-checkbox" checked>
+                                <label for="autoNoticeMaintenance">정기 점검 시 자동 공지</label>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="autoNoticeAlert" class="form-checkbox">
+                                <label for="autoNoticeAlert">긴급 알림 발생 시 자동 공지</label>
+                            </div>
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="autoNoticeSecurity" class="form-checkbox" checked>
+                                <label for="autoNoticeSecurity">보안 이벤트 발생 시 자동 공지</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">자동 공지 보존 기간</label>
+                            <select class="form-select">
+                                <option value="7">7일</option>
+                                <option value="30" selected>30일</option>
+                                <option value="90">90일</option>
+                                <option value="never">영구 보존</option>
+                            </select>
+                        </div>
+
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="saveAutoNoticeSettings()">💾 자동 공지 설정 저장</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 시스템 정보 -->
+                <div id="system" class="settings-section">
+                    <h2 class="section-title">시스템 정보</h2>
+                    <p class="section-description">현재 시스템 상태 및 통계를 확인합니다</p>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number">v2.1.0</div>
+                            <div class="stat-label">시스템 버전</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">15</div>
+                            <div class="stat-label">연결된 서버</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">247</div>
+                            <div class="stat-label">활성 세션</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">99.9%</div>
+                            <div class="stat-label">가동률</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">시스템 리소스</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">CPU 사용률</label>
+                                <div style="background: #e9ecef; height: 20px; border-radius: 10px; overflow: hidden;">
+                                    <div style="background: #28a745; height: 100%; width: 32%; border-radius: 10px;"></div>
+                                </div>
+                                <small>32% (정상)</small>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">메모리 사용률</label>
+                                <div style="background: #e9ecef; height: 20px; border-radius: 10px; overflow: hidden;">
+                                    <div style="background: #ffc107; height: 100%; width: 67%; border-radius: 10px;"></div>
+                                </div>
+                                <small>67% (주의)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="card-title">최근 활동</h3>
+                        <div style="max-height: 200px; overflow-y: auto;">
+                            <div style="padding: 8px 0; border-bottom: 1px solid #e9ecef;">
+                                <strong>2025-08-15 09:00</strong> - 시스템 업데이트 완료
+                            </div>
+                            <div style="padding: 8px 0; border-bottom: 1px solid #e9ecef;">
+                                <strong>2025-08-15 08:30</strong> - 새 사용자 등록 (monitor@company.com)
+                            </div>
+                            <div style="padding: 8px 0; border-bottom: 1px solid #e9ecef;">
+                                <strong>2025-08-15 08:15</strong> - 자동 백업 완료
+                            </div>
+                            <div style="padding: 8px 0;">
+                                <strong>2025-08-15 07:45</strong> - 알림 설정 변경됨
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="refreshSystemInfo()">🔄 새로고침</button>
+                        <button class="btn btn-secondary" onclick="downloadLogs()">📥 로그 다운로드</button>
+                        <button class="btn btn-danger" onclick="restartSystem()">🔄 시스템 재시작</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 사용자 추가 모달 -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('addUserModal')">&times;</span>
+            <h2>새 사용자 추가</h2>
+            <div class="form-group">
+                <label class="form-label">사용자명</label>
+                <input type="text" id="newUserName" class="form-input" placeholder="사용자명을 입력하세요">
+            </div>
+            <div class="form-group">
+                <label class="form-label">이메일</label>
+                <input type="email" id="newUserEmail" class="form-input" placeholder="이메일을 입력하세요">
+            </div>
+            <div class="form-group">
+                <label class="form-label">역할</label>
+                <select id="newUserRole" class="form-select">
+                    <option value="viewer">Viewer</option>
+                    <option value="operator" selected>Operator</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="addUser()">추가</button>
+                <button class="btn btn-secondary" onclick="closeModal('addUserModal')">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 공지사항 미리보기 모달 -->
+    <div id="noticePreviewModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close" onclick="closeModal('noticePreviewModal')">&times;</span>
+            <h2>공지사항 미리보기</h2>
+            <div id="noticePreviewContent" style="border: 1px solid #e9ecef; border-radius: 8px; padding: 20px; background: #f8f9fa;">
+                <!-- 미리보기 내용이 여기에 표시됩니다 -->
+            </div>
+            <div class="btn-group" style="margin-top: 20px;">
+                <button class="btn btn-primary" onclick="submitNoticeFromPreview()">✅ 등록하기</button>
+                <button class="btn btn-secondary" onclick="closeModal('noticePreviewModal')">✏️ 수정하기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 공지사항 수정 모달 -->
+    <div id="editNoticeModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close" onclick="closeModal('editNoticeModal')">&times;</span>
+            <h2>공지사항 수정</h2>
+            <form id="editNoticeForm">
+                <input type="hidden" id="editNoticeId">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">제목 *</label>
+                        <input type="text" id="editNoticeTitle" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">우선순위 *</label>
+                        <select id="editNoticePriority" class="form-select" required>
+                            <option value="low">일반 (낮음)</option>
+                            <option value="medium">중요 (보통)</option>
+                            <option value="high">긴급 (높음)</option>
+                            <option value="critical">매우 긴급</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">내용 *</label>
+                    <textarea id="editNoticeContent" class="form-textarea" rows="5" required></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">범위 *</label>
+                        <select id="editNoticeScope" class="form-select" required>
+                            <option value="all">전체 사용자</option>
+                            <option value="admin">관리자만</option>
+                            <option value="operator">운영자 이상</option>
+                            <option value="team">특정 팀</option>
+                            <option value="system">시스템 공지</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">유형</label>
+                        <select id="editNoticeType" class="form-select">
+                            <option value="general">일반 공지</option>
+                            <option value="maintenance">점검 안내</option>
+                            <option value="update">업데이트 알림</option>
+                            <option value="security">보안 공지</option>
+                            <option value="emergency">긴급 공지</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button type="submit" class="btn btn-primary">💾 수정 완료</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('editNoticeModal')">취소</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 섹션 표시/숨김
+        function showSection(sectionId) {
+            // 모든 섹션 숨김
+            const sections = document.querySelectorAll('.settings-section');
+            sections.forEach(section => section.classList.remove('active'));
+            
+            // 모든 네비게이션 아이템 비활성화
+            const navItems = document.querySelectorAll('.settings-nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+            
+            // 선택된 섹션 표시
+            document.getElementById(sectionId).classList.add('active');
+            
+            // 선택된 네비게이션 아이템 활성화
+            event.target.classList.add('active');
+        }
+
+        // 모달 관련 함수
+        function showAddUserModal() {
+            document.getElementById('addUserModal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // 사용자 관리 함수
+        function addUser() {
+            const name = document.getElementById('newUserName').value;
+            const email = document.getElementById('newUserEmail').value;
+            const role = document.getElementById('newUserRole').value;
+            
+            if (!name || !email) {
+                alert('사용자명과 이메일을 입력해주세요.');
+                return;
+            }
+            
+            // API 호출로 사용자 추가
+            fetch('/api/admin/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, email, role })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('사용자가 성공적으로 추가되었습니다.', 'success');
+                    closeModal('addUserModal');
+                    refreshUserList();
+                } else {
+                    showAlert('사용자 추가에 실패했습니다.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('오류가 발생했습니다.', 'error');
+            });
+        }
+
+        function editUser(userId) {
+            // 사용자 편집 기능
+            console.log('Edit user:', userId);
+        }
+
+        function deleteUser(userId) {
+            if (confirm('정말로 이 사용자를 삭제하시겠습니까?')) {
+                fetch(`/api/admin/users/${userId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('사용자가 삭제되었습니다.', 'success');
+                        refreshUserList();
+                    } else {
+                        showAlert('사용자 삭제에 실패했습니다.', 'error');
+                    }
+                });
+            }
+        }
+
+        function refreshUserList() {
+            // 사용자 목록 새로고침
+            console.log('Refreshing user list...');
+        }
+
+        // 설정 저장 함수들
+        function saveGeneralSettings() {
+            showAlert('일반 설정이 저장되었습니다.', 'success');
+        }
+
+        function saveAlertSettings() {
+            showAlert('알림 설정이 저장되었습니다.', 'success');
+        }
+
+        function saveMonitoringSettings() {
+            showAlert('모니터링 설정이 저장되었습니다.', 'success');
+        }
+
+        function saveSecuritySettings() {
+            showAlert('보안 설정이 저장되었습니다.', 'success');
+        }
+
+        // 기타 함수들
+        function testNotifications() {
+            showAlert('테스트 알림을 전송했습니다.', 'success');
+        }
+
+        function testMonitoring() {
+            showAlert('모니터링 연결 테스트가 성공했습니다.', 'success');
+        }
+
+        function generateNewApiKey() {
+            if (confirm('새 API 키를 생성하시겠습니까? 기존 키는 무효화됩니다.')) {
+                showAlert('새 API 키가 생성되었습니다.', 'success');
+            }
+        }
+
+        function createBackup() {
+            const statusDiv = document.getElementById('backupStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.textContent = '백업을 생성하고 있습니다...';
+            statusDiv.className = 'alert alert-warning';
+            
+            setTimeout(() => {
+                statusDiv.textContent = '백업이 성공적으로 완료되었습니다.';
+                statusDiv.className = 'alert alert-success';
+            }, 3000);
+        }
+
+        function refreshSystemInfo() {
+            showAlert('시스템 정보를 새로고침했습니다.', 'success');
+        }
+
+        function restartSystem() {
+            if (confirm('시스템을 재시작하시겠습니까? 잠시 동안 서비스가 중단됩니다.')) {
+                showAlert('시스템 재시작이 예약되었습니다.', 'warning');
+            }
+        }
+
+        // 알림 표시 함수
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '10000';
+            alertDiv.style.minWidth = '300px';
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 3000);
+        }
+
+        // 키보드 단축키
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey || event.metaKey) {
+                switch(event.key) {
+                    case 's':
+                        event.preventDefault();
+                        // 현재 활성화된 섹션의 저장 함수 호출
+                        const activeSection = document.querySelector('.settings-section.active');
+                        if (activeSection) {
+                            const sectionId = activeSection.id;
+                            switch(sectionId) {
+                                case 'general':
+                                    saveGeneralSettings();
+                                    break;
+                                case 'alerts':
+                                    saveAlertSettings();
+                                    break;
+                                case 'monitoring':
+                                    saveMonitoringSettings();
+                                    break;
+                                case 'security':
+                                    saveSecuritySettings();
+                                    break;
+                            }
+                        }
+                        break;
+                }
+            }
+        });
+
+        // 자동 공지 설정 저장
+        function saveAutoNoticeSettings() {
+            const settings = {
+                autoUpdate: document.getElementById('autoNoticeUpdate').checked,
+                autoMaintenance: document.getElementById('autoNoticeMaintenance').checked,
+                autoAlert: document.getElementById('autoNoticeAlert').checked,
+                autoSecurity: document.getElementById('autoNoticeSecurity').checked
+            };
+
+            fetch('/api/admin/settings/auto-notices', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(settings)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('자동 공지 설정이 저장되었습니다.', 'success');
+                } else {
+                    showAlert('설정 저장에 실패했습니다.', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('오류가 발생했습니다.', 'error');
+            });
+        }
+
+        // 공지사항 관련 함수들
+        function resetNoticeForm() {
+            document.getElementById('noticeForm').reset();
+            
+            // 현재 시간을 기본값으로 설정
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('noticeStartDate').value = now.toISOString().slice(0, 16);
+        }
+
+        function previewNotice() {
+            const title = document.getElementById('noticeTitle').value;
+            const content = document.getElementById('noticeContent').value;
+            const priority = document.getElementById('noticePriority').value;
+            const scope = document.getElementById('noticeScope').value;
+            const type = document.getElementById('noticeType').value;
+            const startDate = document.getElementById('noticeStartDate').value;
+            const endDate = document.getElementById('noticeEndDate').value;
+            const popup = document.getElementById('noticePopup').checked;
+            const email = document.getElementById('noticeEmail').checked;
+            const pinned = document.getElementById('noticePinned').checked;
+
+            if (!title || !content) {
+                showAlert('제목과 내용을 입력해주세요.', 'error');
+                return;
+            }
+
+            const priorityText = {
+                'low': '일반',
+                'medium': '중요',
+                'high': '긴급',
+                'critical': '매우 긴급'
+            };
+
+            const scopeText = {
+                'all': '전체 사용자',
+                'admin': '관리자만',
+                'operator': '운영자 이상',
+                'team': '특정 팀',
+                'system': '시스템 공지'
+            };
+
+            const typeText = {
+                'general': '일반 공지',
+                'maintenance': '점검 안내',
+                'update': '업데이트 알림',
+                'security': '보안 공지',
+                'emergency': '긴급 공지'
+            };
+
+            const priorityClass = {
+                'low': 'badge-success',
+                'medium': 'badge-warning',
+                'high': 'badge-danger',
+                'critical': 'badge-danger'
+            };
+
+            const previewContent = `
+                <div style="border-bottom: 1px solid #e9ecef; padding-bottom: 15px; margin-bottom: 15px;">
+                    <h3 style="margin-bottom: 10px;">
+                        ${title}
+                        <span class="badge ${priorityClass[priority]}" style="margin-left: 10px;">${priorityText[priority]}</span>
+                        ${pinned ? '<span class="badge badge-info" style="margin-left: 5px;">상단 고정</span>' : ''}
+                    </h3>
+                    <div style="display: flex; gap: 15px; font-size: 14px; color: #666; flex-wrap: wrap;">
+                        <span>📋 유형: ${typeText[type]}</span>
+                        <span>👥 범위: ${scopeText[scope]}</span>
+                        <span>📅 시작: ${new Date(startDate).toLocaleString('ko-KR')}</span>
+                        ${endDate ? `<span>⏰ 종료: ${new Date(endDate).toLocaleString('ko-KR')}</span>` : ''}
+                    </div>
+                    ${popup || email ? `
+                        <div style="margin-top: 10px; font-size: 14px;">
+                            ${popup ? '<span class="badge badge-info">팝업 표시</span>' : ''}
+                            ${email ? '<span class="badge badge-info" style="margin-left: 5px;">이메일 발송</span>' : ''}
+                        </div>
+                    ` : ''}
+                </div>
+                <div style="line-height: 1.6;">
+                    ${content.replace(/\n/g, '<br>')}
+                </div>
+            `;
+
+            document.getElementById('noticePreviewContent').innerHTML = previewContent;
+            document.getElementById('noticePreviewModal').style.display = 'block';
+        }
+
+        function submitNoticeFromPreview() {
+            closeModal('noticePreviewModal');
+            submitNotice();
+        }
+
+        function submitNotice() {
+            const formData = {
+                title: document.getElementById('noticeTitle').value,
+                content: document.getElementById('noticeContent').value,
+                priority: document.getElementById('noticePriority').value,
+                scope: document.getElementById('noticeScope').value,
+                type: document.getElementById('noticeType').value,
+                startDate: document.getElementById('noticeStartDate').value,
+                endDate: document.getElementById('noticeEndDate').value,
+                targetTeam: document.getElementById('noticeTargetTeam').value,
+                popup: document.getElementById('noticePopup').checked,
+                email: document.getElementById('noticeEmail').checked,
+                pinned: document.getElementById('noticePinned').checked
+            };
+
+            fetch('/api/admin/notices', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('공지사항이 성공적으로 등록되었습니다.', 'success');
+                    resetNoticeForm();
+                    refreshNoticeList();
+                } else {
+                    showAlert('공지사항 등록에 실패했습니다: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('오류가 발생했습니다.', 'error');
+            });
+        }
+
+        function refreshNoticeList() {
+            fetch('/api/admin/notices')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayNoticeList(data.notices);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('공지사항 목록을 불러오는데 실패했습니다.', 'error');
+                });
+        }
+
+        function displayNoticeList(notices) {
+            const tbody = document.getElementById('noticeTableBody');
+            
+            if (!notices || notices.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #666;">등록된 공지사항이 없습니다.</td></tr>';
+                return;
+            }
+
+            const priorityBadges = {
+                'low': 'badge-success',
+                'medium': 'badge-warning', 
+                'high': 'badge-danger',
+                'critical': 'badge-danger'
+            };
+
+            const priorityText = {
+                'low': '일반',
+                'medium': '중요',
+                'high': '긴급',
+                'critical': '매우 긴급'
+            };
+
+            const typeText = {
+                'general': '일반',
+                'maintenance': '점검',
+                'update': '업데이트',
+                'security': '보안',
+                'emergency': '긴급'
+            };
+
+            const scopeText = {
+                'all': '전체',
+                'admin': '관리자',
+                'operator': '운영자+',
+                'team': '특정팀',
+                'system': '시스템'
+            };
+
+            tbody.innerHTML = notices.map(notice => {
+                const startDate = new Date(notice.startDate || notice.date);
+                const endDate = notice.endDate ? new Date(notice.endDate) : null;
+                const now = new Date();
+                
+                let status = '활성';
+                let statusClass = 'badge-success';
+                
+                if (startDate > now) {
+                    status = '예약';
+                    statusClass = 'badge-warning';
+                } else if (endDate && endDate < now) {
+                    status = '만료';
+                    statusClass = 'badge-secondary';
+                }
+                
+                const period = endDate ? 
+                    `${startDate.toLocaleDateString()} ~ ${endDate.toLocaleDateString()}` :
+                    `${startDate.toLocaleDateString()} ~`;
+
+                return `
+                    <tr>
+                        <td>
+                            <strong>${notice.title}</strong>
+                            ${notice.pinned ? '<span class="badge badge-info" style="margin-left: 5px;">고정</span>' : ''}
+                        </td>
+                        <td><span class="badge ${priorityBadges[notice.priority]}">${priorityText[notice.priority]}</span></td>
+                        <td>${typeText[notice.type] || notice.type}</td>
+                        <td>${scopeText[notice.scope] || notice.scope}</td>
+                        <td style="font-size: 12px;">${period}</td>
+                        <td><span class="badge ${statusClass}">${status}</span></td>
+                        <td>${notice.author}</td>
+                        <td>
+                            <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px; margin-right: 5px;" onclick="editNotice('${notice.id}')">수정</button>
+                            <button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="deleteNotice('${notice.id}')">삭제</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterNotices() {
+            const filter = document.getElementById('noticeFilter').value;
+            fetch(`/api/admin/notices?filter=${filter}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayNoticeList(data.notices);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function editNotice(noticeId) {
+            fetch(`/api/admin/notices/${noticeId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const notice = data.notice;
+                        document.getElementById('editNoticeId').value = notice.id;
+                        document.getElementById('editNoticeTitle').value = notice.title;
+                        document.getElementById('editNoticeContent').value = notice.content;
+                        document.getElementById('editNoticePriority').value = notice.priority;
+                        document.getElementById('editNoticeScope').value = notice.scope;
+                        document.getElementById('editNoticeType').value = notice.type;
+                        
+                        document.getElementById('editNoticeModal').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('공지사항 정보를 불러오는데 실패했습니다.', 'error');
+                });
+        }
+
+        function deleteNotice(noticeId) {
+            if (confirm('이 공지사항을 삭제하시겠습니까?')) {
+                fetch(`/api/admin/notices/${noticeId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('공지사항이 삭제되었습니다.', 'success');
+                        refreshNoticeList();
+                    } else {
+                        showAlert('공지사항 삭제에 실패했습니다.', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('오류가 발생했습니다.', 'error');
+                });
+            }
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            // 현재 시간을 기본값으로 설정
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            if (document.getElementById('noticeStartDate')) {
+                document.getElementById('noticeStartDate').value = now.toISOString().slice(0, 16);
+            }
+
+            // 공지사항 폼 제출 이벤트
+            const noticeForm = document.getElementById('noticeForm');
+            if (noticeForm) {
+                noticeForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    submitNotice();
+                });
+            }
+
+            // 공지사항 수정 폼 제출 이벤트
+            const editNoticeForm = document.getElementById('editNoticeForm');
+            if (editNoticeForm) {
+                editNoticeForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const noticeId = document.getElementById('editNoticeId').value;
+                    const formData = {
+                        title: document.getElementById('editNoticeTitle').value,
+                        content: document.getElementById('editNoticeContent').value,
+                        priority: document.getElementById('editNoticePriority').value,
+                        scope: document.getElementById('editNoticeScope').value,
+                        type: document.getElementById('editNoticeType').value
+                    };
+
+                    fetch(`/api/admin/notices/${noticeId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            showAlert('공지사항이 수정되었습니다.', 'success');
+                            closeModal('editNoticeModal');
+                            refreshNoticeList();
+                        } else {
+                            showAlert('공지사항 수정에 실패했습니다.', 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showAlert('오류가 발생했습니다.', 'error');
+                    });
+                });
+            }
+
+            console.log('🔧 AIRIS-MON 관리자 설정 페이지 로드 완료');
+        });
+
+        // 모달 외부 클릭 시 닫기
+        window.onclick = function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+    </script>
+    </div>
+</body>
+</html>

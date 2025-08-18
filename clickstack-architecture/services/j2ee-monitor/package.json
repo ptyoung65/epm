@@ -1,0 +1,43 @@
+{
+  "name": "airis-apm-j2ee-monitor",
+  "version": "1.0.0",
+  "description": "AIRIS APM J2EE Monitoring Service - J2EE 애플리케이션 특화 모니터링",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest",
+    "build": "echo 'No build step required'",
+    "lint": "eslint src/",
+    "health": "curl -f http://localhost:3008/health || exit 1"
+  },
+  "keywords": [
+    "apm",
+    "j2ee",
+    "servlet",
+    "jsp",
+    "ejb",
+    "monitoring",
+    "performance",
+    "korean"
+  ],
+  "author": "AIRIS APM Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "uuid": "^9.0.0",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "compression": "^1.7.4",
+    "express-rate-limit": "^6.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.5.0",
+    "supertest": "^6.3.3",
+    "eslint": "^8.44.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

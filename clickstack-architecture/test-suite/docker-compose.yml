@@ -1,0 +1,285 @@
+version: '3.8'
+
+services:
+  # AIRIS-MON 테스트 스위트 메인 서비스
+  test-suite:
+    build: .
+    container_name: airis-mon-test-suite
+    ports:
+      - "3100:3100"
+    environment:
+      - NODE_ENV=production
+      - TEST_PORT=3100
+      - TZ=Asia/Seoul
+      - KAFKA_BROKERS=kafka:9092
+      - CLICKHOUSE_HOST=clickhouse
+      - CLICKHOUSE_PORT=8123
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - API_GATEWAY_URL=http://api-gateway:3000
+      - AIOPS_URL=http://aiops:3004
+      - SESSION_REPLAY_URL=http://session-replay:3003
+      - NLP_SEARCH_URL=http://nlp-search:3006
+    depends_on:
+      - kafka
+      - clickhouse
+      - redis
+    networks:
+      - airis-test-network
+    volumes:
+      - ./test-results:/app/test-results
+      - ./test-data:/app/test-data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ClickHouse 데이터베이스 (테스트용)
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: airis-test-clickhouse
+    environment:
+      - CLICKHOUSE_DB=airis_test
+      - CLICKHOUSE_USER=test_user
+      - CLICKHOUSE_PASSWORD=test_password
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./database/clickhouse-init:/docker-entrypoint-initdb.d
+    networks:
+      - airis-test-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8123/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Kafka (테스트용 이벤트 스트리밍)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: airis-test-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - airis-test-network
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: airis-test-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - airis-test-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis (테스트용 캐싱)
+  redis:
+    image: redis:7-alpine
+    container_name: airis-test-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --appendfsync everysec
+    volumes:
+      - redis_data:/data
+    networks:
+      - airis-test-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # 테스트 데이터 생성기
+  data-generator:
+    build:
+      context: .
+      dockerfile: Dockerfile.generator
+    container_name: airis-test-data-generator
+    environment:
+      - NODE_ENV=production
+      - KAFKA_BROKERS=kafka:9092
+      - CLICKHOUSE_HOST=clickhouse
+      - REDIS_HOST=redis
+      - GENERATION_INTERVAL=5000
+      - BATCH_SIZE=100
+    depends_on:
+      - kafka
+      - clickhouse
+      - redis
+    networks:
+      - airis-test-network
+    restart: unless-stopped
+    profiles:
+      - data-generation
+
+  # 테스트 결과 시각화 (Grafana)
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: airis-test-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=airis-test
+      - GF_INSTALL_PLUGINS=grafana-clickhouse-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - airis-test-network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # 시뮬레이션된 AIRIS-MON 서비스들
+  mock-api-gateway:
+    image: node:18-alpine
+    container_name: airis-mock-api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - SERVICE_NAME=api-gateway
+      - SERVICE_PORT=3000
+    command: |
+      sh -c "
+        echo 'const express = require(\"express\"); 
+        const app = express(); 
+        app.use(express.json());
+        app.use((req,res,next) => { res.header(\"Access-Control-Allow-Origin\", \"*\"); next(); });
+        app.get(\"/health\", (req,res) => res.json({status:\"정상\",service:\"API Gateway\",korean_time:new Date().toLocaleString(\"ko-KR\",{timeZone:\"Asia/Seoul\"})}));
+        app.get(\"/api/v1/status\", (req,res) => res.json({status:\"running\",services:[\"api-gateway\",\"aiops\",\"session-replay\",\"nlp-search\"]}));
+        app.post(\"/api/v1/metrics\", (req,res) => res.json({received:req.body.metrics?.length || 0, status:\"processed\"}));
+        app.post(\"/api/v1/events\", (req,res) => res.json({received:req.body.events?.length || 0, status:\"processed\"}));
+        app.listen(3000, () => console.log(\"🌐 Mock API Gateway 실행 중: 3000\"));' > server.js && 
+        npm init -y && 
+        npm install express && 
+        node server.js
+      "
+    networks:
+      - airis-test-network
+    restart: unless-stopped
+
+  mock-aiops:
+    image: node:18-alpine
+    container_name: airis-mock-aiops
+    ports:
+      - "3004:3004"
+    environment:
+      - SERVICE_NAME=aiops
+      - SERVICE_PORT=3004
+    command: |
+      sh -c "
+        echo 'const express = require(\"express\"); 
+        const app = express(); 
+        app.use(express.json());
+        app.use((req,res,next) => { res.header(\"Access-Control-Allow-Origin\", \"*\"); next(); });
+        app.get(\"/health\", (req,res) => res.json({status:\"정상\",service:\"AIOps Engine\",korean_time:new Date().toLocaleString(\"ko-KR\",{timeZone:\"Asia/Seoul\"})}));
+        app.post(\"/api/v1/anomalies\", (req,res) => res.json({processed:req.body.samples?.length || 0, status:\"analyzed\"}));
+        app.listen(3004, () => console.log(\"🤖 Mock AIOps Engine 실행 중: 3004\"));' > server.js && 
+        npm init -y && 
+        npm install express && 
+        node server.js
+      "
+    networks:
+      - airis-test-network
+    restart: unless-stopped
+
+  mock-session-replay:
+    image: node:18-alpine
+    container_name: airis-mock-session-replay
+    ports:
+      - "3003:3003"
+    environment:
+      - SERVICE_NAME=session-replay
+      - SERVICE_PORT=3003
+    command: |
+      sh -c "
+        echo 'const express = require(\"express\"); 
+        const app = express(); 
+        app.use(express.json());
+        app.use((req,res,next) => { res.header(\"Access-Control-Allow-Origin\", \"*\"); next(); });
+        app.get(\"/health\", (req,res) => res.json({status:\"정상\",service:\"Session Replay\",korean_time:new Date().toLocaleString(\"ko-KR\",{timeZone:\"Asia/Seoul\"})}));
+        app.post(\"/api/v1/sessions/start\", (req,res) => res.json({session_id:req.body.session_id, status:\"recording\"}));
+        app.post(\"/api/v1/sessions/:id/end\", (req,res) => res.json({session_id:req.params.id, status:\"completed\"}));
+        app.listen(3003, () => console.log(\"📹 Mock Session Replay 실행 중: 3003\"));' > server.js && 
+        npm init -y && 
+        npm install express && 
+        node server.js
+      "
+    networks:
+      - airis-test-network
+    restart: unless-stopped
+
+  mock-nlp-search:
+    image: node:18-alpine
+    container_name: airis-mock-nlp-search
+    ports:
+      - "3006:3006"
+    environment:
+      - SERVICE_NAME=nlp-search
+      - SERVICE_PORT=3006
+    command: |
+      sh -c "
+        echo 'const express = require(\"express\"); 
+        const app = express(); 
+        app.use(express.json());
+        app.use((req,res,next) => { res.header(\"Access-Control-Allow-Origin\", \"*\"); next(); });
+        app.get(\"/health\", (req,res) => res.json({status:\"정상\",service:\"NLP Search\",korean_time:new Date().toLocaleString(\"ko-KR\",{timeZone:\"Asia/Seoul\"})}));
+        app.post(\"/api/v1/search\", (req,res) => res.json({query:req.body.query, results:Array.from({length:10},(i)=>({id:i,title:`결과 ${i+1}`,score:Math.random()})), total:10}));
+        app.listen(3006, () => console.log(\"🔍 Mock NLP Search 실행 중: 3006\"));' > server.js && 
+        npm init -y && 
+        npm install express && 
+        node server.js
+      "
+    networks:
+      - airis-test-network
+    restart: unless-stopped
+
+# 볼륨 정의
+volumes:
+  clickhouse_data:
+    driver: local
+  kafka_data:
+    driver: local
+  redis_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# 네트워크 정의
+networks:
+  airis-test-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

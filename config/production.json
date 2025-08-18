@@ -1,0 +1,289 @@
+{
+  "ingestion": {
+    "batchSize": 1000,
+    "flushInterval": 5000,
+    "maxConcurrentBatches": 10,
+    "retryAttempts": 3,
+    "retryDelay": 1000,
+    "queueConfig": {
+      "redis": {
+        "host": "localhost",
+        "port": 6379,
+        "retryDelayOnFailover": 100,
+        "maxRetriesPerRequest": 3,
+        "lazyConnect": true
+      },
+      "kafka": {
+        "brokers": ["localhost:9092"],
+        "clientId": "airis-mon-ingestion",
+        "connectionTimeout": 3000,
+        "requestTimeout": 30000,
+        "retry": {
+          "retries": 8
+        }
+      },
+      "rabbitmq": {
+        "url": "amqp://localhost",
+        "heartbeat": 60,
+        "connection_timeout": 60000
+      }
+    }
+  },
+  "analytics": {
+    "realTimeEnabled": true,
+    "batchSize": 500,
+    "processingInterval": 1000,
+    "alertThreshold": 0.8,
+    "maxConcurrentAnalyses": 5,
+    "anomalyDetection": {
+      "enabled": true,
+      "methods": ["z-score", "iqr", "isolation-forest"],
+      "sensitivity": "medium",
+      "lookbackWindow": 100
+    },
+    "patternDetection": {
+      "cyclic": {
+        "enabled": true,
+        "windowSize": 50,
+        "threshold": 0.7,
+        "minCycles": 2
+      },
+      "seasonal": {
+        "enabled": true,
+        "periods": [24, 168, 720],
+        "threshold": 0.6,
+        "minSeasons": 3
+      },
+      "anomalyClusters": {
+        "enabled": true,
+        "minPoints": 5,
+        "threshold": 0.5,
+        "maxDistance": 2.0
+      }
+    },
+    "riskScoring": {
+      "enabled": true,
+      "categories": {
+        "security": { "weight": 0.4, "threshold": 0.7 },
+        "performance": { "weight": 0.3, "threshold": 0.8 },
+        "availability": { "weight": 0.3, "threshold": 0.9 }
+      }
+    }
+  },
+  "alerts": {
+    "batchSize": 100,
+    "processingInterval": 2000,
+    "suppressionWindow": 300000,
+    "escalationDelay": 900000,
+    "maxAlertsPerMinute": 50,
+    "deduplication": {
+      "enabled": true,
+      "window": 300000,
+      "fields": ["title", "source", "category"]
+    },
+    "channels": {
+      "email": {
+        "enabled": false,
+        "priority": 1,
+        "rateLimitPerHour": 100,
+        "templates": {
+          "critical": "critical-alert-template",
+          "high": "high-alert-template",
+          "medium": "medium-alert-template"
+        }
+      },
+      "slack": {
+        "enabled": false,
+        "priority": 2,
+        "rateLimitPerHour": 200,
+        "channels": {
+          "critical": "#alerts-critical",
+          "high": "#alerts-high",
+          "medium": "#alerts"
+        }
+      },
+      "teams": {
+        "enabled": false,
+        "priority": 3,
+        "rateLimitPerHour": 150
+      },
+      "webhook": {
+        "enabled": true,
+        "priority": 4,
+        "rateLimitPerHour": 1000,
+        "timeout": 5000,
+        "retryAttempts": 3
+      },
+      "sms": {
+        "enabled": false,
+        "priority": 1,
+        "rateLimitPerHour": 20,
+        "onlyCritical": true
+      }
+    },
+    "escalation": {
+      "enabled": true,
+      "levels": [
+        {
+          "delay": 900000,
+          "channels": ["slack", "email"],
+          "condition": "no_acknowledgment"
+        },
+        {
+          "delay": 1800000,
+          "channels": ["sms", "webhook"],
+          "condition": "no_acknowledgment"
+        }
+      ]
+    }
+  },
+  "api": {
+    "port": 3000,
+    "host": "0.0.0.0",
+    "cors": {
+      "origin": "*",
+      "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      "allowedHeaders": ["Content-Type", "Authorization", "X-API-Key", "X-Request-ID"],
+      "maxAge": 86400
+    },
+    "security": {
+      "helmet": {
+        "contentSecurityPolicy": false,
+        "hsts": {
+          "maxAge": 31536000,
+          "includeSubDomains": true,
+          "preload": true
+        }
+      },
+      "rateLimit": {
+        "windowMs": 900000,
+        "max": 1000,
+        "standardHeaders": true,
+        "legacyHeaders": false,
+        "message": "Too many requests from this IP"
+      },
+      "apiKeys": {
+        "enabled": true,
+        "header": "X-API-Key",
+        "keys": []
+      },
+      "jwt": {
+        "enabled": false,
+        "secret": "",
+        "expiresIn": "24h",
+        "issuer": "airis-mon",
+        "audience": "airis-mon-api"
+      }
+    },
+    "compression": {
+      "enabled": true,
+      "level": 6,
+      "threshold": 1024
+    },
+    "logging": {
+      "enabled": true,
+      "format": "combined",
+      "skip": {
+        "healthCheck": true,
+        "staticAssets": true
+      }
+    },
+    "websocket": {
+      "enabled": true,
+      "path": "/ws",
+      "pingInterval": 25000,
+      "pingTimeout": 5000,
+      "maxPayload": 1048576,
+      "compression": true
+    },
+    "swagger": {
+      "enabled": false,
+      "path": "/api-docs",
+      "title": "AIRIS-MON API",
+      "version": "1.0.0",
+      "description": "AI-Driven Real-time Infrastructure and Security Monitoring API"
+    }
+  },
+  "storage": {
+    "metrics": {
+      "type": "influxdb",
+      "retention": "30d",
+      "batchSize": 1000
+    },
+    "alerts": {
+      "type": "mongodb",
+      "retention": "90d"
+    },
+    "analytics": {
+      "type": "redis",
+      "retention": "7d"
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "transports": {
+      "console": {
+        "enabled": true,
+        "colorize": true
+      },
+      "file": {
+        "enabled": true,
+        "filename": "logs/airis-mon.log",
+        "maxSize": "10m",
+        "maxFiles": 5,
+        "rotateDaily": true
+      },
+      "syslog": {
+        "enabled": false,
+        "host": "localhost",
+        "port": 514,
+        "facility": "local0"
+      }
+    }
+  },
+  "monitoring": {
+    "healthCheck": {
+      "enabled": true,
+      "interval": 30000,
+      "timeout": 5000,
+      "endpoints": [
+        "http://localhost:8086/health",
+        "http://localhost:9090/-/healthy"
+      ]
+    },
+    "metrics": {
+      "enabled": true,
+      "interval": 60000,
+      "endpoint": "/metrics",
+      "prefix": "airis_mon_"
+    },
+    "profiling": {
+      "enabled": false,
+      "interval": 300000,
+      "heapSnapshot": false
+    }
+  },
+  "features": {
+    "machineLearning": {
+      "enabled": true,
+      "models": {
+        "anomalyDetection": "isolation-forest",
+        "forecasting": "arima",
+        "clustering": "kmeans"
+      }
+    },
+    "alertCorrelation": {
+      "enabled": true,
+      "timeWindow": 300000,
+      "similarityThreshold": 0.8
+    },
+    "autoScaling": {
+      "enabled": false,
+      "minInstances": 1,
+      "maxInstances": 10,
+      "scaleUpThreshold": 80,
+      "scaleDownThreshold": 20
+    }
+  }
+}

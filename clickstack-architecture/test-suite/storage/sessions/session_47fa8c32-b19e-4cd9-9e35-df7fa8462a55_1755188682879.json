@@ -1,0 +1,1848 @@
+{
+  "id": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+  "scenario": "e2e_test_e-commerce",
+  "startTime": "2025-08-14T16:24:37.967Z",
+  "lastActivity": "2025-08-14T16:24:42.835Z",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+  "ipAddress": "::1",
+  "events": [
+    {
+      "id": "2d102299-4f36-4a83-859c-3a3479325a41",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188677953,
+      "recordedAt": "2025-08-14T16:24:38.016Z",
+      "type": "rrweb_event",
+      "rrwebType": "purchase",
+      "originalEvent": {
+        "type": "purchase",
+        "timestamp": 1755188677953,
+        "page_url": "/confirmation",
+        "target": {
+          "tagName": "button",
+          "id": "element_0",
+          "className": "test-element"
+        },
+        "value": 131.6408644281337
+      }
+    },
+    {
+      "id": "9246d40b-de12-407f-91ca-38e995ebd95a",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188678104,
+      "recordedAt": "2025-08-14T16:24:38.068Z",
+      "type": "rrweb_event",
+      "rrwebType": "scroll",
+      "originalEvent": {
+        "type": "scroll",
+        "timestamp": 1755188678104,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_1",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "622a59e7-4385-4d42-8302-c316b7a7e89a",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188678256,
+      "recordedAt": "2025-08-14T16:24:38.116Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188678256,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_2",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "832e8224-8711-4f97-8ae9-66a300b8acd1",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188678405,
+      "recordedAt": "2025-08-14T16:24:38.168Z",
+      "type": "rrweb_event",
+      "rrwebType": "focus",
+      "originalEvent": {
+        "type": "focus",
+        "timestamp": 1755188678405,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_3",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "8d0434c1-dd6f-4059-bee3-9a4f4a08a5c6",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188678557,
+      "recordedAt": "2025-08-14T16:24:38.220Z",
+      "type": "rrweb_event",
+      "rrwebType": "input",
+      "originalEvent": {
+        "type": "input",
+        "timestamp": 1755188678557,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_4",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "0edc9332-5d71-4f55-9577-e026c7b46738",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188678708,
+      "recordedAt": "2025-08-14T16:24:38.267Z",
+      "type": "rrweb_event",
+      "rrwebType": "blur",
+      "originalEvent": {
+        "type": "blur",
+        "timestamp": 1755188678708,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_5",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "5d579396-b44c-43f9-99a4-663e4e082376",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188678855,
+      "recordedAt": "2025-08-14T16:24:38.315Z",
+      "type": "rrweb_event",
+      "rrwebType": "blur",
+      "originalEvent": {
+        "type": "blur",
+        "timestamp": 1755188678855,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_6",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "318e23bc-e42f-4f29-b8fd-4be5501f8d64",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188679003,
+      "recordedAt": "2025-08-14T16:24:38.359Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188679003,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_7",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "0a41bd2e-f549-4b3e-8268-ffb853a0a532",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188679148,
+      "recordedAt": "2025-08-14T16:24:38.408Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188679148,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_8",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "3b5c2da8-2b04-4b64-8e0d-54c02990bd07",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188679297,
+      "recordedAt": "2025-08-14T16:24:38.456Z",
+      "type": "rrweb_event",
+      "rrwebType": "input",
+      "originalEvent": {
+        "type": "input",
+        "timestamp": 1755188679297,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_9",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "699ddced-2498-4303-96b0-1eb3e14927fb",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188679446,
+      "recordedAt": "2025-08-14T16:24:38.504Z",
+      "type": "rrweb_event",
+      "rrwebType": "focus",
+      "originalEvent": {
+        "type": "focus",
+        "timestamp": 1755188679446,
+        "page_url": "/home",
+        "target": {
+          "tagName": "button",
+          "id": "element_10",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "5a38f884-6b47-4f5f-9de4-f0042dcc5f42",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188679594,
+      "recordedAt": "2025-08-14T16:24:38.552Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188679594,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_11",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "115ce3a2-031b-4b1b-a900-d8a484cac8aa",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188679743,
+      "recordedAt": "2025-08-14T16:24:38.600Z",
+      "type": "rrweb_event",
+      "rrwebType": "scroll",
+      "originalEvent": {
+        "type": "scroll",
+        "timestamp": 1755188679743,
+        "page_url": "/payment",
+        "target": {
+          "tagName": "button",
+          "id": "element_12",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "a8d9079e-677b-49dc-bb36-fc6a59ea9944",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188679891,
+      "recordedAt": "2025-08-14T16:24:38.648Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188679891,
+        "page_url": "/confirmation",
+        "target": {
+          "tagName": "button",
+          "id": "element_13",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "2ac8e287-c08c-43d6-8aeb-2d923d80cdae",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188680043,
+      "recordedAt": "2025-08-14T16:24:38.700Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188680043,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_14",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "37317834-6d96-4d08-8236-ca19db82e20a",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188680193,
+      "recordedAt": "2025-08-14T16:24:38.756Z",
+      "type": "rrweb_event",
+      "rrwebType": "scroll",
+      "originalEvent": {
+        "type": "scroll",
+        "timestamp": 1755188680193,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_15",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "b3825787-be22-44ab-8dbe-3cede10ff58b",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188680349,
+      "recordedAt": "2025-08-14T16:24:38.804Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188680349,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_16",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "73bf0018-9eaa-4402-8cba-910bcb5483f5",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188680497,
+      "recordedAt": "2025-08-14T16:24:38.851Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188680497,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_17",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "e2b3600b-4540-499b-a67e-e8f571a22872",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188680644,
+      "recordedAt": "2025-08-14T16:24:38.900Z",
+      "type": "rrweb_event",
+      "rrwebType": "input",
+      "originalEvent": {
+        "type": "input",
+        "timestamp": 1755188680644,
+        "page_url": "/payment",
+        "target": {
+          "tagName": "button",
+          "id": "element_18",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "4861b658-a727-4cff-9735-0a8b0810311e",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188680795,
+      "recordedAt": "2025-08-14T16:24:38.947Z",
+      "type": "rrweb_event",
+      "rrwebType": "input",
+      "originalEvent": {
+        "type": "input",
+        "timestamp": 1755188680795,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_19",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "540183d9-72f6-46c4-a2af-f867bcbd4e35",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188680942,
+      "recordedAt": "2025-08-14T16:24:38.995Z",
+      "type": "rrweb_event",
+      "rrwebType": "purchase",
+      "originalEvent": {
+        "type": "purchase",
+        "timestamp": 1755188680942,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_20",
+          "className": "test-element"
+        },
+        "value": 160.94714545840395
+      }
+    },
+    {
+      "id": "090f000e-eb5f-4cab-a3c3-2eda365f5b02",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188681089,
+      "recordedAt": "2025-08-14T16:24:39.039Z",
+      "type": "rrweb_event",
+      "rrwebType": "input",
+      "originalEvent": {
+        "type": "input",
+        "timestamp": 1755188681089,
+        "page_url": "/home",
+        "target": {
+          "tagName": "button",
+          "id": "element_21",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "1ef9a892-1de1-4b0f-815f-e0cbfb77c763",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188681233,
+      "recordedAt": "2025-08-14T16:24:39.085Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188681233,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_22",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "2e1153d4-6bd6-45cd-9eda-682eaf0d3468",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188681390,
+      "recordedAt": "2025-08-14T16:24:39.108Z",
+      "type": "rrweb_event",
+      "rrwebType": "focus",
+      "originalEvent": {
+        "type": "focus",
+        "timestamp": 1755188681390,
+        "page_url": "/home",
+        "target": {
+          "tagName": "button",
+          "id": "element_23",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "90d2cd1d-9ce0-4a82-9ce9-464e50f80181",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188681503,
+      "recordedAt": "2025-08-14T16:24:39.156Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188681503,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_24",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "1267220c-ec83-4dfd-b32e-c4d0e2cfb2d2",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188681652,
+      "recordedAt": "2025-08-14T16:24:39.204Z",
+      "type": "rrweb_event",
+      "rrwebType": "scroll",
+      "originalEvent": {
+        "type": "scroll",
+        "timestamp": 1755188681652,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_25",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "de12c58d-dd28-4307-85ed-8cab7042fd65",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188681802,
+      "recordedAt": "2025-08-14T16:24:39.255Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188681802,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_26",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "99da9861-5b88-4a48-9ec8-a9d5faa2bef1",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188681952,
+      "recordedAt": "2025-08-14T16:24:39.303Z",
+      "type": "rrweb_event",
+      "rrwebType": "scroll",
+      "originalEvent": {
+        "type": "scroll",
+        "timestamp": 1755188681952,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_27",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "d88e8fc2-d9fd-4cab-bba1-6c4eef20f7c3",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188682100,
+      "recordedAt": "2025-08-14T16:24:39.351Z",
+      "type": "rrweb_event",
+      "rrwebType": "input",
+      "originalEvent": {
+        "type": "input",
+        "timestamp": 1755188682100,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_28",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "80d31cb9-3139-48e6-967a-8fe1b1d90a6c",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188682248,
+      "recordedAt": "2025-08-14T16:24:39.400Z",
+      "type": "rrweb_event",
+      "rrwebType": "scroll",
+      "originalEvent": {
+        "type": "scroll",
+        "timestamp": 1755188682248,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_29",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "0318697b-837d-4041-bb16-7a90b4248a1c",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188682398,
+      "recordedAt": "2025-08-14T16:24:39.448Z",
+      "type": "rrweb_event",
+      "rrwebType": "scroll",
+      "originalEvent": {
+        "type": "scroll",
+        "timestamp": 1755188682398,
+        "page_url": "/confirmation",
+        "target": {
+          "tagName": "button",
+          "id": "element_30",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "10fc16df-6afe-407f-94da-19844c1c5a58",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188682546,
+      "recordedAt": "2025-08-14T16:24:39.496Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188682546,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_31",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "77526590-2106-4454-8418-42616486796c",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188682695,
+      "recordedAt": "2025-08-14T16:24:39.544Z",
+      "type": "rrweb_event",
+      "rrwebType": "blur",
+      "originalEvent": {
+        "type": "blur",
+        "timestamp": 1755188682695,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_32",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "44f04a76-3f4a-49b1-a020-64f9c485bd34",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188682844,
+      "recordedAt": "2025-08-14T16:24:39.592Z",
+      "type": "rrweb_event",
+      "rrwebType": "scroll",
+      "originalEvent": {
+        "type": "scroll",
+        "timestamp": 1755188682844,
+        "page_url": "/confirmation",
+        "target": {
+          "tagName": "button",
+          "id": "element_33",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "021d6e43-c79f-4f77-abe7-0078883865b1",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188682992,
+      "recordedAt": "2025-08-14T16:24:39.640Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188682992,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_34",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "d3b3d340-854c-480a-85e1-a67c1483f1df",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188683183,
+      "recordedAt": "2025-08-14T16:24:39.731Z",
+      "type": "rrweb_event",
+      "rrwebType": "focus",
+      "originalEvent": {
+        "type": "focus",
+        "timestamp": 1755188683183,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_35",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "50897c73-92df-4fad-8af5-c751d30d4922",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188683330,
+      "recordedAt": "2025-08-14T16:24:39.779Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188683330,
+        "page_url": "/home",
+        "target": {
+          "tagName": "button",
+          "id": "element_36",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "d0257179-3a55-4d14-93bb-0d6fe400a102",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188683479,
+      "recordedAt": "2025-08-14T16:24:39.823Z",
+      "type": "rrweb_event",
+      "rrwebType": "blur",
+      "originalEvent": {
+        "type": "blur",
+        "timestamp": 1755188683479,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_37",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "6c38c346-7c17-4ca4-8893-d844f6b08784",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188683623,
+      "recordedAt": "2025-08-14T16:24:39.867Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188683623,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_38",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "68490379-7306-4788-8789-35ce17933abc",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188683768,
+      "recordedAt": "2025-08-14T16:24:39.916Z",
+      "type": "rrweb_event",
+      "rrwebType": "blur",
+      "originalEvent": {
+        "type": "blur",
+        "timestamp": 1755188683768,
+        "page_url": "/payment",
+        "target": {
+          "tagName": "button",
+          "id": "element_39",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "cc15f085-3830-4444-a6c8-a45e632a8eda",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188683917,
+      "recordedAt": "2025-08-14T16:24:39.964Z",
+      "type": "rrweb_event",
+      "rrwebType": "purchase",
+      "originalEvent": {
+        "type": "purchase",
+        "timestamp": 1755188683917,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_40",
+          "className": "test-element"
+        },
+        "value": 118.24211059957935
+      }
+    },
+    {
+      "id": "7696c9dd-b5eb-4111-bc45-65c88473bed4",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188684066,
+      "recordedAt": "2025-08-14T16:24:40.012Z",
+      "type": "rrweb_event",
+      "rrwebType": "focus",
+      "originalEvent": {
+        "type": "focus",
+        "timestamp": 1755188684066,
+        "page_url": "/home",
+        "target": {
+          "tagName": "button",
+          "id": "element_41",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "f43a2ef1-2fda-4e72-b57b-1dacef11cfc3",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188684213,
+      "recordedAt": "2025-08-14T16:24:40.059Z",
+      "type": "rrweb_event",
+      "rrwebType": "blur",
+      "originalEvent": {
+        "type": "blur",
+        "timestamp": 1755188684213,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_42",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "69cb2b8a-5a70-4e3a-b8f2-dae1f4f88f83",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188684361,
+      "recordedAt": "2025-08-14T16:24:40.107Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188684361,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_43",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "ceb07534-3c84-499d-986e-65d78b3e19b2",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188684509,
+      "recordedAt": "2025-08-14T16:24:40.151Z",
+      "type": "rrweb_event",
+      "rrwebType": "blur",
+      "originalEvent": {
+        "type": "blur",
+        "timestamp": 1755188684509,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_44",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "7aedaa05-c8d3-4c07-a293-80d81f02d6f3",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188684654,
+      "recordedAt": "2025-08-14T16:24:40.200Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188684654,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_45",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "6dd627ce-76b7-4c16-8434-167e20c2468f",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188684803,
+      "recordedAt": "2025-08-14T16:24:40.247Z",
+      "type": "rrweb_event",
+      "rrwebType": "scroll",
+      "originalEvent": {
+        "type": "scroll",
+        "timestamp": 1755188684803,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_46",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "e903d156-2972-45c4-8a2a-b10e9057ee1f",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188684951,
+      "recordedAt": "2025-08-14T16:24:40.295Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188684951,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_47",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "2a696e05-85a3-46e7-bfbc-0a627513e2d6",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188685099,
+      "recordedAt": "2025-08-14T16:24:40.358Z",
+      "type": "rrweb_event",
+      "rrwebType": "blur",
+      "originalEvent": {
+        "type": "blur",
+        "timestamp": 1755188685099,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_48",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "33af3a65-88fa-412e-85ca-21b39a58479b",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188685261,
+      "recordedAt": "2025-08-14T16:24:40.404Z",
+      "type": "rrweb_event",
+      "rrwebType": "input",
+      "originalEvent": {
+        "type": "input",
+        "timestamp": 1755188685261,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_49",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "700146cb-a14a-4ce1-8044-92da4599e057",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188685410,
+      "recordedAt": "2025-08-14T16:24:40.456Z",
+      "type": "rrweb_event",
+      "rrwebType": "scroll",
+      "originalEvent": {
+        "type": "scroll",
+        "timestamp": 1755188685410,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_50",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "d1851d72-9a1f-4c8d-bb31-fc3f96dbca84",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188685563,
+      "recordedAt": "2025-08-14T16:24:40.508Z",
+      "type": "rrweb_event",
+      "rrwebType": "blur",
+      "originalEvent": {
+        "type": "blur",
+        "timestamp": 1755188685563,
+        "page_url": "/confirmation",
+        "target": {
+          "tagName": "button",
+          "id": "element_51",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "6f37e3c8-e15e-4694-a059-fbfb38575973",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188685713,
+      "recordedAt": "2025-08-14T16:24:40.556Z",
+      "type": "rrweb_event",
+      "rrwebType": "focus",
+      "originalEvent": {
+        "type": "focus",
+        "timestamp": 1755188685713,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_52",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "6985e57d-7725-46c1-878e-632e0e701748",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188685861,
+      "recordedAt": "2025-08-14T16:24:40.603Z",
+      "type": "rrweb_event",
+      "rrwebType": "input",
+      "originalEvent": {
+        "type": "input",
+        "timestamp": 1755188685861,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_53",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "ee3d1ae1-d730-4051-a5cd-a9aa67c4761f",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188686009,
+      "recordedAt": "2025-08-14T16:24:40.652Z",
+      "type": "rrweb_event",
+      "rrwebType": "blur",
+      "originalEvent": {
+        "type": "blur",
+        "timestamp": 1755188686009,
+        "page_url": "/confirmation",
+        "target": {
+          "tagName": "button",
+          "id": "element_54",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "e3f2c3f7-af07-4e5d-92d1-016402bb5ac4",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188686159,
+      "recordedAt": "2025-08-14T16:24:40.699Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188686159,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_55",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "e2c9a81a-91b9-4fa9-9d7a-642a84864d5b",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188686305,
+      "recordedAt": "2025-08-14T16:24:40.748Z",
+      "type": "rrweb_event",
+      "rrwebType": "focus",
+      "originalEvent": {
+        "type": "focus",
+        "timestamp": 1755188686305,
+        "page_url": "/home",
+        "target": {
+          "tagName": "button",
+          "id": "element_56",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "6c8cbbc8-95e1-4f7d-bd83-dde738169834",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188686455,
+      "recordedAt": "2025-08-14T16:24:40.795Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188686455,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_57",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "9a939503-47d4-4b78-acb6-d3d7a5f0d6fa",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188686601,
+      "recordedAt": "2025-08-14T16:24:40.844Z",
+      "type": "rrweb_event",
+      "rrwebType": "focus",
+      "originalEvent": {
+        "type": "focus",
+        "timestamp": 1755188686601,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_58",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "5e19679d-5ca0-4c80-b8a8-ff512682052b",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188686751,
+      "recordedAt": "2025-08-14T16:24:40.896Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188686751,
+        "page_url": "/home",
+        "target": {
+          "tagName": "button",
+          "id": "element_59",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "98615d27-967d-4965-a182-d679b54103b8",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188686906,
+      "recordedAt": "2025-08-14T16:24:40.948Z",
+      "type": "rrweb_event",
+      "rrwebType": "purchase",
+      "originalEvent": {
+        "type": "purchase",
+        "timestamp": 1755188686906,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_60",
+          "className": "test-element"
+        },
+        "value": 119.87793213283115
+      }
+    },
+    {
+      "id": "eed38417-90e3-4fe9-8703-3c170c4d21d4",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188687056,
+      "recordedAt": "2025-08-14T16:24:41.000Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188687056,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_61",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "f372cc1b-bcc6-4b47-892d-06e072a259f6",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188687209,
+      "recordedAt": "2025-08-14T16:24:41.048Z",
+      "type": "rrweb_event",
+      "rrwebType": "scroll",
+      "originalEvent": {
+        "type": "scroll",
+        "timestamp": 1755188687209,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_62",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "f63117f4-f672-453f-a07e-c32d9a97e24b",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188687361,
+      "recordedAt": "2025-08-14T16:24:41.104Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188687361,
+        "page_url": "/confirmation",
+        "target": {
+          "tagName": "button",
+          "id": "element_63",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "57826d7b-1be8-4d22-ac5a-51bfae6cc648",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188687513,
+      "recordedAt": "2025-08-14T16:24:41.152Z",
+      "type": "rrweb_event",
+      "rrwebType": "focus",
+      "originalEvent": {
+        "type": "focus",
+        "timestamp": 1755188687513,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_64",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "37a18a52-859c-480b-9d99-83fc19d2351a",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188687662,
+      "recordedAt": "2025-08-14T16:24:41.208Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188687662,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_65",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "560bff75-35a8-4540-b95d-b0c2b8340d9a",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188687817,
+      "recordedAt": "2025-08-14T16:24:41.255Z",
+      "type": "rrweb_event",
+      "rrwebType": "focus",
+      "originalEvent": {
+        "type": "focus",
+        "timestamp": 1755188687817,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_66",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "7091c1b3-27fb-4dbb-9005-4cae78f1df9d",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188687964,
+      "recordedAt": "2025-08-14T16:24:41.304Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188687964,
+        "page_url": "/confirmation",
+        "target": {
+          "tagName": "button",
+          "id": "element_67",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "81842a90-c1aa-44f1-bc37-09b7915310af",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188688113,
+      "recordedAt": "2025-08-14T16:24:41.351Z",
+      "type": "rrweb_event",
+      "rrwebType": "scroll",
+      "originalEvent": {
+        "type": "scroll",
+        "timestamp": 1755188688113,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_68",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "fdc8245e-eae1-4a9d-bacd-cb41ab5ea7b9",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188688260,
+      "recordedAt": "2025-08-14T16:24:41.395Z",
+      "type": "rrweb_event",
+      "rrwebType": "scroll",
+      "originalEvent": {
+        "type": "scroll",
+        "timestamp": 1755188688260,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_69",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "9e7fa315-7dd7-4189-b043-3031ac84ca04",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188688405,
+      "recordedAt": "2025-08-14T16:24:41.444Z",
+      "type": "rrweb_event",
+      "rrwebType": "focus",
+      "originalEvent": {
+        "type": "focus",
+        "timestamp": 1755188688405,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_70",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "d8196a0d-6681-4612-b5a1-e7117fe5a688",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188688554,
+      "recordedAt": "2025-08-14T16:24:41.492Z",
+      "type": "rrweb_event",
+      "rrwebType": "input",
+      "originalEvent": {
+        "type": "input",
+        "timestamp": 1755188688554,
+        "page_url": "/payment",
+        "target": {
+          "tagName": "button",
+          "id": "element_71",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "20db1e99-3d81-46e5-a914-2a71dbb77824",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188688702,
+      "recordedAt": "2025-08-14T16:24:41.539Z",
+      "type": "rrweb_event",
+      "rrwebType": "focus",
+      "originalEvent": {
+        "type": "focus",
+        "timestamp": 1755188688702,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_72",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "ec806cb0-cac5-4e04-97cc-f422ad97f817",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188688849,
+      "recordedAt": "2025-08-14T16:24:41.588Z",
+      "type": "rrweb_event",
+      "rrwebType": "blur",
+      "originalEvent": {
+        "type": "blur",
+        "timestamp": 1755188688849,
+        "page_url": "/confirmation",
+        "target": {
+          "tagName": "button",
+          "id": "element_73",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "ab24cbe1-d417-406b-865c-084a42256954",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188688999,
+      "recordedAt": "2025-08-14T16:24:41.636Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188688999,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_74",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "166b99ad-3642-42c6-af14-51b392b9ee2e",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188689147,
+      "recordedAt": "2025-08-14T16:24:41.683Z",
+      "type": "rrweb_event",
+      "rrwebType": "input",
+      "originalEvent": {
+        "type": "input",
+        "timestamp": 1755188689147,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_75",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "c17dd18d-eb87-4749-b351-a04bf71fd2ca",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188689294,
+      "recordedAt": "2025-08-14T16:24:41.732Z",
+      "type": "rrweb_event",
+      "rrwebType": "input",
+      "originalEvent": {
+        "type": "input",
+        "timestamp": 1755188689294,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_76",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "5863b89b-e200-42b6-8d08-ca82e7bb19d3",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188689443,
+      "recordedAt": "2025-08-14T16:24:41.779Z",
+      "type": "rrweb_event",
+      "rrwebType": "blur",
+      "originalEvent": {
+        "type": "blur",
+        "timestamp": 1755188689443,
+        "page_url": "/home",
+        "target": {
+          "tagName": "button",
+          "id": "element_77",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "b07ccfa6-3325-4c75-9f1c-360509cce1d5",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188689591,
+      "recordedAt": "2025-08-14T16:24:41.828Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188689591,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_78",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "e41f03c5-e2bf-436c-a141-291e36445f29",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188689739,
+      "recordedAt": "2025-08-14T16:24:41.875Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188689739,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_79",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "c882301f-f8ab-41e2-b83c-856cfb9a3aed",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188689893,
+      "recordedAt": "2025-08-14T16:24:41.927Z",
+      "type": "rrweb_event",
+      "rrwebType": "purchase",
+      "originalEvent": {
+        "type": "purchase",
+        "timestamp": 1755188689893,
+        "page_url": "/confirmation",
+        "target": {
+          "tagName": "button",
+          "id": "element_80",
+          "className": "test-element"
+        },
+        "value": 502.0703304443073
+      }
+    },
+    {
+      "id": "2920221f-d48f-453d-9d13-6a13ca7d0929",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188690039,
+      "recordedAt": "2025-08-14T16:24:41.976Z",
+      "type": "rrweb_event",
+      "rrwebType": "blur",
+      "originalEvent": {
+        "type": "blur",
+        "timestamp": 1755188690039,
+        "page_url": "/checkout",
+        "target": {
+          "tagName": "button",
+          "id": "element_81",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "bbc60720-0cd0-4a8f-9e21-1b3cc10319ef",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188690187,
+      "recordedAt": "2025-08-14T16:24:42.024Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188690187,
+        "page_url": "/payment",
+        "target": {
+          "tagName": "button",
+          "id": "element_82",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "eb757334-be89-4804-8b29-2b73355de1b4",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188690336,
+      "recordedAt": "2025-08-14T16:24:42.072Z",
+      "type": "rrweb_event",
+      "rrwebType": "blur",
+      "originalEvent": {
+        "type": "blur",
+        "timestamp": 1755188690336,
+        "page_url": "/home",
+        "target": {
+          "tagName": "button",
+          "id": "element_83",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "b17627be-38ac-444d-baa9-f021600fb425",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188690484,
+      "recordedAt": "2025-08-14T16:24:42.120Z",
+      "type": "rrweb_event",
+      "rrwebType": "scroll",
+      "originalEvent": {
+        "type": "scroll",
+        "timestamp": 1755188690484,
+        "page_url": "/home",
+        "target": {
+          "tagName": "button",
+          "id": "element_84",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "425c1730-5948-4385-9a40-7fbe61d8a7c8",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188690632,
+      "recordedAt": "2025-08-14T16:24:42.168Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188690632,
+        "page_url": "/home",
+        "target": {
+          "tagName": "button",
+          "id": "element_85",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "99196dda-d1a7-4ac3-8d8f-1bf74971b456",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188690782,
+      "recordedAt": "2025-08-14T16:24:42.216Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188690782,
+        "page_url": "/products",
+        "target": {
+          "tagName": "button",
+          "id": "element_86",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "9eb5c6ea-e923-42a9-a9a1-ce74f9fcd4fb",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188690929,
+      "recordedAt": "2025-08-14T16:24:42.263Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188690929,
+        "page_url": "/confirmation",
+        "target": {
+          "tagName": "button",
+          "id": "element_87",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "48e2b312-87ea-43d3-bb81-04255b88632c",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188691076,
+      "recordedAt": "2025-08-14T16:24:42.307Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188691076,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_88",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "3cbb1011-9355-4513-97ea-233c23c797a8",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188691220,
+      "recordedAt": "2025-08-14T16:24:42.352Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188691220,
+        "page_url": "/home",
+        "target": {
+          "tagName": "button",
+          "id": "element_89",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "9da433b7-c6b6-41b6-8edd-129eec74e5a8",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188691369,
+      "recordedAt": "2025-08-14T16:24:42.404Z",
+      "type": "rrweb_event",
+      "rrwebType": "scroll",
+      "originalEvent": {
+        "type": "scroll",
+        "timestamp": 1755188691369,
+        "page_url": "/payment",
+        "target": {
+          "tagName": "button",
+          "id": "element_90",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "05b5577a-6b41-4a4f-82d6-cc00b0977d38",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188691518,
+      "recordedAt": "2025-08-14T16:24:42.452Z",
+      "type": "rrweb_event",
+      "rrwebType": "focus",
+      "originalEvent": {
+        "type": "focus",
+        "timestamp": 1755188691518,
+        "page_url": "/home",
+        "target": {
+          "tagName": "button",
+          "id": "element_91",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "d466c8be-1dc3-464e-96ef-b0a43af6dc11",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188691665,
+      "recordedAt": "2025-08-14T16:24:42.499Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188691665,
+        "page_url": "/confirmation",
+        "target": {
+          "tagName": "button",
+          "id": "element_92",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "81883225-4205-4e32-b4ee-a3825c0debd7",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188691813,
+      "recordedAt": "2025-08-14T16:24:42.548Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188691813,
+        "page_url": "/cart",
+        "target": {
+          "tagName": "button",
+          "id": "element_93",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "9904b983-bede-4572-a09c-0bc544f915c0",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188691963,
+      "recordedAt": "2025-08-14T16:24:42.596Z",
+      "type": "rrweb_event",
+      "rrwebType": "blur",
+      "originalEvent": {
+        "type": "blur",
+        "timestamp": 1755188691963,
+        "page_url": "/payment",
+        "target": {
+          "tagName": "button",
+          "id": "element_94",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "48f0ab38-46e6-4c25-8434-d5be2d3a9709",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188692113,
+      "recordedAt": "2025-08-14T16:24:42.648Z",
+      "type": "rrweb_event",
+      "rrwebType": "focus",
+      "originalEvent": {
+        "type": "focus",
+        "timestamp": 1755188692113,
+        "page_url": "/payment",
+        "target": {
+          "tagName": "button",
+          "id": "element_95",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "2eeffa95-5823-4847-b7c3-042176973dff",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188692264,
+      "recordedAt": "2025-08-14T16:24:42.697Z",
+      "type": "rrweb_event",
+      "rrwebType": "input",
+      "originalEvent": {
+        "type": "input",
+        "timestamp": 1755188692264,
+        "page_url": "/payment",
+        "target": {
+          "tagName": "button",
+          "id": "element_96",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "65dc8cdc-f70b-4701-bb0d-aa7b4f6d9745",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188692412,
+      "recordedAt": "2025-08-14T16:24:42.747Z",
+      "type": "rrweb_event",
+      "rrwebType": "blur",
+      "originalEvent": {
+        "type": "blur",
+        "timestamp": 1755188692412,
+        "page_url": "/payment",
+        "target": {
+          "tagName": "button",
+          "id": "element_97",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "082b06ab-cee7-47d8-8315-7843bb911bf4",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188692561,
+      "recordedAt": "2025-08-14T16:24:42.791Z",
+      "type": "rrweb_event",
+      "rrwebType": "navigation",
+      "originalEvent": {
+        "type": "navigation",
+        "timestamp": 1755188692561,
+        "page_url": "/home",
+        "target": {
+          "tagName": "button",
+          "id": "element_98",
+          "className": "test-element"
+        }
+      }
+    },
+    {
+      "id": "1ead47cc-27ec-4587-828e-25a9a850a4d3",
+      "sessionId": "47fa8c32-b19e-4cd9-9e35-df7fa8462a55",
+      "timestamp": 1755188692705,
+      "recordedAt": "2025-08-14T16:24:42.835Z",
+      "type": "rrweb_event",
+      "rrwebType": "click",
+      "originalEvent": {
+        "type": "click",
+        "timestamp": 1755188692705,
+        "page_url": "/payment",
+        "target": {
+          "tagName": "button",
+          "id": "element_99",
+          "className": "test-element"
+        }
+      }
+    }
+  ],
+  "status": "completed",
+  "metadata": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+    "device": {
+      "type": "desktop",
+      "browser": "Chrome",
+      "os": "Windows"
+    }
+  },
+  "endTime": "2025-08-14T16:24:42.879Z",
+  "duration": 4912,
+  "endReason": "user_ended",
+  "statistics": {
+    "totalEvents": 100,
+    "eventTypes": {
+      "rrweb_event": 100
+    },
+    "clicks": 0,
+    "formInputs": 0,
+    "pageViews": 0,
+    "errors": 0,
+    "scrollEvents": 0,
+    "userBehavior": {
+      "avgTimeBetweenEvents": 147.52,
+      "hasErrors": false,
+      "hasFormInteraction": false,
+      "hasNavigation": false
+    }
+  }
+}

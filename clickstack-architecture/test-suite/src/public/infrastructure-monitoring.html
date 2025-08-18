@@ -1,0 +1,2142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infrastructure Monitoring - AIRIS-MON 인프라 통합 모니터링</title>
+    <script src="/components/common-layout.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-left h1 .icon {
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-healthy {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-critical {
+            background: #fecaca;
+            color: #991b1b;
+        }
+
+        .global-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .global-stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .global-stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .global-stat-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .global-stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .global-stat-label {
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .infrastructure-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .infra-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .infra-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f3f4f6;
+        }
+
+        .infra-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .infra-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .server-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .server-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .server-item:hover {
+            background: #f3f4f6;
+            transform: translateX(5px);
+        }
+
+        .server-item.healthy {
+            border-left-color: #10b981;
+        }
+
+        .server-item.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .server-item.critical {
+            border-left-color: #ef4444;
+        }
+
+        .server-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .server-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .server-status-dot.healthy {
+            background: #10b981;
+        }
+
+        .server-status-dot.warning {
+            background: #f59e0b;
+        }
+
+        .server-status-dot.critical {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.1);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .server-name {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .server-details {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .server-metrics {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+        }
+
+        .metric {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .metric-value {
+            font-weight: 500;
+        }
+
+        .chart-container {
+            height: 200px;
+            margin-top: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .network-topology {
+            grid-column: 1 / -1;
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .topology-map {
+            height: 400px;
+            background: #f8fafc;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .topology-node {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .topology-node:hover {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .topology-node.web {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            top: 50px;
+            left: 50px;
+        }
+
+        .topology-node.was {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            top: 50px;
+            left: 200px;
+        }
+
+        .topology-node.db {
+            background: linear-gradient(135deg, #10b981, #059669);
+            top: 50px;
+            left: 350px;
+        }
+
+        .topology-node.network {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            top: 200px;
+            left: 200px;
+        }
+
+        .topology-connection {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, #cbd5e1, #94a3b8);
+            transform-origin: left center;
+        }
+
+        .connection-1 {
+            top: 90px;
+            left: 130px;
+            width: 70px;
+        }
+
+        .connection-2 {
+            top: 90px;
+            left: 280px;
+            width: 70px;
+        }
+
+        .connection-3 {
+            top: 180px;
+            left: 240px;
+            width: 2px;
+            height: 70px;
+            transform: rotate(90deg);
+            transform-origin: center;
+        }
+
+        .alerts-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .alert-item:hover {
+            background: #f9fafb;
+        }
+
+        .alert-item.critical {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert-item.warning {
+            background: #fefbeb;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .alert-item.info {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .alert-icon {
+            font-size: 18px;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 500;
+            margin-bottom: 2px;
+            font-size: 14px;
+        }
+
+        .alert-time {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .real-time-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-card-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .metric-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .metric-card-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .metric-card-trend {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .trend-up {
+            color: #10b981;
+        }
+
+        .trend-down {
+            color: #ef4444;
+        }
+
+        .trend-stable {
+            color: #6b7280;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            transition: width 0.3s ease;
+        }
+
+        .floating-controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .fab {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideInUp 0.3s ease;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f3f4f6;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #666;
+            padding: 5px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            background: #f3f4f6;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .btn-cancel {
+            background: #f3f4f6;
+            color: #4b5563;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-cancel:hover {
+            background: #e5e7eb;
+        }
+
+        .btn-save {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save:hover {
+            background: #2563eb;
+        }
+
+        .server-list-modal {
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+
+        .server-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .server-list-item:hover {
+            background: #f9fafb;
+            border-color: #3b82f6;
+        }
+
+        .server-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-edit {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+        }
+
+        .alert-config-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 25px;
+            background: #e5e7eb;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #3b82f6;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 21px;
+            height: 21px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch.active::after {
+            left: 27px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInUp {
+            from { 
+                opacity: 0;
+                transform: translateY(30px) scale(0.9);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .infrastructure-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .global-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .global-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .topology-map {
+                height: 300px;
+            }
+
+            .topology-node {
+                width: 60px;
+                height: 60px;
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="airis-content-wrapper">
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <h1>
+                    <span class="icon">🏗️</span>
+                    Infrastructure Monitoring
+                </h1>
+                <p class="subtitle">WEB / WAS / DB / NETWORK 통합 성능 모니터링 대시보드</p>
+            </div>
+            <div class="header-right">
+                <div class="status-indicator status-healthy">
+                    <span>●</span> 전체 시스템 정상
+                </div>
+                <button class="btn btn-primary" onclick="refreshAllSystems()">🔄 전체 새로고침</button>
+            </div>
+        </div>
+
+        <!-- Global Statistics -->
+        <div class="global-stats">
+            <div class="global-stat-card">
+                <div class="global-stat-icon">🌐</div>
+                <div class="global-stat-value" id="totalServers">24</div>
+                <div class="global-stat-label">총 서버 수</div>
+            </div>
+            <div class="global-stat-card">
+                <div class="global-stat-icon">✅</div>
+                <div class="global-stat-value" id="healthyServers">22</div>
+                <div class="global-stat-label">정상 서버</div>
+            </div>
+            <div class="global-stat-card">
+                <div class="global-stat-icon">⚠️</div>
+                <div class="global-stat-value" id="warningServers">2</div>
+                <div class="global-stat-label">경고 상태</div>
+            </div>
+            <div class="global-stat-card">
+                <div class="global-stat-icon">🔥</div>
+                <div class="global-stat-value" id="criticalServers">0</div>
+                <div class="global-stat-label">위험 상태</div>
+            </div>
+            <div class="global-stat-card">
+                <div class="global-stat-icon">📊</div>
+                <div class="global-stat-value" id="avgCpuUsage">68%</div>
+                <div class="global-stat-label">평균 CPU 사용률</div>
+            </div>
+            <div class="global-stat-card">
+                <div class="global-stat-icon">💾</div>
+                <div class="global-stat-value" id="avgMemoryUsage">74%</div>
+                <div class="global-stat-label">평균 메모리 사용률</div>
+            </div>
+        </div>
+
+        <!-- Network Topology -->
+        <div class="network-topology">
+            <div class="infra-header">
+                <h3 class="infra-title">
+                    <span>🔗</span>
+                    네트워크 토폴로지
+                </h3>
+                <div class="infra-actions">
+                    <button class="btn btn-secondary" onclick="exportTopology()">📥 토폴로지 내보내기</button>
+                    <button class="btn btn-primary" onclick="refreshTopology()">🔄 새로고침</button>
+                </div>
+            </div>
+            <div class="topology-map" id="topologyMap">
+                <div class="topology-node web" onclick="showServerDetails('web')">
+                    <div>🌐</div>
+                    <div>WEB</div>
+                    <div style="font-size: 9px;">Load Balancer</div>
+                </div>
+                <div class="topology-node was" onclick="showServerDetails('was')">
+                    <div>⚙️</div>
+                    <div>WAS</div>
+                    <div style="font-size: 9px;">App Server</div>
+                </div>
+                <div class="topology-node db" onclick="showServerDetails('db')">
+                    <div>🗄️</div>
+                    <div>DB</div>
+                    <div style="font-size: 9px;">Database</div>
+                </div>
+                <div class="topology-node network" onclick="showServerDetails('network')">
+                    <div>🔌</div>
+                    <div>NETWORK</div>
+                    <div style="font-size: 9px;">Switch/Router</div>
+                </div>
+                
+                <!-- Connections -->
+                <div class="topology-connection connection-1"></div>
+                <div class="topology-connection connection-2"></div>
+                <div class="topology-connection connection-3"></div>
+            </div>
+        </div>
+
+        <!-- Infrastructure Grid -->
+        <div class="infrastructure-grid">
+            <!-- WEB Servers -->
+            <div class="infra-section">
+                <div class="infra-header">
+                    <h3 class="infra-title">
+                        <span>🌐</span>
+                        WEB 서버 (Load Balancer)
+                    </h3>
+                    <div class="infra-actions">
+                        <button class="btn btn-secondary" onclick="manageWebServers()">⚙️ 관리</button>
+                        <button class="btn btn-primary" onclick="addWebServer()">+ 서버 추가</button>
+                    </div>
+                </div>
+                <div class="server-list" id="webServerList">
+                    <!-- WEB servers will be populated here -->
+                </div>
+                <div class="chart-container">
+                    <canvas id="webChart"></canvas>
+                </div>
+            </div>
+
+            <!-- WAS Servers -->
+            <div class="infra-section">
+                <div class="infra-header">
+                    <h3 class="infra-title">
+                        <span>⚙️</span>
+                        WAS 서버 (Application)
+                    </h3>
+                    <div class="infra-actions">
+                        <button class="btn btn-secondary" onclick="manageWasServers()">⚙️ 관리</button>
+                        <button class="btn btn-primary" onclick="addWasServer()">+ 서버 추가</button>
+                    </div>
+                </div>
+                <div class="server-list" id="wasServerList">
+                    <!-- WAS servers will be populated here -->
+                </div>
+                <div class="chart-container">
+                    <canvas id="wasChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Database Servers -->
+            <div class="infra-section">
+                <div class="infra-header">
+                    <h3 class="infra-title">
+                        <span>🗄️</span>
+                        DB 서버 (Database)
+                    </h3>
+                    <div class="infra-actions">
+                        <button class="btn btn-secondary" onclick="manageDatabaseServers()">⚙️ 관리</button>
+                        <button class="btn btn-primary" onclick="addDatabaseServer()">+ 서버 추가</button>
+                    </div>
+                </div>
+                <div class="server-list" id="dbServerList">
+                    <!-- DB servers will be populated here -->
+                </div>
+                <div class="chart-container">
+                    <canvas id="dbChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Network Infrastructure -->
+            <div class="infra-section">
+                <div class="infra-header">
+                    <h3 class="infra-title">
+                        <span>🔌</span>
+                        NETWORK 인프라
+                    </h3>
+                    <div class="infra-actions">
+                        <button class="btn btn-secondary" onclick="manageNetworkDevices()">⚙️ 관리</button>
+                        <button class="btn btn-primary" onclick="addNetworkDevice()">+ 장비 추가</button>
+                    </div>
+                </div>
+                <div class="server-list" id="networkDeviceList">
+                    <!-- Network devices will be populated here -->
+                </div>
+                <div class="chart-container">
+                    <canvas id="networkChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Metrics -->
+        <div class="real-time-metrics">
+            <div class="metric-card">
+                <div class="metric-card-header">
+                    <div class="metric-card-title">총 요청 처리량</div>
+                </div>
+                <div class="metric-card-value" id="totalThroughput">2,847</div>
+                <div class="metric-card-trend trend-up">
+                    <span>↗</span> +12% vs 지난 시간
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 78%"></div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-card-header">
+                    <div class="metric-card-title">평균 응답 시간</div>
+                </div>
+                <div class="metric-card-value" id="avgResponseTime">124<span style="font-size: 16px;">ms</span></div>
+                <div class="metric-card-trend trend-down">
+                    <span>↘</span> -8% 개선
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 45%"></div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-card-header">
+                    <div class="metric-card-title">네트워크 대역폭</div>
+                </div>
+                <div class="metric-card-value" id="networkBandwidth">8.4<span style="font-size: 16px;">GB/s</span></div>
+                <div class="metric-card-trend trend-stable">
+                    <span>→</span> 안정적
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 84%"></div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-card-header">
+                    <div class="metric-card-title">에러율</div>
+                </div>
+                <div class="metric-card-value" id="errorRate">0.02<span style="font-size: 16px;">%</span></div>
+                <div class="metric-card-trend trend-down">
+                    <span>↘</span> -0.01% 개선
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 2%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Panel -->
+        <div class="alerts-panel">
+            <div class="infra-header">
+                <h3 class="infra-title">
+                    <span>🚨</span>
+                    실시간 알림 및 경고
+                </h3>
+                <div class="infra-actions">
+                    <button class="btn btn-secondary" onclick="clearAllAlerts()">🗑️ 모두 지우기</button>
+                    <button class="btn btn-primary" onclick="configureAlerts()">⚙️ 알림 설정</button>
+                </div>
+            </div>
+            <div id="alertsList">
+                <!-- Alerts will be populated here -->
+            </div>
+        </div>
+
+        <!-- Floating Controls -->
+        <div class="floating-controls">
+            <button class="fab" onclick="openDashboardSettings()" title="대시보드 설정">
+                ⚙️
+            </button>
+            <button class="fab" onclick="exportInfraReport()" title="인프라 리포트 생성">
+                📊
+            </button>
+            <button class="fab" onclick="toggleAutoRefresh()" title="자동 새로고침 토글">
+                🔄
+            </button>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Server Management Modal -->
+    <div id="serverManagementModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span id="serverModalIcon">🌐</span>
+                    <span id="serverModalTitle">WEB 서버 관리</span>
+                </h3>
+                <button class="close-btn" onclick="closeModal('serverManagementModal')">&times;</button>
+            </div>
+            
+            <div class="server-list-modal" id="serverListModal">
+                <!-- Server list will be populated here -->
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('serverManagementModal')">닫기</button>
+                <button class="btn-save" onclick="refreshServerList()">새로고침</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Server Modal -->
+    <div id="addServerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span id="addServerIcon">➕</span>
+                    <span id="addServerTitle">새 서버 추가</span>
+                </h3>
+                <button class="close-btn" onclick="closeModal('addServerModal')">&times;</button>
+            </div>
+            
+            <form id="addServerForm">
+                <div class="form-group">
+                    <label class="form-label">서버 타입</label>
+                    <select class="form-select" id="serverType" required>
+                        <option value="">서버 타입 선택</option>
+                        <option value="web">WEB 서버</option>
+                        <option value="was">WAS 서버</option>
+                        <option value="db">DB 서버</option>
+                        <option value="network">네트워크 장비</option>
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">서버명</label>
+                        <input type="text" class="form-input" id="serverName" placeholder="예: Web Server 01" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">IP 주소</label>
+                        <input type="text" class="form-input" id="serverIp" placeholder="예: 192.168.1.100" required>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">포트</label>
+                        <input type="number" class="form-input" id="serverPort" placeholder="예: 80" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">상태</label>
+                        <select class="form-select" id="serverStatus" required>
+                            <option value="healthy">정상</option>
+                            <option value="warning">경고</option>
+                            <option value="critical">위험</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">설명</label>
+                    <input type="text" class="form-input" id="serverDescription" placeholder="서버에 대한 설명을 입력하세요">
+                </div>
+            </form>
+            
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('addServerModal')">취소</button>
+                <button class="btn-save" onclick="saveNewServer()">서버 추가</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Configuration Modal -->
+    <div id="alertConfigModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span>🚨</span>
+                    알림 설정
+                </h3>
+                <button class="close-btn" onclick="closeModal('alertConfigModal')">&times;</button>
+            </div>
+            
+            <div class="alert-config-item">
+                <div>
+                    <div style="font-weight: 500;">CPU 사용률 경고</div>
+                    <div style="font-size: 12px; color: #666;">CPU 사용률이 80% 이상일 때 알림</div>
+                </div>
+                <div class="toggle-switch active" onclick="toggleAlert(this)"></div>
+            </div>
+            
+            <div class="alert-config-item">
+                <div>
+                    <div style="font-weight: 500;">메모리 사용률 경고</div>
+                    <div style="font-size: 12px; color: #666;">메모리 사용률이 85% 이상일 때 알림</div>
+                </div>
+                <div class="toggle-switch active" onclick="toggleAlert(this)"></div>
+            </div>
+            
+            <div class="alert-config-item">
+                <div>
+                    <div style="font-weight: 500;">네트워크 대역폭 경고</div>
+                    <div style="font-size: 12px; color: #666;">네트워크 대역폭이 90% 이상일 때 알림</div>
+                </div>
+                <div class="toggle-switch" onclick="toggleAlert(this)"></div>
+            </div>
+            
+            <div class="alert-config-item">
+                <div>
+                    <div style="font-weight: 500;">서버 다운 알림</div>
+                    <div style="font-size: 12px; color: #666;">서버가 응답하지 않을 때 즉시 알림</div>
+                </div>
+                <div class="toggle-switch active" onclick="toggleAlert(this)"></div>
+            </div>
+            
+            <div class="form-group" style="margin-top: 25px;">
+                <label class="form-label">알림 주기 (분)</label>
+                <select class="form-select" id="alertInterval">
+                    <option value="1">1분</option>
+                    <option value="5" selected>5분</option>
+                    <option value="10">10분</option>
+                    <option value="30">30분</option>
+                </select>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('alertConfigModal')">취소</button>
+                <button class="btn-save" onclick="saveAlertConfig()">설정 저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Settings Modal -->
+    <div id="dashboardSettingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span>⚙️</span>
+                    대시보드 설정
+                </h3>
+                <button class="close-btn" onclick="closeModal('dashboardSettingsModal')">&times;</button>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">새로고침 간격</label>
+                <select class="form-select" id="refreshInterval">
+                    <option value="3">3초</option>
+                    <option value="5" selected>5초</option>
+                    <option value="10">10초</option>
+                    <option value="30">30초</option>
+                    <option value="60">1분</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">차트 표시 기간</label>
+                <select class="form-select" id="chartPeriod">
+                    <option value="1h">1시간</option>
+                    <option value="6h" selected>6시간</option>
+                    <option value="24h">24시간</option>
+                    <option value="7d">7일</option>
+                </select>
+            </div>
+            
+            <div class="alert-config-item">
+                <div>
+                    <div style="font-weight: 500;">다크 모드</div>
+                    <div style="font-size: 12px; color: #666;">어두운 테마 사용</div>
+                </div>
+                <div class="toggle-switch" onclick="toggleDarkMode(this)"></div>
+            </div>
+            
+            <div class="alert-config-item">
+                <div>
+                    <div style="font-weight: 500;">소리 알림</div>
+                    <div style="font-size: 12px; color: #666;">경고 발생 시 소리 알림</div>
+                </div>
+                <div class="toggle-switch active" onclick="toggleSoundAlert(this)"></div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal('dashboardSettingsModal')">취소</button>
+                <button class="btn-save" onclick="saveDashboardSettings()">설정 저장</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Sample data for infrastructure monitoring
+        const infrastructureData = {
+            webServers: [
+                { id: 'web-lb-01', name: 'Load Balancer 01', ip: '10.0.1.10', status: 'healthy', cpu: 45, memory: 62, connections: 1247 },
+                { id: 'web-lb-02', name: 'Load Balancer 02', ip: '10.0.1.11', status: 'healthy', cpu: 38, memory: 58, connections: 1156 },
+                { id: 'web-cache-01', name: 'Redis Cache 01', ip: '10.0.1.20', status: 'warning', cpu: 78, memory: 84, connections: 890 }
+            ],
+            wasServers: [
+                { id: 'was-app-01', name: 'App Server 01', ip: '10.0.2.10', status: 'healthy', cpu: 65, memory: 72, threads: 234 },
+                { id: 'was-app-02', name: 'App Server 02', ip: '10.0.2.11', status: 'healthy', cpu: 58, memory: 68, threads: 198 },
+                { id: 'was-app-03', name: 'App Server 03', ip: '10.0.2.12', status: 'healthy', cpu: 72, memory: 75, threads: 267 },
+                { id: 'was-session-01', name: 'Session Server 01', ip: '10.0.2.20', status: 'warning', cpu: 82, memory: 88, threads: 145 }
+            ],
+            dbServers: [
+                { id: 'db-master-01', name: 'DB Master 01', ip: '10.0.3.10', status: 'healthy', cpu: 52, memory: 78, connections: 127 },
+                { id: 'db-slave-01', name: 'DB Slave 01', ip: '10.0.3.11', status: 'healthy', cpu: 48, memory: 72, connections: 89 },
+                { id: 'db-slave-02', name: 'DB Slave 02', ip: '10.0.3.12', status: 'healthy', cpu: 44, memory: 69, connections: 76 }
+            ],
+            networkDevices: [
+                { id: 'switch-core-01', name: 'Core Switch 01', ip: '10.0.0.10', status: 'healthy', cpu: 23, memory: 45, bandwidth: 85 },
+                { id: 'switch-dist-01', name: 'Distribution SW 01', ip: '10.0.0.20', status: 'healthy', cpu: 18, memory: 38, bandwidth: 62 },
+                { id: 'router-edge-01', name: 'Edge Router 01', ip: '10.0.0.1', status: 'healthy', cpu: 34, memory: 52, bandwidth: 78 },
+                { id: 'firewall-01', name: 'Firewall 01', ip: '10.0.0.5', status: 'healthy', cpu: 28, memory: 41, bandwidth: 43 }
+            ]
+        };
+
+        const alerts = [
+            { type: 'warning', icon: '⚠️', title: 'WAS Session Server 고부하', time: '2분 전', server: 'was-session-01' },
+            { type: 'warning', icon: '⚠️', title: 'Redis Cache 메모리 사용률 높음', time: '5분 전', server: 'web-cache-01' },
+            { type: 'info', icon: 'ℹ️', title: 'DB Slave 02 자동 재시작 완료', time: '12분 전', server: 'db-slave-02' },
+            { type: 'info', icon: 'ℹ️', title: '전체 시스템 상태 체크 완료', time: '30분 전', server: 'system' }
+        ];
+
+        // Initialize infrastructure monitoring
+        function initializeInfrastructure() {
+            populateServerLists();
+            initializeCharts();
+            populateAlerts();
+            startRealTimeUpdates();
+        }
+
+        function populateServerLists() {
+            populateWebServers();
+            populateWasServers();
+            populateDbServers();
+            populateNetworkDevices();
+        }
+
+        function populateWebServers() {
+            const container = document.getElementById('webServerList');
+            container.innerHTML = infrastructureData.webServers.map(server => `
+                <div class="server-item ${server.status}">
+                    <div class="server-info">
+                        <div class="server-status-dot ${server.status}"></div>
+                        <div>
+                            <div class="server-name">${server.name}</div>
+                            <div class="server-details">${server.ip}</div>
+                        </div>
+                    </div>
+                    <div class="server-metrics">
+                        <div class="metric">
+                            <span>CPU:</span>
+                            <span class="metric-value">${server.cpu}%</span>
+                        </div>
+                        <div class="metric">
+                            <span>Memory:</span>
+                            <span class="metric-value">${server.memory}%</span>
+                        </div>
+                        <div class="metric">
+                            <span>Connections:</span>
+                            <span class="metric-value">${server.connections}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function populateWasServers() {
+            const container = document.getElementById('wasServerList');
+            container.innerHTML = infrastructureData.wasServers.map(server => `
+                <div class="server-item ${server.status}">
+                    <div class="server-info">
+                        <div class="server-status-dot ${server.status}"></div>
+                        <div>
+                            <div class="server-name">${server.name}</div>
+                            <div class="server-details">${server.ip}</div>
+                        </div>
+                    </div>
+                    <div class="server-metrics">
+                        <div class="metric">
+                            <span>CPU:</span>
+                            <span class="metric-value">${server.cpu}%</span>
+                        </div>
+                        <div class="metric">
+                            <span>Memory:</span>
+                            <span class="metric-value">${server.memory}%</span>
+                        </div>
+                        <div class="metric">
+                            <span>Threads:</span>
+                            <span class="metric-value">${server.threads}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function populateDbServers() {
+            const container = document.getElementById('dbServerList');
+            container.innerHTML = infrastructureData.dbServers.map(server => `
+                <div class="server-item ${server.status}">
+                    <div class="server-info">
+                        <div class="server-status-dot ${server.status}"></div>
+                        <div>
+                            <div class="server-name">${server.name}</div>
+                            <div class="server-details">${server.ip}</div>
+                        </div>
+                    </div>
+                    <div class="server-metrics">
+                        <div class="metric">
+                            <span>CPU:</span>
+                            <span class="metric-value">${server.cpu}%</span>
+                        </div>
+                        <div class="metric">
+                            <span>Memory:</span>
+                            <span class="metric-value">${server.memory}%</span>
+                        </div>
+                        <div class="metric">
+                            <span>Connections:</span>
+                            <span class="metric-value">${server.connections}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function populateNetworkDevices() {
+            const container = document.getElementById('networkDeviceList');
+            container.innerHTML = infrastructureData.networkDevices.map(device => `
+                <div class="server-item ${device.status}">
+                    <div class="server-info">
+                        <div class="server-status-dot ${device.status}"></div>
+                        <div>
+                            <div class="server-name">${device.name}</div>
+                            <div class="server-details">${device.ip}</div>
+                        </div>
+                    </div>
+                    <div class="server-metrics">
+                        <div class="metric">
+                            <span>CPU:</span>
+                            <span class="metric-value">${device.cpu}%</span>
+                        </div>
+                        <div class="metric">
+                            <span>Memory:</span>
+                            <span class="metric-value">${device.memory}%</span>
+                        </div>
+                        <div class="metric">
+                            <span>Bandwidth:</span>
+                            <span class="metric-value">${device.bandwidth}%</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function populateAlerts() {
+            const container = document.getElementById('alertsList');
+            container.innerHTML = alerts.map(alert => `
+                <div class="alert-item ${alert.type}">
+                    <div class="alert-icon">${alert.icon}</div>
+                    <div class="alert-content">
+                        <div class="alert-title">${alert.title}</div>
+                        <div class="alert-time">${alert.time}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function initializeCharts() {
+            // Web Server Chart
+            const webCtx = document.getElementById('webChart');
+            if (webCtx) {
+                new Chart(webCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                        datasets: [{
+                            label: 'CPU 사용률',
+                            data: [45, 52, 48, 55, 42, 47],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, max: 100 } }
+                    }
+                });
+            }
+
+            // WAS Server Chart
+            const wasCtx = document.getElementById('wasChart');
+            if (wasCtx) {
+                new Chart(wasCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                        datasets: [{
+                            label: 'Memory 사용률',
+                            data: [68, 72, 75, 82, 78, 74],
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, max: 100 } }
+                    }
+                });
+            }
+
+            // Database Chart
+            const dbCtx = document.getElementById('dbChart');
+            if (dbCtx) {
+                new Chart(dbCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                        datasets: [{
+                            label: 'Connection Pool',
+                            data: [89, 95, 127, 134, 98, 112],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+
+            // Network Chart
+            const networkCtx = document.getElementById('networkChart');
+            if (networkCtx) {
+                new Chart(networkCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                        datasets: [{
+                            label: 'Network Bandwidth',
+                            data: [62, 78, 85, 92, 68, 74],
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true, max: 100 } }
+                    }
+                });
+            }
+        }
+
+        function startRealTimeUpdates(interval = 3000) {
+            if (refreshIntervalId) {
+                clearInterval(refreshIntervalId);
+            }
+            
+            if (autoRefreshEnabled) {
+                refreshIntervalId = setInterval(() => {
+                    updateGlobalStats();
+                    updateMetrics();
+                    updateTopologyStatus();
+                }, interval);
+            }
+        }
+
+        function updateGlobalStats() {
+            // Calculate actual stats from server data
+            const allServers = [...infrastructureData.webServers, ...infrastructureData.wasServers, ...infrastructureData.dbServers, ...infrastructureData.networkDevices];
+            const totalServers = allServers.length;
+            const healthyServers = allServers.filter(s => s.status === 'healthy').length;
+            const warningServers = allServers.filter(s => s.status === 'warning').length;
+            const criticalServers = allServers.filter(s => s.status === 'critical').length;
+            
+            // Update counters
+            document.getElementById('totalServers').textContent = totalServers;
+            document.getElementById('healthyServers').textContent = healthyServers;
+            document.getElementById('warningServers').textContent = warningServers;
+            document.getElementById('criticalServers').textContent = criticalServers;
+            
+            // Update averages with slight random variations for realism
+            const avgCpu = Math.floor(allServers.reduce((sum, s) => sum + (s.cpu || 0), 0) / totalServers) + Math.floor(Math.random() * 5 - 2);
+            const avgMemory = Math.floor(allServers.reduce((sum, s) => sum + (s.memory || 0), 0) / totalServers) + Math.floor(Math.random() * 5 - 2);
+            
+            document.getElementById('avgCpuUsage').textContent = Math.max(0, Math.min(100, avgCpu)) + '%';
+            document.getElementById('avgMemoryUsage').textContent = Math.max(0, Math.min(100, avgMemory)) + '%';
+        }
+
+        function updateMetrics() {
+            // Update real-time metrics
+            document.getElementById('totalThroughput').textContent = 
+                (2800 + Math.floor(Math.random() * 100)).toLocaleString();
+            document.getElementById('avgResponseTime').innerHTML = 
+                Math.floor(120 + Math.random() * 20) + '<span style="font-size: 16px;">ms</span>';
+            document.getElementById('networkBandwidth').innerHTML = 
+                (8.0 + Math.random() * 1).toFixed(1) + '<span style="font-size: 16px;">GB/s</span>';
+        }
+
+        function updateTopologyStatus() {
+            // Add visual indicators for topology health
+            const nodes = document.querySelectorAll('.topology-node');
+            nodes.forEach(node => {
+                // Randomly update node visual state
+                if (Math.random() > 0.9) {
+                    node.style.transform = 'scale(1.05)';
+                    setTimeout(() => {
+                        node.style.transform = 'scale(1)';
+                    }, 500);
+                }
+            });
+        }
+
+        // Global variables for state management
+        let autoRefreshEnabled = true;
+        let currentServerType = '';
+        let refreshIntervalId = null;
+        
+        // Action functions for buttons
+        function refreshAllSystems() {
+            showNotification('전체 시스템을 새로고침하고 있습니다...', 'info');
+            
+            // Animate refresh
+            const refreshBtn = document.querySelector('[onclick="refreshAllSystems()"]');
+            refreshBtn.style.transform = 'rotate(360deg)';
+            refreshBtn.style.transition = 'transform 1s ease';
+            
+            setTimeout(() => {
+                // Update all data
+                updateGlobalStats();
+                populateServerLists();
+                populateAlerts();
+                updateMetrics();
+                
+                // Reset button animation
+                refreshBtn.style.transform = 'rotate(0deg)';
+                
+                showNotification('전체 시스템 새로고침이 완료되었습니다', 'success');
+            }, 1500);
+        }
+
+        function showServerDetails(serverType) {
+            const typeNames = {
+                'web': 'WEB 서버',
+                'was': 'WAS 서버', 
+                'db': 'DB 서버',
+                'network': '네트워크 장비'
+            };
+            
+            showNotification(`${typeNames[serverType]} 상세 정보를 로딩 중입니다...`, 'info');
+            
+            // Highlight selected topology node
+            document.querySelectorAll('.topology-node').forEach(node => {
+                node.style.transform = 'scale(1)';
+                node.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+            });
+            
+            const selectedNode = document.querySelector(`.topology-node.${serverType}`);
+            if (selectedNode) {
+                selectedNode.style.transform = 'scale(1.2)';
+                selectedNode.style.boxShadow = '0 8px 25px rgba(59, 130, 246, 0.4)';
+                selectedNode.style.zIndex = '100';
+                
+                setTimeout(() => {
+                    selectedNode.style.transform = 'scale(1)';
+                    selectedNode.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.2)';
+                    selectedNode.style.zIndex = 'auto';
+                }, 2000);
+            }
+        }
+
+        // Server Management Functions
+        function manageWebServers() {
+            openServerManagement('web', '🌐', 'WEB 서버 관리');
+        }
+
+        function manageWasServers() {
+            openServerManagement('was', '⚙️', 'WAS 서버 관리');
+        }
+
+        function manageDatabaseServers() {
+            openServerManagement('db', '🗄️', 'DB 서버 관리');
+        }
+
+        function manageNetworkDevices() {
+            openServerManagement('network', '🔌', '네트워크 장비 관리');
+        }
+
+        function openServerManagement(type, icon, title) {
+            currentServerType = type;
+            document.getElementById('serverModalIcon').textContent = icon;
+            document.getElementById('serverModalTitle').textContent = title;
+            
+            populateServerManagementList(type);
+            openModal('serverManagementModal');
+        }
+
+        function populateServerManagementList(type) {
+            const container = document.getElementById('serverListModal');
+            let servers = [];
+            
+            switch(type) {
+                case 'web':
+                    servers = infrastructureData.webServers;
+                    break;
+                case 'was':
+                    servers = infrastructureData.wasServers;
+                    break;
+                case 'db':
+                    servers = infrastructureData.dbServers;
+                    break;
+                case 'network':
+                    servers = infrastructureData.networkDevices;
+                    break;
+            }
+            
+            container.innerHTML = servers.map(server => `
+                <div class="server-list-item">
+                    <div>
+                        <div style="font-weight: 500;">${server.name}</div>
+                        <div style="font-size: 12px; color: #666;">${server.ip}</div>
+                        <div style="font-size: 11px; color: #999;">상태: ${getStatusText(server.status)}</div>
+                    </div>
+                    <div class="server-actions">
+                        <button class="btn-small btn-edit" onclick="editServer('${server.id}')">수정</button>
+                        <button class="btn-small btn-delete" onclick="deleteServer('${server.id}')">삭제</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'healthy': '정상',
+                'warning': '경고',
+                'critical': '위험'
+            };
+            return statusMap[status] || '알수없음';
+        }
+
+        // Add Server Functions
+        function addWebServer() {
+            openAddServerModal('web', '🌐', '새 WEB 서버 추가');
+        }
+
+        function addWasServer() {
+            openAddServerModal('was', '⚙️', '새 WAS 서버 추가');
+        }
+
+        function addDatabaseServer() {
+            openAddServerModal('db', '🗄️', '새 DB 서버 추가');
+        }
+
+        function addNetworkDevice() {
+            openAddServerModal('network', '🔌', '새 네트워크 장비 추가');
+        }
+
+        function openAddServerModal(type, icon, title) {
+            currentServerType = type;
+            document.getElementById('addServerIcon').textContent = icon;
+            document.getElementById('addServerTitle').textContent = title;
+            
+            // Pre-select server type
+            document.getElementById('serverType').value = type;
+            
+            // Clear form
+            document.getElementById('addServerForm').reset();
+            document.getElementById('serverType').value = type;
+            
+            openModal('addServerModal');
+        }
+
+        function saveNewServer() {
+            const form = document.getElementById('addServerForm');
+            const formData = new FormData(form);
+            
+            const serverData = {
+                id: `${currentServerType}-${Date.now()}`,
+                name: document.getElementById('serverName').value,
+                ip: document.getElementById('serverIp').value,
+                port: document.getElementById('serverPort').value,
+                status: document.getElementById('serverStatus').value,
+                description: document.getElementById('serverDescription').value,
+                cpu: Math.floor(Math.random() * 50) + 20,
+                memory: Math.floor(Math.random() * 40) + 30
+            };
+            
+            if (!serverData.name || !serverData.ip || !serverData.port) {
+                showNotification('필수 필드를 모두 입력해주세요', 'error');
+                return;
+            }
+            
+            // Add to appropriate server list
+            switch(currentServerType) {
+                case 'web':
+                    infrastructureData.webServers.push({...serverData, connections: Math.floor(Math.random() * 1000) + 500});
+                    break;
+                case 'was':
+                    infrastructureData.wasServers.push({...serverData, threads: Math.floor(Math.random() * 200) + 100});
+                    break;
+                case 'db':
+                    infrastructureData.dbServers.push({...serverData, connections: Math.floor(Math.random() * 100) + 50});
+                    break;
+                case 'network':
+                    infrastructureData.networkDevices.push({...serverData, bandwidth: Math.floor(Math.random() * 50) + 30});
+                    break;
+            }
+            
+            closeModal('addServerModal');
+            populateServerLists();
+            updateGlobalStats();
+            showNotification(`${serverData.name} 서버가 성공적으로 추가되었습니다`, 'success');
+        }
+
+        function editServer(serverId) {
+            showNotification(`서버 ${serverId} 편집 기능을 준비 중입니다`, 'info');
+        }
+
+        function deleteServer(serverId) {
+            if (confirm('정말로 이 서버를 삭제하시겠습니까?')) {
+                // Remove from all server arrays
+                infrastructureData.webServers = infrastructureData.webServers.filter(s => s.id !== serverId);
+                infrastructureData.wasServers = infrastructureData.wasServers.filter(s => s.id !== serverId);
+                infrastructureData.dbServers = infrastructureData.dbServers.filter(s => s.id !== serverId);
+                infrastructureData.networkDevices = infrastructureData.networkDevices.filter(s => s.id !== serverId);
+                
+                populateServerManagementList(currentServerType);
+                populateServerLists();
+                updateGlobalStats();
+                showNotification('서버가 성공적으로 삭제되었습니다', 'success');
+            }
+        }
+
+        function refreshServerList() {
+            populateServerManagementList(currentServerType);
+            showNotification('서버 목록이 새로고침되었습니다', 'success');
+        }
+
+        // Topology Functions
+        function exportTopology() {
+            showNotification('토폴로지 내보내기를 준비 중입니다...', 'info');
+            
+            setTimeout(() => {
+                const topologyData = {
+                    timestamp: new Date().toISOString(),
+                    nodes: {
+                        web: infrastructureData.webServers.length,
+                        was: infrastructureData.wasServers.length,
+                        db: infrastructureData.dbServers.length,
+                        network: infrastructureData.networkDevices.length
+                    },
+                    connections: [
+                        { from: 'web', to: 'was', status: 'active' },
+                        { from: 'was', to: 'db', status: 'active' },
+                        { from: 'was', to: 'network', status: 'active' }
+                    ],
+                    metadata: {
+                        totalServers: infrastructureData.webServers.length + infrastructureData.wasServers.length + infrastructureData.dbServers.length + infrastructureData.networkDevices.length,
+                        exportedBy: 'AIRIS-MON Infrastructure Monitoring',
+                        version: '1.0'
+                    }
+                };
+                
+                downloadJson(topologyData, 'infrastructure-topology.json');
+                showNotification('토폴로지가 성공적으로 내보내졌습니다', 'success');
+            }, 1000);
+        }
+
+        function refreshTopology() {
+            showNotification('토폴로지를 새로고침하고 있습니다...', 'info');
+            
+            // Animate topology refresh
+            const nodes = document.querySelectorAll('.topology-node');
+            nodes.forEach((node, index) => {
+                setTimeout(() => {
+                    node.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        node.style.transform = 'scale(1)';
+                    }, 200);
+                }, index * 100);
+            });
+            
+            setTimeout(() => {
+                updateTopologyStatus();
+                showNotification('토폴로지 새로고침이 완료되었습니다', 'success');
+            }, 1000);
+        }
+
+        // Alert Functions
+        function clearAllAlerts() {
+            if (confirm('모든 알림을 지우시겠습니까?')) {
+                const alertsList = document.getElementById('alertsList');
+                alertsList.style.opacity = '0.5';
+                
+                setTimeout(() => {
+                    alertsList.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">표시할 알림이 없습니다</div>';
+                    alertsList.style.opacity = '1';
+                    showNotification('모든 알림이 지워졌습니다', 'success');
+                }, 500);
+            }
+        }
+
+        function configureAlerts() {
+            openModal('alertConfigModal');
+        }
+
+        function toggleAlert(toggleSwitch) {
+            toggleSwitch.classList.toggle('active');
+            const isActive = toggleSwitch.classList.contains('active');
+            showNotification(`알림이 ${isActive ? '활성화' : '비활성화'}되었습니다`, 'info');
+        }
+
+        function saveAlertConfig() {
+            const interval = document.getElementById('alertInterval').value;
+            showNotification(`알림 설정이 저장되었습니다 (주기: ${interval}분)`, 'success');
+            closeModal('alertConfigModal');
+        }
+
+        // Dashboard Settings Functions
+        function openDashboardSettings() {
+            openModal('dashboardSettingsModal');
+        }
+
+        function toggleDarkMode(toggleSwitch) {
+            toggleSwitch.classList.toggle('active');
+            const isDark = toggleSwitch.classList.contains('active');
+            document.body.classList.toggle('dark-mode', isDark);
+            showNotification(`${isDark ? '다크' : '라이트'} 모드로 전환되었습니다`, 'info');
+        }
+
+        function toggleSoundAlert(toggleSwitch) {
+            toggleSwitch.classList.toggle('active');
+            const isActive = toggleSwitch.classList.contains('active');
+            showNotification(`소리 알림이 ${isActive ? '활성화' : '비활성화'}되었습니다`, 'info');
+        }
+
+        function saveDashboardSettings() {
+            const refreshInterval = document.getElementById('refreshInterval').value;
+            const chartPeriod = document.getElementById('chartPeriod').value;
+            
+            // Update refresh interval
+            if (refreshIntervalId) {
+                clearInterval(refreshIntervalId);
+            }
+            startRealTimeUpdates(parseInt(refreshInterval) * 1000);
+            
+            showNotification(`대시보드 설정이 저장되었습니다`, 'success');
+            closeModal('dashboardSettingsModal');
+        }
+
+        // Report and Auto-refresh Functions
+        function exportInfraReport() {
+            showNotification('인프라 리포트를 생성하고 있습니다...', 'info');
+            
+            setTimeout(() => {
+                const report = {
+                    timestamp: new Date().toISOString(),
+                    summary: {
+                        totalServers: infrastructureData.webServers.length + infrastructureData.wasServers.length + infrastructureData.dbServers.length + infrastructureData.networkDevices.length,
+                        healthyServers: document.getElementById('healthyServers').textContent,
+                        warningServers: document.getElementById('warningServers').textContent,
+                        criticalServers: document.getElementById('criticalServers').textContent,
+                        avgCpuUsage: document.getElementById('avgCpuUsage').textContent,
+                        avgMemoryUsage: document.getElementById('avgMemoryUsage').textContent
+                    },
+                    servers: {
+                        web: infrastructureData.webServers,
+                        was: infrastructureData.wasServers,
+                        db: infrastructureData.dbServers,
+                        network: infrastructureData.networkDevices
+                    },
+                    metrics: {
+                        totalThroughput: document.getElementById('totalThroughput').textContent,
+                        avgResponseTime: document.getElementById('avgResponseTime').textContent,
+                        networkBandwidth: document.getElementById('networkBandwidth').textContent,
+                        errorRate: document.getElementById('errorRate').textContent
+                    },
+                    alerts: alerts,
+                    generatedBy: 'AIRIS-MON Infrastructure Monitoring System'
+                };
+                
+                downloadJson(report, `infrastructure-report-${new Date().toISOString().split('T')[0]}.json`);
+                showNotification('인프라 리포트가 성공적으로 생성되었습니다', 'success');
+            }, 1500);
+        }
+
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            const fab = document.querySelector('[onclick="toggleAutoRefresh()"]');
+            
+            if (autoRefreshEnabled) {
+                fab.style.background = '#3b82f6';
+                startRealTimeUpdates();
+                showNotification('자동 새로고침이 활성화되었습니다', 'success');
+            } else {
+                fab.style.background = '#6b7280';
+                if (refreshIntervalId) {
+                    clearInterval(refreshIntervalId);
+                }
+                showNotification('자동 새로고침이 비활성화되었습니다', 'warning');
+            }
+        }
+
+        // Utility notification function
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            const colors = {
+                success: '#10b981',
+                error: '#ef4444',
+                warning: '#f59e0b',
+                info: '#3b82f6'
+            };
+
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${colors[type] || colors.info};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                z-index: 10001;
+                font-size: 14px;
+                font-weight: 500;
+                max-width: 400px;
+                animation: slideInRight 0.3s ease;
+            `;
+
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            // Add animation CSS
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideInRight {
+                    from { transform: translateX(100%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideInRight 0.3s ease reverse';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Modal utility functions
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.add('show');
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+            document.body.style.overflow = 'auto';
+        }
+
+        // Download utility function
+        function downloadJson(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Close modals when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('show');
+                setTimeout(() => {
+                    e.target.style.display = 'none';
+                }, 300);
+                document.body.style.overflow = 'auto';
+            }
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const openModal = document.querySelector('.modal.show');
+                if (openModal) {
+                    openModal.classList.remove('show');
+                    setTimeout(() => {
+                        openModal.style.display = 'none';
+                    }, 300);
+                    document.body.style.overflow = 'auto';
+                }
+            }
+            
+            // F5 or Ctrl+R for refresh
+            if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+                e.preventDefault();
+                refreshAllSystems();
+            }
+        });
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            initializeInfrastructure();
+        });
+    </script>
+    </div>
+</body>
+</html>

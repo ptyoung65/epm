@@ -1,0 +1,498 @@
+# Clickstack Development Environment - Enhanced for Container Registry Integration
+version: '3.8'
+
+services:
+  # ClickHouse - Primary Database
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.12
+    hostname: clickhouse
+    ports:
+      - "8123:8123"  # HTTP interface
+      - "9000:9000"  # Native client
+    environment:
+      CLICKHOUSE_DB: airis_mon
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: airis_secure_2024
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./database/clickhouse/init:/docker-entrypoint-initdb.d
+      - ./database/clickhouse/config:/etc/clickhouse-server/config.d
+    networks:
+      - airis_network
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Apache Kafka - Event Streaming
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    hostname: kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,EXTERNAL://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+    depends_on:
+      - zookeeper
+    networks:
+      - airis_network
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Zookeeper for Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    hostname: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - airis_network
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper
+
+  # Redis - Caching & Session Store
+  redis:
+    image: redis:7.2-alpine
+    hostname: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass airis_redis_2024
+    volumes:
+      - redis_data:/data
+    networks:
+      - airis_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "airis_redis_2024", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # AIRIS-MON API Gateway
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+      labels:
+        - "airis-mon.service=api-gateway"
+        - "airis-mon.environment=development"
+        - "airis-mon.version=${GIT_COMMIT:-latest}"
+    image: localhost:5000/airis-mon/api-gateway:${GIT_COMMIT:-latest}
+    hostname: api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_DATABASE: airis_mon
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: airis_secure_2024
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: airis_redis_2024
+      KAFKA_BROKERS: kafka:9092
+      JWT_SECRET: airis_jwt_secret_change_in_production
+      API_RATE_LIMIT: 1000
+    depends_on:
+      - clickhouse
+      - redis
+      - kafka
+    networks:
+      - airis_network
+    volumes:
+      - ./services/api-gateway/src:/app/src
+      - ./services/api-gateway/logs:/app/logs
+    develop:
+      watch:
+        - action: sync
+          path: ./services/api-gateway/src
+          target: /app/src
+        - action: rebuild
+          path: ./services/api-gateway/package.json
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Data Ingestion Service
+  data-ingestion:
+    build:
+      context: ./services/data-ingestion
+      dockerfile: Dockerfile
+      labels:
+        - "airis-mon.service=data-ingestion"
+        - "airis-mon.environment=development"
+        - "airis-mon.version=${GIT_COMMIT:-latest}"
+    image: localhost:5000/airis-mon/data-ingestion:${GIT_COMMIT:-latest}
+    hostname: data-ingestion
+    ports:
+      - "3007:3001"
+    environment:
+      NODE_ENV: development
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_DATABASE: airis_mon
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: airis_secure_2024
+      KAFKA_BROKERS: kafka:9092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: airis_redis_2024
+      BATCH_SIZE: 1000
+      FLUSH_INTERVAL: 5000
+    depends_on:
+      - clickhouse
+      - kafka
+      - redis
+    networks:
+      - airis_network
+    volumes:
+      - ./services/data-ingestion/src:/app/src
+      - ./services/data-ingestion/logs:/app/logs
+    develop:
+      watch:
+        - action: sync
+          path: ./services/data-ingestion/src
+          target: /app/src
+
+  # Analytics Processing Service
+  analytics-engine:
+    build:
+      context: ./services/analytics-engine
+      dockerfile: Dockerfile
+      labels:
+        - "airis-mon.service=analytics-engine"
+        - "airis-mon.environment=development"
+        - "airis-mon.version=${GIT_COMMIT:-latest}"
+    image: localhost:5000/airis-mon/analytics-engine:${GIT_COMMIT:-latest}
+    hostname: analytics-engine
+    environment:
+      NODE_ENV: development
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_DATABASE: airis_mon
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: airis_secure_2024
+      KAFKA_BROKERS: kafka:9092
+      ML_MODEL_PATH: /app/models
+    depends_on:
+      - clickhouse
+      - kafka
+    networks:
+      - airis_network
+    volumes:
+      - ./services/analytics-engine/src:/app/src
+      - ./services/analytics-engine/models:/app/models
+    develop:
+      watch:
+        - action: sync
+          path: ./services/analytics-engine/src
+          target: /app/src
+
+  # OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    hostname: otel-collector
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus metrics
+      - "8889:8889"   # Prometheus exporter
+      - "13133:13133" # Health check
+      - "1777:1777"   # pprof
+      - "55679:55679" # zPages
+    environment:
+      - ENVIRONMENT=development
+      - TZ=Asia/Seoul
+    volumes:
+      - ./otel-collector-config-minimal.yaml:/etc/otel-collector-config.yaml:ro
+    depends_on:
+      - clickhouse
+      - kafka
+    networks:
+      - airis_network
+    restart: unless-stopped
+
+  # Session Replay Service
+  session-replay:
+    build:
+      context: ./services/session-replay
+      dockerfile: Dockerfile
+      labels:
+        - "airis-mon.service=session-replay"
+        - "airis-mon.environment=development"
+        - "airis-mon.version=${GIT_COMMIT:-latest}"
+    image: localhost:5000/airis-mon/session-replay:${GIT_COMMIT:-latest}
+    hostname: session-replay
+    ports:
+      - "3003:3000"
+    environment:
+      NODE_ENV: development
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_DATABASE: airis_mon
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: airis_secure_2024
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: airis_redis_2024
+      KAFKA_BROKERS: kafka:9092
+      MAX_SESSION_DURATION: 1800000
+      SAMPLING_RATE: 1.0
+    depends_on:
+      - clickhouse
+      - redis
+      - kafka
+    networks:
+      - airis_network
+    volumes:
+      - ./services/session-replay/src:/app/src
+      - session_replay_data:/app/data
+    develop:
+      watch:
+        - action: sync
+          path: ./services/session-replay/src
+          target: /app/src
+    restart: unless-stopped
+
+  # AIOps ML Engine
+  aiops:
+    build:
+      context: ./services/aiops
+      dockerfile: Dockerfile
+      labels:
+        - "airis-mon.service=aiops"
+        - "airis-mon.environment=development"
+        - "airis-mon.version=${GIT_COMMIT:-latest}"
+    image: localhost:5000/airis-mon/aiops:${GIT_COMMIT:-latest}
+    hostname: aiops
+    ports:
+      - "3004:3000"
+    environment:
+      NODE_ENV: development
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_DATABASE: airis_mon
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: airis_secure_2024
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: airis_redis_2024
+      MODEL_PATH: /app/models
+      ANOMALY_THRESHOLD: 0.95
+      PREDICTION_HORIZON: 24
+    depends_on:
+      - clickhouse
+      - redis
+    networks:
+      - airis_network
+    volumes:
+      - ./services/aiops/src:/app/src
+      - aiops_models:/app/models
+      - aiops_data:/app/data
+    develop:
+      watch:
+        - action: sync
+          path: ./services/aiops/src
+          target: /app/src
+    restart: unless-stopped
+
+  # Event Delta Analyzer
+  event-delta-analyzer:
+    build:
+      context: ./services/event-delta-analyzer
+      dockerfile: Dockerfile
+      labels:
+        - "airis-mon.service=event-delta-analyzer"
+        - "airis-mon.environment=development"
+        - "airis-mon.version=${GIT_COMMIT:-latest}"
+    image: localhost:5000/airis-mon/event-delta-analyzer:${GIT_COMMIT:-latest}
+    hostname: event-delta-analyzer
+    ports:
+      - "3005:3000"
+    environment:
+      NODE_ENV: development
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_DATABASE: airis_mon
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: airis_secure_2024
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: airis_redis_2024
+      BASELINE_WINDOW: 24
+      COMPARISON_WINDOW: 1
+      SIGNIFICANCE_THRESHOLD: 0.05
+    depends_on:
+      - clickhouse
+      - redis
+    networks:
+      - airis_network
+    volumes:
+      - ./services/event-delta-analyzer/src:/app/src
+    develop:
+      watch:
+        - action: sync
+          path: ./services/event-delta-analyzer/src
+          target: /app/src
+    restart: unless-stopped
+
+  # NLP Search Engine
+  nlp-search:
+    build:
+      context: ./services/nlp-search
+      dockerfile: Dockerfile
+      labels:
+        - "airis-mon.service=nlp-search"
+        - "airis-mon.environment=development"
+        - "airis-mon.version=${GIT_COMMIT:-latest}"
+    image: localhost:5000/airis-mon/nlp-search:${GIT_COMMIT:-latest}
+    hostname: nlp-search
+    ports:
+      - "3006:3000"
+    environment:
+      NODE_ENV: development
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_DATABASE: airis_mon
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: airis_secure_2024
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: airis_redis_2024
+      MAX_RESULTS: 50
+      SEARCH_TIMEOUT_MS: 30000
+      MIN_SIMILARITY: 0.3
+      ENABLE_KOREAN_NLP: true
+    depends_on:
+      - clickhouse
+      - redis
+    networks:
+      - airis_network
+    volumes:
+      - ./services/nlp-search/src:/app/src
+    develop:
+      watch:
+        - action: sync
+          path: ./services/nlp-search/src
+          target: /app/src
+    restart: unless-stopped
+
+  # Korean HyperDX-style UI
+  ui:
+    build:
+      context: ./ui/korean-hyperdx-dashboard
+      dockerfile: Dockerfile
+      labels:
+        - "airis-mon.service=ui"
+        - "airis-mon.environment=development"
+        - "airis-mon.version=${GIT_COMMIT:-latest}"
+    image: localhost:5000/airis-mon/ui:${GIT_COMMIT:-latest}
+    hostname: ui
+    ports:
+      - "3001:80"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - api-gateway
+    networks:
+      - airis_network
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./ui/korean-hyperdx-dashboard/src
+          target: /app/src
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Test Suite Service
+  test-suite:
+    build:
+      context: ./test-suite
+      dockerfile: Dockerfile
+      labels:
+        - "airis-mon.service=test-suite"
+        - "airis-mon.environment=development"
+        - "airis-mon.version=${GIT_COMMIT:-latest}"
+    image: localhost:5000/airis-mon/test-suite:${GIT_COMMIT:-latest}
+    hostname: test-suite
+    ports:
+      - "3100:3000"
+    environment:
+      NODE_ENV: development
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_PORT: 8123
+      CLICKHOUSE_DATABASE: airis_mon
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: airis_secure_2024
+    depends_on:
+      - clickhouse
+      - api-gateway
+    networks:
+      - airis_network
+    volumes:
+      - ./test-suite/src:/app/src
+      - ./test-suite/storage:/app/storage
+    develop:
+      watch:
+        - action: sync
+          path: ./test-suite/src
+          target: /app/src
+
+  # Container Registry (Local Development)
+  registry:
+    image: registry:2.8.3
+    container_name: airis-clickstack-registry
+    ports:
+      - "5000:5000"
+    environment:
+      - REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY=/var/lib/registry
+      - REGISTRY_HTTP_ADDR=0.0.0.0:5000
+      - REGISTRY_LOG_LEVEL=info
+    volumes:
+      - /home/ptyoung/work/repository:/var/lib/registry
+    networks:
+      - airis_network
+    restart: unless-stopped
+
+networks:
+  airis_network:
+    driver: bridge
+    name: airis-clickstack-dev-network
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  clickhouse_data:
+    driver: local
+  zookeeper_data:
+    driver: local
+  redis_data:
+    driver: local
+  session_replay_data:
+    driver: local
+  aiops_models:
+    driver: local
+  aiops_data:
+    driver: local

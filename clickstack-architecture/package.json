@@ -1,0 +1,60 @@
+{
+  "name": "airis-mon-clickstack",
+  "version": "2.0.0",
+  "description": "AIRIS-MON: AI Risk & Intelligence System Monitor - ClickStack Architecture",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:ingest\" \"npm run dev:ui\"",
+    "dev:api": "nodemon services/api-gateway/src/index.js",
+    "dev:ingest": "nodemon services/data-ingestion/src/index.js",
+    "dev:ui": "cd ui && npm run dev",
+    "build": "npm run build:services && npm run build:ui",
+    "build:services": "npm run build:api && npm run build:ingest",
+    "build:api": "cd services/api-gateway && npm run build",
+    "build:ingest": "cd services/data-ingestion && npm run build",
+    "build:ui": "cd ui && npm run build",
+    "start": "npm run start:services",
+    "start:services": "concurrently \"npm run start:api\" \"npm run start:ingest\"",
+    "start:api": "cd services/api-gateway && npm start",
+    "start:ingest": "cd services/data-ingestion && npm start",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "k8s:apply": "kubectl apply -f deploy/k8s/",
+    "k8s:delete": "kubectl delete -f deploy/k8s/",
+    "test": "npm run test:services && npm run test:ui",
+    "test:services": "jest services/*/src/**/*.test.js",
+    "test:ui": "cd ui && npm test",
+    "lint": "eslint services/*/src/**/*.js ui/src/**/*.{js,jsx,ts,tsx}",
+    "lint:fix": "npm run lint -- --fix"
+  },
+  "keywords": [
+    "ai-monitoring",
+    "clickstack",
+    "observability",
+    "clickhouse",
+    "real-time-analytics",
+    "korean-ui",
+    "hyperdx-style"
+  ],
+  "author": "AIRIS-MON Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.55.0",
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@clickhouse/client": "^0.2.7",
+    "apache-kafka": "^2.0.2",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.4",
+    "redis": "^4.6.11"
+  }
+}

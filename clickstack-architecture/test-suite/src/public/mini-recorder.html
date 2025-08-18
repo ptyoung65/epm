@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>미니 DOM 녹화기</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .panel { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .btn { padding: 10px 20px; margin: 5px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .btn-green { background: #28a745; color: white; }
+        .btn-red { background: #dc3545; color: white; }
+        .btn-blue { background: #007bff; color: white; }
+        .btn:disabled { background: #ccc; cursor: not-allowed; }
+        .status { font-weight: bold; color: #007bff; }
+    </style>
+</head>
+<body>
+    <div class="panel">
+        <h1>🎬 미니 DOM 녹화기</h1>
+        <p>상태: <span class="status" id="status">준비 완료</span></p>
+        <p>이벤트 수: <span id="eventCount">0</span></p>
+        
+        <button class="btn btn-green" id="startBtn">녹화 시작</button>
+        <button class="btn btn-red" id="stopBtn" disabled>녹화 중지</button>
+        <button class="btn btn-blue" id="playBtn" disabled>재생하기</button>
+    </div>
+    
+    <div class="panel">
+        <h3>테스트 영역</h3>
+        <input type="text" placeholder="텍스트를 입력하세요" style="width: 100%; padding: 10px; margin: 10px 0;">
+        <br>
+        <button class="btn btn-blue" onclick="testAction('버튼 A')">테스트 버튼 A</button>
+        <button class="btn btn-blue" onclick="testAction('버튼 B')">테스트 버튼 B</button>
+        <div id="testArea" style="height: 100px; background: #e9ecef; margin: 10px 0; padding: 10px;">
+            클릭하거나 상호작용해보세요
+        </div>
+    </div>
+
+    <script>
+        console.log('스크립트 로딩 시작');
+        
+        let isRecording = false;
+        let events = [];
+        let currentSessionId = null;
+        let startTime = null;
+        
+        // DOM 요소들
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const playBtn = document.getElementById('playBtn');
+        const status = document.getElementById('status');
+        const eventCount = document.getElementById('eventCount');
+        
+        console.log('DOM 요소 확인:', { startBtn, stopBtn, playBtn });
+        
+        // rrweb 없이 기본적인 이벤트 수집기
+        function startBasicRecording() {
+            console.log('기본 녹화 시작');
+            
+            // 페이지의 모든 클릭 이벤트 감지
+            document.addEventListener('click', recordEvent);
+            document.addEventListener('input', recordEvent);
+            document.addEventListener('change', recordEvent);
+            
+            function recordEvent(e) {
+                if (!isRecording) return;
+                
+                const event = {
+                    type: e.type,
+                    timestamp: Date.now() - startTime,
+                    target: e.target.tagName,
+                    id: e.target.id,
+                    className: e.target.className,
+                    value: e.target.value || e.target.textContent?.substring(0, 50) || ''
+                };
+                
+                events.push(event);
+                eventCount.textContent = events.length;
+                console.log('이벤트 기록:', event);
+            }
+        }
+        
+        // 녹화 시작
+        function startRecording() {
+            console.log('녹화 시작 함수 호출');
+            
+            if (isRecording) return;
+            
+            // 초기화
+            events = [];
+            currentSessionId = 'session_' + Date.now();
+            startTime = Date.now();
+            isRecording = true;
+            
+            // UI 업데이트
+            status.textContent = '🔴 녹화 중';
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            playBtn.disabled = true;
+            
+            // 기본 이벤트 녹화 시작
+            startBasicRecording();
+            
+            console.log('녹화 시작 완료, 세션 ID:', currentSessionId);
+            alert('✅ 녹화가 시작되었습니다! 아래 테스트 영역에서 클릭이나 입력을 해보세요.');
+        }
+        
+        // 녹화 중지
+        function stopRecording() {
+            console.log('녹화 중지 함수 호출');
+            
+            if (!isRecording) return;
+            
+            isRecording = false;
+            
+            // UI 업데이트
+            status.textContent = '⏹️ 녹화 완료';
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            playBtn.disabled = false;
+            
+            // 세션 저장
+            const session = {
+                id: currentSessionId,
+                events: events,
+                startTime: startTime,
+                endTime: Date.now(),
+                duration: Date.now() - startTime,
+                eventCount: events.length
+            };
+            
+            localStorage.setItem(currentSessionId, JSON.stringify(session));
+            
+            console.log('녹화 완료, 세션 저장:', session);
+            alert(`✅ 녹화 완료! ${events.length}개의 이벤트가 기록되었습니다.`);
+        }
+        
+        // 재생 (기본적인 로그 출력)
+        function playRecording() {
+            console.log('재생 함수 호출');
+            
+            if (events.length === 0) {
+                alert('⚠️ 재생할 데이터가 없습니다.');
+                return;
+            }
+            
+            console.log('=== 세션 재생 ===');
+            console.log('세션 ID:', currentSessionId);
+            console.log('총 이벤트:', events.length);
+            console.log('이벤트 목록:');
+            
+            events.forEach((event, index) => {
+                console.log(`${index + 1}. [${event.timestamp}ms] ${event.type} on ${event.target}${event.id ? '#' + event.id : ''} - "${event.value}"`);
+            });
+            
+            alert(`📹 콘솔에서 ${events.length}개 이벤트의 재생 로그를 확인하세요!\n(F12 > Console 탭)`);
+        }
+        
+        // 테스트 함수
+        function testAction(name) {
+            console.log(name + ' 클릭됨');
+            document.getElementById('testArea').innerHTML += `<p>${name} 클릭됨 (${new Date().toLocaleTimeString()})</p>`;
+        }
+        
+        // 버튼 이벤트 연결
+        startBtn.addEventListener('click', startRecording);
+        stopBtn.addEventListener('click', stopRecording);
+        playBtn.addEventListener('click', playRecording);
+        
+        // 테스트 영역 클릭 이벤트
+        document.getElementById('testArea').addEventListener('click', function() {
+            this.style.backgroundColor = `hsl(${Math.random() * 360}, 50%, 80%)`;
+        });
+        
+        console.log('✅ 미니 녹화기 초기화 완료');
+    </script>
+</body>
+</html>

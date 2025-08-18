@@ -1,0 +1,139 @@
+{
+  "id": "2075ad27-20aa-4bc3-9e42-5ea88240e8ca",
+  "scenario": "journey_landing",
+  "startTime": "2025-08-14T15:53:17.264Z",
+  "lastActivity": "2025-08-14T15:53:17.547Z",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+  "ipAddress": "::1",
+  "events": [
+    {
+      "id": "029d4150-d222-4711-8667-2a0e61fb8043",
+      "sessionId": "2075ad27-20aa-4bc3-9e42-5ea88240e8ca",
+      "timestamp": 1755186797191,
+      "recordedAt": "2025-08-14T15:53:17.316Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755186797191,
+        "page_url": "/",
+        "title": "home",
+        "referrer": null,
+        "load_time": 595
+      }
+    },
+    {
+      "id": "ace5f2fc-a1a8-4e1e-92d7-0331df1f85ce",
+      "sessionId": "2075ad27-20aa-4bc3-9e42-5ea88240e8ca",
+      "timestamp": 1755186798240,
+      "recordedAt": "2025-08-14T15:53:17.363Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755186798240,
+        "page_url": "/features",
+        "title": "features",
+        "referrer": "/",
+        "load_time": 2435
+      }
+    },
+    {
+      "id": "559999b2-c06f-4f10-949c-f844e5445c2f",
+      "sessionId": "2075ad27-20aa-4bc3-9e42-5ea88240e8ca",
+      "timestamp": 1755186799287,
+      "recordedAt": "2025-08-14T15:53:17.407Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755186799287,
+        "page_url": "/pricing",
+        "title": "pricing",
+        "referrer": "/features",
+        "load_time": 930
+      }
+    },
+    {
+      "id": "e1f120f1-7f6a-4f91-b850-bd5dd5ad6a65",
+      "sessionId": "2075ad27-20aa-4bc3-9e42-5ea88240e8ca",
+      "timestamp": 1755186800332,
+      "recordedAt": "2025-08-14T15:53:17.459Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755186800332,
+        "page_url": "/testimonials",
+        "title": "testimonials",
+        "referrer": "/pricing",
+        "load_time": 1752
+      }
+    },
+    {
+      "id": "feaea2d8-eea7-4b2f-be13-3162bca1d8bd",
+      "sessionId": "2075ad27-20aa-4bc3-9e42-5ea88240e8ca",
+      "timestamp": 1755186801382,
+      "recordedAt": "2025-08-14T15:53:17.503Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755186801382,
+        "page_url": "/signup",
+        "title": "signup",
+        "referrer": "/testimonials",
+        "load_time": 520
+      }
+    },
+    {
+      "id": "f9582804-3e0b-4041-99cf-8e7dcd6cc6e1",
+      "sessionId": "2075ad27-20aa-4bc3-9e42-5ea88240e8ca",
+      "timestamp": 1755186802427,
+      "recordedAt": "2025-08-14T15:53:17.547Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1755186802427,
+        "page_url": "/thank-you",
+        "title": "thank-you",
+        "referrer": "/signup",
+        "load_time": 591
+      }
+    }
+  ],
+  "status": "completed",
+  "metadata": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36 Edg/139.0.0.0",
+    "device": {
+      "type": "desktop",
+      "browser": "Chrome",
+      "os": "Windows"
+    }
+  },
+  "endTime": "2025-08-14T15:53:17.596Z",
+  "duration": 332,
+  "endReason": "user_ended",
+  "statistics": {
+    "totalEvents": 6,
+    "eventTypes": {
+      "rrweb_event": 6
+    },
+    "clicks": 0,
+    "formInputs": 0,
+    "pageViews": 0,
+    "errors": 0,
+    "scrollEvents": 0,
+    "userBehavior": {
+      "avgTimeBetweenEvents": 872.6666666666666,
+      "hasErrors": false,
+      "hasFormInteraction": false,
+      "hasNavigation": false
+    }
+  }
+}

@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>실제 DOM 녹화 - AIRIS-MON 세션 리플레이</title>
+    <script src="https://cdn.jsdelivr.net/npm/rrweb@2.0.0-alpha.11/dist/rrweb-all.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .recording-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 10000;
+            min-width: 300px;
+        }
+        
+        .recording-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .recording-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ef4444;
+        }
+        
+        .status-dot.recording {
+            background: #10b981;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        
+        .recording-info {
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 14px;
+        }
+        
+        .info-label {
+            color: #6b7280;
+        }
+        
+        .info-value {
+            font-weight: 600;
+            color: #111827;
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-start {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-start:hover {
+            background: #059669;
+        }
+        
+        .btn-stop {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-stop:hover {
+            background: #dc2626;
+        }
+        
+        .btn-play {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-play:hover {
+            background: #2563eb;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* 테스트 콘텐츠 영역 */
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            margin-top: 20px;
+        }
+        
+        .content-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .content-header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            color: #111827;
+        }
+        
+        .demo-form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .interactive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+        
+        .card {
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+        
+        .card-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .card-title {
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 5px;
+        }
+        
+        .card-desc {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .chart-container {
+            margin: 40px 0;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 12px;
+        }
+        
+        .chart-bar {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .chart-label {
+            width: 100px;
+            font-size: 14px;
+            color: #6b7280;
+        }
+        
+        .chart-value {
+            flex: 1;
+            height: 30px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #111827;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 10001;
+        }
+        
+        .notification.show {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .session-list {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            max-height: 300px;
+            overflow-y: auto;
+            min-width: 250px;
+        }
+        
+        .session-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #f3f4f6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .session-item:hover {
+            background: #e5e7eb;
+        }
+        
+        .session-time {
+            font-size: 12px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <!-- 녹화 컨트롤 패널 -->
+    <div class="recording-panel">
+        <div class="recording-header">
+            <div class="recording-status">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">대기 중</span>
+            </div>
+            <span id="timer">00:00</span>
+        </div>
+        
+        <div class="recording-info">
+            <div class="info-row">
+                <span class="info-label">세션 ID:</span>
+                <span class="info-value" id="sessionId">-</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">이벤트 수:</span>
+                <span class="info-value" id="eventCount">0</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">데이터 크기:</span>
+                <span class="info-value" id="dataSize">0 KB</span>
+            </div>
+        </div>
+        
+        <div class="control-buttons">
+            <button class="btn btn-start" id="startBtn" onclick="startRecording()">
+                🔴 녹화 시작
+            </button>
+            <button class="btn btn-stop" id="stopBtn" onclick="stopRecording()" disabled>
+                ⏹ 중지
+            </button>
+            <button class="btn btn-play" id="playBtn" onclick="playRecording()" disabled>
+                ▶️ 재생
+            </button>
+        </div>
+    </div>
+    
+    <!-- 저장된 세션 목록 -->
+    <div class="session-list" id="sessionList">
+        <h3>📹 저장된 세션</h3>
+        <div id="sessionItems"></div>
+    </div>
+    
+    <!-- 알림 메시지 -->
+    <div class="notification" id="notification"></div>
+    
+    <!-- 메인 콘텐츠 영역 -->
+    <div class="main-content">
+        <div class="content-header">
+            <h1>🎬 실제 DOM 녹화 테스트</h1>
+            <p>아래의 인터랙티브 요소들을 사용하여 실제 DOM 이벤트를 녹화하고 재생할 수 있습니다</p>
+        </div>
+        
+        <!-- 테스트 폼 -->
+        <div class="demo-form">
+            <div class="form-group">
+                <label class="form-label">이름</label>
+                <input type="text" class="form-control" id="nameInput" placeholder="이름을 입력하세요">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">이메일</label>
+                <input type="email" class="form-control" id="emailInput" placeholder="email@example.com">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">메시지</label>
+                <textarea class="form-control" id="messageInput" rows="4" placeholder="메시지를 입력하세요"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">카테고리</label>
+                <select class="form-control" id="categorySelect">
+                    <option>일반 문의</option>
+                    <option>기술 지원</option>
+                    <option>버그 신고</option>
+                    <option>기능 요청</option>
+                </select>
+            </div>
+            
+            <button class="btn btn-start" style="width: 100%;" onclick="submitForm()">
+                전송하기
+            </button>
+        </div>
+        
+        <!-- 인터랙티브 카드 그리드 -->
+        <div class="interactive-grid">
+            <div class="card" onclick="cardClick(this, '대시보드')">
+                <div class="card-icon">📊</div>
+                <div class="card-title">대시보드</div>
+                <div class="card-desc">실시간 모니터링</div>
+            </div>
+            
+            <div class="card" onclick="cardClick(this, '분석')">
+                <div class="card-icon">📈</div>
+                <div class="card-title">분석</div>
+                <div class="card-desc">데이터 인사이트</div>
+            </div>
+            
+            <div class="card" onclick="cardClick(this, '알림')">
+                <div class="card-icon">🔔</div>
+                <div class="card-title">알림</div>
+                <div class="card-desc">실시간 알림</div>
+            </div>
+            
+            <div class="card" onclick="cardClick(this, '설정')">
+                <div class="card-icon">⚙️</div>
+                <div class="card-title">설정</div>
+                <div class="card-desc">시스템 구성</div>
+            </div>
+        </div>
+        
+        <!-- 차트 시뮬레이션 -->
+        <div class="chart-container">
+            <h3>📊 실시간 메트릭</h3>
+            <div class="chart-bar">
+                <span class="chart-label">CPU 사용량</span>
+                <div class="chart-value" style="width: 65%;" onclick="updateChart(this)">65%</div>
+            </div>
+            <div class="chart-bar">
+                <span class="chart-label">메모리</span>
+                <div class="chart-value" style="width: 45%;" onclick="updateChart(this)">45%</div>
+            </div>
+            <div class="chart-bar">
+                <span class="chart-label">네트워크</span>
+                <div class="chart-value" style="width: 80%;" onclick="updateChart(this)">80%</div>
+            </div>
+            <div class="chart-bar">
+                <span class="chart-label">디스크</span>
+                <div class="chart-value" style="width: 30%;" onclick="updateChart(this)">30%</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let stopFn = null;
+        let events = [];
+        let isRecording = false;
+        let startTime = null;
+        let timerInterval = null;
+        let currentSessionId = null;
+        
+        // 저장된 세션 목록
+        let savedSessions = [];
+        
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        function startRecording() {
+            if (isRecording) return;
+            
+            // 초기화
+            events = [];
+            currentSessionId = generateSessionId();
+            startTime = Date.now();
+            
+            // rrweb 녹화 시작
+            stopFn = rrweb.record({
+                emit(event) {
+                    // 이벤트 수집
+                    events.push(event);
+                    
+                    // UI 업데이트
+                    document.getElementById('eventCount').textContent = events.length;
+                    const dataSize = (JSON.stringify(events).length / 1024).toFixed(2);
+                    document.getElementById('dataSize').textContent = dataSize + ' KB';
+                    
+                    // 서버로 실시간 전송 (옵션)
+                    sendEventToServer(event);
+                },
+                sampling: {
+                    mousemove: false,
+                    mouseInteraction: false,
+                    scroll: 150,
+                    media: 800,
+                    input: false
+                },
+                recordCanvas: true,
+                collectFonts: true,
+                maskAllInputs: false, // 입력값 마스킹 비활성화 (테스트용)
+                blockClass: 'rr-block',
+                ignoreClass: 'rr-ignore',
+                maskTextClass: 'rr-mask',
+                inlineStylesheet: true,
+                plugins: []
+            });
+            
+            // UI 상태 업데이트
+            isRecording = true;
+            document.getElementById('statusDot').classList.add('recording');
+            document.getElementById('statusText').textContent = '녹화 중';
+            document.getElementById('sessionId').textContent = currentSessionId.substring(0, 8) + '...';
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('playBtn').disabled = true;
+            
+            // 타이머 시작
+            startTimer();
+            
+            // 서버에 세션 시작 알림
+            startSessionOnServer();
+            
+            showNotification('🔴 녹화가 시작되었습니다');
+        }
+        
+        function stopRecording() {
+            if (!isRecording || !stopFn) return;
+            
+            // 녹화 중지
+            stopFn();
+            stopFn = null;
+            isRecording = false;
+            
+            // UI 상태 업데이트
+            document.getElementById('statusDot').classList.remove('recording');
+            document.getElementById('statusText').textContent = '녹화 완료';
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('playBtn').disabled = false;
+            
+            // 타이머 중지
+            stopTimer();
+            
+            // 세션 저장
+            saveSession();
+            
+            // 서버에 세션 종료 알림
+            endSessionOnServer();
+            
+            showNotification('✅ 녹화가 완료되었습니다 (' + events.length + '개 이벤트)');
+        }
+        
+        function playRecording() {
+            if (!currentSessionId || events.length === 0) {
+                showNotification('⚠️ 재생할 세션이 없습니다');
+                return;
+            }
+            
+            // 새 창에서 플레이어 열기
+            const playerUrl = `/real-player.html?sessionId=${currentSessionId}`;
+            window.open(playerUrl, '_blank');
+        }
+        
+        function saveSession() {
+            if (events.length === 0) return;
+            
+            const session = {
+                id: currentSessionId,
+                events: events,
+                startTime: startTime,
+                endTime: Date.now(),
+                duration: Date.now() - startTime,
+                eventCount: events.length,
+                timestamp: new Date().toISOString()
+            };
+            
+            // 로컬 스토리지에 저장
+            localStorage.setItem(currentSessionId, JSON.stringify(session));
+            
+            // 세션 목록에 추가
+            savedSessions.push(session);
+            updateSessionList();
+            
+            // 서버로 전송
+            saveSessionToServer(session);
+        }
+        
+        async function sendEventToServer(event) {
+            try {
+                await fetch('/api/session-replay/add-event', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: currentSessionId,
+                        event: event
+                    })
+                });
+            } catch (error) {
+                console.error('이벤트 전송 실패:', error);
+            }
+        }
+        
+        async function startSessionOnServer() {
+            try {
+                await fetch('/api/session-replay/start-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        scenario: 'real_dom_recording',
+                        userAgent: navigator.userAgent
+                    })
+                });
+            } catch (error) {
+                console.error('세션 시작 실패:', error);
+            }
+        }
+        
+        async function endSessionOnServer() {
+            try {
+                await fetch('/api/session-replay/end-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: currentSessionId,
+                        eventCount: events.length
+                    })
+                });
+            } catch (error) {
+                console.error('세션 종료 실패:', error);
+            }
+        }
+        
+        async function saveSessionToServer(session) {
+            try {
+                await fetch('/api/session-replay/save-full-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(session)
+                });
+            } catch (error) {
+                console.error('세션 저장 실패:', error);
+            }
+        }
+        
+        function startTimer() {
+            let seconds = 0;
+            timerInterval = setInterval(() => {
+                seconds++;
+                const minutes = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                document.getElementById('timer').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+        
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+        
+        function updateSessionList() {
+            const container = document.getElementById('sessionItems');
+            container.innerHTML = '';
+            
+            savedSessions.forEach(session => {
+                const item = document.createElement('div');
+                item.className = 'session-item';
+                item.onclick = () => loadSession(session.id);
+                
+                const time = new Date(session.timestamp).toLocaleTimeString('ko-KR');
+                item.innerHTML = `
+                    <div><strong>${session.id.substring(0, 8)}...</strong></div>
+                    <div class="session-time">${time} (${session.eventCount} 이벤트)</div>
+                `;
+                
+                container.appendChild(item);
+            });
+        }
+        
+        function loadSession(sessionId) {
+            const playerUrl = `/real-player.html?sessionId=${sessionId}`;
+            window.open(playerUrl, '_blank');
+        }
+        
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // 인터랙션 함수들
+        function submitForm() {
+            showNotification('📝 폼이 제출되었습니다 (테스트)');
+        }
+        
+        function cardClick(element, name) {
+            element.style.background = `linear-gradient(135deg, hsl(${Math.random() * 360}, 70%, 80%), hsl(${Math.random() * 360}, 70%, 60%))`;
+            showNotification(`📱 ${name} 카드를 클릭했습니다`);
+        }
+        
+        function updateChart(element) {
+            const newValue = Math.floor(Math.random() * 100);
+            element.style.width = newValue + '%';
+            element.textContent = newValue + '%';
+            showNotification(`📊 차트 업데이트: ${newValue}%`);
+        }
+        
+        // 페이지 로드 시 저장된 세션 로드
+        window.onload = () => {
+            // 로컬 스토리지에서 세션 목록 로드
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('session_')) {
+                    try {
+                        const session = JSON.parse(localStorage.getItem(key));
+                        savedSessions.push(session);
+                    } catch (e) {
+                        console.error('세션 로드 실패:', e);
+                    }
+                }
+            }
+            updateSessionList();
+        };
+    </script>
+</body>
+</html>

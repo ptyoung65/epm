@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS-MON Layout Template</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-blue: #2563eb;
+            --primary-blue-light: #3b82f6;
+            --primary-blue-dark: #1d4ed8;
+            --accent-blue: #60a5fa;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--gray-50);
+            color: var(--gray-800);
+            line-height: 1.6;
+            letter-spacing: -0.01em;
+        }
+
+        /* 메인 레이아웃 구조 */
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease-in-out;
+            background: var(--gray-50);
+        }
+
+        .main-content.sidebar-collapsed {
+            margin-left: 60px;
+        }
+
+        /* 상단 헤더 */
+        .main-header {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 100%;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        .breadcrumb-separator {
+            color: var(--gray-400);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+            color: var(--gray-700);
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .header-btn:hover {
+            background: var(--gray-200);
+            border-color: var(--gray-300);
+            color: var(--gray-900);
+        }
+
+        .header-btn.primary {
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
+            color: white;
+        }
+
+        .header-btn.primary:hover {
+            background: var(--primary-blue-dark);
+            border-color: var(--primary-blue-dark);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: var(--gray-100);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .korean-time {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+
+        /* 메인 컨텐츠 영역 */
+        .content-wrapper {
+            padding: 2rem;
+            min-height: calc(100vh - 80px);
+        }
+
+        .content-header {
+            margin-bottom: 2rem;
+        }
+
+        .content-title {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 0.5rem;
+        }
+
+        .content-description {
+            color: var(--gray-600);
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        /* 카드 컴포넌트 */
+        .card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .card-header {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 0.25rem;
+        }
+
+        .card-subtitle {
+            color: var(--gray-600);
+            font-size: 0.875rem;
+        }
+
+        .card-body {
+            color: var(--gray-700);
+        }
+
+        .card-footer {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* 그리드 레이아웃 */
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
+        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+        /* 버튼 컴포넌트 */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border: 1px solid transparent;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            border-color: var(--primary-blue);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-blue-dark);
+            border-color: var(--primary-blue-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            border-color: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+            border-color: var(--gray-300);
+            color: var(--gray-900);
+        }
+
+        .btn-success {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            border-color: var(--warning);
+            color: white;
+        }
+
+        .btn-error {
+            background: var(--error);
+            border-color: var(--error);
+            color: white;
+        }
+
+        /* 배지 컴포넌트 */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-primary {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-error {
+            background: #fecaca;
+            color: #991b1b;
+        }
+
+        /* 모바일 반응형 */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+            }
+
+            .main-content.sidebar-collapsed {
+                margin-left: 0;
+            }
+
+            .main-header {
+                padding: 1rem;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .header-right {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .content-wrapper {
+                padding: 1rem;
+            }
+
+            .content-title {
+                font-size: 1.5rem;
+            }
+
+            .grid-cols-2,
+            .grid-cols-3,
+            .grid-cols-4 {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+                gap: 0.5rem;
+            }
+
+            .header-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* 애니메이션 */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease-in-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* 스크롤바 스타일링 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--gray-100);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray-400);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gray-500);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-layout">
+        <!-- 사이드바 삽입 위치 -->
+        <div id="sidebar-container"></div>
+
+        <!-- 메인 컨텐츠 -->
+        <main class="main-content" id="mainContent">
+            <!-- 상단 헤더 -->
+            <header class="main-header">
+                <div class="header-content">
+                    <div class="header-left">
+                        <button class="header-btn" id="mobileMenuToggle" style="display: none;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 12h18M3 6h18M3 18h18"></path>
+                            </svg>
+                            <span>메뉴</span>
+                        </button>
+                        <div>
+                            <h1 class="page-title" id="pageTitle">AIRIS-MON 대시보드</h1>
+                            <nav class="breadcrumb" id="breadcrumb">
+                                <span>홈</span>
+                                <span class="breadcrumb-separator">›</span>
+                                <span>대시보드</span>
+                            </nav>
+                        </div>
+                    </div>
+                    <div class="header-right">
+                        <div class="header-actions">
+                            <div class="status-indicator">
+                                <div class="status-dot"></div>
+                                <span>시스템 정상</span>
+                            </div>
+                            <div class="korean-time" id="koreanTime">
+                                <!-- 실시간 시간 표시 -->
+                            </div>
+                            <a href="/admin-settings.html" class="header-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                </svg>
+                                설정
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 컨텐츠 영역 -->
+            <div class="content-wrapper">
+                <div class="content-header">
+                    <h2 class="content-title" id="contentTitle">대시보드</h2>
+                    <p class="content-description" id="contentDescription">
+                        AIRIS-MON 시스템의 전체적인 상태와 주요 메트릭을 확인할 수 있습니다.
+                    </p>
+                </div>
+
+                <!-- 페이지 별 컨텐츠가 여기에 삽입됩니다 -->
+                <div id="pageContent" class="fade-in">
+                    <!-- 기본 대시보드 컨텐츠 -->
+                    <div class="grid grid-cols-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">실행 중인 세션</h3>
+                                <p class="card-subtitle">현재 활성화된 세션 수</p>
+                            </div>
+                            <div class="card-body">
+                                <div style="font-size: 2rem; font-weight: 700; color: var(--primary-blue);">12</div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">API 응답 시간</h3>
+                                <p class="card-subtitle">평균 응답 속도</p>
+                            </div>
+                            <div class="card-body">
+                                <div style="font-size: 2rem; font-weight: 700; color: var(--success);">45ms</div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">시스템 상태</h3>
+                                <p class="card-subtitle">전체 시스템 건강도</p>
+                            </div>
+                            <div class="card-body">
+                                <div class="badge badge-success">정상</div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">알림</h3>
+                                <p class="card-subtitle">미확인 알림 수</p>
+                            </div>
+                            <div class="card-body">
+                                <div style="font-size: 2rem; font-weight: 700; color: var(--warning);">3</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 2rem;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">빠른 접근</h3>
+                                <p class="card-subtitle">자주 사용하는 기능들</p>
+                            </div>
+                            <div class="card-body">
+                                <div class="grid grid-cols-3" style="gap: 1rem;">
+                                    <a href="/integrated-session-recorder-fixed.html" class="btn btn-primary">
+                                        🎬 세션 녹화 시작
+                                    </a>
+                                    <a href="/project-analysis.html" class="btn btn-secondary">
+                                        🐍 프로젝트 분석
+                                    </a>
+                                    <a href="/alert-management.html" class="btn btn-warning">
+                                        🚨 알림 관리
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 레이아웃 관리 클래스
+        class LayoutManager {
+            constructor() {
+                this.sidebarLoaded = false;
+                this.init();
+            }
+
+            async init() {
+                await this.loadSidebar();
+                this.setupEventListeners();
+                this.updateTime();
+                this.setActiveNavigation();
+            }
+
+            // 사이드바 로드
+            async loadSidebar() {
+                try {
+                    const response = await fetch('/components/sidebar.html');
+                    const sidebarHTML = await response.text();
+                    
+                    // HTML 파싱 및 사이드바 추출
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(sidebarHTML, 'text/html');
+                    const sidebar = doc.querySelector('.sidebar');
+                    
+                    if (sidebar) {
+                        document.getElementById('sidebar-container').appendChild(sidebar);
+                        this.sidebarLoaded = true;
+                        
+                        // 사이드바 스크립트 실행
+                        const scripts = doc.querySelectorAll('script');
+                        scripts.forEach(script => {
+                            if (script.textContent) {
+                                eval(script.textContent);
+                            }
+                        });
+                    }
+                } catch (error) {
+                    console.warn('사이드바 로드 실패:', error);
+                    // 사이드바 없이도 작동하도록 설정
+                    this.adjustLayoutWithoutSidebar();
+                }
+            }
+
+            // 사이드바 없이 레이아웃 조정
+            adjustLayoutWithoutSidebar() {
+                const mainContent = document.getElementById('mainContent');
+                mainContent.style.marginLeft = '0';
+                
+                // 모바일 메뉴 버튼 표시
+                const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+                mobileMenuToggle.style.display = 'flex';
+            }
+
+            // 이벤트 리스너 설정
+            setupEventListeners() {
+                // 사이드바 토글 이벤트 감지
+                document.addEventListener('sidebarToggled', (event) => {
+                    const mainContent = document.getElementById('mainContent');
+                    if (event.detail.collapsed) {
+                        mainContent.classList.add('sidebar-collapsed');
+                    } else {
+                        mainContent.classList.remove('sidebar-collapsed');
+                    }
+                });
+
+                // 모바일 메뉴 토글
+                const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+                if (mobileMenuToggle) {
+                    mobileMenuToggle.addEventListener('click', () => {
+                        if (window.AIRIS_SIDEBAR) {
+                            window.AIRIS_SIDEBAR.toggleMobile();
+                        }
+                    });
+                }
+
+                // 리사이즈 이벤트
+                window.addEventListener('resize', () => {
+                    this.handleResize();
+                });
+
+                // 초기 리사이즈 처리
+                this.handleResize();
+            }
+
+            // 리사이즈 처리
+            handleResize() {
+                const isMobile = window.innerWidth <= 768;
+                const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+                
+                if (isMobile) {
+                    mobileMenuToggle.style.display = 'flex';
+                } else {
+                    mobileMenuToggle.style.display = 'none';
+                }
+            }
+
+            // 실시간 시간 업데이트
+            updateTime() {
+                const updateKoreanTime = () => {
+                    const now = new Date();
+                    const koreanTime = now.toLocaleString('ko-KR', {
+                        timeZone: 'Asia/Seoul',
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    });
+                    
+                    const timeElement = document.getElementById('koreanTime');
+                    if (timeElement) {
+                        timeElement.textContent = `🇰🇷 ${koreanTime}`;
+                    }
+                };
+
+                updateKoreanTime();
+                setInterval(updateKoreanTime, 1000);
+            }
+
+            // 현재 페이지에 맞는 네비게이션 설정
+            setActiveNavigation() {
+                const path = window.location.pathname;
+                const pageConfig = this.getPageConfig(path);
+                
+                // 페이지 제목 설정
+                document.getElementById('pageTitle').textContent = pageConfig.title;
+                document.getElementById('contentTitle').textContent = pageConfig.title;
+                document.getElementById('contentDescription').textContent = pageConfig.description;
+                
+                // 브레드크럼 설정
+                this.setBreadcrumb(pageConfig.breadcrumb);
+                
+                // 문서 제목 설정
+                document.title = `${pageConfig.title} - AIRIS-MON`;
+            }
+
+            // 페이지별 설정 가져오기
+            getPageConfig(path) {
+                const configs = {
+                    '/index.html': {
+                        title: '메인 대시보드',
+                        description: 'AIRIS-MON 시스템의 전체적인 상태와 주요 메트릭을 확인할 수 있습니다.',
+                        breadcrumb: ['홈', '대시보드']
+                    },
+                    '/integrated-dashboard.html': {
+                        title: '통합 대시보드',
+                        description: '모든 모니터링 데이터를 한 곳에서 통합 관리합니다.',
+                        breadcrumb: ['홈', '대시보드', '통합 대시보드']
+                    },
+                    '/integrated-session-recorder-fixed.html': {
+                        title: '통합 녹화기',
+                        description: '사용자 세션을 실시간으로 녹화하고 분석합니다.',
+                        breadcrumb: ['홈', '세션 리플레이', '통합 녹화기']
+                    },
+                    '/project-analysis.html': {
+                        title: '프로젝트 분석기',
+                        description: 'GitHub 저장소나 로컬 프로젝트를 자동으로 분석합니다.',
+                        breadcrumb: ['홈', '프로젝트 분석', '분석기']
+                    },
+                    '/application-analysis.html': {
+                        title: 'CRUD 매트릭스',
+                        description: '프로그램과 데이터스토어 간의 상관관계를 시각화합니다.',
+                        breadcrumb: ['홈', '프로젝트 분석', 'CRUD 매트릭스']
+                    },
+                    '/alert-management.html': {
+                        title: '알림 관리',
+                        description: '시스템 알림과 경고를 중앙에서 관리합니다.',
+                        breadcrumb: ['홈', '관리', '알림 관리']
+                    }
+                };
+                
+                return configs[path] || {
+                    title: 'AIRIS-MON',
+                    description: 'AI 기반 실시간 모니터링 시스템',
+                    breadcrumb: ['홈']
+                };
+            }
+
+            // 브레드크럼 설정
+            setBreadcrumb(items) {
+                const breadcrumbElement = document.getElementById('breadcrumb');
+                if (!breadcrumbElement) return;
+                
+                breadcrumbElement.innerHTML = items.map((item, index) => {
+                    const isLast = index === items.length - 1;
+                    return isLast 
+                        ? `<span>${item}</span>`
+                        : `<span>${item}</span><span class="breadcrumb-separator">›</span>`;
+                }).join('');
+            }
+
+            // 페이지 컨텐츠 설정 (다른 페이지에서 사용)
+            setPageContent(title, description, content) {
+                document.getElementById('pageTitle').textContent = title;
+                document.getElementById('contentTitle').textContent = title;
+                document.getElementById('contentDescription').textContent = description;
+                document.getElementById('pageContent').innerHTML = content;
+                document.title = `${title} - AIRIS-MON`;
+            }
+
+            // 알림 표시
+            showNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = `notification notification-${type}`;
+                notification.textContent = message;
+                
+                // 스타일 설정
+                Object.assign(notification.style, {
+                    position: 'fixed',
+                    top: '20px',
+                    right: '20px',
+                    padding: '12px 20px',
+                    borderRadius: '8px',
+                    color: 'white',
+                    fontWeight: '500',
+                    zIndex: '9999',
+                    maxWidth: '400px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                    animation: 'slideInRight 0.3s ease-out'
+                });
+                
+                // 타입별 색상
+                const colors = {
+                    info: '#2563eb',
+                    success: '#10b981',
+                    warning: '#f59e0b',
+                    error: '#ef4444'
+                };
+                notification.style.backgroundColor = colors[type] || colors.info;
+                
+                document.body.appendChild(notification);
+                
+                // 3초 후 자동 제거
+                setTimeout(() => {
+                    notification.style.animation = 'slideOutRight 0.3s ease-out';
+                    setTimeout(() => notification.remove(), 300);
+                }, 3000);
+            }
+        }
+
+        // 전역 레이아웃 매니저 인스턴스
+        window.AIRIS_LAYOUT = new LayoutManager();
+
+        // 전역 유틸리티 함수들
+        window.AIRIS_UTILS = {
+            formatTime: (timestamp) => {
+                return new Date(timestamp).toLocaleString('ko-KR', {
+                    timeZone: 'Asia/Seoul',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            },
+            
+            formatDuration: (ms) => {
+                const seconds = Math.floor(ms / 1000);
+                const minutes = Math.floor(seconds / 60);
+                const hours = Math.floor(minutes / 60);
+                
+                if (hours > 0) {
+                    return `${hours}시간 ${minutes % 60}분`;
+                } else if (minutes > 0) {
+                    return `${minutes}분 ${seconds % 60}초`;
+                } else {
+                    return `${seconds}초`;
+                }
+            },
+            
+            formatBytes: (bytes) => {
+                const sizes = ['B', 'KB', 'MB', 'GB'];
+                if (bytes === 0) return '0 B';
+                const i = Math.floor(Math.log(bytes) / Math.log(1024));
+                return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+            }
+        };
+
+        // CSS 애니메이션 정의
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            
+            @keyframes slideOutRight {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

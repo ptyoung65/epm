@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 실제 화면 기반 세션 리플레이 테스트</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    
+    <!-- rrweb 라이브러리 로드 -->
+    <script src="/rrweb.js"></script>
+    <script>
+        console.log('rrweb 로드 체크:', typeof rrweb);
+        if (typeof rrweb === 'undefined') {
+            console.log('rrweb 로드 실패, 다른 방법 시도...');
+        } else {
+            console.log('✅ rrweb 성공적으로 로드됨');
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5rem;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+        }
+        
+        .scenarios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .scenario-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .scenario-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+        }
+        
+        .scenario-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .scenario-description {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .test-interface {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px dashed #e9ecef;
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .recording-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            z-index: 1000;
+            display: none;
+        }
+        
+        .recording-status.active {
+            display: block;
+            background: #dc3545;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        
+        .results-section {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+        }
+        
+        .session-info {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        
+        .error-simulation {
+            background: #fff5f5;
+            border: 1px solid #fed7d7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            color: #721c24;
+        }
+        
+        .performance-meter {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            transition: width 2s ease;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="recording-status" id="recordingStatus">
+        🔴 세션 녹화 중... <span id="recordingTime">00:00</span>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🎬 실제 화면 기반 세션 리플레이 테스트</h1>
+            <p>rrweb을 사용한 실제 DOM 캡처 및 프로덕션 레벨 세션 분석</p>
+        </div>
+
+        <div class="scenarios-grid">
+            <!-- 시나리오 1: E-commerce 결제 플로우 -->
+            <div class="scenario-card">
+                <div class="scenario-title">
+                    🛒 E-commerce 결제 플로우
+                </div>
+                <div class="scenario-description">
+                    실제 온라인 쇼핑 결제 과정에서 발생할 수 있는 다양한 상황을 시뮬레이션합니다.
+                </div>
+                
+                <div class="test-interface" data-scenario="ecommerce_checkout">
+                    <div class="test-controls">
+                        <button class="btn btn-primary" onclick="startScenario('ecommerce_checkout')">
+                            🎬 시나리오 시작
+                        </button>
+                        <button class="btn btn-success" onclick="completeScenario('ecommerce_checkout')">
+                            ✅ 시나리오 완료
+                        </button>
+                    </div>
+                    
+                    <!-- 실제 결제 폼 -->
+                    <div class="checkout-form">
+                        <h4>결제 정보</h4>
+                        <div class="form-group">
+                            <label for="cardNumber">카드 번호</label>
+                            <input type="text" id="cardNumber" class="form-control" 
+                                   placeholder="1234-5678-9012-3456" maxlength="19">
+                        </div>
+                        <div class="form-group">
+                            <label for="expiryDate">만료일</label>
+                            <input type="text" id="expiryDate" class="form-control" 
+                                   placeholder="MM/YY" maxlength="5">
+                        </div>
+                        <div class="form-group">
+                            <label for="cvv">CVV</label>
+                            <input type="text" id="cvv" class="form-control" 
+                                   placeholder="123" maxlength="4">
+                        </div>
+                        <button class="btn btn-success" onclick="processPayment()">
+                            💳 결제 처리 (₩50,000)
+                        </button>
+                        
+                        <div class="error-simulation" id="paymentError" style="display: none;">
+                            ❌ 결제 처리 중 오류가 발생했습니다. 카드 정보를 확인해주세요.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 시나리오 2: SaaS 대시보드 상호작용 -->
+            <div class="scenario-card">
+                <div class="scenario-title">
+                    📊 SaaS 대시보드 상호작용
+                </div>
+                <div class="scenario-description">
+                    비즈니스 대시보드에서의 차트 조작, 필터링, 데이터 내보내기 등의 복잡한 상호작용
+                </div>
+                
+                <div class="test-interface" data-scenario="saas_dashboard">
+                    <div class="test-controls">
+                        <button class="btn btn-primary" onclick="startScenario('saas_dashboard')">
+                            🎬 시나리오 시작
+                        </button>
+                        <button class="btn btn-warning" onclick="loadDashboardData()">
+                            📊 대시보드 로드
+                        </button>
+                        <button class="btn btn-success" onclick="completeScenario('saas_dashboard')">
+                            ✅ 시나리오 완료
+                        </button>
+                    </div>
+                    
+                    <!-- 대시보드 컨트롤 -->
+                    <div class="dashboard-controls">
+                        <h4>비즈니스 메트릭</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 15px 0;">
+                            <div class="metric-card" style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 2em; font-weight: bold; color: #28a745;">₩2.4M</div>
+                                <div style="color: #666;">이번 달 매출</div>
+                            </div>
+                            <div class="metric-card" style="background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center;">
+                                <div style="font-size: 2em; font-weight: bold; color: #007bff;">1,234</div>
+                                <div style="color: #666;">활성 사용자</div>
+                            </div>
+                        </div>
+                        
+                        <div class="performance-meter">
+                            <h5>차트 로딩 성능</h5>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="chartProgress" style="width: 0%;"></div>
+                            </div>
+                            <small id="loadingStatus">대기 중...</small>
+                        </div>
+                        
+                        <button class="btn btn-warning" onclick="simulateSlowChart()">
+                            🐌 느린 차트 로딩 시뮬레이션
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 시나리오 3: 폼 검증 및 사용자 피드백 -->
+            <div class="scenario-card">
+                <div class="scenario-title">
+                    📝 폼 검증 및 사용자 피드백
+                </div>
+                <div class="scenario-description">
+                    복잡한 폼 입력, 실시간 검증, 에러 처리 및 사용자 피드백 시스템 테스트
+                </div>
+                
+                <div class="test-interface" data-scenario="form_validation">
+                    <div class="test-controls">
+                        <button class="btn btn-primary" onclick="startScenario('form_validation')">
+                            🎬 시나리오 시작
+                        </button>
+                        <button class="btn btn-danger" onclick="triggerValidationErrors()">
+                            ❌ 검증 오류 발생
+                        </button>
+                        <button class="btn btn-success" onclick="completeScenario('form_validation')">
+                            ✅ 시나리오 완료
+                        </button>
+                    </div>
+                    
+                    <!-- 사용자 등록 폼 -->
+                    <div class="registration-form">
+                        <h4>사용자 등록</h4>
+                        <div class="form-group">
+                            <label for="username">사용자명</label>
+                            <input type="text" id="username" class="form-control" 
+                                   placeholder="영문, 숫자 3-20자" onchange="validateUsername(this)">
+                            <div class="validation-message" id="usernameError"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">이메일</label>
+                            <input type="email" id="email" class="form-control" 
+                                   placeholder="example@domain.com" onchange="validateEmail(this)">
+                            <div class="validation-message" id="emailError"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">비밀번호</label>
+                            <input type="password" id="password" class="form-control" 
+                                   placeholder="8자 이상, 특수문자 포함" onchange="validatePassword(this)">
+                            <div class="validation-message" id="passwordError"></div>
+                        </div>
+                        <button class="btn btn-primary" onclick="submitRegistration()">
+                            👤 계정 생성
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 시나리오 4: 모바일 반응형 상호작용 -->
+            <div class="scenario-card">
+                <div class="scenario-title">
+                    📱 모바일 반응형 상호작용
+                </div>
+                <div class="scenario-description">
+                    터치 제스처, 스와이프, 반응형 레이아웃 변화 등 모바일 특화 상호작용 테스트
+                </div>
+                
+                <div class="test-interface" data-scenario="mobile_responsive">
+                    <div class="test-controls">
+                        <button class="btn btn-primary" onclick="startScenario('mobile_responsive')">
+                            🎬 시나리오 시작
+                        </button>
+                        <button class="btn btn-warning" onclick="toggleMobileView()">
+                            📱 모바일 뷰 전환
+                        </button>
+                        <button class="btn btn-success" onclick="completeScenario('mobile_responsive')">
+                            ✅ 시나리오 완료
+                        </button>
+                    </div>
+                    
+                    <!-- 반응형 컨텐츠 -->
+                    <div class="responsive-content" id="responsiveContent">
+                        <h4>반응형 카드 레이아웃</h4>
+                        <div class="cards-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 15px 0;">
+                            <div class="card" style="background: #e3f2fd; padding: 20px; border-radius: 8px; text-align: center; cursor: pointer;" onclick="selectCard(1)">
+                                <div style="font-size: 2em; margin-bottom: 10px;">🎯</div>
+                                <div>목표 관리</div>
+                            </div>
+                            <div class="card" style="background: #f3e5f5; padding: 20px; border-radius: 8px; text-align: center; cursor: pointer;" onclick="selectCard(2)">
+                                <div style="font-size: 2em; margin-bottom: 10px;">📈</div>
+                                <div>성과 분석</div>
+                            </div>
+                            <div class="card" style="background: #e8f5e8; padding: 20px; border-radius: 8px; text-align: center; cursor: pointer;" onclick="selectCard(3)">
+                                <div style="font-size: 2em; margin-bottom: 10px;">⚙️</div>
+                                <div>시스템 설정</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mobile-menu" style="display: none;">
+                            <button class="btn btn-primary" style="width: 100%; margin: 5px 0;">🏠 홈</button>
+                            <button class="btn btn-primary" style="width: 100%; margin: 5px 0;">📊 대시보드</button>
+                            <button class="btn btn-primary" style="width: 100%; margin: 5px 0;">👤 프로필</button>
+                            <button class="btn btn-primary" style="width: 100%; margin: 5px 0;">⚙️ 설정</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 녹화 결과 섹션 -->
+        <div class="results-section">
+            <h2>🎬 녹화된 세션 정보</h2>
+            <div id="sessionResults">
+                <p>시나리오를 시작하면 세션 정보가 여기에 표시됩니다.</p>
+            </div>
+            
+            <div class="test-controls" style="margin-top: 20px;">
+                <button class="btn btn-success" onclick="viewRecordedSession()">
+                    👀 녹화된 세션 보기
+                </button>
+                <button class="btn btn-warning" onclick="downloadSessionData()">
+                    💾 세션 데이터 다운로드
+                </button>
+                <button class="btn btn-danger" onclick="clearAllSessions()">
+                    🗑️ 모든 세션 삭제
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // rrweb 녹화 관련 변수
+        let currentRecording = null;
+        let currentSessionId = null;
+        let recordingStartTime = null;
+        let recordingTimer = null;
+        
+        // 세션 시작 함수
+        async function startScenario(scenarioType) {
+            try {
+                // 이전 녹화가 있다면 중지
+                if (currentRecording) {
+                    currentRecording();
+                    currentRecording = null;
+                }
+                
+                // 새 세션 시작
+                const response = await fetch('/api/session-replay/start-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        scenario: scenarioType,
+                        userAgent: navigator.userAgent,
+                        viewport: {
+                            width: window.innerWidth,
+                            height: window.innerHeight
+                        }
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    currentSessionId = result.sessionId;
+                    
+                    // rrweb 가용성 확인 및 폴백
+                    if (typeof rrweb !== 'undefined') {
+                        console.log('✅ rrweb 라이브러리 확인됨:', rrweb);
+                        
+                        // rrweb 녹화 시작
+                        currentRecording = rrweb.record({
+                            emit(event) {
+                                console.log('📡 rrweb 이벤트 발생:', event.type, event);
+                                
+                                // 이벤트를 서버로 전송
+                                fetch('/api/session-replay/add-event', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        sessionId: currentSessionId,
+                                        event: event
+                                    })
+                                }).then(response => {
+                                    if (response.ok) {
+                                        console.log('✅ 이벤트 전송 성공');
+                                    } else {
+                                        console.error('❌ 이벤트 전송 실패:', response.status);
+                                    }
+                                }).catch(error => {
+                                    console.error('❌ 이벤트 전송 오류:', error);
+                                });
+                            },
+                            recordCanvas: true,
+                            collectFonts: true,
+                            plugins: []
+                        });
+                        
+                        console.log('✅ rrweb 녹화 시작됨:', currentRecording);
+                    } else {
+                        console.warn('⚠️ rrweb를 사용할 수 없습니다. 기본 이벤트 캡처로 대체합니다.');
+                        
+                        // 기본 이벤트 리스너 설정
+                        currentRecording = setupBasicRecording(currentSessionId);
+                        console.log('✅ 기본 이벤트 녹화 시작됨');
+                    }
+                    
+                    // 녹화 상태 표시
+                    showRecordingStatus(scenarioType);
+                    updateSessionInfo(scenarioType, currentSessionId);
+                    
+                    console.log(`✅ 세션 녹화 시작: ${scenarioType} (${currentSessionId})`);
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('세션 시작 실패:', error);
+                alert('세션을 시작할 수 없습니다: ' + error.message);
+            }
+        }
+        
+        // 세션 완료 함수
+        async function completeScenario(scenarioType) {
+            if (!currentSessionId) {
+                alert('진행 중인 세션이 없습니다.');
+                return;
+            }
+            
+            try {
+                // 녹화 중지
+                if (currentRecording) {
+                    currentRecording();
+                    currentRecording = null;
+                }
+                
+                // 세션 종료
+                const response = await fetch('/api/session-replay/end-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: currentSessionId,
+                        endReason: 'user_completed'
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    hideRecordingStatus();
+                    updateSessionResults(result.session);
+                    
+                    console.log(`✅ 세션 완료: ${scenarioType} (${currentSessionId})`);
+                    currentSessionId = null;
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                console.error('세션 완료 실패:', error);
+                alert('세션을 완료할 수 없습니다: ' + error.message);
+            }
+        }
+        
+        // 녹화 상태 표시
+        function showRecordingStatus(scenarioType) {
+            const status = document.getElementById('recordingStatus');
+            status.classList.add('active');
+            
+            recordingStartTime = Date.now();
+            recordingTimer = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+                const seconds = (elapsed % 60).toString().padStart(2, '0');
+                document.getElementById('recordingTime').textContent = `${minutes}:${seconds}`;
+            }, 1000);
+        }
+        
+        // 녹화 상태 숨기기
+        function hideRecordingStatus() {
+            document.getElementById('recordingStatus').classList.remove('active');
+            if (recordingTimer) {
+                clearInterval(recordingTimer);
+                recordingTimer = null;
+            }
+        }
+        
+        // 세션 정보 업데이트
+        function updateSessionInfo(scenarioType, sessionId) {
+            const results = document.getElementById('sessionResults');
+            results.innerHTML = `
+                <div class="session-info">
+                    <h4>현재 진행 중인 세션</h4>
+                    <p><strong>시나리오:</strong> ${getScenarioName(scenarioType)}</p>
+                    <p><strong>세션 ID:</strong> ${sessionId}</p>
+                    <p><strong>시작 시간:</strong> ${new Date().toLocaleString()}</p>
+                    <p><strong>상태:</strong> 🔴 녹화 중</p>
+                </div>
+            `;
+        }
+        
+        // 세션 결과 업데이트
+        function updateSessionResults(session) {
+            const results = document.getElementById('sessionResults');
+            results.innerHTML = `
+                <div class="session-info">
+                    <h4>완료된 세션</h4>
+                    <p><strong>시나리오:</strong> ${getScenarioName(session.scenario)}</p>
+                    <p><strong>세션 ID:</strong> ${session.id}</p>
+                    <p><strong>시작 시간:</strong> ${new Date(session.startTime).toLocaleString()}</p>
+                    <p><strong>종료 시간:</strong> ${new Date(session.endTime).toLocaleString()}</p>
+                    <p><strong>소요 시간:</strong> ${Math.floor(session.duration / 1000)}초</p>
+                    <p><strong>이벤트 수:</strong> ${session.events.length}개</p>
+                    <p><strong>상태:</strong> ✅ 완료</p>
+                </div>
+            `;
+        }
+        
+        // 시나리오 이름 반환
+        function getScenarioName(type) {
+            const names = {
+                'ecommerce_checkout': '🛒 E-commerce 결제 플로우',
+                'saas_dashboard': '📊 SaaS 대시보드 상호작용',
+                'form_validation': '📝 폼 검증 및 사용자 피드백',
+                'mobile_responsive': '📱 모바일 반응형 상호작용'
+            };
+            return names[type] || type;
+        }
+        
+        // 녹화된 세션 보기
+        function viewRecordedSession() {
+            if (!currentSessionId) {
+                alert('진행 중인 세션이 없습니다. 먼저 시나리오를 완료해주세요.');
+                return;
+            }
+            
+            window.open(`/real-replay-player?session=${currentSessionId}`, '_blank');
+        }
+        
+        // 시나리오별 상호작용 함수들
+        
+        // 결제 처리
+        function processPayment() {
+            const cardNumber = document.getElementById('cardNumber').value;
+            const expiryDate = document.getElementById('expiryDate').value;
+            const cvv = document.getElementById('cvv').value;
+            
+            // 결제 오류 시뮬레이션
+            if (!cardNumber || !expiryDate || !cvv) {
+                document.getElementById('paymentError').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('paymentError').style.display = 'none';
+                }, 3000);
+            } else {
+                alert('결제가 성공적으로 처리되었습니다! 💳✅');
+            }
+        }
+        
+        // 대시보드 데이터 로드
+        function loadDashboardData() {
+            document.getElementById('loadingStatus').textContent = '데이터 로딩 중...';
+            document.getElementById('chartProgress').style.width = '0%';
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 20;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    document.getElementById('loadingStatus').textContent = '로딩 완료!';
+                }
+                document.getElementById('chartProgress').style.width = progress + '%';
+            }, 300);
+        }
+        
+        // 느린 차트 로딩 시뮬레이션
+        function simulateSlowChart() {
+            document.getElementById('loadingStatus').textContent = '느린 차트 로딩 중... 🐌';
+            document.getElementById('chartProgress').style.width = '0%';
+            
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 5; // 매우 천천히
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    document.getElementById('loadingStatus').textContent = '로딩 완료 (느림 감지됨)';
+                }
+                document.getElementById('chartProgress').style.width = progress + '%';
+            }, 800);
+        }
+        
+        // 폼 검증 함수들
+        function validateUsername(input) {
+            const error = document.getElementById('usernameError');
+            if (input.value.length < 3) {
+                error.textContent = '사용자명은 3자 이상이어야 합니다.';
+                error.style.color = '#dc3545';
+                input.style.borderColor = '#dc3545';
+            } else {
+                error.textContent = '✅ 사용 가능한 사용자명입니다.';
+                error.style.color = '#28a745';
+                input.style.borderColor = '#28a745';
+            }
+        }
+        
+        function validateEmail(input) {
+            const error = document.getElementById('emailError');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(input.value)) {
+                error.textContent = '올바른 이메일 형식이 아닙니다.';
+                error.style.color = '#dc3545';
+                input.style.borderColor = '#dc3545';
+            } else {
+                error.textContent = '✅ 올바른 이메일 형식입니다.';
+                error.style.color = '#28a745';
+                input.style.borderColor = '#28a745';
+            }
+        }
+        
+        function validatePassword(input) {
+            const error = document.getElementById('passwordError');
+            const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(input.value);
+            if (input.value.length < 8 || !hasSpecial) {
+                error.textContent = '8자 이상, 특수문자를 포함해야 합니다.';
+                error.style.color = '#dc3545';
+                input.style.borderColor = '#dc3545';
+            } else {
+                error.textContent = '✅ 강력한 비밀번호입니다.';
+                error.style.color = '#28a745';
+                input.style.borderColor = '#28a745';
+            }
+        }
+        
+        function triggerValidationErrors() {
+            // 강제로 모든 필드에 오류 표시
+            const inputs = ['username', 'email', 'password'];
+            inputs.forEach(id => {
+                const input = document.getElementById(id);
+                input.value = '';
+                input.dispatchEvent(new Event('change'));
+            });
+        }
+        
+        function submitRegistration() {
+            alert('사용자 등록이 완료되었습니다! 👤✅');
+        }
+        
+        // 모바일 뷰 토글
+        function toggleMobileView() {
+            const content = document.getElementById('responsiveContent');
+            const mobileMenu = content.querySelector('.mobile-menu');
+            const cardsGrid = content.querySelector('.cards-grid');
+            
+            if (mobileMenu.style.display === 'none') {
+                mobileMenu.style.display = 'block';
+                cardsGrid.style.gridTemplateColumns = '1fr';
+                content.style.maxWidth = '400px';
+                content.style.margin = '0 auto';
+            } else {
+                mobileMenu.style.display = 'none';
+                cardsGrid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(200px, 1fr))';
+                content.style.maxWidth = '';
+                content.style.margin = '';
+            }
+        }
+        
+        function selectCard(cardNumber) {
+            alert(`카드 ${cardNumber} 선택됨! 상세 페이지로 이동합니다.`);
+        }
+        
+        // 세션 데이터 다운로드
+        async function downloadSessionData() {
+            if (!currentSessionId) {
+                alert('다운로드할 세션이 없습니다.');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/session-replay/session/${currentSessionId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `session_${currentSessionId}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('세션 데이터 다운로드 실패:', error);
+                alert('세션 데이터를 다운로드할 수 없습니다: ' + error.message);
+            }
+        }
+        
+        // 모든 세션 삭제
+        async function clearAllSessions() {
+            if (confirm('모든 세션 데이터를 삭제하시겠습니까?')) {
+                try {
+                    const response = await fetch('/api/session-replay/clear-all', { method: 'DELETE' });
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('모든 세션 데이터가 삭제되었습니다.');
+                        document.getElementById('sessionResults').innerHTML = '<p>시나리오를 시작하면 세션 정보가 여기에 표시됩니다.</p>';
+                    } else {
+                        throw new Error(result.error);
+                    }
+                } catch (error) {
+                    console.error('세션 삭제 실패:', error);
+                    alert('세션을 삭제할 수 없습니다: ' + error.message);
+                }
+            }
+        }
+        
+        // 기본 이벤트 캡처 시스템 (rrweb 폴백)
+        function setupBasicRecording(sessionId) {
+            let eventCount = 0;
+            const startTime = Date.now();
+            
+            // 페이지 로드 이벤트
+            addBasicEvent(sessionId, {
+                type: 'page_load',
+                timestamp: Date.now() - startTime,
+                url: window.location.href,
+                title: document.title,
+                viewport: {
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                }
+            });
+            
+            // 클릭 이벤트
+            const clickHandler = (e) => {
+                const rect = e.target.getBoundingClientRect();
+                addBasicEvent(sessionId, {
+                    type: 'click',
+                    timestamp: Date.now() - startTime,
+                    x: e.clientX,
+                    y: e.clientY,
+                    element: {
+                        tagName: e.target.tagName,
+                        id: e.target.id,
+                        className: e.target.className,
+                        textContent: e.target.textContent?.slice(0, 50)
+                    },
+                    boundingRect: {
+                        left: rect.left,
+                        top: rect.top,
+                        width: rect.width,
+                        height: rect.height
+                    }
+                });
+            };
+            
+            // 입력 이벤트
+            const inputHandler = (e) => {
+                if (e.target.type === 'password') return; // 비밀번호는 기록하지 않음
+                
+                addBasicEvent(sessionId, {
+                    type: 'input',
+                    timestamp: Date.now() - startTime,
+                    element: {
+                        tagName: e.target.tagName,
+                        id: e.target.id,
+                        type: e.target.type
+                    },
+                    value: e.target.value.replace(/./g, '*'), // 입력값 마스킹
+                    valueLength: e.target.value.length
+                });
+            };
+            
+            // 스크롤 이벤트
+            const scrollHandler = () => {
+                addBasicEvent(sessionId, {
+                    type: 'scroll',
+                    timestamp: Date.now() - startTime,
+                    scrollX: window.scrollX,
+                    scrollY: window.scrollY
+                });
+            };
+            
+            // 이벤트 리스너 등록
+            document.addEventListener('click', clickHandler);
+            document.addEventListener('input', inputHandler);
+            document.addEventListener('change', inputHandler);
+            window.addEventListener('scroll', scrollHandler);
+            
+            // 정리 함수 반환
+            return function cleanup() {
+                document.removeEventListener('click', clickHandler);
+                document.removeEventListener('input', inputHandler);
+                document.removeEventListener('change', inputHandler);
+                window.removeEventListener('scroll', scrollHandler);
+            };
+        }
+        
+        // 기본 이벤트 전송 함수
+        function addBasicEvent(sessionId, event) {
+            fetch('/api/session-replay/add-event', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: sessionId,
+                    ...event
+                })
+            }).then(response => {
+                if (response.ok) {
+                    console.log('✅ 기본 이벤트 전송 성공:', event.type);
+                } else {
+                    console.error('❌ 기본 이벤트 전송 실패:', response.status);
+                }
+            }).catch(error => {
+                console.error('❌ 기본 이벤트 전송 오류:', error);
+            });
+        }
+        
+        // 페이지 언로드 시 현재 세션 자동 완료
+        window.addEventListener('beforeunload', () => {
+            if (currentSessionId && currentRecording) {
+                navigator.sendBeacon('/api/session-replay/end-session', JSON.stringify({
+                    sessionId: currentSessionId,
+                    endReason: 'page_unload'
+                }));
+            }
+        });
+    </script>
+</body>
+</html>

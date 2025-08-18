@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIOps/MLOps 대시보드 - AIRIS-MON</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/components/common-layout.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --white: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --info: #06b6d4;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--gray-50);
+            color: var(--gray-800);
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+        .card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin: 0;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.warning {
+            background: var(--warning);
+        }
+
+        .status-dot.error {
+            background: var(--error);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1rem;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border-color: var(--gray-200);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+
+        .service-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .service-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .service-item:last-child {
+            border-bottom: none;
+        }
+
+        .service-name {
+            font-weight: 500;
+            color: var(--gray-900);
+        }
+
+        .service-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .activity-log {
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 0.875rem;
+            background: var(--gray-50);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .log-entry {
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0;
+        }
+
+        .log-time {
+            color: var(--gray-500);
+            font-family: monospace;
+            margin-right: 0.5rem;
+        }
+
+        .log-level {
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+
+        .log-level.info { color: var(--info); }
+        .log-level.success { color: var(--success); }
+        .log-level.warning { color: var(--warning); }
+        .log-level.error { color: var(--error); }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+        }
+
+        .input, .textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+
+        .input:focus, .textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .alert-warning {
+            background: #fffbeb;
+            color: #92400e;
+            border: 1px solid #fed7aa;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        @media (max-width: 768px) {
+            .grid-cols-2,
+            .grid-cols-3,
+            .grid-cols-4 {
+                grid-template-columns: 1fr;
+            }
+            
+            .dashboard-container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- 시스템 상태 개요 -->
+        <div class="grid grid-cols-4 mb-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">시스템 상태</h3>
+                    <div class="status-indicator">
+                        <div class="status-dot" id="system-status-dot"></div>
+                        <span id="system-status-text">확인 중...</span>
+                    </div>
+                </div>
+                <div class="metric-value" id="overall-health">--</div>
+                <div class="metric-label">전체 시스템 건강도</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">활성 서비스</h3>
+                </div>
+                <div class="metric-value" id="active-services">--</div>
+                <div class="metric-label">실행 중인 AIOps 서비스</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">처리된 요청</h3>
+                </div>
+                <div class="metric-value" id="processed-requests">--</div>
+                <div class="metric-label">오늘 처리된 AI 요청 수</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">응답 시간</h3>
+                </div>
+                <div class="metric-value" id="response-time">--</div>
+                <div class="metric-label">평균 응답 시간 (ms)</div>
+            </div>
+        </div>
+
+        <!-- 서비스별 상태 -->
+        <div class="grid grid-cols-2 mb-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🤖 AI 모델 서비스</h3>
+                    <button class="btn btn-secondary" onclick="refreshServices()">새로고침</button>
+                </div>
+                <ul class="service-list" id="ai-services">
+                    <li class="service-item">
+                        <span class="service-name">Ollama Client</span>
+                        <div class="service-status">
+                            <div class="status-dot" id="ollama-status"></div>
+                            <span id="ollama-text">확인 중...</span>
+                        </div>
+                    </li>
+                    <li class="service-item">
+                        <span class="service-name">Gemini Service</span>
+                        <div class="service-status">
+                            <div class="status-dot" id="gemini-status"></div>
+                            <span id="gemini-text">확인 중...</span>
+                        </div>
+                    </li>
+                    <li class="service-item">
+                        <span class="service-name">Knowledge Collector</span>
+                        <div class="service-status">
+                            <div class="status-dot" id="knowledge-status"></div>
+                            <span id="knowledge-text">확인 중...</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📊 MLOps 파이프라인</h3>
+                    <button class="btn btn-secondary" onclick="refreshMLOps()">새로고침</button>
+                </div>
+                <ul class="service-list" id="mlops-services">
+                    <li class="service-item">
+                        <span class="service-name">ML Pipeline</span>
+                        <div class="service-status">
+                            <div class="status-dot" id="mlops-status"></div>
+                            <span id="mlops-text">확인 중...</span>
+                        </div>
+                    </li>
+                    <li class="service-item">
+                        <span class="service-name">Statistical Analyzer</span>
+                        <div class="service-status">
+                            <div class="status-dot" id="analytics-status"></div>
+                            <span id="analytics-text">확인 중...</span>
+                        </div>
+                    </li>
+                    <li class="service-item">
+                        <span class="service-name">Monitoring Bridge</span>
+                        <div class="service-status">
+                            <div class="status-dot" id="monitoring-status"></div>
+                            <span id="monitoring-text">확인 중...</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- AI 텍스트 생성 테스트 -->
+        <div class="grid grid-cols-2 mb-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🧠 AI 텍스트 생성</h3>
+                </div>
+                <form onsubmit="testTextGeneration(event)">
+                    <div class="input-group">
+                        <label class="label" for="ai-prompt">프롬프트</label>
+                        <textarea class="textarea" id="ai-prompt" placeholder="AI에게 질문하거나 분석을 요청하세요...">시스템 메트릭을 분석하고 이상 징후를 감지하는 방법을 설명해주세요.</textarea>
+                    </div>
+                    <div class="input-group">
+                        <label class="label" for="ai-model">모델 선택</label>
+                        <select class="input" id="ai-model">
+                            <option value="">자동 선택</option>
+                            <option value="ollama">Ollama (로컬)</option>
+                            <option value="gemini">Gemini (클라우드)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="generate-btn">
+                        텍스트 생성
+                    </button>
+                </form>
+                <div id="ai-response" class="mt-4"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📈 메트릭 분석</h3>
+                </div>
+                <form onsubmit="testMetricAnalysis(event)">
+                    <div class="input-group">
+                        <label class="label" for="metric-name">메트릭 이름</label>
+                        <input type="text" class="input" id="metric-name" value="cpu_usage" placeholder="cpu_usage, memory_usage, response_time 등">
+                    </div>
+                    <div class="input-group">
+                        <label class="label" for="metric-values">데이터 값 (콤마로 구분)</label>
+                        <input type="text" class="input" id="metric-values" value="45, 67, 89, 95, 12, 78, 56, 90, 85, 92" placeholder="숫자 값들을 콤마로 구분하여 입력">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="analyze-btn">
+                        이상 탐지 분석
+                    </button>
+                </form>
+                <div id="analysis-response" class="mt-4"></div>
+            </div>
+        </div>
+
+        <!-- 시스템 로그 및 활동 -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📋 시스템 활동 로그</h3>
+                <button class="btn btn-secondary" onclick="refreshLogs()">새로고침</button>
+            </div>
+            <div class="activity-log" id="activity-log">
+                <div class="log-entry">
+                    <span class="log-time">--:--:--</span>
+                    <span class="log-level info">[INFO]</span>
+                    <span>시스템 로그를 불러오는 중...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // AIOps API 기본 URL
+        const AIOPS_API_BASE = '/api/v1/aiops';
+        
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSystemStatus();
+            loadActivityLogs();
+            
+            // 정기적으로 상태 업데이트 (30초마다)
+            setInterval(loadSystemStatus, 30000);
+            setInterval(loadActivityLogs, 60000);
+        });
+
+        // 시스템 상태 로드
+        async function loadSystemStatus() {
+            try {
+                const response = await fetch(`${AIOPS_API_BASE}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    updateSystemStatus(data);
+                } else {
+                    updateSystemStatus({ status: 'unhealthy', error: data.error || '알 수 없는 오류' });
+                }
+            } catch (error) {
+                console.error('Failed to load system status:', error);
+                updateSystemStatus({ status: 'error', error: '연결 실패' });
+            }
+        }
+
+        // 시스템 상태 UI 업데이트
+        function updateSystemStatus(data) {
+            const systemStatusDot = document.getElementById('system-status-dot');
+            const systemStatusText = document.getElementById('system-status-text');
+            const overallHealth = document.getElementById('overall-health');
+            const activeServices = document.getElementById('active-services');
+            
+            if (data.status === 'healthy') {
+                systemStatusDot.className = 'status-dot';
+                systemStatusText.textContent = '정상';
+                overallHealth.textContent = '✅ 양호';
+                activeServices.textContent = data.healthyServices || '--';
+                
+                // 개별 서비스 상태 업데이트
+                updateServiceStatus('ollama', data.services?.ollama || 'unknown');
+                updateServiceStatus('gemini', data.services?.gemini || 'unknown');
+                updateServiceStatus('knowledge', data.services?.knowledgeCollector || 'unknown');
+                updateServiceStatus('mlops', data.services?.mlops || 'unknown');
+                updateServiceStatus('analytics', data.services?.analytics || 'unknown');
+                updateServiceStatus('monitoring', data.services?.monitoring || 'unknown');
+                
+            } else {
+                systemStatusDot.className = 'status-dot error';
+                systemStatusText.textContent = data.error || '오류';
+                overallHealth.textContent = '❌ 문제';
+                activeServices.textContent = data.healthyServices || '0';
+            }
+        }
+
+        // 개별 서비스 상태 업데이트
+        function updateServiceStatus(serviceId, status) {
+            const statusDot = document.getElementById(`${serviceId}-status`);
+            const statusText = document.getElementById(`${serviceId}-text`);
+            
+            if (!statusDot || !statusText) return;
+            
+            switch (status) {
+                case 'healthy':
+                case 'active':
+                case true:
+                    statusDot.className = 'status-dot';
+                    statusText.textContent = '정상';
+                    break;
+                case 'warning':
+                    statusDot.className = 'status-dot warning';
+                    statusText.textContent = '경고';
+                    break;
+                case 'error':
+                case 'inactive':
+                case false:
+                    statusDot.className = 'status-dot error';
+                    statusText.textContent = '오류';
+                    break;
+                default:
+                    statusDot.className = 'status-dot warning';
+                    statusText.textContent = '알 수 없음';
+            }
+        }
+
+        // AI 텍스트 생성 테스트
+        async function testTextGeneration(event) {
+            event.preventDefault();
+            
+            const prompt = document.getElementById('ai-prompt').value;
+            const model = document.getElementById('ai-model').value;
+            const responseDiv = document.getElementById('ai-response');
+            const generateBtn = document.getElementById('generate-btn');
+            
+            if (!prompt.trim()) {
+                showAlert(responseDiv, 'error', '프롬프트를 입력해주세요.');
+                return;
+            }
+            
+            generateBtn.textContent = '생성 중...';
+            generateBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`${AIOPS_API_BASE}/generate/text`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        model: model || undefined
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert(responseDiv, 'success', `✅ AI 응답 생성 완료 (${data.metadata?.model || '알 수 없음'} 모델 사용)`);
+                    responseDiv.innerHTML += `
+                        <div class="mt-2 p-3 bg-gray-50 rounded-lg">
+                            <h4 class="font-medium mb-2">AI 응답:</h4>
+                            <p class="text-sm">${data.result}</p>
+                        </div>
+                    `;
+                } else {
+                    showAlert(responseDiv, 'error', `❌ 생성 실패: ${data.error || data.message}`);
+                }
+            } catch (error) {
+                console.error('Text generation failed:', error);
+                showAlert(responseDiv, 'error', `❌ 연결 오류: ${error.message}`);
+            } finally {
+                generateBtn.textContent = '텍스트 생성';
+                generateBtn.disabled = false;
+            }
+        }
+
+        // 메트릭 분석 테스트
+        async function testMetricAnalysis(event) {
+            event.preventDefault();
+            
+            const metricName = document.getElementById('metric-name').value;
+            const metricValuesText = document.getElementById('metric-values').value;
+            const responseDiv = document.getElementById('analysis-response');
+            const analyzeBtn = document.getElementById('analyze-btn');
+            
+            if (!metricName.trim() || !metricValuesText.trim()) {
+                showAlert(responseDiv, 'error', '메트릭 이름과 값을 모두 입력해주세요.');
+                return;
+            }
+            
+            // 콤마로 분리된 값을 숫자 배열로 변환
+            const values = metricValuesText.split(',').map(v => parseFloat(v.trim())).filter(v => !isNaN(v));
+            
+            if (values.length === 0) {
+                showAlert(responseDiv, 'error', '유효한 숫자 값을 입력해주세요.');
+                return;
+            }
+            
+            analyzeBtn.textContent = '분석 중...';
+            analyzeBtn.disabled = true;
+            
+            try {
+                const response = await fetch(`${AIOPS_API_BASE}/analytics/analyze`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        metricName: metricName,
+                        values: values
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showAlert(responseDiv, 'success', '✅ 메트릭 분석 완료');
+                    responseDiv.innerHTML += `
+                        <div class="mt-2 p-3 bg-gray-50 rounded-lg">
+                            <h4 class="font-medium mb-2">분석 결과:</h4>
+                            <pre class="text-sm overflow-auto">${JSON.stringify(data.result, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    showAlert(responseDiv, 'error', `❌ 분석 실패: ${data.error || data.message}`);
+                }
+            } catch (error) {
+                console.error('Metric analysis failed:', error);
+                showAlert(responseDiv, 'error', `❌ 연결 오류: ${error.message}`);
+            } finally {
+                analyzeBtn.textContent = '이상 탐지 분석';
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        // 활동 로그 로드
+        function loadActivityLogs() {
+            const logContainer = document.getElementById('activity-log');
+            const now = new Date();
+            
+            // 샘플 로그 데이터 (실제로는 API에서 가져와야 함)
+            const logs = [
+                { time: now, level: 'info', message: 'AIOps 시스템 상태 확인 완료' },
+                { time: new Date(now.getTime() - 60000), level: 'success', message: 'Ollama 모델 로드 성공' },
+                { time: new Date(now.getTime() - 120000), level: 'info', message: 'Gemini API 연결 확인' },
+                { time: new Date(now.getTime() - 180000), level: 'success', message: 'MLOps 파이프라인 초기화 완료' },
+                { time: new Date(now.getTime() - 240000), level: 'warning', message: '일부 지식 수집 에이전트 지연' },
+            ];
+            
+            logContainer.innerHTML = logs.map(log => `
+                <div class="log-entry">
+                    <span class="log-time">${log.time.toLocaleTimeString('ko-KR')}</span>
+                    <span class="log-level ${log.level}">[${log.level.toUpperCase()}]</span>
+                    <span>${log.message}</span>
+                </div>
+            `).join('');
+        }
+
+        // 알림 메시지 표시
+        function showAlert(container, type, message) {
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+        }
+
+        // 새로고침 함수들
+        function refreshServices() {
+            loadSystemStatus();
+        }
+
+        function refreshMLOps() {
+            loadSystemStatus();
+        }
+
+        function refreshLogs() {
+            loadActivityLogs();
+        }
+    </script>
+</body>
+</html>

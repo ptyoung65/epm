@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS-MON 사용자 여정 맵</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="/components/common-layout.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            color: #4c51bf;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: #6b7280;
+            font-size: 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .controls {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .quick-actions {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .quick-actions h3 {
+            color: #92400e;
+            margin-bottom: 1rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #34d399, #10b981);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            border: 1px solid #10b981;
+            color: #065f46;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            border: 1px solid #3b82f6;
+            color: #1e40af;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        select, input {
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .journey-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+            min-height: 600px;
+        }
+
+        .journey-header {
+            background: #f9fafb;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .journey-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .journey-stats {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .journey-content {
+            position: relative;
+            height: 600px;
+            overflow: hidden;
+        }
+
+        #journeyMap {
+            width: 100%;
+            height: 100%;
+        }
+
+        .node {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .node:hover {
+            transform: scale(1.1);
+        }
+
+        .node circle {
+            fill: #667eea;
+            stroke: #fff;
+            stroke-width: 3px;
+        }
+
+        .node.start-page circle {
+            fill: #10b981;
+        }
+
+        .node.end-page circle {
+            fill: #ef4444;
+        }
+
+        .node.high-traffic circle {
+            fill: #f59e0b;
+        }
+
+        .node text {
+            font-family: inherit;
+            font-size: 12px;
+            fill: #1f2937;
+            text-anchor: middle;
+            dominant-baseline: middle;
+        }
+
+        .link {
+            fill: none;
+            stroke: #9ca3af;
+            stroke-width: 2;
+            marker-end: url(#arrowhead);
+            transition: all 0.3s ease;
+        }
+
+        .link.thick {
+            stroke-width: 4;
+            stroke: #667eea;
+        }
+
+        .link.medium {
+            stroke-width: 3;
+            stroke: #8b5cf6;
+        }
+
+        .link:hover {
+            stroke: #4c51bf;
+            stroke-width: 5;
+        }
+
+        .tooltip {
+            position: absolute;
+            padding: 0.75rem;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            z-index: 10;
+            display: none;
+            max-width: 250px;
+            line-height: 1.4;
+        }
+
+        .legend {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            min-width: 200px;
+        }
+
+        .legend-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .path-analysis {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-top: 2rem;
+        }
+
+        .path-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+        }
+
+        .path-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .path-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .path-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .path-card-title {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 1rem;
+        }
+
+        .path-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .path-step {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem;
+            background: #f9fafb;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem;
+            color: #6b7280;
+        }
+
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 3px solid #e5e7eb;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #fecaca;
+            margin: 1rem 0;
+        }
+
+        .success-message {
+            background: #d1fae5;
+            color: #059669;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #a7f3d0;
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+                margin: 1rem auto;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .journey-header {
+                padding: 1rem;
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .journey-stats {
+                gap: 1rem;
+            }
+            
+            .legend {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin: 1rem;
+            }
+
+            .path-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="airis-content-wrapper">
+    <div class="header">
+        <h1>🗺️ AIRIS-MON 사용자 여정 맵</h1>
+        <p>사용자의 페이지 이동 패턴을 시각적으로 분석하여 사용자 경험을 개선하세요</p>
+    </div>
+
+    <div class="container">
+        <!-- 빠른 테스트 데이터 생성 섹션 -->
+        <div class="quick-actions">
+            <h3>🚀 빠른 시작 - 테스트 세션 생성</h3>
+            <div id="alertContainer"></div>
+            <div class="action-buttons">
+                <button class="btn btn-success" onclick="createSampleSessions()">
+                    🎯 샘플 세션 5개 생성
+                </button>
+                <button class="btn btn-warning" onclick="createRealisticSession()">
+                    🛒 실제 이커머스 시나리오 생성
+                </button>
+                <button class="btn btn-info" onclick="createComplexJourney()">
+                    🔄 복잡한 여정 생성 (20+ 페이지)
+                </button>
+                <button class="btn" onclick="loadExistingSessions()">
+                    📂 기존 세션 불러오기
+                </button>
+            </div>
+            <p style="margin-top: 1rem; color: #6b7280; font-size: 0.9rem;">
+                💡 팁: 테스트 세션을 먼저 생성한 후, 아래에서 시나리오를 선택하고 "여정 맵 생성"을 클릭하세요
+            </p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>분석할 세션 선택</label>
+                <select id="sessionSelect">
+                    <option value="">세션을 선택하세요...</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>여정 유형</label>
+                <select id="journeyType">
+                    <option value="all">전체 여정</option>
+                    <option value="successful">성공적 전환</option>
+                    <option value="abandoned">중단된 여정</option>
+                    <option value="loops">순환 패턴</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>최소 방문 수</label>
+                <input type="number" id="minVisits" value="1" min="1" max="100" placeholder="1">
+            </div>
+            
+            <div class="control-group">
+                <label>레이아웃 타입</label>
+                <select id="layoutType">
+                    <option value="force">포스 다이렉티드</option>
+                    <option value="hierarchical">계층형</option>
+                    <option value="circular">원형</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn" onclick="generateJourneyMap()">🗺️ 여정 맵 생성</button>
+            </div>
+            
+            <div class="control-group">
+                <button class="btn" onclick="exportJourneyMap()" style="background: linear-gradient(135deg, #10b981, #059669);">💾 SVG로 내보내기</button>
+            </div>
+        </div>
+
+        <div class="journey-container">
+            <div class="journey-header">
+                <div class="journey-title">사용자 여정 시각화</div>
+                <div class="journey-stats">
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalPages">0</div>
+                        <div class="stat-label">페이지</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="totalTransitions">0</div>
+                        <div class="stat-label">전환</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="avgPathLength">0</div>
+                        <div class="stat-label">평균 경로</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value" id="bounceRate">0%</div>
+                        <div class="stat-label">이탈률</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="journey-content">
+                <svg id="journeyMap"></svg>
+                <div class="tooltip" id="tooltip"></div>
+                
+                <div class="legend">
+                    <div class="legend-title">페이지 유형</div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #10b981;"></div>
+                        <span>시작 페이지</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #ef4444;"></div>
+                        <span>종료/이탈 페이지</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #f59e0b;"></div>
+                        <span>고트래픽 페이지</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #667eea;"></div>
+                        <span>일반 페이지</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="path-analysis">
+            <div class="path-title">주요 사용자 경로 분석</div>
+            <div class="path-grid" id="pathAnalysis">
+                <!-- 동적으로 생성됨 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 글로벌 변수
+        let journeyData = null;
+        let currentSession = null;
+        let svg, g, simulation;
+        let width, height;
+
+        // 알림 표시 함수
+        function showAlert(message, type = 'success') {
+            const alertContainer = document.getElementById('alertContainer');
+            if (!alertContainer) return;
+            
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+
+        // 샘플 세션 생성 (5개)
+        async function createSampleSessions() {
+            try {
+                const scenarios = ['e-commerce', 'dashboard', 'blog', 'landing', 'support'];
+                const createdSessions = [];
+
+                for (let i = 0; i < 5; i++) {
+                    const scenario = scenarios[i];
+                    const sessionId = await createTestSession(scenario, 10 + Math.floor(Math.random() * 20));
+                    createdSessions.push(sessionId);
+                }
+
+                showAlert(`✅ 5개의 샘플 세션이 생성되었습니다!`, 'success');
+                await loadSessions(); // 세션 목록 새로고침
+                
+                // 첫 번째 세션 자동 선택
+                if (createdSessions[0]) {
+                    document.getElementById('sessionSelect').value = createdSessions[0];
+                }
+            } catch (error) {
+                showAlert('세션 생성 실패: ' + error.message, 'error');
+            }
+        }
+
+        // 실제 이커머스 시나리오 생성
+        async function createRealisticSession() {
+            try {
+                const sessionId = await createEcommerceJourney();
+                showAlert(`✅ 이커머스 세션이 생성되었습니다! (ID: ${sessionId.substring(0, 8)}...)`, 'success');
+                await loadSessions();
+                document.getElementById('sessionSelect').value = sessionId;
+            } catch (error) {
+                showAlert('세션 생성 실패: ' + error.message, 'error');
+            }
+        }
+
+        // 복잡한 여정 생성
+        async function createComplexJourney() {
+            try {
+                const sessionId = await createComplexUserJourney();
+                showAlert(`✅ 복잡한 여정 세션이 생성되었습니다! (20+ 페이지 방문)`, 'success');
+                await loadSessions();
+                document.getElementById('sessionSelect').value = sessionId;
+            } catch (error) {
+                showAlert('세션 생성 실패: ' + error.message, 'error');
+            }
+        }
+
+        // 기존 세션 불러오기
+        async function loadExistingSessions() {
+            await loadSessions();
+            const sessionSelect = document.getElementById('sessionSelect');
+            if (sessionSelect.options.length > 1) {
+                showAlert(`✅ ${sessionSelect.options.length - 1}개의 기존 세션을 불러왔습니다`, 'info');
+            } else {
+                showAlert('기존 세션이 없습니다. 새로운 세션을 생성해주세요.', 'info');
+            }
+        }
+
+        // 테스트 세션 생성 헬퍼 함수
+        async function createTestSession(scenario, eventCount) {
+            // 세션 시작
+            const startResponse = await fetch('/api/session-replay/start-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scenario: `journey_${scenario}`,
+                    metadata: {
+                        testType: 'user_journey',
+                        scenario: scenario,
+                        timestamp: new Date().toISOString()
+                    }
+                })
+            });
+
+            const sessionData = await startResponse.json();
+            const sessionId = sessionData.sessionId;
+
+            // 페이지 방문 이벤트 생성
+            const pages = generatePageSequence(scenario);
+            for (let i = 0; i < eventCount && i < pages.length; i++) {
+                const event = {
+                    type: 'page_load',
+                    timestamp: Date.now() + (i * 1000),
+                    page_url: pages[i],
+                    title: pages[i].split('/').pop() || 'home',
+                    referrer: i > 0 ? pages[i-1] : null,
+                    load_time: Math.floor(Math.random() * 2000) + 500
+                };
+
+                await fetch('/api/session-replay/add-event', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        event: event
+                    })
+                });
+            }
+
+            // 세션 종료
+            await fetch('/api/session-replay/end-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: sessionId,
+                    summary: { pageViews: eventCount }
+                })
+            });
+
+            return sessionId;
+        }
+
+        // 이커머스 여정 생성
+        async function createEcommerceJourney() {
+            const journey = [
+                '/', '/products', '/products/laptop', '/products/laptop/reviews',
+                '/products/laptop', '/cart', '/checkout', '/checkout/shipping',
+                '/checkout/payment', '/checkout/confirm', '/order/success'
+            ];
+
+            return await createJourneyWithPages(journey, 'e-commerce');
+        }
+
+        // 복잡한 사용자 여정 생성
+        async function createComplexUserJourney() {
+            const journey = [
+                '/', '/about', '/products', '/products/category/electronics',
+                '/products/laptop', '/products/laptop/compare', '/products/mouse',
+                '/blog', '/blog/tech-tips', '/support', '/support/contact',
+                '/products', '/products/keyboard', '/cart', '/products/monitor',
+                '/cart', '/account/login', '/account/dashboard', '/account/orders',
+                '/checkout', '/checkout/shipping', '/checkout/payment', '/order/success'
+            ];
+
+            return await createJourneyWithPages(journey, 'complex');
+        }
+
+        // 페이지 시퀀스로 여정 생성
+        async function createJourneyWithPages(pages, scenario) {
+            const startResponse = await fetch('/api/session-replay/start-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scenario: `journey_${scenario}`,
+                    metadata: {
+                        testType: 'user_journey',
+                        scenario: scenario,
+                        timestamp: new Date().toISOString()
+                    }
+                })
+            });
+
+            const sessionData = await startResponse.json();
+            const sessionId = sessionData.sessionId;
+
+            for (let i = 0; i < pages.length; i++) {
+                const event = {
+                    type: 'page_load',
+                    timestamp: Date.now() + (i * 2000),
+                    page_url: pages[i],
+                    title: pages[i].split('/').pop() || 'home',
+                    referrer: i > 0 ? pages[i-1] : null,
+                    load_time: Math.floor(Math.random() * 2000) + 500,
+                    duration: Math.floor(Math.random() * 5000) + 1000
+                };
+
+                await fetch('/api/session-replay/add-event', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        event: event
+                    })
+                });
+
+                // 페이지별 추가 이벤트 (클릭, 스크롤 등)
+                if (Math.random() > 0.5) {
+                    await fetch('/api/session-replay/add-event', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            sessionId: sessionId,
+                            event: {
+                                type: 'click',
+                                timestamp: Date.now() + (i * 2000) + 500,
+                                page_url: pages[i],
+                                target: { tagName: 'button', text: 'Action' }
+                            }
+                        })
+                    });
+                }
+            }
+
+            await fetch('/api/session-replay/end-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: sessionId,
+                    summary: { 
+                        pageViews: pages.length,
+                        journeyComplete: true 
+                    }
+                })
+            });
+
+            return sessionId;
+        }
+
+        // 시나리오별 페이지 시퀀스 생성
+        function generatePageSequence(scenario) {
+            const sequences = {
+                'e-commerce': [
+                    '/', '/products', '/products/item1', '/cart', 
+                    '/checkout', '/payment', '/confirmation'
+                ],
+                'dashboard': [
+                    '/login', '/dashboard', '/dashboard/analytics',
+                    '/dashboard/reports', '/dashboard/settings', '/dashboard'
+                ],
+                'blog': [
+                    '/', '/blog', '/blog/post1', '/blog/post2',
+                    '/about', '/contact', '/'
+                ],
+                'landing': [
+                    '/', '/features', '/pricing', '/testimonials',
+                    '/signup', '/thank-you'
+                ],
+                'support': [
+                    '/', '/support', '/support/docs', '/support/faq',
+                    '/support/contact', '/support/ticket'
+                ]
+            };
+
+            return sequences[scenario] || sequences['e-commerce'];
+        }
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSessions();
+            initializeVisualization();
+            
+            // 시작 시 도움말 표시
+            showAlert('👋 시작하려면 "샘플 세션 5개 생성" 버튼을 클릭하세요!', 'info');
+        });
+
+        // 세션 목록 로드
+        async function loadSessions() {
+            try {
+                // 모든 시나리오의 세션 가져오기 (journey_ 시나리오 포함)
+                const scenarios = [
+                    'journey_e-commerce', 'journey_dashboard', 'journey_blog', 
+                    'journey_landing', 'journey_support', 'journey_complex',
+                    'bug_payment', 'ux_navigation', 'security_attack', 
+                    'performance_slow', 'enhanced_recording', 'e2e_test_e-commerce',
+                    'e2e_test_dashboard', 'e2e_test_search', 'e2e_test_form',
+                    'e2e_test_media', 'e2e_test_api-heavy', 'e2e_test_realtime'
+                ];
+                
+                const select = document.getElementById('sessionSelect');
+                
+                // 기존 옵션 초기화 (첫 번째 빈 옵션 제외)
+                while (select.options.length > 1) {
+                    select.remove(1);
+                }
+                
+                let totalSessionCount = 0;
+                
+                for (const scenario of scenarios) {
+                    const response = await fetch(`/api/session-replay/sessions/${scenario}`);
+                    const data = await response.json();
+                    
+                    if (data.success && data.sessions && data.sessions.length > 0) {
+                        const optgroup = document.createElement('optgroup');
+                        optgroup.label = getScenarioName(scenario);
+                        
+                        data.sessions.forEach(session => {
+                            const option = document.createElement('option');
+                            option.value = session.id;
+                            const timestamp = session.startTime ? new Date(session.startTime).toLocaleTimeString() : '';
+                            option.textContent = `${session.id.substring(0, 8)}... (${session.eventCount || 0}개 이벤트) ${timestamp}`;
+                            optgroup.appendChild(option);
+                            totalSessionCount++;
+                        });
+                        
+                        select.appendChild(optgroup);
+                    }
+                }
+                
+                // 세션이 없을 경우 안내 메시지
+                if (totalSessionCount === 0) {
+                    const option = document.createElement('option');
+                    option.value = "";
+                    option.textContent = "세션이 없습니다. 위의 버튼으로 생성하세요.";
+                    option.disabled = true;
+                    select.appendChild(option);
+                }
+                
+                console.log(`총 ${totalSessionCount}개 세션 로드 완료`);
+                
+            } catch (error) {
+                console.error('세션 로드 오류:', error);
+                showAlert('세션 목록을 불러오는 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        // 시나리오 이름 변환
+        function getScenarioName(scenario) {
+            const names = {
+                'bug_payment': '🐛 버그 재현 시나리오',
+                'ux_navigation': '📊 UX/UI 개선 시나리오',
+                'security_attack': '🚨 보안 공격 시나리오',
+                'performance_slow': '⚡ 성능 문제 시나리오',
+                'enhanced_recording': '🎯 향상된 녹화 세션'
+            };
+            return names[scenario] || scenario;
+        }
+
+        // 시각화 초기화
+        function initializeVisualization() {
+            const container = document.querySelector('.journey-content');
+            width = container.clientWidth;
+            height = container.clientHeight;
+
+            svg = d3.select('#journeyMap')
+                .attr('width', width)
+                .attr('height', height);
+
+            // 마커 정의 (화살표)
+            svg.append('defs').append('marker')
+                .attr('id', 'arrowhead')
+                .attr('viewBox', '0 -5 10 10')
+                .attr('refX', 15)
+                .attr('refY', -0.5)
+                .attr('markerWidth', 6)
+                .attr('markerHeight', 6)
+                .attr('orient', 'auto')
+                .append('path')
+                .attr('d', 'M0,-5L10,0L0,5')
+                .attr('fill', '#9ca3af');
+
+            g = svg.append('g');
+            
+            // 줌 기능 추가
+            const zoom = d3.zoom()
+                .scaleExtent([0.1, 4])
+                .on('zoom', (event) => {
+                    g.attr('transform', event.transform);
+                });
+
+            svg.call(zoom);
+
+            // 기본 메시지 표시
+            showDefaultMessage();
+        }
+
+        // 기본 메시지 표시
+        function showDefaultMessage() {
+            g.append('text')
+                .attr('x', width / 2)
+                .attr('y', height / 2)
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'middle')
+                .style('font-size', '18px')
+                .style('fill', '#6b7280')
+                .text('세션을 선택하고 여정 맵 생성 버튼을 클릭하세요');
+        }
+
+        // 여정 맵 생성
+        async function generateJourneyMap() {
+            const sessionId = document.getElementById('sessionSelect').value;
+            if (!sessionId) {
+                showError('분석할 세션을 선택해주세요.');
+                return;
+            }
+
+            try {
+                showLoading();
+                
+                // 세션 데이터 가져오기
+                const response = await fetch(`/api/session-replay/session/${sessionId}`);
+                const data = await response.json();
+
+                if (!data.success || !data.session) {
+                    throw new Error('세션 데이터를 찾을 수 없습니다.');
+                }
+
+                currentSession = data.session;
+                
+                // 여정 데이터 처리
+                const journeyData = processJourneyData(data.session.events);
+                
+                // 여정 맵 렌더링
+                renderJourneyMap(journeyData);
+                
+                // 통계 업데이트
+                updateJourneyStats(journeyData);
+                
+                // 경로 분석 업데이트
+                updatePathAnalysis(journeyData);
+                
+                showSuccess('사용자 여정 맵이 성공적으로 생성되었습니다!');
+                
+            } catch (error) {
+                console.error('여정 맵 생성 오류:', error);
+                showError('여정 맵 생성 중 오류가 발생했습니다: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 여정 데이터 처리
+        function processJourneyData(events) {
+            const journeyType = document.getElementById('journeyType').value;
+            const minVisits = parseInt(document.getElementById('minVisits').value) || 1;
+
+            // 페이지 로드 이벤트 필터링 (rrweb_event 래핑 고려)
+            const pageLoadEvents = events
+                .filter(event => {
+                    // rrweb_event로 래핑된 page_load 이벤트 처리
+                    if (event.type === 'rrweb_event' && event.rrwebType === 'page_load' && event.originalEvent) {
+                        return event.originalEvent.page_url;
+                    }
+                    // 직접적인 page_load 이벤트 처리
+                    return event.type === 'page_load' && event.page_url;
+                })
+                .map(event => {
+                    // rrweb_event인 경우 originalEvent 데이터를 사용
+                    if (event.type === 'rrweb_event' && event.originalEvent) {
+                        return {
+                            ...event.originalEvent,
+                            timestamp: event.timestamp || event.originalEvent.timestamp,
+                            id: event.id
+                        };
+                    }
+                    return event;
+                })
+                .sort((a, b) => a.timestamp - b.timestamp);
+
+            if (pageLoadEvents.length === 0) {
+                throw new Error('페이지 로드 이벤트가 없습니다.');
+            }
+
+            // 페이지별 방문 수 계산
+            const pageVisits = {};
+            const transitions = {};
+            const paths = [];
+            let currentPath = [];
+
+            pageLoadEvents.forEach((event, index) => {
+                const page = event.page_url;
+                
+                // 페이지 방문 수 증가
+                pageVisits[page] = (pageVisits[page] || 0) + 1;
+                
+                // 경로 추가
+                currentPath.push({
+                    page: page,
+                    timestamp: event.timestamp,
+                    index: index
+                });
+                
+                // 다음 페이지로의 전환 계산
+                if (index > 0) {
+                    const prevPage = pageLoadEvents[index - 1].page_url;
+                    const transitionKey = `${prevPage} -> ${page}`;
+                    transitions[transitionKey] = (transitions[transitionKey] || 0) + 1;
+                }
+            });
+
+            // 최소 방문 수 필터링
+            const filteredPages = Object.keys(pageVisits).filter(page => 
+                pageVisits[page] >= minVisits
+            );
+
+            // 노드 생성
+            const nodes = filteredPages.map(page => {
+                const visits = pageVisits[page];
+                const isStart = page === pageLoadEvents[0].page_url;
+                const isEnd = page === pageLoadEvents[pageLoadEvents.length - 1].page_url;
+                const isHighTraffic = visits > Math.max(2, Object.values(pageVisits).reduce((a, b) => a + b, 0) / Object.keys(pageVisits).length);
+
+                return {
+                    id: page,
+                    page: page,
+                    visits: visits,
+                    isStart,
+                    isEnd,
+                    isHighTraffic,
+                    type: isStart ? 'start-page' : isEnd ? 'end-page' : isHighTraffic ? 'high-traffic' : 'normal'
+                };
+            });
+
+            // 링크 생성
+            const links = [];
+            Object.entries(transitions).forEach(([transition, count]) => {
+                const [source, target] = transition.split(' -> ');
+                if (filteredPages.includes(source) && filteredPages.includes(target)) {
+                    links.push({
+                        source: source,
+                        target: target,
+                        count: count,
+                        thickness: count > 2 ? 'thick' : count > 1 ? 'medium' : 'thin'
+                    });
+                }
+            });
+
+            return {
+                nodes,
+                links,
+                pageVisits,
+                transitions,
+                paths: [currentPath]
+            };
+        }
+
+        // 여정 맵 렌더링
+        function renderJourneyMap(data) {
+            // 기존 요소 제거
+            g.selectAll('*').remove();
+
+            const layoutType = document.getElementById('layoutType').value;
+
+            // 레이아웃에 따른 시뮬레이션 설정
+            let simulation;
+            
+            switch (layoutType) {
+                case 'hierarchical':
+                    simulation = createHierarchicalLayout(data);
+                    break;
+                case 'circular':
+                    simulation = createCircularLayout(data);
+                    break;
+                default:
+                    simulation = createForceLayout(data);
+            }
+
+            // 링크 그리기
+            const link = g.append('g')
+                .attr('class', 'links')
+                .selectAll('path')
+                .data(data.links)
+                .enter().append('path')
+                .attr('class', d => `link ${d.thickness}`)
+                .on('mouseover', showLinkTooltip)
+                .on('mouseout', hideTooltip);
+
+            // 노드 그리기
+            const node = g.append('g')
+                .attr('class', 'nodes')
+                .selectAll('.node')
+                .data(data.nodes)
+                .enter().append('g')
+                .attr('class', d => `node ${d.type}`)
+                .on('mouseover', showNodeTooltip)
+                .on('mouseout', hideTooltip)
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended));
+
+            // 노드 원 그리기
+            node.append('circle')
+                .attr('r', d => Math.max(20, Math.sqrt(d.visits) * 8));
+
+            // 노드 텍스트 그리기
+            node.append('text')
+                .text(d => getPageName(d.page))
+                .attr('dy', 0.35)
+                .style('font-weight', 'bold');
+
+            // 방문 수 텍스트
+            node.append('text')
+                .text(d => `${d.visits}회`)
+                .attr('dy', 12)
+                .style('font-size', '10px')
+                .style('fill', '#666');
+
+            // 시뮬레이션 tick 이벤트
+            simulation.on('tick', () => {
+                link.attr('d', linkPath);
+                node.attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+
+            // 전역 변수에 저장
+            window.currentSimulation = simulation;
+            journeyData = data;
+        }
+
+        // 포스 레이아웃 생성
+        function createForceLayout(data) {
+            return d3.forceSimulation(data.nodes)
+                .force('link', d3.forceLink(data.links).id(d => d.id).distance(100).strength(0.5))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(d => Math.max(25, Math.sqrt(d.visits) * 10)));
+        }
+
+        // 계층형 레이아웃 생성
+        function createHierarchicalLayout(data) {
+            // 시작 페이지부터 레벨별로 배치
+            const levels = {};
+            const visited = new Set();
+            
+            // BFS로 레벨 할당
+            const queue = [{ node: data.nodes.find(n => n.isStart), level: 0 }];
+            while (queue.length > 0) {
+                const { node, level } = queue.shift();
+                if (!node || visited.has(node.id)) continue;
+                
+                visited.add(node.id);
+                if (!levels[level]) levels[level] = [];
+                levels[level].push(node);
+                
+                // 다음 레벨 노드들 추가
+                data.links
+                    .filter(link => link.source === node.id)
+                    .forEach(link => {
+                        const targetNode = data.nodes.find(n => n.id === link.target);
+                        if (targetNode && !visited.has(targetNode.id)) {
+                            queue.push({ node: targetNode, level: level + 1 });
+                        }
+                    });
+            }
+
+            // 레벨별 위치 설정
+            Object.entries(levels).forEach(([level, nodes]) => {
+                const y = (height / (Object.keys(levels).length + 1)) * (parseInt(level) + 1);
+                nodes.forEach((node, index) => {
+                    node.fx = (width / (nodes.length + 1)) * (index + 1);
+                    node.fy = y;
+                });
+            });
+
+            return d3.forceSimulation(data.nodes)
+                .force('link', d3.forceLink(data.links).id(d => d.id).distance(80))
+                .force('charge', d3.forceManyBody().strength(-200))
+                .force('collision', d3.forceCollide().radius(30));
+        }
+
+        // 원형 레이아웃 생성
+        function createCircularLayout(data) {
+            const radius = Math.min(width, height) / 3;
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            data.nodes.forEach((node, index) => {
+                const angle = (2 * Math.PI * index) / data.nodes.length;
+                node.fx = centerX + radius * Math.cos(angle);
+                node.fy = centerY + radius * Math.sin(angle);
+            });
+
+            return d3.forceSimulation(data.nodes)
+                .force('link', d3.forceLink(data.links).id(d => d.id).distance(50))
+                .force('collision', d3.forceCollide().radius(35));
+        }
+
+        // 링크 경로 생성
+        function linkPath(d) {
+            const dx = d.target.x - d.source.x;
+            const dy = d.target.y - d.source.y;
+            const dr = Math.sqrt(dx * dx + dy * dy) * 0.5;
+            return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
+        }
+
+        // 페이지 이름 축약
+        function getPageName(url) {
+            const names = {
+                '/checkout': '결제',
+                '/products': '상품',
+                '/dashboard': '대시보드',
+                '/login': '로그인',
+                '/': '홈',
+                '/cart': '장바구니',
+                '/profile': '프로필'
+            };
+            return names[url] || url.split('/').pop() || '홈';
+        }
+
+        // 툴팁 표시
+        function showNodeTooltip(event, d) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.innerHTML = `
+                <strong>${getPageName(d.page)}</strong><br>
+                URL: ${d.page}<br>
+                방문 수: ${d.visits}회<br>
+                유형: ${getNodeTypeText(d.type)}
+            `;
+            tooltip.style.display = 'block';
+            tooltip.style.left = (event.pageX + 10) + 'px';
+            tooltip.style.top = (event.pageY - 10) + 'px';
+        }
+
+        function showLinkTooltip(event, d) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.innerHTML = `
+                <strong>페이지 전환</strong><br>
+                ${getPageName(d.source.page || d.source)} → ${getPageName(d.target.page || d.target)}<br>
+                전환 수: ${d.count}회
+            `;
+            tooltip.style.display = 'block';
+            tooltip.style.left = (event.pageX + 10) + 'px';
+            tooltip.style.top = (event.pageY - 10) + 'px';
+        }
+
+        function hideTooltip() {
+            document.getElementById('tooltip').style.display = 'none';
+        }
+
+        function getNodeTypeText(type) {
+            const types = {
+                'start-page': '시작 페이지',
+                'end-page': '종료 페이지',
+                'high-traffic': '고트래픽 페이지',
+                'normal': '일반 페이지'
+            };
+            return types[type] || '일반 페이지';
+        }
+
+        // 드래그 이벤트 핸들러
+        function dragstarted(event, d) {
+            if (!event.active) window.currentSimulation?.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) window.currentSimulation?.alphaTarget(0);
+        }
+
+        // 통계 업데이트
+        function updateJourneyStats(data) {
+            const totalPages = data.nodes.length;
+            const totalTransitions = data.links.reduce((sum, link) => sum + link.count, 0);
+            const avgPathLength = data.paths.length > 0 ? 
+                data.paths.reduce((sum, path) => sum + path.length, 0) / data.paths.length : 0;
+            const bounceRate = data.nodes.filter(n => n.visits === 1).length / totalPages * 100;
+
+            document.getElementById('totalPages').textContent = totalPages;
+            document.getElementById('totalTransitions').textContent = totalTransitions;
+            document.getElementById('avgPathLength').textContent = avgPathLength.toFixed(1);
+            document.getElementById('bounceRate').textContent = bounceRate.toFixed(0) + '%';
+        }
+
+        // 경로 분석 업데이트
+        function updatePathAnalysis(data) {
+            const container = document.getElementById('pathAnalysis');
+            container.innerHTML = '';
+
+            // 가장 인기 있는 경로 찾기
+            const popularPaths = findPopularPaths(data);
+            
+            popularPaths.forEach((path, index) => {
+                const card = document.createElement('div');
+                card.className = 'path-card';
+                
+                const title = document.createElement('div');
+                title.className = 'path-card-title';
+                title.textContent = `인기 경로 ${index + 1} (${path.count}회)`;
+                card.appendChild(title);
+                
+                const steps = document.createElement('div');
+                steps.className = 'path-steps';
+                
+                path.steps.forEach((step, stepIndex) => {
+                    const stepDiv = document.createElement('div');
+                    stepDiv.className = 'path-step';
+                    
+                    const stepNumber = document.createElement('div');
+                    stepNumber.className = 'step-number';
+                    stepNumber.textContent = stepIndex + 1;
+                    stepDiv.appendChild(stepNumber);
+                    
+                    const stepText = document.createElement('span');
+                    stepText.textContent = getPageName(step);
+                    stepDiv.appendChild(stepText);
+                    
+                    steps.appendChild(stepDiv);
+                });
+                
+                card.appendChild(steps);
+                container.appendChild(card);
+            });
+        }
+
+        // 인기 경로 찾기
+        function findPopularPaths(data) {
+            // 링크 기반으로 경로 구성
+            const pathCounts = {};
+            
+            // 시작 페이지부터 DFS로 경로 탐색
+            const startNodes = data.nodes.filter(n => n.isStart);
+            
+            startNodes.forEach(startNode => {
+                const paths = findAllPaths(startNode.id, data.links, data.nodes);
+                paths.forEach(path => {
+                    const pathKey = path.join(' -> ');
+                    pathCounts[pathKey] = (pathCounts[pathKey] || 0) + 1;
+                });
+            });
+
+            // 상위 5개 경로 반환
+            return Object.entries(pathCounts)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 5)
+                .map(([path, count]) => ({
+                    steps: path.split(' -> '),
+                    count
+                }));
+        }
+
+        // 모든 경로 찾기 (DFS)
+        function findAllPaths(startId, links, nodes, visited = new Set(), currentPath = []) {
+            if (visited.has(startId)) return [];
+            
+            visited.add(startId);
+            currentPath.push(startId);
+            
+            const outgoingLinks = links.filter(link => link.source === startId || (link.source.id && link.source.id === startId));
+            
+            if (outgoingLinks.length === 0) {
+                // 경로 종료
+                const result = [currentPath.slice()];
+                visited.delete(startId);
+                currentPath.pop();
+                return result;
+            }
+            
+            const allPaths = [];
+            outgoingLinks.forEach(link => {
+                const targetId = link.target.id || link.target;
+                const paths = findAllPaths(targetId, links, nodes, visited, currentPath);
+                allPaths.push(...paths);
+            });
+            
+            visited.delete(startId);
+            currentPath.pop();
+            return allPaths;
+        }
+
+        // 내보내기
+        function exportJourneyMap() {
+            if (!journeyData) {
+                showError('먼저 여정 맵을 생성해주세요.');
+                return;
+            }
+            
+            const svgElement = document.getElementById('journeyMap');
+            const svgString = new XMLSerializer().serializeToString(svgElement);
+            const blob = new Blob([svgString], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.download = `user-journey-${currentSession?.id || 'unknown'}-${Date.now()}.svg`;
+            link.href = url;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            showSuccess('여정 맵 SVG 파일이 다운로드되었습니다!');
+        }
+
+        // UI 헬퍼 함수들
+        function showLoading() {
+            const container = document.querySelector('.journey-content');
+            if (!document.getElementById('loadingOverlay')) {
+                const overlay = document.createElement('div');
+                overlay.id = 'loadingOverlay';
+                overlay.className = 'loading';
+                overlay.innerHTML = `
+                    <div class="loading-spinner"></div>
+                    <p>여정 맵을 생성하고 있습니다...</p>
+                `;
+                container.appendChild(overlay);
+            }
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        function showError(message) {
+            const container = document.querySelector('.container');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            container.insertBefore(errorDiv, container.firstChild);
+            
+            setTimeout(() => errorDiv.remove(), 5000);
+        }
+
+        function showSuccess(message) {
+            const container = document.querySelector('.container');
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-message';
+            successDiv.textContent = message;
+            container.insertBefore(successDiv, container.firstChild);
+            
+            setTimeout(() => successDiv.remove(), 3000);
+        }
+
+        // 창 크기 변경 시 재조정
+        window.addEventListener('resize', () => {
+            const container = document.querySelector('.journey-content');
+            const newWidth = container.clientWidth;
+            const newHeight = container.clientHeight;
+            
+            if (newWidth !== width || newHeight !== height) {
+                width = newWidth;
+                height = newHeight;
+                
+                d3.select('#journeyMap')
+                    .attr('width', width)
+                    .attr('height', height);
+                
+                if (window.currentSimulation) {
+                    window.currentSimulation.force('center', d3.forceCenter(width / 2, height / 2));
+                    window.currentSimulation.alpha(0.3).restart();
+                }
+            }
+        });
+    </script>
+    </div>
+</body>
+</html>

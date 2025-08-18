@@ -1,0 +1,104 @@
+# 테스트 데이터 생성기 전용 Docker 이미지
+FROM node:18-alpine
+
+WORKDIR /app
+
+# 시스템 의존성 설치
+RUN apk add --no-cache curl bash tzdata \
+    && cp /usr/share/zoneinfo/Asia/Seoul /etc/localtime \
+    && echo "Asia/Seoul" > /etc/timezone
+
+# 환경 설정
+ENV NODE_ENV=production
+ENV TZ=Asia/Seoul
+
+# 데이터 생성기 의존성
+RUN npm init -y && \
+    npm install kafkajs @clickhouse/client ioredis uuid @faker-js/faker chalk
+
+# 데이터 생성기 스크립트 생성
+RUN echo 'const kafka = require("kafkajs"); \
+const { ClickHouseClient } = require("@clickhouse/client"); \
+const Redis = require("ioredis"); \
+const { v4: uuidv4 } = require("uuid"); \
+const { faker } = require("@faker-js/faker"); \
+\
+class ContinuousDataGenerator { \
+  constructor() { \
+    this.kafka = kafka({ \
+      clientId: "test-data-generator", \
+      brokers: [process.env.KAFKA_BROKERS || "kafka:9092"] \
+    }); \
+    this.producer = null; \
+    this.clickhouse = new ClickHouseClient({ \
+      host: `http://${process.env.CLICKHOUSE_HOST || "clickhouse"}:8123`, \
+      database: "airis_test" \
+    }); \
+    this.redis = new Redis({ \
+      host: process.env.REDIS_HOST || "redis", \
+      port: 6379 \
+    }); \
+  } \
+\
+  async initialize() { \
+    this.producer = this.kafka.producer(); \
+    await this.producer.connect(); \
+    console.log("📊 데이터 생성기 초기화 완료"); \
+  } \
+\
+  async generateMetrics() { \
+    const metrics = Array.from({length: parseInt(process.env.BATCH_SIZE) || 50}, () => ({ \
+      id: uuidv4(), \
+      timestamp: new Date().toISOString(), \
+      metric_name: ["cpu_usage", "memory_usage", "disk_usage"][Math.floor(Math.random()*3)], \
+      value: Math.random() * 100, \
+      service: ["api-gateway", "aiops", "session-replay"][Math.floor(Math.random()*3)] \
+    })); \
+\
+    await this.producer.send({ \
+      topic: "test_metrics", \
+      messages: metrics.map(m => ({key: m.id, value: JSON.stringify(m)})) \
+    }); \
+\
+    console.log(`📊 ${metrics.length}개 메트릭 생성됨`); \
+  } \
+\
+  async generateEvents() { \
+    const events = Array.from({length: 20}, () => ({ \
+      id: uuidv4(), \
+      timestamp: new Date().toISOString(), \
+      event_type: ["user_action", "system_event", "error_event"][Math.floor(Math.random()*3)], \
+      message: faker.lorem.sentence(), \
+      user_id: `user_${Math.floor(Math.random()*1000)}` \
+    })); \
+\
+    await this.producer.send({ \
+      topic: "test_events", \
+      messages: events.map(e => ({key: e.id, value: JSON.stringify(e)})) \
+    }); \
+\
+    console.log(`🎯 ${events.length}개 이벤트 생성됨`); \
+  } \
+\
+  async start() { \
+    await this.initialize(); \
+    const interval = parseInt(process.env.GENERATION_INTERVAL) || 10000; \
+\
+    setInterval(async () => { \
+      try { \
+        await this.generateMetrics(); \
+        await this.generateEvents(); \
+      } catch (error) { \
+        console.error("데이터 생성 오류:", error.message); \
+      } \
+    }, interval); \
+\
+    console.log(`🚀 연속 데이터 생성 시작 (${interval}ms 간격)`); \
+  } \
+} \
+\
+const generator = new ContinuousDataGenerator(); \
+generator.start().catch(console.error);' > generator.js
+
+# 시작 명령
+CMD ["node", "generator.js"]

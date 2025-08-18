@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trace 분석 대시보드 - AIRIS-MON</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="components/common-layout.js"></script>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #ffffff;
+            --border-color: #e0e0e0;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --accent-blue: #0d6efd;
+            --accent-green: #198754;
+            --accent-yellow: #ffc107;
+            --accent-red: #dc3545;
+            --accent-purple: #6f42c1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .analysis-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0 auto;
+            max-width: 1400px;
+            padding: 0 20px;
+            background: var(--bg-primary);
+        }
+
+        /* 팝업 창에서는 사이드바 여백 제거 */
+        .popup-analysis-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0 auto;
+            max-width: 1400px;
+            padding: 0 20px;
+            background: var(--bg-primary);
+        }
+
+        /* 상단 1/3: 애플리케이션 성능 Bar Chart */
+        .top-section {
+            height: 33.33vh;
+            background: var(--bg-secondary);
+            border-bottom: 2px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            min-height: 60px;
+        }
+
+        .top-section.collapsed {
+            height: 60px;
+            padding: 10px 20px;
+        }
+
+        .top-section.collapsed .chart-container {
+            display: none;
+        }
+
+        .top-section.expanded {
+            height: 80vh;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-control-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .section-control-btn:hover {
+            background: var(--accent-blue);
+            color: var(--text-primary);
+            border-color: var(--accent-blue);
+        }
+
+        .collapse-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 16px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .collapse-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .collapse-btn.collapsed {
+            transform: rotate(180deg);
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .time-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .time-range-btn {
+            padding: 6px 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .time-range-btn:hover,
+        .time-range-btn.active {
+            background: var(--accent-blue);
+            color: var(--text-primary);
+            border-color: var(--accent-blue);
+        }
+
+        .chart-container {
+            flex: 1;
+            position: relative;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        /* 중간 2/3: Trace 정보 */
+        .middle-section {
+            height: 33.33vh;
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+            min-height: 60px;
+        }
+
+        .middle-section.collapsed {
+            height: 60px;
+        }
+
+        .middle-section.collapsed .panel-content {
+            display: none;
+        }
+
+        .middle-section.expanded {
+            height: 80vh;
+        }
+
+        .trace-list-panel {
+            width: 50%;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .span-detail-panel {
+            width: 50%;
+            background: var(--bg-secondary);
+            display: flex;
+            flex-direction: column;
+            padding-left: 0;
+        }
+
+        .panel-header {
+            padding: 15px 10px 15px 5px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-tertiary);
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+
+        .panel-content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        /* Trace 목록 스타일 */
+        .trace-item {
+            padding: 12px;
+            margin: 8px 0;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .trace-item:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent-blue);
+        }
+
+        .trace-item.selected {
+            background: var(--accent-blue);
+            color: var(--bg-primary);
+            border-color: var(--accent-blue);
+        }
+
+        .trace-id {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .trace-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .trace-item.selected .trace-info {
+            color: var(--bg-secondary);
+        }
+
+        /* Span 목록 스타일 */
+        .span-item {
+            padding: 10px;
+            margin: 6px 0;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .span-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        /* Waterfall Chart 스타일 */
+        .waterfall-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+        }
+
+        .waterfall-header {
+            display: flex;
+            background: var(--bg-secondary);
+            border-bottom: 2px solid var(--border-color);
+            padding: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .waterfall-labels {
+            width: 180px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            padding: 0 4px 0 0;
+        }
+
+        .label-column {
+            padding: 2px 0;
+        }
+
+        .waterfall-timeline {
+            flex: 1;
+            position: relative;
+            height: 40px;
+            border-left: 1px solid var(--border-color);
+        }
+
+        .timeline-tick {
+            position: absolute;
+            top: 0;
+            height: 100%;
+            border-left: 1px solid var(--border-color);
+            font-size: 10px;
+            color: var(--text-secondary);
+            padding-left: 4px;
+            display: flex;
+            align-items: center;
+        }
+
+        .waterfall-body {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+
+        .waterfall-row {
+            display: flex;
+            height: 40px;
+            border-bottom: 1px solid var(--border-color);
+            align-items: center;
+        }
+
+        .waterfall-row:hover {
+            background: var(--bg-secondary);
+        }
+
+        .span-labels {
+            width: 180px;
+            height: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 0 4px 0 0;
+            border-right: 1px solid var(--border-color);
+            font-size: 11px;
+        }
+
+        .span-service {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .span-operation {
+            color: var(--text-secondary);
+            font-size: 10px;
+        }
+
+        .span-timeline {
+            flex: 1;
+            position: relative;
+            height: 40px;
+            display: flex;
+            align-items: center;
+        }
+
+        .span-bar {
+            position: absolute;
+            height: 20px;
+            top: 4px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 2px;
+        }
+
+        .span-bar:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+
+        .span-bar.error {
+            border: 2px solid var(--accent-red);
+        }
+
+        .span-bar.success {
+            opacity: 0.8;
+        }
+
+        .span-duration-label {
+            color: white;
+            font-size: 9px;
+            font-weight: 600;
+            padding-left: 4px;
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .span-id {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: var(--accent-purple);
+        }
+
+        .span-duration {
+            color: var(--accent-yellow);
+            font-weight: 500;
+        }
+
+        .span-operation {
+            color: var(--text-secondary);
+            font-size: 11px;
+        }
+
+        /* 하단 1/3: 세션 리플레이 및 프로그램 리스트 */
+        .bottom-section {
+            height: 33.33vh;
+            display: flex;
+            background: var(--bg-secondary);
+            transition: all 0.3s ease;
+            min-height: 60px;
+        }
+
+        .bottom-section.collapsed {
+            height: 60px;
+        }
+
+        .bottom-section.collapsed .panel-content {
+            display: none;
+        }
+
+        .bottom-section.expanded {
+            height: 80vh;
+        }
+
+        .session-panel {
+            width: 50%;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .program-panel {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .session-item, .program-item {
+            padding: 10px;
+            margin: 6px 0;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .session-item:hover, .program-item:hover {
+            background: var(--bg-primary);
+            border-color: var(--accent-green);
+        }
+
+        .session-id {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--accent-green);
+            font-weight: bold;
+        }
+
+        .session-info, .program-info {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .program-name {
+            font-size: 13px;
+            color: var(--accent-yellow);
+            font-weight: 500;
+        }
+
+        /* 로딩 및 빈 상태 */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--border-color);
+            border-top: 2px solid var(--accent-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 스크롤바 스타일 */
+        .panel-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .panel-content::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        .panel-content::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        .panel-content::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* 차트 툴팁 스타일 */
+        .chart-tooltip {
+            background: var(--bg-primary) !important;
+            border: 1px solid var(--border-color) !important;
+            color: var(--text-primary) !important;
+            border-radius: 4px !important;
+            padding: 8px !important;
+            font-size: 12px !important;
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .analysis-container {
+                margin-left: 0;
+            }
+            
+            .middle-section, .bottom-section {
+                flex-direction: column;
+            }
+            
+            .trace-list-panel, .span-detail-panel,
+            .session-panel, .program-panel {
+                width: 100%;
+                height: 50%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 상단 1/3: 애플리케이션 성능 Bar Chart -->
+    <div class="analysis-container" id="analysisContainer">
+        <div class="top-section">
+            <div class="section-header" onclick="toggleSection('top')">
+                <h2 class="section-title">
+                    <div class="status-indicator"></div>
+                    애플리케이션 성능 분석 (1초 단위)
+                </h2>
+                <div class="section-controls">
+                    <div class="time-controls">
+                        <button class="time-range-btn active" data-range="5m" onclick="event.stopPropagation()">5분</button>
+                        <button class="time-range-btn" data-range="15m" onclick="event.stopPropagation()">15분</button>
+                        <button class="time-range-btn" data-range="1h" onclick="event.stopPropagation()">1시간</button>
+                        <button class="time-range-btn" data-range="6h" onclick="event.stopPropagation()">6시간</button>
+                    </div>
+                    <button class="section-control-btn" onclick="event.stopPropagation(); openInPopup('top')" title="별도 창으로 열기">📤</button>
+                    <button class="collapse-btn" id="topCollapseBtn" onclick="event.stopPropagation(); toggleSection('top')" title="접기/펼치기">▼</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="performanceChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 중간 2/3: Trace 정보 -->
+        <div class="middle-section">
+            <!-- 왼쪽: Trace 목록 -->
+            <div class="trace-list-panel">
+                <div class="panel-header" onclick="toggleSection('middle')">
+                    <h3 class="panel-title">Trace 목록 <span id="selectedTimeDisplay">시간 선택 필요</span></h3>
+                    <div class="section-controls">
+                        <button class="section-control-btn" onclick="event.stopPropagation(); openInPopup('middle')" title="별도 창으로 열기">📤</button>
+                        <button class="collapse-btn" id="middleCollapseBtn" onclick="event.stopPropagation(); toggleSection('middle')" title="접기/펼치기">▼</button>
+                    </div>
+                </div>
+                <div class="panel-content" id="traceListContent">
+                    <div class="empty-state">
+                        <div>📊</div>
+                        <div>차트에서 시간을 선택하세요</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 오른쪽: Span Waterfall Chart -->
+            <div class="span-detail-panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">Span Waterfall Chart <span id="selectedTraceDisplay">Trace 선택 필요</span></h3>
+                </div>
+                <div class="panel-content" id="spanDetailContent">
+                    <div class="empty-state">
+                        <div>🔍</div>
+                        <div>Trace를 선택하세요</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 하단 1/3: 세션 리플레이 및 프로그램 리스트 -->
+        <div class="bottom-section">
+            <!-- 왼쪽: 세션 리플레이 -->
+            <div class="session-panel">
+                <div class="panel-header" onclick="toggleSection('bottom')">
+                    <h3 class="panel-title">연관 세션 리플레이 <span id="sessionCountDisplay"></span></h3>
+                    <div class="section-controls">
+                        <button class="section-control-btn" onclick="event.stopPropagation(); openInPopup('bottom')" title="별도 창으로 열기">📤</button>
+                        <button class="collapse-btn" id="bottomCollapseBtn" onclick="event.stopPropagation(); toggleSection('bottom')" title="접기/펼치기">▼</button>
+                    </div>
+                </div>
+                <div class="panel-content" id="sessionListContent">
+                    <div class="empty-state">
+                        <div>🎬</div>
+                        <div>Trace를 선택하면 연관 세션이 표시됩니다</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 오른쪽: 프로그램 리스트 -->
+            <div class="program-panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">연관 프로그램 <span id="programCountDisplay"></span></h3>
+                </div>
+                <div class="panel-content" id="programListContent">
+                    <div class="empty-state">
+                        <div>💻</div>
+                        <div>Trace를 선택하면 연관 프로그램이 표시됩니다</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let performanceChart = null;
+        let selectedTimeIndex = null;
+        let selectedTraceId = null;
+        let currentTimeRange = '5m';
+        let openPopups = new Map(); // 열린 팝업 창들 관리
+        
+        // 섹션 상태 관리
+        const sectionStates = {
+            top: { collapsed: false, expanded: false },
+            middle: { collapsed: false, expanded: false },
+            bottom: { collapsed: false, expanded: false }
+        };
+        
+        // 샘플 데이터 생성
+        const sampleData = {
+            performance: [],
+            traces: {},
+            sessions: {},
+            programs: {}
+        };
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            // URL 파라미터 체크로 팝업 모드 감지
+            const urlParams = new URLSearchParams(window.location.search);
+            const isPopup = urlParams.get('popup') === 'true' || window.opener;
+            const sectionParam = urlParams.get('section');
+            
+            // 팝업 모드인 경우 레이아웃 조정
+            if (isPopup) {
+                const container = document.getElementById('analysisContainer');
+                if (container) {
+                    container.className = 'popup-analysis-container';
+                    container.style.marginLeft = '0';
+                }
+                // 공통 레이아웃 비활성화
+                const commonLayoutScript = document.querySelector('script[src*="common-layout.js"]');
+                if (commonLayoutScript) {
+                    commonLayoutScript.remove();
+                }
+                
+                // 특정 섹션만 표시
+                if (sectionParam) {
+                    setTimeout(() => showPopupSection(sectionParam), 100);
+                }
+            }
+            
+            // 화면 크기 확인 및 대시보드 초기화
+            console.log('🚀 Trace 분석 대시보드 초기화 시작...', { isPopup, screenWidth: window.innerWidth });
+            
+            if (window.innerWidth >= 1024 || isPopup) {
+                // 가로 화면 또는 팝업에서만 분석 기능 활성화
+                initializeData();
+                initializeChart();
+                setupEventListeners();
+                
+                // 5초마다 데이터 업데이트
+                setInterval(updateData, 5000);
+                
+                console.log('🚀 Trace 분석 대시보드 초기화 완료', isPopup ? '(팝업 모드)' : '');
+            } else {
+                console.log('📱 세로 화면 감지 - 분석 기능 비활성화 (최소 해상도: 1024px)');
+            }
+        });
+
+        // 데이터 초기화
+        function initializeData() {
+            const now = Date.now();
+            const intervals = {
+                '5m': { count: 300, interval: 1000 },    // 5분 = 300초
+                '15m': { count: 900, interval: 1000 },   // 15분 = 900초  
+                '1h': { count: 3600, interval: 1000 },   // 1시간 = 3600초
+                '6h': { count: 21600, interval: 1000 }   // 6시간 = 21600초
+            };
+
+            const config = intervals[currentTimeRange];
+            
+            // 성능 데이터 생성
+            sampleData.performance = [];
+            for (let i = config.count; i > 0; i--) {
+                const timestamp = now - (i * config.interval);
+                const responseTime = 100 + Math.random() * 400 + Math.sin(i * 0.1) * 50;
+                const throughput = 50 + Math.random() * 100;
+                const errorRate = Math.random() * 5;
+                
+                sampleData.performance.push({
+                    timestamp: timestamp,
+                    responseTime: Math.round(responseTime),
+                    throughput: Math.round(throughput),
+                    errorRate: parseFloat(errorRate.toFixed(2)),
+                    traceCount: Math.floor(Math.random() * 20) + 5
+                });
+            }
+
+            // 각 시간대별 Trace 데이터 생성
+            sampleData.performance.forEach((point, index) => {
+                const traces = [];
+                const traceCount = point.traceCount;
+                
+                for (let i = 0; i < traceCount; i++) {
+                    const traceId = generateTraceId();
+                    const spans = generateSpans(traceId);
+                    
+                    traces.push({
+                        traceId: traceId,
+                        timestamp: point.timestamp + (i * 100),
+                        duration: Math.round(point.responseTime + (Math.random() * 100 - 50)),
+                        service: ['user-service', 'payment-service', 'order-service', 'notification-service'][Math.floor(Math.random() * 4)],
+                        status: Math.random() > 0.95 ? 'error' : 'success',
+                        spans: spans,
+                        sessionId: Math.random() > 0.7 ? generateSessionId() : null
+                    });
+                }
+                
+                sampleData.traces[index] = traces;
+                
+                // 세션 및 프로그램 데이터 생성
+                traces.forEach(trace => {
+                    if (trace.sessionId) {
+                        if (!sampleData.sessions[trace.traceId]) {
+                            sampleData.sessions[trace.traceId] = {
+                                sessionId: trace.sessionId,
+                                userId: 'user_' + Math.floor(Math.random() * 1000),
+                                duration: Math.floor(Math.random() * 300) + 60,
+                                pages: Math.floor(Math.random() * 10) + 1,
+                                actions: Math.floor(Math.random() * 50) + 10
+                            };
+                        }
+                    }
+                    
+                    if (!sampleData.programs[trace.traceId]) {
+                        sampleData.programs[trace.traceId] = generatePrograms(trace.service);
+                    }
+                });
+            });
+        }
+
+        // Trace ID 생성
+        function generateTraceId() {
+            return 'trace_' + Math.random().toString(36).substr(2, 16);
+        }
+
+        // Session ID 생성
+        function generateSessionId() {
+            return 'session_' + Math.random().toString(36).substr(2, 12);
+        }
+
+        // Span 생성
+        function generateSpans(traceId) {
+            const spanCount = Math.floor(Math.random() * 8) + 3;
+            const spans = [];
+            
+            for (let i = 0; i < spanCount; i++) {
+                spans.push({
+                    spanId: 'span_' + Math.random().toString(36).substr(2, 8),
+                    parentSpanId: i > 0 && Math.random() > 0.5 ? spans[Math.floor(Math.random() * i)].spanId : null,
+                    operation: ['HTTP GET', 'Database Query', 'Cache Read', 'External API', 'Processing'][Math.floor(Math.random() * 5)],
+                    service: ['frontend', 'backend', 'database', 'cache', 'external'][Math.floor(Math.random() * 5)],
+                    duration: Math.floor(Math.random() * 200) + 10,
+                    startTime: Date.now() + (i * 50),
+                    tags: {
+                        'http.method': ['GET', 'POST', 'PUT', 'DELETE'][Math.floor(Math.random() * 4)],
+                        'db.type': 'postgresql',
+                        'component': 'http-client'
+                    }
+                });
+            }
+            
+            return spans;
+        }
+
+        // 프로그램 생성
+        function generatePrograms(service) {
+            const programs = [
+                { name: 'UserController.java', type: 'Controller', lines: 245, complexity: 'Medium' },
+                { name: 'PaymentService.js', type: 'Service', lines: 189, complexity: 'High' },
+                { name: 'OrderRepository.py', type: 'Repository', lines: 156, complexity: 'Low' },
+                { name: 'NotificationHandler.go', type: 'Handler', lines: 98, complexity: 'Low' },
+                { name: 'DatabaseConnection.java', type: 'Utility', lines: 67, complexity: 'Medium' }
+            ];
+            
+            return programs.slice(0, Math.floor(Math.random() * 3) + 2);
+        }
+
+        // Chart.js 초기화
+        function initializeChart() {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            performanceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sampleData.performance.map(p => new Date(p.timestamp).toLocaleTimeString()),
+                    datasets: [{
+                        label: '응답시간 (ms)',
+                        data: sampleData.performance.map(p => p.responseTime),
+                        backgroundColor: function(context) {
+                            const value = context.parsed.y;
+                            if (value > 400) return '#f85149';
+                            if (value > 250) return '#d29922';
+                            return '#3fb950';
+                        },
+                        borderColor: '#30363d',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    onClick: handleChartClick,
+                    scales: {
+                        x: {
+                            grid: {
+                                color: '#30363d'
+                            },
+                            ticks: {
+                                color: '#8b949e',
+                                maxTicksLimit: 20
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: '#30363d'
+                            },
+                            ticks: {
+                                color: '#8b949e'
+                            },
+                            title: {
+                                display: true,
+                                text: '응답시간 (ms)',
+                                color: '#f0f6fc'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#0d1117',
+                            titleColor: '#f0f6fc',
+                            bodyColor: '#f0f6fc',
+                            borderColor: '#30363d',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    const point = sampleData.performance[context.dataIndex];
+                                    return [
+                                        `응답시간: ${point.responseTime}ms`,
+                                        `처리량: ${point.throughput} req/s`,
+                                        `에러율: ${point.errorRate}%`,
+                                        `Trace 수: ${point.traceCount}개`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 차트 클릭 이벤트 처리
+        function handleChartClick(event, elements) {
+            if (elements.length > 0) {
+                const clickedIndex = elements[0].index;
+                selectedTimeIndex = clickedIndex;
+                
+                const selectedPoint = sampleData.performance[clickedIndex];
+                const timeStr = new Date(selectedPoint.timestamp).toLocaleTimeString();
+                
+                document.getElementById('selectedTimeDisplay').textContent = `(${timeStr})`;
+                
+                loadTraceList(clickedIndex);
+                clearSpanDetail();
+                clearSessionAndPrograms();
+            }
+        }
+
+        // Trace 목록 로드
+        function loadTraceList(timeIndex) {
+            const traces = sampleData.traces[timeIndex] || [];
+            const content = document.getElementById('traceListContent');
+            
+            if (traces.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div>📊</div>
+                        <div>이 시간대에 Trace가 없습니다</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            content.innerHTML = traces.map(trace => `
+                <div class="trace-item" onclick="selectTrace('${trace.traceId}', ${timeIndex})">
+                    <div class="trace-id">${trace.traceId}</div>
+                    <div class="trace-info">
+                        <span>${trace.service}</span>
+                        <span>${trace.duration}ms</span>
+                        <span class="status-${trace.status}">${trace.status}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Trace 선택
+        function selectTrace(traceId, timeIndex) {
+            selectedTraceId = traceId;
+            
+            // 선택 상태 업데이트
+            document.querySelectorAll('.trace-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            document.getElementById('selectedTraceDisplay').textContent = `(${traceId})`;
+            
+            loadSpanDetail(traceId, timeIndex);
+            loadSessionAndPrograms(traceId);
+        }
+
+        // Span Waterfall Chart 로드
+        function loadSpanDetail(traceId, timeIndex) {
+            const traces = sampleData.traces[timeIndex] || [];
+            const trace = traces.find(t => t.traceId === traceId);
+            const content = document.getElementById('spanDetailContent');
+            
+            if (!trace || !trace.spans) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div>🔍</div>
+                        <div>Span 정보를 찾을 수 없습니다</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Waterfall Chart 생성
+            createWaterfallChart(trace.spans, content);
+        }
+        
+        // Waterfall Chart 생성
+        function createWaterfallChart(spans, container) {
+            // 전체 타임라인 계산
+            const minStartTime = Math.min(...spans.map(s => s.startTime || 0));
+            const maxEndTime = Math.max(...spans.map(s => (s.startTime || 0) + s.duration));
+            const totalDuration = maxEndTime - minStartTime || spans.reduce((max, s) => Math.max(max, s.duration), 0);
+            
+            // 컨테이너 초기화
+            container.innerHTML = `
+                <div class="waterfall-container">
+                    <div class="waterfall-header">
+                        <div class="waterfall-labels">
+                            <div class="label-column">Service</div>
+                            <div class="label-column">Operation</div>
+                        </div>
+                        <div class="waterfall-timeline">
+                            <div class="timeline-tick" style="left: 0%">0ms</div>
+                            <div class="timeline-tick" style="left: 25%">${Math.round(totalDuration/4)}ms</div>
+                            <div class="timeline-tick" style="left: 50%">${Math.round(totalDuration/2)}ms</div>
+                            <div class="timeline-tick" style="left: 75%">${Math.round(totalDuration*3/4)}ms</div>
+                            <div class="timeline-tick" style="left: 100%">${totalDuration}ms</div>
+                        </div>
+                    </div>
+                    <div class="waterfall-body" id="waterfallBody"></div>
+                </div>
+            `;
+            
+            const waterfallBody = document.getElementById('waterfallBody');
+            
+            // 각 Span에 대한 Waterfall 바 생성
+            spans.forEach((span, index) => {
+                const startTime = span.startTime || 0;
+                const startOffset = totalDuration > 0 ? ((startTime - minStartTime) / totalDuration) * 100 : 0;
+                const width = totalDuration > 0 ? (span.duration / totalDuration) * 100 : 20;
+                
+                const spanRow = document.createElement('div');
+                spanRow.className = 'waterfall-row';
+                spanRow.innerHTML = `
+                    <div class="span-labels">
+                        <div class="span-service">${span.service}</div>
+                        <div class="span-operation">${span.operation}</div>
+                    </div>
+                    <div class="span-timeline">
+                        <div class="span-bar ${span.status || 'success'}" 
+                             style="left: ${startOffset}%; width: ${Math.max(width, 2)}%; background-color: ${getSpanColor(span.service, index)};"
+                             title="${span.operation} (${span.service}) - ${span.duration}ms">
+                            <span class="span-duration-label">${span.duration}ms</span>
+                        </div>
+                    </div>
+                `;
+                
+                waterfallBody.appendChild(spanRow);
+            });
+        }
+        
+        // Span별 색상 생성
+        function getSpanColor(service, index) {
+            const colors = {
+                'user-service': '#3b82f6',
+                'payment-service': '#10b981', 
+                'order-service': '#f59e0b',
+                'notification-service': '#8b5cf6',
+                'database': '#ef4444',
+                'cache': '#06b6d4',
+                'api-gateway': '#84cc16',
+                'auth-service': '#f97316',
+                'http': '#3b82f6',
+                'db': '#ef4444'
+            };
+            return colors[service] || `hsl(${(index * 137.5) % 360}, 70%, 60%)`;
+        }
+
+        // Span Waterfall 초기화
+        function clearSpanDetail() {
+            selectedTraceId = null;
+            document.getElementById('selectedTraceDisplay').textContent = 'Trace 선택 필요';
+            document.getElementById('spanDetailContent').innerHTML = `
+                <div class="empty-state">
+                    <div>🔍</div>
+                    <div>Trace를 선택하면 Span Waterfall이 표시됩니다</div>
+                </div>
+            `;
+        }
+
+        // 세션 및 프로그램 로드
+        function loadSessionAndPrograms(traceId) {
+            const session = sampleData.sessions[traceId];
+            const programs = sampleData.programs[traceId];
+            
+            // 세션 로드
+            const sessionContent = document.getElementById('sessionListContent');
+            if (session) {
+                document.getElementById('sessionCountDisplay').textContent = '(1개)';
+                sessionContent.innerHTML = `
+                    <div class="session-item" onclick="openSessionReplay('${session.sessionId}')">
+                        <div class="session-id">${session.sessionId}</div>
+                        <div class="session-info">
+                            사용자: ${session.userId} | 
+                            지속시간: ${session.duration}초 | 
+                            페이지: ${session.pages}개 | 
+                            액션: ${session.actions}개
+                        </div>
+                    </div>
+                `;
+            } else {
+                document.getElementById('sessionCountDisplay').textContent = '';
+                sessionContent.innerHTML = `
+                    <div class="empty-state">
+                        <div>🎬</div>
+                        <div>연관된 세션이 없습니다</div>
+                    </div>
+                `;
+            }
+            
+            // 프로그램 로드
+            const programContent = document.getElementById('programListContent');
+            if (programs && programs.length > 0) {
+                document.getElementById('programCountDisplay').textContent = `(${programs.length}개)`;
+                programContent.innerHTML = programs.map(program => `
+                    <div class="program-item" onclick="openProgramDetail('${program.name}')">
+                        <div class="program-name">${program.name}</div>
+                        <div class="program-info">
+                            ${program.type} | ${program.lines} lines | 복잡도: ${program.complexity}
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                document.getElementById('programCountDisplay').textContent = '';
+                programContent.innerHTML = `
+                    <div class="empty-state">
+                        <div>💻</div>
+                        <div>연관된 프로그램이 없습니다</div>
+                    </div>
+                `;
+            }
+        }
+
+        // 세션 및 프로그램 초기화
+        function clearSessionAndPrograms() {
+            document.getElementById('sessionCountDisplay').textContent = '';
+            document.getElementById('programCountDisplay').textContent = '';
+            
+            document.getElementById('sessionListContent').innerHTML = `
+                <div class="empty-state">
+                    <div>🎬</div>
+                    <div>Trace를 선택하면 연관 세션이 표시됩니다</div>
+                </div>
+            `;
+            
+            document.getElementById('programListContent').innerHTML = `
+                <div class="empty-state">
+                    <div>💻</div>
+                    <div>Trace를 선택하면 연관 프로그램이 표시됩니다</div>
+                </div>
+            `;
+        }
+
+        // 세션 리플레이 열기
+        function openSessionReplay(sessionId) {
+            console.log('세션 리플레이 열기:', sessionId);
+            // 새 창에서 세션 리플레이 열기
+            window.open(`/enhanced-player.html?sessionId=${sessionId}`, '_blank');
+        }
+
+        // 프로그램 상세 열기
+        function openProgramDetail(programName) {
+            console.log('프로그램 상세 보기:', programName);
+            // 프로그램 분석 페이지로 이동
+            window.open(`/project-analysis.html?file=${programName}`, '_blank');
+        }
+
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            // 시간 범위 버튼
+            document.querySelectorAll('.time-range-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.time-range-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    currentTimeRange = this.dataset.range;
+                    initializeData();
+                    updateChart();
+                    clearAllSelections();
+                });
+            });
+        }
+
+        // 모든 선택 초기화
+        function clearAllSelections() {
+            selectedTimeIndex = null;
+            selectedTraceId = null;
+            
+            document.getElementById('selectedTimeDisplay').textContent = '시간 선택 필요';
+            document.getElementById('traceListContent').innerHTML = `
+                <div class="empty-state">
+                    <div>📊</div>
+                    <div>차트에서 시간을 선택하세요</div>
+                </div>
+            `;
+            
+            clearSpanDetail();
+            clearSessionAndPrograms();
+        }
+
+        // 차트 업데이트
+        function updateChart() {
+            if (performanceChart) {
+                performanceChart.data.labels = sampleData.performance.map(p => new Date(p.timestamp).toLocaleTimeString());
+                performanceChart.data.datasets[0].data = sampleData.performance.map(p => p.responseTime);
+                performanceChart.update();
+            }
+        }
+
+        // 데이터 업데이트 (실시간)
+        function updateData() {
+            // 새로운 데이터 포인트 추가
+            const now = Date.now();
+            const newPoint = {
+                timestamp: now,
+                responseTime: Math.round(100 + Math.random() * 400 + Math.sin(Date.now() * 0.001) * 50),
+                throughput: Math.round(50 + Math.random() * 100),
+                errorRate: parseFloat((Math.random() * 5).toFixed(2)),
+                traceCount: Math.floor(Math.random() * 20) + 5
+            };
+            
+            // 기존 데이터에서 가장 오래된 것 제거하고 새 데이터 추가
+            sampleData.performance.shift();
+            sampleData.performance.push(newPoint);
+            
+            // 새 Trace 데이터 생성
+            const newTraces = [];
+            for (let i = 0; i < newPoint.traceCount; i++) {
+                const traceId = generateTraceId();
+                newTraces.push({
+                    traceId: traceId,
+                    timestamp: newPoint.timestamp + (i * 100),
+                    duration: Math.round(newPoint.responseTime + (Math.random() * 100 - 50)),
+                    service: ['user-service', 'payment-service', 'order-service', 'notification-service'][Math.floor(Math.random() * 4)],
+                    status: Math.random() > 0.95 ? 'error' : 'success',
+                    spans: generateSpans(traceId),
+                    sessionId: Math.random() > 0.7 ? generateSessionId() : null
+                });
+            }
+            
+            // Trace 데이터 배열 시프트
+            const traceKeys = Object.keys(sampleData.traces).map(Number).sort((a, b) => a - b);
+            if (traceKeys.length > 0) {
+                delete sampleData.traces[traceKeys[0]];
+            }
+            sampleData.traces[sampleData.performance.length - 1] = newTraces;
+            
+            updateChart();
+        }
+
+        // 섹션 토글 기능
+        function toggleSection(sectionName) {
+            const section = document.querySelector(`.${sectionName}-section`);
+            const collapseBtn = document.getElementById(`${sectionName}CollapseBtn`);
+            const state = sectionStates[sectionName];
+            
+            if (state.expanded) {
+                // 확장된 상태에서 일반 상태로
+                section.classList.remove('expanded');
+                state.expanded = false;
+                collapseBtn.textContent = '▼';
+                collapseBtn.title = '접기/펼치기';
+            } else if (state.collapsed) {
+                // 접힌 상태에서 일반 상태로
+                section.classList.remove('collapsed');
+                collapseBtn.classList.remove('collapsed');
+                state.collapsed = false;
+                collapseBtn.textContent = '▼';
+                collapseBtn.title = '접기/펼치기';
+            } else {
+                // 일반 상태에서 접힌 상태로
+                section.classList.add('collapsed');
+                collapseBtn.classList.add('collapsed');
+                state.collapsed = true;
+                collapseBtn.textContent = '▲';
+                collapseBtn.title = '펼치기';
+            }
+            
+            // 차트 크기 조정 (성능 차트인 경우)
+            if (sectionName === 'top' && performanceChart) {
+                setTimeout(() => {
+                    performanceChart.resize();
+                }, 300);
+            }
+        }
+
+        // 섹션 확장 기능
+        function expandSection(sectionName) {
+            const section = document.querySelector(`.${sectionName}-section`);
+            const collapseBtn = document.getElementById(`${sectionName}CollapseBtn`);
+            const state = sectionStates[sectionName];
+            
+            // 모든 섹션을 접기
+            Object.keys(sectionStates).forEach(name => {
+                if (name !== sectionName) {
+                    const otherSection = document.querySelector(`.${name}-section`);
+                    const otherBtn = document.getElementById(`${name}CollapseBtn`);
+                    otherSection.classList.add('collapsed');
+                    otherBtn.classList.add('collapsed');
+                    otherBtn.textContent = '▲';
+                    sectionStates[name].collapsed = true;
+                    sectionStates[name].expanded = false;
+                }
+            });
+            
+            // 현재 섹션 확장
+            section.classList.remove('collapsed');
+            section.classList.add('expanded');
+            collapseBtn.classList.remove('collapsed');
+            collapseBtn.textContent = '◼';
+            collapseBtn.title = '일반 크기로';
+            state.collapsed = false;
+            state.expanded = true;
+            
+            // 차트 크기 조정
+            if (sectionName === 'top' && performanceChart) {
+                setTimeout(() => {
+                    performanceChart.resize();
+                }, 300);
+            }
+        }
+
+        // 팝업 창에서 섹션 열기
+        function openInPopup(sectionName) {
+            const sectionTitles = {
+                top: '애플리케이션 성능 분석',
+                middle: 'Trace 분석',
+                bottom: '세션 & 프로그램 분석'
+            };
+            
+            // 현재 페이지를 팝업 모드로 새 창에서 열기
+            const currentUrl = window.location.href.split('?')[0];
+            const popupUrl = currentUrl + '?popup=true&section=' + sectionName;
+            
+            const popupName = sectionName + '_popup_' + Date.now();
+            const popupWindow = window.open(popupUrl, popupName, 
+                'width=1200,height=800,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no'
+            );
+            
+            if (!popupWindow) {
+                alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.');
+                return;
+            }
+            
+            console.log('팝업 창 열림: ' + sectionTitles[sectionName]);
+        }
+
+        // 팝업 모드에서 특정 섹션만 표시
+        function showPopupSection(sectionName) {
+            const sections = ['top', 'middle', 'bottom'];
+            
+            sections.forEach(section => {
+                const element = document.querySelector('.' + section + '-section');
+                if (element) {
+                    if (section === sectionName) {
+                        element.style.display = 'flex';
+                        element.style.height = '100vh';
+                        element.style.flexDirection = 'column';
+                    } else {
+                        element.style.display = 'none';
+                    }
+                }
+            });
+            
+            // 페이지 제목 변경
+            const titles = {
+                top: '애플리케이션 성능 분석',
+                middle: 'Trace 분석',
+                bottom: '세션 & 프로그램 분석'
+            };
+            document.title = titles[sectionName] + ' - AIRIS-MON';
+        }
+        // 간단한 팝업 기능 (URL 파라미터 방식)
+        function openInPopup(sectionName) {
+            const url = window.location.href.split('?')[0] + '?popup=true&section=' + sectionName;
+            const popupWindow = window.open(url, 'popup_' + sectionName, 
+                'width=1200,height=800,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no'
+            );
+            if (popupWindow) {
+                popupWindow.focus();
+            }
+        }
+
+        // URL 파라미터 확인하여 팝업 모드 적용
+        function checkPopupMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isPopup = urlParams.get('popup') === 'true';
+            const section = urlParams.get('section');
+            
+            if (isPopup && section) {
+                showPopupSection(section);
+            }
+        }
+
+        // 팝업에서 특정 섹션만 표시
+        function showPopupSection(sectionName) {
+            // 사이드바 숨기기
+            const sidebar = document.querySelector('.airis-sidebar');
+            if (sidebar) sidebar.style.display = 'none';
+            
+            // 메인 컨텐츠 조정
+            const mainContent = document.querySelector('.airis-main-content');
+            if (mainContent) {
+                mainContent.style.marginLeft = '0';
+                mainContent.style.width = '100%';
+            }
+            
+            // 다른 섹션들 숨기기
+            const allSections = ['.top-section', '.middle-section', '.bottom-section'];
+            allSections.forEach(selector => {
+                const element = document.querySelector(selector);
+                if (element) {
+                    if (selector === '.' + sectionName + '-section') {
+                        element.style.display = 'flex';
+                        element.style.height = '100vh';
+                        element.style.flexDirection = 'column';
+                    } else {
+                        element.style.display = 'none';
+                    }
+                }
+            });
+            
+            // 페이지 제목 변경
+            const titles = {
+                top: '애플리케이션 성능 분석',
+                middle: 'Trace 분석',
+                bottom: '세션 & 프로그램 분석'
+            };
+            document.title = titles[sectionName] + ' - AIRIS-MON';
+        }
+
+        // 더블클릭으로 섹션 확장
+        document.addEventListener('dblclick', function(e) {
+            const section = e.target.closest('.top-section, .middle-section, .bottom-section');
+            if (section) {
+                const sectionName = section.classList.contains('top-section') ? 'top' : 
+                    section.classList.contains('middle-section') ? 'middle' : 'bottom';
+                expandSection(sectionName);
+            }
+        });
+
+        // 키보드 단축키
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                // ESC로 모든 확장 해제
+                Object.keys(sectionStates).forEach(sectionName => {
+                    const section = document.querySelector(`.${sectionName}-section`);
+                    const collapseBtn = document.getElementById(`${sectionName}CollapseBtn`);
+                    const state = sectionStates[sectionName];
+                    if (state.expanded || state.collapsed) {
+                        section.classList.remove('expanded', 'collapsed');
+                        collapseBtn.classList.remove('collapsed');
+                        collapseBtn.textContent = '▼';
+                        collapseBtn.title = '접기/펼치기';
+                        state.expanded = false;
+                        state.collapsed = false;
+                    }
+                });
+                if (performanceChart) {
+                    setTimeout(() => performanceChart.resize(), 300);
+                }
+                clearAllSelections();
+            }
+            // F11로 전체화면 섹션 토글 (Shift+F11로 각 섹션 순차적으로)
+            if (e.key === 'F11') {
+                e.preventDefault();
+                if (e.shiftKey) {
+                    // Shift+F11: 다음 섹션 확장
+                    const sections = ['top', 'middle', 'bottom'];
+                    const expandedSection = sections.find(name => sectionStates[name].expanded);
+                    const nextIndex = expandedSection ? (sections.indexOf(expandedSection) + 1) % sections.length : 0;
+                    expandSection(sections[nextIndex]);
+                } else {
+                    // F11: 첫 번째 섹션 확장
+                    expandSection('top');
+                }
+            }
+        });
+
+        // 페이지 로드 시 팝업 모드 확인
+        window.addEventListener('load', function() {
+            checkPopupMode();
+        });
+
+        // 화면 크기 변경 시 반응형 처리
+        window.addEventListener('resize', function() {
+            const isWideScreen = window.innerWidth >= 1024;
+            const analysisContainer = document.getElementById('analysisContainer');
+            
+            if (isWideScreen) {
+                // 가로 화면으로 변경 시 분석 기능 활성화
+                if (!document.querySelector('.top-section').style.display || 
+                    document.querySelector('.top-section').style.display === 'none') {
+                    location.reload(); // 페이지 새로고침으로 완전 초기화
+                }
+            } else {
+                // 세로 화면으로 변경 시 모바일 메시지 표시
+                const mobileMessage = document.querySelector('.mobile-message');
+                if (mobileMessage) {
+                    mobileMessage.style.display = 'flex';
+                }
+                
+                // 분석 섹션들 숨기기
+                const sections = ['.top-section', '.middle-section', '.bottom-section'];
+                sections.forEach(selector => {
+                    const element = document.querySelector(selector);
+                    if (element) element.style.display = 'none';
+                });
+            }
+            
+            console.log('📱 화면 크기 변경:', { 
+                width: window.innerWidth, 
+                isWideScreen, 
+                analysisActive: isWideScreen 
+            });
+        });
+
+    </script>
+</body>
+</html>

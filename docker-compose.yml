@@ -1,0 +1,280 @@
+version: '3.8'
+
+services:
+  # Container Registry
+  registry:
+    image: registry:2
+    container_name: airis-registry
+    ports:
+      - "5000:5000"
+    volumes:
+      - registry_data:/var/lib/registry
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+
+  # API Gateway Service
+  api-gateway:
+    image: localhost:5000/airis-mon/api-gateway:latest
+    container_name: airis-api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+    depends_on:
+      - registry
+
+  # Data Ingestion Service
+  data-ingestion:
+    image: localhost:5000/airis-mon/data-ingestion:latest
+    container_name: airis-data-ingestion
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+
+  # UI Dashboard Service
+  ui:
+    image: localhost:5000/airis-mon/ui:latest
+    container_name: airis-ui-dashboard
+    ports:
+      - "3002:80"
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+    depends_on:
+      - api-gateway
+
+  # Analytics Engine Service
+  analytics-engine:
+    image: localhost:5000/airis-mon/analytics-engine:latest
+    container_name: airis-analytics-engine
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=production
+      - PORT=3003
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+
+  # Session Replay Service
+  session-replay:
+    image: localhost:5000/airis-mon/session-replay:latest
+    container_name: airis-session-replay
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=production
+      - PORT=3004
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+
+  # AIOps Service
+  aiops:
+    image: localhost:5000/airis-mon/aiops:latest
+    container_name: airis-aiops
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=production
+      - PORT=3005
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+
+  # Event Delta Analyzer Service
+  event-delta-analyzer:
+    image: localhost:5000/airis-mon/event-delta-analyzer:latest
+    container_name: airis-event-delta-analyzer
+    ports:
+      - "3006:3006"
+    environment:
+      - NODE_ENV=production
+      - PORT=3006
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+
+  # NLP Search Service
+  nlp-search:
+    image: localhost:5000/airis-mon/nlp-search:latest
+    container_name: airis-nlp-search
+    ports:
+      - "3007:3007"
+    environment:
+      - NODE_ENV=production
+      - PORT=3007
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+
+  # J2EE Monitor Service
+  j2ee-monitor:
+    image: localhost:5000/airis-mon/j2ee-monitor:latest
+    container_name: airis-j2ee-monitor
+    ports:
+      - "3008:3008"
+    environment:
+      - NODE_ENV=production
+      - PORT=3008
+      - WAS_TYPE=tomcat
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+
+  # WAS Monitor Service
+  was-monitor:
+    image: localhost:5000/airis-mon/was-monitor:latest
+    container_name: airis-was-monitor
+    ports:
+      - "3009:3009"
+    environment:
+      - NODE_ENV=production
+      - PORT=3009
+      - WAS_TYPE=tomcat
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+
+  # Exception Tracker Service
+  exception-tracker:
+    image: localhost:5000/airis-mon/exception-tracker:latest
+    container_name: airis-exception-tracker
+    ports:
+      - "3010:3010"
+    environment:
+      - NODE_ENV=production
+      - PORT=3010
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+
+  # Alert Notification Service
+  alert-notification:
+    image: localhost:5000/airis-mon/alert-notification:latest
+    container_name: airis-alert-notification
+    ports:
+      - "3011:3011"
+    environment:
+      - NODE_ENV=production
+      - PORT=3011
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+
+  # Service Topology Service
+  service-topology:
+    image: localhost:5000/airis-mon/service-topology:latest
+    container_name: airis-service-topology
+    ports:
+      - "3012:3012"
+    environment:
+      - NODE_ENV=production
+      - PORT=3012
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+
+  # MongoDB for APM data storage
+  mongodb:
+    image: mongo:7.0
+    container_name: airis-apm-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=airis-apm
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+
+  # Redis for caching and session storage
+  redis:
+    image: redis:7.2-alpine
+    container_name: airis-apm-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+
+  # PostgreSQL for relational data
+  postgres:
+    image: postgres:16-alpine
+    container_name: airis-apm-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=airis_apm
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+
+  # ClickHouse for time-series data
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8
+    container_name: airis-apm-clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      - CLICKHOUSE_DB=airis_apm
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+
+networks:
+  airis-apm-network:
+    driver: bridge
+
+volumes:
+  registry_data:
+  mongodb_data:
+  redis_data:
+  postgres_data:
+  clickhouse_data:

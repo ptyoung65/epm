@@ -1,0 +1,91 @@
+{
+  "id": "66a6efe3-f119-45f6-a009-c2f9d3494c13",
+  "scenario": "journey_e-commerce",
+  "startTime": "2025-08-14T16:02:55.218Z",
+  "lastActivity": "2025-08-14T16:04:34.052Z",
+  "userAgent": "curl/8.5.0",
+  "ipAddress": "::1",
+  "events": [
+    {
+      "id": "22aa7ad5-ab62-48ba-a815-0a7ecbc5ed9d",
+      "sessionId": "66a6efe3-f119-45f6-a009-c2f9d3494c13",
+      "timestamp": 1000,
+      "recordedAt": "2025-08-14T16:04:34.014Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 1000,
+        "page_url": "/",
+        "title": "home",
+        "referrer": null,
+        "load_time": 800
+      }
+    },
+    {
+      "id": "76c32f60-61e9-4ac1-afac-6c1959fc9a55",
+      "sessionId": "66a6efe3-f119-45f6-a009-c2f9d3494c13",
+      "timestamp": 3000,
+      "recordedAt": "2025-08-14T16:04:34.031Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 3000,
+        "page_url": "/products",
+        "title": "products",
+        "referrer": "/",
+        "load_time": 1200
+      }
+    },
+    {
+      "id": "311cf0ea-bc4c-43bd-8475-2ae37280f6af",
+      "sessionId": "66a6efe3-f119-45f6-a009-c2f9d3494c13",
+      "timestamp": 5000,
+      "recordedAt": "2025-08-14T16:04:34.052Z",
+      "type": "rrweb_event",
+      "rrwebType": "page_load",
+      "originalEvent": {
+        "type": "page_load",
+        "timestamp": 5000,
+        "page_url": "/cart",
+        "title": "cart",
+        "referrer": "/products",
+        "load_time": 900
+      }
+    }
+  ],
+  "status": "completed",
+  "metadata": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "userAgent": "curl/8.5.0",
+    "device": {
+      "type": "desktop",
+      "browser": "unknown",
+      "os": "unknown"
+    }
+  },
+  "endTime": "2025-08-14T16:08:41.914Z",
+  "duration": 346696,
+  "endReason": "user_ended",
+  "statistics": {
+    "totalEvents": 3,
+    "eventTypes": {
+      "rrweb_event": 3
+    },
+    "clicks": 0,
+    "formInputs": 0,
+    "pageViews": 0,
+    "errors": 0,
+    "scrollEvents": 0,
+    "userBehavior": {
+      "avgTimeBetweenEvents": 1333.3333333333333,
+      "hasErrors": false,
+      "hasFormInteraction": false,
+      "hasNavigation": false
+    }
+  }
+}

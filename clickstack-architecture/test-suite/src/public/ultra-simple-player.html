@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>초단순 DOM 플레이어</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #0d1117;
+            color: white;
+        }
+        
+        .player-header {
+            background: #161b22;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .player-controls {
+            background: #161b22;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .btn {
+            font-size: 16px;
+            padding: 12px 25px;
+            margin: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .btn-green {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-blue {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .replay-area {
+            background: white;
+            color: black;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 400px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .timeline {
+            width: 100%;
+            height: 8px;
+            background: #30363d;
+            border-radius: 4px;
+            margin: 20px 0;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .timeline-progress {
+            height: 100%;
+            background: #28a745;
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .event-indicator {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #dc3545;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+            opacity: 0.8;
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+        }
+        
+        .status-info {
+            display: flex;
+            justify-content: space-around;
+            background: #21262d;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        
+        .info-item {
+            text-align: center;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            color: #8b949e;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #f0f6fc;
+        }
+        
+        #debugLog {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+        
+        .simulated-element {
+            border: 2px solid #ced4da;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            background: #f8f9fa;
+        }
+        
+        .simulated-button {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 15px 25px;
+            margin: 10px 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .simulated-click-area {
+            background: #e3f2fd;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 20px 0;
+            border: 2px solid #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="player-header">
+        <h1>🎬 초단순 DOM 플레이어</h1>
+        <div class="status-info">
+            <div class="info-item">
+                <div class="info-label">세션 ID</div>
+                <div class="info-value" id="sessionIdDisplay">-</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">총 이벤트</div>
+                <div class="info-value" id="totalEvents">0</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">재생 시간</div>
+                <div class="info-value" id="totalDuration">00:00</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">현재 시간</div>
+                <div class="info-value" id="currentTime">00:00</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="player-controls">
+        <button class="btn btn-green" onclick="startPlayback()" id="playButton">▶️ 재생 시작</button>
+        <button class="btn btn-blue" onclick="pausePlayback()" id="pauseButton" disabled>⏸️ 일시정지</button>
+        <button class="btn btn-blue" onclick="stopPlayback()" id="stopButton" disabled>⏹️ 정지</button>
+        <button class="btn btn-blue" onclick="resetPlayback()">🔄 처음부터</button>
+        
+        <div style="margin: 20px 0;">
+            <label style="color: white; margin-right: 10px;">재생 속도:</label>
+            <select id="speedSelect" onchange="changeSpeed()" style="padding: 5px; border-radius: 4px;">
+                <option value="0.5">0.5x</option>
+                <option value="1" selected>1x</option>
+                <option value="2">2x</option>
+                <option value="4">4x</option>
+            </select>
+        </div>
+        
+        <div class="timeline" onclick="seekToPosition(event)">
+            <div class="timeline-progress" id="timelineProgress"></div>
+        </div>
+    </div>
+    
+    <div class="replay-area" id="replayArea">
+        <h2>🎯 재생 영역</h2>
+        <p>여기서 녹화된 세션이 재생됩니다...</p>
+        
+        <!-- 시뮬레이션된 UI 요소들 -->
+        <input type="text" placeholder="이름을 입력하세요" class="simulated-element" id="sim-nameField">
+        <input type="email" placeholder="이메일을 입력하세요" class="simulated-element" id="sim-emailField">
+        <textarea placeholder="메시지를 입력하세요" rows="3" class="simulated-element" id="sim-messageField"></textarea>
+        
+        <div>
+            <button class="simulated-button" id="sim-buttonA">테스트 버튼 A</button>
+            <button class="simulated-button" id="sim-buttonB">테스트 버튼 B</button>
+            <button class="simulated-button" id="sim-colorBtn">색상 변경</button>
+        </div>
+        
+        <div class="simulated-click-area" id="sim-clickArea">
+            <h3>🎯 클릭 테스트 영역</h3>
+            <p>여기를 클릭해보세요</p>
+        </div>
+    </div>
+    
+    <div class="player-header">
+        <h3>🐛 재생 로그</h3>
+        <div id="debugLog">플레이어 초기화 중...
+</div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let sessionData = null;
+        let isPlaying = false;
+        let isPaused = false;
+        let currentEventIndex = 0;
+        let playbackSpeed = 1;
+        let playbackTimer = null;
+        let totalDuration = 0;
+        let currentPlayTime = 0;
+        
+        // 디버그 로그 함수
+        function addDebugLog(message) {
+            const debugLog = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.textContent += `[${timestamp}] ${message}\n`;
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        // URL에서 세션 ID 가져오기
+        function getSessionId() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('sessionId');
+        }
+        
+        // 세션 데이터 로드
+        function loadSessionData() {
+            const sessionId = getSessionId();
+            addDebugLog(`세션 ID 확인: ${sessionId}`);
+            
+            if (!sessionId) {
+                addDebugLog('❌ 세션 ID가 없음');
+                alert('세션 ID가 제공되지 않았습니다.');
+                return false;
+            }
+            
+            try {
+                const data = localStorage.getItem(sessionId);
+                if (!data) {
+                    addDebugLog('❌ 로컬 스토리지에서 세션을 찾을 수 없음');
+                    alert('세션 데이터를 찾을 수 없습니다.');
+                    return false;
+                }
+                
+                sessionData = JSON.parse(data);
+                addDebugLog(`✅ 세션 로드 성공: ${sessionData.events.length}개 이벤트`);
+                
+                // UI 정보 업데이트
+                updateSessionInfo();
+                return true;
+                
+            } catch (error) {
+                addDebugLog(`❌ 세션 로드 실패: ${error.message}`);
+                alert('세션 데이터 로드에 실패했습니다.');
+                return false;
+            }
+        }
+        
+        // 세션 정보 UI 업데이트
+        function updateSessionInfo() {
+            document.getElementById('sessionIdDisplay').textContent = 
+                sessionData.id.substring(8, 20) + '...';
+            document.getElementById('totalEvents').textContent = sessionData.events.length;
+            
+            totalDuration = sessionData.duration || 0;
+            document.getElementById('totalDuration').textContent = formatTime(totalDuration);
+            
+            addDebugLog(`세션 정보 업데이트: ${sessionData.events.length}개 이벤트, ${formatTime(totalDuration)} 길이`);
+        }
+        
+        // 시간 포맷팅
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        // 재생 시작
+        function startPlayback() {
+            if (!sessionData || !sessionData.events.length) {
+                alert('재생할 데이터가 없습니다.');
+                return;
+            }
+            
+            addDebugLog('▶️ 재생 시작');
+            isPlaying = true;
+            isPaused = false;
+            
+            // UI 업데이트
+            document.getElementById('playButton').disabled = true;
+            document.getElementById('pauseButton').disabled = false;
+            document.getElementById('stopButton').disabled = false;
+            
+            // 재생 타이머 시작
+            startPlaybackTimer();
+        }
+        
+        // 재생 타이머 시작
+        function startPlaybackTimer() {
+            if (currentEventIndex >= sessionData.events.length) {
+                stopPlayback();
+                return;
+            }
+            
+            const currentEvent = sessionData.events[currentEventIndex];
+            const nextEventTime = currentEvent.timestamp / playbackSpeed;
+            
+            playbackTimer = setTimeout(() => {
+                if (isPlaying && !isPaused) {
+                    playEvent(currentEvent);
+                    currentEventIndex++;
+                    currentPlayTime = currentEvent.timestamp;
+                    updateProgress();
+                    startPlaybackTimer();
+                }
+            }, nextEventTime - currentPlayTime);
+        }
+        
+        // 개별 이벤트 재생
+        function playEvent(event) {
+            addDebugLog(`재생: ${event.type} on ${event.target} - "${event.value}"`);
+            
+            // 시각적 이벤트 표시
+            showEventIndicator(event);
+            
+            // 이벤트 타입별 시뮬레이션
+            try {
+                switch (event.type) {
+                    case 'click':
+                        simulateClick(event);
+                        break;
+                    case 'input':
+                        simulateInput(event);
+                        break;
+                    case 'change':
+                        simulateChange(event);
+                        break;
+                }
+            } catch (error) {
+                addDebugLog(`이벤트 시뮬레이션 오류: ${error.message}`);
+            }
+        }
+        
+        // 클릭 이벤트 시뮬레이션
+        function simulateClick(event) {
+            const replayArea = document.getElementById('replayArea');
+            
+            // 클릭 위치에 시각적 효과
+            const indicator = document.createElement('div');
+            indicator.className = 'event-indicator';
+            indicator.style.left = Math.random() * 80 + 10 + '%';
+            indicator.style.top = Math.random() * 60 + 20 + '%';
+            replayArea.appendChild(indicator);
+            
+            // 타겟 요소 찾기 및 효과 적용
+            if (event.target.includes('#sim-buttonA')) {
+                const btn = document.getElementById('sim-buttonA');
+                btn.style.background = '#dc3545';
+                setTimeout(() => btn.style.background = '#17a2b8', 500);
+            } else if (event.target.includes('#sim-buttonB')) {
+                const btn = document.getElementById('sim-buttonB');
+                btn.style.background = '#28a745';
+                setTimeout(() => btn.style.background = '#17a2b8', 500);
+            } else if (event.target.includes('#sim-colorBtn')) {
+                document.body.style.backgroundColor = `hsl(${Math.random() * 360}, 20%, 10%)`;
+            } else if (event.target.includes('#sim-clickArea')) {
+                const area = document.getElementById('sim-clickArea');
+                area.style.backgroundColor = `hsl(${Math.random() * 360}, 30%, 85%)`;
+            }
+            
+            // 효과 제거
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    indicator.parentNode.removeChild(indicator);
+                }
+            }, 1000);
+        }
+        
+        // 입력 이벤트 시뮬레이션
+        function simulateInput(event) {
+            if (event.target.includes('#sim-nameField')) {
+                const field = document.getElementById('sim-nameField');
+                field.value = event.value;
+                field.style.backgroundColor = '#e3f2fd';
+                setTimeout(() => field.style.backgroundColor = '#f8f9fa', 500);
+            } else if (event.target.includes('#sim-emailField')) {
+                const field = document.getElementById('sim-emailField');
+                field.value = event.value;
+                field.style.backgroundColor = '#e8f5e8';
+                setTimeout(() => field.style.backgroundColor = '#f8f9fa', 500);
+            } else if (event.target.includes('#sim-messageField')) {
+                const field = document.getElementById('sim-messageField');
+                field.value = event.value;
+                field.style.backgroundColor = '#fff3cd';
+                setTimeout(() => field.style.backgroundColor = '#f8f9fa', 500);
+            }
+        }
+        
+        // 변경 이벤트 시뮬레이션
+        function simulateChange(event) {
+            simulateInput(event); // 입력과 동일하게 처리
+        }
+        
+        // 이벤트 표시기 생성
+        function showEventIndicator(event) {
+            // 이미 simulateClick에서 처리됨
+        }
+        
+        // 진행률 업데이트
+        function updateProgress() {
+            if (totalDuration > 0) {
+                const progress = (currentPlayTime / totalDuration) * 100;
+                document.getElementById('timelineProgress').style.width = progress + '%';
+                document.getElementById('currentTime').textContent = formatTime(currentPlayTime);
+            }
+        }
+        
+        // 일시정지
+        function pausePlayback() {
+            addDebugLog('⏸️ 재생 일시정지');
+            isPaused = !isPaused;
+            
+            if (isPaused) {
+                document.getElementById('pauseButton').textContent = '▶️ 계속';
+                if (playbackTimer) {
+                    clearTimeout(playbackTimer);
+                }
+            } else {
+                document.getElementById('pauseButton').textContent = '⏸️ 일시정지';
+                startPlaybackTimer();
+            }
+        }
+        
+        // 정지
+        function stopPlayback() {
+            addDebugLog('⏹️ 재생 정지');
+            isPlaying = false;
+            isPaused = false;
+            
+            if (playbackTimer) {
+                clearTimeout(playbackTimer);
+            }
+            
+            // UI 리셋
+            document.getElementById('playButton').disabled = false;
+            document.getElementById('pauseButton').disabled = true;
+            document.getElementById('stopButton').disabled = true;
+            document.getElementById('pauseButton').textContent = '⏸️ 일시정지';
+            
+            addDebugLog('재생 완료');
+        }
+        
+        // 처음부터 재생
+        function resetPlayback() {
+            addDebugLog('🔄 처음부터 재생');
+            stopPlayback();
+            currentEventIndex = 0;
+            currentPlayTime = 0;
+            updateProgress();
+            
+            // UI 리셋
+            const inputs = document.querySelectorAll('.simulated-element');
+            inputs.forEach(input => {
+                input.value = '';
+                input.style.backgroundColor = '#f8f9fa';
+            });
+        }
+        
+        // 재생 속도 변경
+        function changeSpeed() {
+            playbackSpeed = parseFloat(document.getElementById('speedSelect').value);
+            addDebugLog(`재생 속도 변경: ${playbackSpeed}x`);
+        }
+        
+        // 타임라인 클릭으로 이동
+        function seekToPosition(event) {
+            if (!sessionData || !totalDuration) return;
+            
+            const rect = event.currentTarget.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const percentage = x / rect.width;
+            const targetTime = totalDuration * percentage;
+            
+            // 해당 시간에 가장 가까운 이벤트 찾기
+            let nearestIndex = 0;
+            for (let i = 0; i < sessionData.events.length; i++) {
+                if (sessionData.events[i].timestamp <= targetTime) {
+                    nearestIndex = i;
+                } else {
+                    break;
+                }
+            }
+            
+            currentEventIndex = nearestIndex;
+            currentPlayTime = targetTime;
+            updateProgress();
+            
+            addDebugLog(`타임라인 이동: ${formatTime(targetTime)}`);
+        }
+        
+        // 페이지 로드 시 초기화
+        window.addEventListener('load', function() {
+            addDebugLog('플레이어 페이지 로드 완료');
+            
+            if (loadSessionData()) {
+                addDebugLog('✅ 플레이어 준비 완료');
+            } else {
+                addDebugLog('❌ 플레이어 초기화 실패');
+            }
+        });
+        
+        addDebugLog('플레이어 스크립트 로딩 완료');
+    </script>
+</body>
+</html>

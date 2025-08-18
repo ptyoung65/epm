@@ -1,0 +1,50 @@
+{
+  "name": "airis-apm-alert-notification",
+  "version": "1.0.0",
+  "description": "AIRIS APM Alert and Notification Service - 통합 알림 및 경보 관리 시스템",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest",
+    "build": "echo 'No build step required'",
+    "lint": "eslint src/",
+    "health": "curl -f http://localhost:3011/health || exit 1"
+  },
+  "keywords": [
+    "apm",
+    "alert",
+    "notification",
+    "monitoring",
+    "threshold",
+    "escalation",
+    "korean"
+  ],
+  "author": "AIRIS APM Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "uuid": "^9.0.0",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "compression": "^1.7.4",
+    "express-rate-limit": "^6.8.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.5.0",
+    "supertest": "^6.3.3",
+    "eslint": "^8.44.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/airis-apm/alert-notification.git"
+  },
+  "bugs": {
+    "url": "https://github.com/airis-apm/alert-notification/issues"
+  },
+  "homepage": "https://github.com/airis-apm/alert-notification#readme"
+}
