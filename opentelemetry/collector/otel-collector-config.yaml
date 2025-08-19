@@ -1,0 +1,128 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  
+  # Host metrics receiver
+  hostmetrics:
+    collection_interval: 10s
+    scrapers:
+      cpu:
+      disk:
+      filesystem:
+      load:
+      memory:
+      network:
+      paging:
+      processes:
+      process:
+  
+  # Docker stats receiver
+  docker_stats:
+    endpoint: unix:///var/run/docker.sock
+    collection_interval: 10s
+    timeout: 20s
+    api_version: "1.40"
+  
+  # Prometheus receiver for additional metrics
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'otel-collector'
+          scrape_interval: 10s
+          static_configs:
+            - targets: ['localhost:8888']
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+  
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
+  
+  resource:
+    attributes:
+      - key: environment
+        value: production
+        action: insert
+      - key: service.namespace
+        value: airis-apm
+        action: insert
+  
+  attributes:
+    actions:
+      - key: http.method
+        action: insert
+        from_attribute: http.request.method
+      - key: http.url
+        action: insert
+        from_attribute: http.request.url
+  
+  transform:
+    metric_statements:
+      - context: datapoint
+        statements:
+          - set(attributes["collector.name"], "otel-collector")
+
+exporters:
+  clickhouse:
+    endpoint: tcp://airis-apm-clickhouse:9000?database=otel
+    logs_table_name: otel_logs
+    traces_table_name: otel_traces
+    metrics_table_name: otel_metrics
+    timeout: 5s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+  
+  otlp/gateway:
+    endpoint: otel-gateway:4317
+    tls:
+      insecure: true
+  
+  debug:
+    verbosity: detailed
+  
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: airis_apm
+    const_labels:
+      collector: "otel"
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+    path: "/health"
+  
+  pprof:
+    endpoint: 0.0.0.0:1777
+  
+  zpages:
+    endpoint: 0.0.0.0:55679
+
+service:
+  extensions: [health_check, pprof, zpages]
+  
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, resource]
+      exporters: [clickhouse, otlp/gateway, debug]
+    
+    metrics:
+      receivers: [otlp, hostmetrics, prometheus]
+      processors: [memory_limiter, batch, resource, transform]
+      exporters: [clickhouse, prometheus, otlp/gateway]
+    
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch, resource, attributes]
+      exporters: [clickhouse, otlp/gateway, debug]

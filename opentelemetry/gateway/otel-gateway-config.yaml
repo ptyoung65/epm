@@ -1,0 +1,129 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - "http://localhost:*"
+            - "http://127.0.0.1:*"
+          allowed_headers: ["*"]
+          allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 2048
+    send_batch_max_size: 4096
+  
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 1024
+    spike_limit_mib: 256
+  
+  # Sampling processor for high volume
+  probabilistic_sampler:
+    sampling_percentage: 100
+  
+  # Filter processor
+  filter/errors:
+    error_mode: ignore
+    traces:
+      span:
+        - 'attributes["http.status_code"] >= 400'
+  
+  # Group by trace processor
+  groupbytrace:
+    wait_duration: 10s
+    num_traces: 100000
+    num_workers: 4
+  
+  # Span metrics processor
+  spanmetrics:
+    metrics_exporter: prometheus
+    latency_histogram_buckets: [1ms, 2ms, 5ms, 10ms, 20ms, 50ms, 100ms, 200ms, 500ms, 1s, 2s, 5s]
+    dimensions:
+      - name: http.method
+      - name: http.status_code
+      - name: service.name
+
+exporters:
+  clickhouse:
+    endpoint: tcp://clickhouse:9000?database=otel
+    ttl_days: 90
+    logs_table_name: otel_logs
+    traces_table_name: otel_traces  
+    metrics_table_name: otel_metrics
+    timeout: 10s
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
+  
+  prometheus:
+    endpoint: "0.0.0.0:9090"
+    namespace: airis_apm
+    const_labels:
+      gateway: "otel"
+    resource_to_telemetry_conversion:
+      enabled: true
+  
+  logging:
+    loglevel: info
+    sampling_initial: 10
+    sampling_thereafter: 500
+  
+  # Load balancing exporter for multiple collectors
+  loadbalancing:
+    protocol:
+      otlp:
+        tls:
+          insecure: true
+    resolver:
+      static:
+        hostnames:
+          - otel-collector:4317
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+    path: "/health"
+  
+  pprof:
+    endpoint: 0.0.0.0:1777
+  
+  zpages:
+    endpoint: 0.0.0.0:55679
+  
+  # Basic auth extension
+  basicauth/client:
+    client_auth:
+      username: admin
+      password: admin123
+
+service:
+  extensions: [health_check, pprof, zpages]
+  
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, groupbytrace, batch, spanmetrics]
+      exporters: [clickhouse, loadbalancing, logging]
+    
+    traces/errors:
+      receivers: [otlp]
+      processors: [memory_limiter, filter/errors, batch]
+      exporters: [clickhouse, logging]
+    
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [clickhouse, prometheus, loadbalancing]
+    
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [clickhouse, loadbalancing, logging]
