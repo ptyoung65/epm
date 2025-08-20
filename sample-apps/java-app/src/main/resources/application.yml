@@ -1,0 +1,75 @@
+spring:
+  application:
+    name: java-sample-app
+  
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+    
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    
+server:
+  port: 8080
+  
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, prometheus
+  metrics:
+    export:
+      otlp:
+        enabled: true
+        endpoint: http://otel-collector:4318
+        resource-attributes:
+          service.name: ${spring.application.name}
+          service.version: 1.0.0
+          deployment.environment: production
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        
+logging:
+  level:
+    root: INFO
+    com.airis.apm: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# OpenTelemetry Configuration
+otel:
+  service:
+    name: ${spring.application.name}
+    version: 1.0.0
+  exporter:
+    otlp:
+      endpoint: http://otel-collector:4317
+      protocol: grpc
+      headers:
+        api-key: demo-api-key
+  resource:
+    attributes:
+      deployment.environment: production
+      service.namespace: airis-apm
+      service.instance.id: ${random.uuid}
+      host.name: ${HOSTNAME:localhost}
+  traces:
+    sampler:
+      probability: 1.0
+  metrics:
+    export:
+      interval: 10000
+  logs:
+    export:
+      enabled: true

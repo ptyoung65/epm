@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Monitoring - AIRIS APM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="container mx-auto px-4 py-6">
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold mb-2">웹 모니터링 & 세션 리플레이</h1>
+            <p class="text-gray-400">실사용자 모니터링 (RUM) 및 세션 리플레이 분석</p>
+        </div>
+
+        <!-- Web Vitals -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-sm text-gray-400 mb-1">LCP (ms)</h3>
+                <p class="text-2xl font-bold text-green-400" id="lcp">0</p>
+                <p class="text-xs text-gray-500">Largest Contentful Paint</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-sm text-gray-400 mb-1">FID (ms)</h3>
+                <p class="text-2xl font-bold text-blue-400" id="fid">0</p>
+                <p class="text-xs text-gray-500">First Input Delay</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-sm text-gray-400 mb-1">CLS</h3>
+                <p class="text-2xl font-bold text-yellow-400" id="cls">0</p>
+                <p class="text-xs text-gray-500">Cumulative Layout Shift</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-sm text-gray-400 mb-1">페이지뷰</h3>
+                <p class="text-2xl font-bold" id="pageViews">0</p>
+                <p class="text-xs text-green-400">+12% from yesterday</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-sm text-gray-400 mb-1">세션</h3>
+                <p class="text-2xl font-bold" id="sessions">0</p>
+                <p class="text-xs text-green-400">+8% from yesterday</p>
+            </div>
+        </div>
+
+        <!-- Performance Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">페이지 성능 트렌드</h2>
+                <div class="h-64">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">브라우저 분포</h2>
+                <div class="h-64">
+                    <canvas id="browserChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Session Replay -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">세션 리플레이</h2>
+                <div id="sessionsList" class="space-y-3 max-h-96 overflow-y-auto">
+                    <!-- Sessions list -->
+                </div>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">브라우저 에러</h2>
+                <div id="browserErrorsList" class="space-y-3 max-h-96 overflow-y-auto">
+                    <!-- Browser errors -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Analytics -->
+        <div class="bg-gray-800 p-6 rounded-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">페이지 분석</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="text-gray-400 border-b border-gray-700">
+                        <tr>
+                            <th class="text-left py-2">페이지</th>
+                            <th class="text-left py-2">뷰</th>
+                            <th class="text-left py-2">평균 LCP</th>
+                            <th class="text-left py-2">평균 FID</th>
+                            <th class="text-left py-2">바운스율</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pageAnalyticsTable">
+                        <!-- Dynamic content -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- User Journey Map -->
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <h2 class="text-xl font-semibold mb-4">사용자 여정 맵</h2>
+            <div id="userJourneyMap" class="h-64 flex items-center justify-center">
+                <p class="text-gray-400">사용자 여정 시각화</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Replay Modal -->
+    <div id="replayModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-gray-800 rounded-lg max-w-6xl w-full max-h-screen overflow-hidden">
+                <div class="p-6 border-b border-gray-700">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-semibold">세션 리플레이</h2>
+                        <button onclick="closeReplayModal()" class="text-gray-400 hover:text-white">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div id="replayPlayer" class="bg-white rounded h-96 flex items-center justify-center">
+                        <p class="text-gray-800">세션 리플레이 플레이어</p>
+                    </div>
+                    <div class="mt-4 flex justify-between items-center">
+                        <div class="text-sm text-gray-400" id="replayInfo">
+                            세션 정보가 로드됩니다...
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700">재생</button>
+                            <button class="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700">일시정지</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3013/api';
+        
+        // Initialize charts
+        const performanceChart = new Chart(document.getElementById('performanceChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'LCP (ms)',
+                    data: [],
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'FID (ms)',
+                    data: [],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: 2,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'white'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'white'
+                        }
+                    }
+                }
+            }
+        });
+
+        const browserChart = new Chart(document.getElementById('browserChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Chrome', 'Firefox', 'Safari', 'Edge', 'Other'],
+                datasets: [{
+                    data: [65, 15, 12, 6, 2],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(251, 146, 60, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(167, 139, 250, 0.8)',
+                        'rgba(156, 163, 175, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: 1,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Load page performance
+        async function loadPagePerformance() {
+            try {
+                const response = await axios.get(`${API_BASE}/browser/performance`);
+                
+                if (response.data && response.data.length > 0) {
+                    const latest = response.data[0];
+                    
+                    // Update Web Vitals
+                    document.getElementById('lcp').textContent = latest.avg_lcp?.toFixed(0) || '0';
+                    document.getElementById('fid').textContent = latest.avg_fid?.toFixed(0) || '0';
+                    document.getElementById('cls').textContent = latest.avg_cls?.toFixed(3) || '0.000';
+                    document.getElementById('pageViews').textContent = latest.view_count?.toLocaleString() || '0';
+                    
+                    // Update performance chart
+                    const labels = response.data.map(d => new Date(d.timestamp).toLocaleTimeString());
+                    const lcpData = response.data.map(d => d.avg_lcp || 0);
+                    const fidData = response.data.map(d => d.avg_fid || 0);
+                    
+                    performanceChart.data.labels = labels.slice(-10);
+                    performanceChart.data.datasets[0].data = lcpData.slice(-10);
+                    performanceChart.data.datasets[1].data = fidData.slice(-10);
+                    performanceChart.update('none');
+                    
+                    // Update page analytics table
+                    const tbody = document.getElementById('pageAnalyticsTable');
+                    tbody.innerHTML = '';
+                    
+                    response.data.slice(0, 10).forEach(page => {
+                        const row = document.createElement('tr');
+                        row.className = 'border-b border-gray-700';
+                        row.innerHTML = `
+                            <td class="py-2">${page.page_path || '/'}</td>
+                            <td class="py-2">${page.view_count?.toLocaleString() || '0'}</td>
+                            <td class="py-2 ${page.avg_lcp > 2500 ? 'text-red-400' : 'text-green-400'}">
+                                ${page.avg_lcp?.toFixed(0) || '0'}ms
+                            </td>
+                            <td class="py-2 ${page.avg_fid > 100 ? 'text-red-400' : 'text-green-400'}">
+                                ${page.avg_fid?.toFixed(0) || '0'}ms
+                            </td>
+                            <td class="py-2">65%</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading page performance:', error);
+                // Use mock data when API fails
+                loadMockData();
+            }
+        }
+        
+        // Load sessions
+        async function loadSessions() {
+            try {
+                const response = await axios.get(`${API_BASE}/sessions`, { params: { limit: 20 } });
+                const sessionsDiv = document.getElementById('sessionsList');
+                
+                sessionsDiv.innerHTML = '';
+                
+                response.data.forEach(session => {
+                    const div = document.createElement('div');
+                    div.className = 'p-3 bg-gray-700 rounded cursor-pointer hover:bg-gray-600';
+                    div.onclick = () => openReplayModal(session.session_id);
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="font-semibold">세션 ${session.session_id.substring(0, 8)}...</span>
+                            <span class="text-xs text-gray-400">${new Date(session.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                        <div class="text-sm text-gray-400">
+                            <p>${session.browser_name} • ${session.os_name}</p>
+                            <p>지속시간: ${Math.round(session.duration_ms / 1000)}초 • 페이지뷰: ${session.page_views_count}</p>
+                            ${session.errors_count > 0 ? `<p class="text-red-400">에러: ${session.errors_count}개</p>` : ''}
+                        </div>
+                    `;
+                    sessionsDiv.appendChild(div);
+                });
+                
+                // Update sessions count
+                document.getElementById('sessions').textContent = response.data.length.toLocaleString();
+                
+            } catch (error) {
+                console.error('Error loading sessions:', error);
+                loadMockSessions();
+            }
+        }
+        
+        // Load browser errors
+        async function loadBrowserErrors() {
+            try {
+                const response = await axios.get(`${API_BASE}/browser/errors`, { params: { limit: 10 } });
+                const errorsDiv = document.getElementById('browserErrorsList');
+                
+                errorsDiv.innerHTML = '';
+                
+                response.data.forEach(error => {
+                    const div = document.createElement('div');
+                    div.className = 'p-3 bg-red-900 bg-opacity-30 rounded border-l-4 border-red-500';
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="text-red-400 font-semibold">${error.error_type}</span>
+                            <span class="text-xs text-gray-400">${new Date(error.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                        <p class="text-sm text-gray-300 mb-1">${error.error_message}</p>
+                        <p class="text-xs text-gray-400">${error.page_url}</p>
+                    `;
+                    errorsDiv.appendChild(div);
+                });
+                
+            } catch (error) {
+                console.error('Error loading browser errors:', error);
+                loadMockErrors();
+            }
+        }
+        
+        // Mock data functions for when API is not available
+        function loadMockData() {
+            document.getElementById('lcp').textContent = '1850';
+            document.getElementById('fid').textContent = '45';
+            document.getElementById('cls').textContent = '0.125';
+            document.getElementById('pageViews').textContent = '12,543';
+            
+            // Mock performance chart data
+            const now = Date.now();
+            const labels = [];
+            const lcpData = [];
+            const fidData = [];
+            
+            for (let i = 9; i >= 0; i--) {
+                const time = new Date(now - i * 60000);
+                labels.push(time.toLocaleTimeString());
+                lcpData.push(1800 + Math.random() * 400);
+                fidData.push(40 + Math.random() * 20);
+            }
+            
+            performanceChart.data.labels = labels;
+            performanceChart.data.datasets[0].data = lcpData;
+            performanceChart.data.datasets[1].data = fidData;
+            performanceChart.update('none');
+        }
+        
+        function loadMockSessions() {
+            const sessionsDiv = document.getElementById('sessionsList');
+            sessionsDiv.innerHTML = '';
+            
+            const mockSessions = [
+                { id: 'session1', browser: 'Chrome 119', os: 'Windows 11', duration: 245, pages: 5, errors: 0 },
+                { id: 'session2', browser: 'Safari 17', os: 'macOS 14', duration: 180, pages: 3, errors: 1 },
+                { id: 'session3', browser: 'Firefox 120', os: 'Ubuntu 22', duration: 320, pages: 8, errors: 0 }
+            ];
+            
+            mockSessions.forEach(session => {
+                const div = document.createElement('div');
+                div.className = 'p-3 bg-gray-700 rounded cursor-pointer hover:bg-gray-600';
+                div.onclick = () => openReplayModal(session.id);
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-semibold">세션 ${session.id}</span>
+                        <span class="text-xs text-gray-400">${new Date().toLocaleTimeString()}</span>
+                    </div>
+                    <div class="text-sm text-gray-400">
+                        <p>${session.browser} • ${session.os}</p>
+                        <p>지속시간: ${session.duration}초 • 페이지뷰: ${session.pages}</p>
+                        ${session.errors > 0 ? `<p class="text-red-400">에러: ${session.errors}개</p>` : ''}
+                    </div>
+                `;
+                sessionsDiv.appendChild(div);
+            });
+            
+            document.getElementById('sessions').textContent = mockSessions.length.toLocaleString();
+        }
+        
+        function loadMockErrors() {
+            const errorsDiv = document.getElementById('browserErrorsList');
+            errorsDiv.innerHTML = '';
+            
+            const mockErrors = [
+                { type: 'JavaScript', message: 'Cannot read property of undefined', url: '/dashboard', time: new Date() },
+                { type: 'Network', message: 'Failed to fetch /api/data', url: '/analytics', time: new Date(Date.now() - 60000) }
+            ];
+            
+            mockErrors.forEach(error => {
+                const div = document.createElement('div');
+                div.className = 'p-3 bg-red-900 bg-opacity-30 rounded border-l-4 border-red-500';
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-red-400 font-semibold">${error.type}</span>
+                        <span class="text-xs text-gray-400">${error.time.toLocaleTimeString()}</span>
+                    </div>
+                    <p class="text-sm text-gray-300 mb-1">${error.message}</p>
+                    <p class="text-xs text-gray-400">${error.url}</p>
+                `;
+                errorsDiv.appendChild(div);
+            });
+        }
+        
+        // Replay modal functions
+        function openReplayModal(sessionId) {
+            document.getElementById('replayModal').classList.remove('hidden');
+            document.getElementById('replayInfo').textContent = `세션 ID: ${sessionId}`;
+            
+            // Load replay data (mock for now)
+            document.getElementById('replayPlayer').innerHTML = `
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p class="text-gray-600">세션 ${sessionId} 리플레이를 로딩중...</p>
+                </div>
+            `;
+        }
+        
+        function closeReplayModal() {
+            document.getElementById('replayModal').classList.add('hidden');
+        }
+        
+        // Auto-refresh
+        setInterval(() => {
+            loadPagePerformance();
+            loadSessions();
+            loadBrowserErrors();
+        }, 30000); // Refresh every 30 seconds
+        
+        // Initial load
+        loadPagePerformance();
+        loadSessions();
+        loadBrowserErrors();
+    </script>
+</body>
+</html>

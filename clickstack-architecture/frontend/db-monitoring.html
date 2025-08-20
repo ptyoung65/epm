@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Monitoring - AIRIS APM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="container mx-auto px-4 py-6">
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold mb-2">데이터베이스 모니터링</h1>
+            <p class="text-gray-400">OpenTelemetry 기반 데이터베이스 성능 모니터링</p>
+        </div>
+
+        <!-- DB Metrics Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-sm text-gray-400 mb-1">쿼리 수</h3>
+                <p class="text-2xl font-bold" id="queryCount">0</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-sm text-gray-400 mb-1">평균 쿼리 시간</h3>
+                <p class="text-2xl font-bold" id="avgQueryTime">0ms</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-sm text-gray-400 mb-1">활성 연결</h3>
+                <p class="text-2xl font-bold" id="activeConnections">0</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-sm text-gray-400 mb-1">DB 에러율</h3>
+                <p class="text-2xl font-bold" id="dbErrorRate">0%</p>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">데이터베이스 성능</h2>
+                <div class="h-64">
+                    <canvas id="dbPerformanceChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">연결 풀 상태</h2>
+                <div class="h-64">
+                    <canvas id="connectionPoolChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slow Queries Table -->
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <h2 class="text-xl font-semibold mb-4">느린 쿼리</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="text-gray-400 border-b border-gray-700">
+                        <tr>
+                            <th class="text-left py-2">서비스</th>
+                            <th class="text-left py-2">DB</th>
+                            <th class="text-left py-2">쿼리</th>
+                            <th class="text-left py-2">지속시간</th>
+                            <th class="text-left py-2">시간</th>
+                        </tr>
+                    </thead>
+                    <tbody id="slowQueriesTable">
+                        <!-- Dynamic content -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3013/api';
+        
+        // Initialize charts
+        const dbPerformanceChart = new Chart(document.getElementById('dbPerformanceChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Average Query Time (ms)',
+                    data: [],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: 2,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'white'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'white'
+                        }
+                    }
+                }
+            }
+        });
+
+        const connectionPoolChart = new Chart(document.getElementById('connectionPoolChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Active', 'Idle', 'Available'],
+                datasets: [{
+                    data: [10, 5, 15],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(250, 204, 21, 0.8)',
+                        'rgba(34, 197, 94, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: 1,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Load database metrics
+        async function loadDatabaseMetrics() {
+            try {
+                const response = await axios.get(`${API_BASE}/database/metrics`);
+                
+                if (response.data && response.data.length > 0) {
+                    // Update metrics
+                    const totalQueries = response.data.reduce((sum, item) => sum + item.query_count, 0);
+                    const avgDuration = response.data.reduce((sum, item) => sum + item.avg_duration_ms, 0) / response.data.length;
+                    const totalErrors = response.data.reduce((sum, item) => sum + item.error_count, 0);
+                    const errorRate = totalQueries > 0 ? (totalErrors / totalQueries * 100).toFixed(2) : 0;
+                    
+                    document.getElementById('queryCount').textContent = totalQueries.toLocaleString();
+                    document.getElementById('avgQueryTime').textContent = avgDuration.toFixed(2) + 'ms';
+                    document.getElementById('dbErrorRate').textContent = errorRate + '%';
+                    
+                    // Update performance chart
+                    const labels = response.data.map(d => new Date(d.time).toLocaleTimeString());
+                    const data = response.data.map(d => d.avg_duration_ms);
+                    
+                    dbPerformanceChart.data.labels = labels.slice(-20);
+                    dbPerformanceChart.data.datasets[0].data = data.slice(-20);
+                    dbPerformanceChart.update('none');
+                    
+                    // Update slow queries table
+                    const tbody = document.getElementById('slowQueriesTable');
+                    tbody.innerHTML = '';
+                    
+                    response.data
+                        .filter(q => q.avg_duration_ms > 100)
+                        .slice(0, 10)
+                        .forEach(query => {
+                            const row = document.createElement('tr');
+                            row.className = 'border-b border-gray-700';
+                            row.innerHTML = `
+                                <td class="py-2">${query.service_name}</td>
+                                <td class="py-2">${query.db_name || query.db_system}</td>
+                                <td class="py-2 font-mono text-xs">SELECT * FROM ...</td>
+                                <td class="py-2 ${query.avg_duration_ms > 1000 ? 'text-red-400' : 'text-yellow-400'}">
+                                    ${query.avg_duration_ms.toFixed(2)}ms
+                                </td>
+                                <td class="py-2">${new Date(query.time).toLocaleTimeString()}</td>
+                            `;
+                            tbody.appendChild(row);
+                        });
+                }
+            } catch (error) {
+                console.error('Error loading database metrics:', error);
+            }
+        }
+        
+        // Load system metrics for connection info
+        async function loadSystemMetrics() {
+            try {
+                const response = await axios.get(`${API_BASE}/system/metrics`);
+                const connectionMetrics = response.data.filter(m => m.metric_name === 'db_connections_active');
+                
+                if (connectionMetrics.length > 0) {
+                    const activeConnections = connectionMetrics[0].avg_value;
+                    document.getElementById('activeConnections').textContent = Math.round(activeConnections);
+                }
+            } catch (error) {
+                console.error('Error loading system metrics:', error);
+            }
+        }
+        
+        // Auto-refresh
+        setInterval(() => {
+            loadDatabaseMetrics();
+            loadSystemMetrics();
+        }, 10000);
+        
+        // Initial load
+        loadDatabaseMetrics();
+        loadSystemMetrics();
+    </script>
+</body>
+</html>

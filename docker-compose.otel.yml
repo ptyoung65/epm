@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  # OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./opentelemetry/collector/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus metrics exposed by the collector
+      - "8889:8889"   # Prometheus exporter metrics
+      - "13133:13133" # health_check extension
+      - "55679:55679" # zpages extension
+    depends_on:
+      - clickhouse
+    networks:
+      - clickstack-network
+
+  # OpenTelemetry Gateway
+  otel-gateway:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-gateway
+    command: ["--config=/etc/otel-gateway-config.yaml"]
+    volumes:
+      - ./opentelemetry/gateway/otel-gateway-config.yaml:/etc/otel-gateway-config.yaml
+    ports:
+      - "14317:4317"  # OTLP gRPC receiver (gateway)
+      - "14318:4318"  # OTLP HTTP receiver (gateway)
+      - "9090:9090"   # Prometheus endpoint
+    depends_on:
+      - otel-collector
+      - clickhouse
+    networks:
+      - clickstack-network
+
+  # OpenTelemetry Monitor Service
+  otel-monitor:
+    build: ./clickstack-architecture/services/otel-monitor
+    container_name: otel-monitor
+    ports:
+      - "3013:3013"  # HTTP API
+      - "3014:3014"  # WebSocket
+    environment:
+      - CLICKHOUSE_HOST=http://clickhouse
+      - NODE_ENV=production
+    depends_on:
+      - clickhouse
+    networks:
+      - clickstack-network
+    restart: unless-stopped
+
+  # Java Sample Application
+  java-sample-app:
+    build: ./sample-apps/java-app
+    container_name: java-sample-app
+    ports:
+      - "8080:8080"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=java-sample-app
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=java-sample-app,service.version=1.0.0
+    depends_on:
+      - otel-collector
+    networks:
+      - clickstack-network
+    restart: unless-stopped
+
+  # Python Sample Application
+  python-sample-app:
+    build: ./sample-apps/python-app
+    container_name: python-sample-app
+    ports:
+      - "8081:8081"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=python-sample-app
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/sampledb
+    depends_on:
+      - otel-collector
+      - postgres
+    networks:
+      - clickstack-network
+    restart: unless-stopped
+
+  # Additional ClickHouse initialization for OpenTelemetry tables
+  clickhouse-init-otel:
+    image: clickhouse/clickhouse-client:latest
+    container_name: clickhouse-init-otel
+    volumes:
+      - ./clickhouse/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./clickhouse/session-replay-tables.sql:/docker-entrypoint-initdb.d/02-session-replay.sql
+    entrypoint: >
+      sh -c "
+      sleep 10 &&
+      clickhouse-client --host clickhouse --query 'CREATE DATABASE IF NOT EXISTS otel' &&
+      clickhouse-client --host clickhouse --multiquery < /docker-entrypoint-initdb.d/01-init.sql &&
+      clickhouse-client --host clickhouse --multiquery < /docker-entrypoint-initdb.d/02-session-replay.sql &&
+      echo 'OpenTelemetry tables initialized'
+      "
+    depends_on:
+      - clickhouse
+    networks:
+      - clickstack-network
+
+networks:
+  clickstack-network:
+    external: true

@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Monitoring - AIRIS APM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="container mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold mb-2">애플리케이션 모니터링</h1>
+            <p class="text-gray-400">OpenTelemetry 기반 통합 애플리케이션 성능 모니터링</p>
+        </div>
+
+        <!-- Service Selector -->
+        <div class="mb-6">
+            <select id="serviceSelector" class="bg-gray-800 text-white px-4 py-2 rounded-lg">
+                <option value="">모든 서비스</option>
+            </select>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-sm text-gray-400 mb-1">요청 수</h3>
+                <p class="text-2xl font-bold" id="requestCount">0</p>
+                <p class="text-xs text-green-400">+12% from last hour</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-sm text-gray-400 mb-1">평균 응답시간</h3>
+                <p class="text-2xl font-bold" id="avgResponseTime">0ms</p>
+                <p class="text-xs text-yellow-400">+5ms from last hour</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-sm text-gray-400 mb-1">에러율</h3>
+                <p class="text-2xl font-bold" id="errorRate">0%</p>
+                <p class="text-xs text-red-400">+0.5% from last hour</p>
+            </div>
+            <div class="bg-gray-800 p-4 rounded-lg">
+                <h3 class="text-sm text-gray-400 mb-1">활성 서비스</h3>
+                <p class="text-2xl font-bold" id="activeServices">0</p>
+                <p class="text-xs text-green-400">All healthy</p>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Throughput Chart -->
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">처리량 (Requests/min)</h2>
+                <div class="h-64">
+                    <canvas id="throughputChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Response Time Chart -->
+            <div class="bg-gray-800 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4">응답시간 분포</h2>
+                <div class="h-64">
+                    <canvas id="responseTimeChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Dependency Map -->
+        <div class="bg-gray-800 p-6 rounded-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">서비스 의존성 맵</h2>
+            <div id="dependencyMap" class="h-96 flex items-center justify-center">
+                <svg id="dependencySvg" width="100%" height="100%"></svg>
+            </div>
+        </div>
+
+        <!-- Traces Table -->
+        <div class="bg-gray-800 p-6 rounded-lg mb-6">
+            <h2 class="text-xl font-semibold mb-4">최근 트레이스</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="text-gray-400 border-b border-gray-700">
+                        <tr>
+                            <th class="text-left py-2">Trace ID</th>
+                            <th class="text-left py-2">서비스</th>
+                            <th class="text-left py-2">작업</th>
+                            <th class="text-left py-2">지속시간</th>
+                            <th class="text-left py-2">상태</th>
+                            <th class="text-left py-2">시간</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tracesTable" class="text-gray-300">
+                        <!-- Dynamic content -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Error Analysis -->
+        <div class="bg-gray-800 p-6 rounded-lg">
+            <h2 class="text-xl font-semibold mb-4">에러 분석</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="h-64">
+                    <canvas id="errorTypeChart"></canvas>
+                </div>
+                <div>
+                    <h3 class="text-lg mb-2">Top Errors</h3>
+                    <div id="topErrors" class="space-y-2">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3013/api';
+        let ws = null;
+        
+        // Initialize WebSocket
+        function initWebSocket() {
+            ws = new WebSocket('ws://localhost:3014');
+            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'metrics_update') {
+                    updateMetrics(data.data);
+                }
+            };
+            
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+        }
+        
+        // Update metrics
+        function updateMetrics(data) {
+            if (!data || data.length === 0) return;
+            
+            const totalRequests = data.reduce((sum, item) => sum + item.request_count, 0);
+            const avgDuration = data.reduce((sum, item) => sum + item.avg_duration_ms, 0) / data.length;
+            const totalErrors = data.reduce((sum, item) => sum + item.error_count, 0);
+            const errorRate = totalRequests > 0 ? (totalErrors / totalRequests * 100).toFixed(2) : 0;
+            
+            document.getElementById('requestCount').textContent = totalRequests.toLocaleString();
+            document.getElementById('avgResponseTime').textContent = avgDuration.toFixed(2) + 'ms';
+            document.getElementById('errorRate').textContent = errorRate + '%';
+            document.getElementById('activeServices').textContent = data.length;
+        }
+        
+        // Initialize Charts
+        const throughputChart = new Chart(document.getElementById('throughputChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'Requests/min',
+                    data: [],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: 2,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        const responseTimeChart = new Chart(document.getElementById('responseTimeChart'), {
+            type: 'bar',
+            data: {
+                labels: ['p50', 'p75', 'p90', 'p95', 'p99'],
+                datasets: [{
+                    label: 'Response Time (ms)',
+                    data: [],
+                    backgroundColor: [
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(250, 204, 21, 0.8)',
+                        'rgba(251, 146, 60, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(220, 38, 38, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: 2,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        const errorTypeChart = new Chart(document.getElementById('errorTypeChart'), {
+            type: 'doughnut',
+            data: {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(251, 146, 60, 0.8)',
+                        'rgba(250, 204, 21, 0.8)',
+                        'rgba(34, 197, 94, 0.8)',
+                        'rgba(59, 130, 246, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: 1,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Load services
+        async function loadServices() {
+            try {
+                const response = await axios.get(`${API_BASE}/services`);
+                const select = document.getElementById('serviceSelector');
+                
+                response.data.forEach(service => {
+                    const option = document.createElement('option');
+                    option.value = service;
+                    option.textContent = service;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading services:', error);
+            }
+        }
+        
+        // Load traces
+        async function loadTraces(service = '') {
+            try {
+                const params = service ? { service } : {};
+                const response = await axios.get(`${API_BASE}/traces`, { params });
+                const tbody = document.getElementById('tracesTable');
+                tbody.innerHTML = '';
+                
+                response.data.slice(0, 10).forEach(trace => {
+                    const row = document.createElement('tr');
+                    row.className = 'border-b border-gray-700';
+                    row.innerHTML = `
+                        <td class="py-2 font-mono text-xs">${trace.trace_id.substring(0, 16)}...</td>
+                        <td class="py-2">${trace.service_name}</td>
+                        <td class="py-2">${trace.operation_name || trace.span_name}</td>
+                        <td class="py-2">${trace.duration_ms.toFixed(2)}ms</td>
+                        <td class="py-2">
+                            <span class="px-2 py-1 rounded text-xs ${
+                                trace.status_code === 0 ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'
+                            }">
+                                ${trace.status_code === 0 ? 'OK' : 'ERROR'}
+                            </span>
+                        </td>
+                        <td class="py-2">${new Date(trace.timestamp).toLocaleTimeString()}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading traces:', error);
+            }
+        }
+        
+        // Load performance metrics
+        async function loadPerformanceMetrics(service = '') {
+            try {
+                if (!service) {
+                    service = 'java-sample-app'; // Default service
+                }
+                
+                const response = await axios.get(`${API_BASE}/services/${service}/performance`);
+                
+                if (response.data && response.data.length > 0) {
+                    // Update throughput chart
+                    const labels = response.data.map(d => new Date(d.timestamp).toLocaleTimeString());
+                    const data = response.data.map(d => d.request_count);
+                    
+                    throughputChart.data.labels = labels.slice(-20);
+                    throughputChart.data.datasets[0].data = data.slice(-20);
+                    throughputChart.update('none');
+                    
+                    // Update response time percentiles
+                    const latest = response.data[0];
+                    responseTimeChart.data.datasets[0].data = [
+                        latest.p50_duration_ms || 0,
+                        latest.avg_duration_ms || 0,
+                        latest.avg_duration_ms * 1.5 || 0,
+                        latest.p95_duration_ms || 0,
+                        latest.p99_duration_ms || 0
+                    ];
+                    responseTimeChart.update('none');
+                }
+            } catch (error) {
+                console.error('Error loading performance metrics:', error);
+            }
+        }
+        
+        // Load dependencies
+        async function loadDependencies() {
+            try {
+                const response = await axios.get(`${API_BASE}/dependencies`);
+                drawDependencyMap(response.data);
+            } catch (error) {
+                console.error('Error loading dependencies:', error);
+            }
+        }
+        
+        // Draw dependency map
+        function drawDependencyMap(dependencies) {
+            const svg = document.getElementById('dependencySvg');
+            svg.innerHTML = '';
+            
+            if (!dependencies || dependencies.length === 0) {
+                svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="white">No dependencies found</text>';
+                return;
+            }
+            
+            // Simple dependency visualization
+            const services = new Set();
+            dependencies.forEach(dep => {
+                services.add(dep.source_service);
+                services.add(dep.target_service);
+            });
+            
+            const serviceArray = Array.from(services);
+            const positions = {};
+            const radius = 150;
+            const centerX = svg.clientWidth / 2;
+            const centerY = svg.clientHeight / 2;
+            
+            serviceArray.forEach((service, index) => {
+                const angle = (2 * Math.PI * index) / serviceArray.length;
+                positions[service] = {
+                    x: centerX + radius * Math.cos(angle),
+                    y: centerY + radius * Math.sin(angle)
+                };
+            });
+            
+            // Draw connections
+            dependencies.forEach(dep => {
+                const source = positions[dep.source_service];
+                const target = positions[dep.target_service];
+                
+                if (source && target) {
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', source.x);
+                    line.setAttribute('y1', source.y);
+                    line.setAttribute('x2', target.x);
+                    line.setAttribute('y2', target.y);
+                    line.setAttribute('stroke', dep.total_errors > 0 ? '#ef4444' : '#3b82f6');
+                    line.setAttribute('stroke-width', '2');
+                    line.setAttribute('opacity', '0.5');
+                    svg.appendChild(line);
+                }
+            });
+            
+            // Draw services
+            serviceArray.forEach(service => {
+                const pos = positions[service];
+                
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', pos.x);
+                circle.setAttribute('cy', pos.y);
+                circle.setAttribute('r', '20');
+                circle.setAttribute('fill', '#1f2937');
+                circle.setAttribute('stroke', '#3b82f6');
+                circle.setAttribute('stroke-width', '2');
+                svg.appendChild(circle);
+                
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', pos.x);
+                text.setAttribute('y', pos.y - 30);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('fill', 'white');
+                text.setAttribute('font-size', '12');
+                text.textContent = service;
+                svg.appendChild(text);
+            });
+        }
+        
+        // Load error analysis
+        async function loadErrorAnalysis() {
+            try {
+                const response = await axios.get(`${API_BASE}/errors`);
+                
+                if (response.data && response.data.length > 0) {
+                    // Group errors by type
+                    const errorTypes = {};
+                    response.data.forEach(error => {
+                        const type = error.error_type || 'Unknown';
+                        errorTypes[type] = (errorTypes[type] || 0) + error.error_count;
+                    });
+                    
+                    // Update error type chart
+                    errorTypeChart.data.labels = Object.keys(errorTypes);
+                    errorTypeChart.data.datasets[0].data = Object.values(errorTypes);
+                    errorTypeChart.update('none');
+                    
+                    // Update top errors
+                    const topErrorsDiv = document.getElementById('topErrors');
+                    topErrorsDiv.innerHTML = '';
+                    
+                    response.data.slice(0, 5).forEach(error => {
+                        const div = document.createElement('div');
+                        div.className = 'bg-gray-700 p-3 rounded';
+                        div.innerHTML = `
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <p class="text-sm font-semibold">${error.error_type || 'Unknown'}</p>
+                                    <p class="text-xs text-gray-400 mt-1">${error.error_message || 'No message'}</p>
+                                </div>
+                                <span class="text-red-400 text-sm font-bold">${error.error_count}</span>
+                            </div>
+                        `;
+                        topErrorsDiv.appendChild(div);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading error analysis:', error);
+            }
+        }
+        
+        // Service selector change handler
+        document.getElementById('serviceSelector').addEventListener('change', (e) => {
+            const service = e.target.value;
+            loadTraces(service);
+            loadPerformanceMetrics(service);
+        });
+        
+        // Auto-refresh
+        function startAutoRefresh() {
+            setInterval(() => {
+                const service = document.getElementById('serviceSelector').value;
+                loadTraces(service);
+                loadPerformanceMetrics(service);
+                loadDependencies();
+                loadErrorAnalysis();
+            }, 10000); // Refresh every 10 seconds
+        }
+        
+        // Initialize
+        async function init() {
+            await loadServices();
+            await loadTraces();
+            await loadPerformanceMetrics();
+            await loadDependencies();
+            await loadErrorAnalysis();
+            initWebSocket();
+            startAutoRefresh();
+        }
+        
+        // Start the application
+        init();
+    </script>
+</body>
+</html>
