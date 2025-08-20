@@ -4,177 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIRIS APM | 서비스 토폴로지 대시보드</title>
+  <link rel="stylesheet" href="/src/styles/globals.css">
   <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://d3js.org/d3.v7.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
   <style>
     * {
       font-family: 'Inter', sans-serif;
     }
-    
-    /* shadcn/ui CSS Variables */
-    :root {
-      --background: 0 0% 100%;
-      --foreground: 222.2 84% 4.9%;
-      --card: 0 0% 100%;
-      --card-foreground: 222.2 84% 4.9%;
-      --popover: 0 0% 100%;
-      --popover-foreground: 222.2 84% 4.9%;
-      --primary: 222.2 47.4% 11.2%;
-      --primary-foreground: 210 40% 98%;
-      --secondary: 210 40% 96%;
-      --secondary-foreground: 222.2 47.4% 11.2%;
-      --muted: 210 40% 96%;
-      --muted-foreground: 215.4 16.3% 46.9%;
-      --accent: 210 40% 96%;
-      --accent-foreground: 222.2 47.4% 11.2%;
-      --destructive: 0 84.2% 60.2%;
-      --destructive-foreground: 210 40% 98%;
-      --border: 214.3 31.8% 91.4%;
-      --input: 214.3 31.8% 91.4%;
-      --ring: 222.2 84% 4.9%;
-      --radius: 0.5rem;
-    }
-
-    .dark {
-      --background: 222.2 84% 4.9%;
-      --foreground: 210 40% 98%;
-      --card: 222.2 84% 4.9%;
-      --card-foreground: 210 40% 98%;
-      --popover: 222.2 84% 4.9%;
-      --popover-foreground: 210 40% 98%;
-      --primary: 210 40% 98%;
-      --primary-foreground: 222.2 47.4% 11.2%;
-      --secondary: 217.2 32.6% 17.5%;
-      --secondary-foreground: 210 40% 98%;
-      --muted: 217.2 32.6% 17.5%;
-      --muted-foreground: 215 20.2% 65.1%;
-      --accent: 217.2 32.6% 17.5%;
-      --accent-foreground: 210 40% 98%;
-      --destructive: 0 62.8% 30.6%;
-      --destructive-foreground: 210 40% 98%;
-      --border: 217.2 32.6% 17.5%;
-      --input: 217.2 32.6% 17.5%;
-      --ring: 212.7 26.8% 83.9%;
-    }
-
-    /* shadcn/ui Utility Classes */
-    .bg-background { background-color: hsl(var(--background)); }
-    .text-foreground { color: hsl(var(--foreground)); }
-    .bg-card { background-color: hsl(var(--card)); }
-    .text-card-foreground { color: hsl(var(--card-foreground)); }
-    .bg-primary { background-color: hsl(var(--primary)); }
-    .text-primary { color: hsl(var(--primary)); }
-    .text-primary-foreground { color: hsl(var(--primary-foreground)); }
-    .bg-secondary { background-color: hsl(var(--secondary)); }
-    .text-secondary-foreground { color: hsl(var(--secondary-foreground)); }
-    .bg-muted { background-color: hsl(var(--muted)); }
-    .text-muted-foreground { color: hsl(var(--muted-foreground)); }
-    .bg-accent { background-color: hsl(var(--accent)); }
-    .text-accent-foreground { color: hsl(var(--accent-foreground)); }
-    .bg-destructive { background-color: hsl(var(--destructive)); }
-    .text-destructive-foreground { color: hsl(var(--destructive-foreground)); }
-    .border { border: 1px solid hsl(var(--border)); }
-    .border-input { border: 1px solid hsl(var(--input)); }
-    
-    /* Modern Card Styles */
-    .modern-card {
-      background: hsl(var(--card));
-      border: 1px solid hsl(var(--border));
-      border-radius: calc(var(--radius));
-      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-    }
-    
-    /* Button Styles */
-    .btn-primary {
-      background: hsl(var(--primary));
-      color: hsl(var(--primary-foreground));
-      border: none;
-      border-radius: calc(var(--radius));
-      padding: 0.5rem 1rem;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-    
-    .btn-primary:hover {
-      background: hsl(var(--primary) / 0.9);
-    }
-    
-    .btn-ghost {
-      background: transparent;
-      border: 1px solid hsl(var(--border));
-      color: hsl(var(--foreground));
-      border-radius: calc(var(--radius));
-      padding: 0.5rem 1rem;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-    
-    .btn-ghost:hover {
-      background: hsl(var(--accent));
-      color: hsl(var(--accent-foreground));
-    }
-
-    /* Status Indicators */
-    .status-success { color: #10b981; }
-    .status-warning { color: #f59e0b; }
-    .status-error { color: #ef4444; }
-    .status-info { color: #3b82f6; }
-  
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            border: 'hsl(var(--border))',
-            input: 'hsl(var(--input))',
-            ring: 'hsl(var(--ring))',
-            background: 'hsl(var(--background))',
-            foreground: 'hsl(var(--foreground))',
-            primary: {
-              DEFAULT: 'hsl(var(--primary))',
-              foreground: 'hsl(var(--primary-foreground))',
-            },
-            secondary: {
-              DEFAULT: 'hsl(var(--secondary))',
-              foreground: 'hsl(var(--secondary-foreground))',
-            },
-            destructive: {
-              DEFAULT: 'hsl(var(--destructive))',
-              foreground: 'hsl(var(--destructive-foreground))',
-            },
-            muted: {
-              DEFAULT: 'hsl(var(--muted))',
-              foreground: 'hsl(var(--muted-foreground))',
-            },
-            accent: {
-              DEFAULT: 'hsl(var(--accent))',
-              foreground: 'hsl(var(--accent-foreground))',
-            },
-            popover: {
-              DEFAULT: 'hsl(var(--popover))',
-              foreground: 'hsl(var(--popover-foreground))',
-            },
-            card: {
-              DEFAULT: 'hsl(var(--card))',
-              foreground: 'hsl(var(--card-foreground))',
-            },
-          },
-          borderRadius: {
-            lg: 'var(--radius)',
-            md: 'calc(var(--radius) - 2px)',
-            sm: 'calc(var(--radius) - 4px)',
-          },
-        },
-      },
-    }
-  </script>
     .topology-container {
       position: relative;
       border: 1px solid hsl(var(--border));
@@ -221,7 +62,7 @@
     }
   </style>
 </head>
-<body class="bg-background text-foreground">
+<body>
   <div id="root"></div>
   
   <script type="text/babel">

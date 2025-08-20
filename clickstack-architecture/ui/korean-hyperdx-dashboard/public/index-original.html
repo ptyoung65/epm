@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIRIS APM | 통합 모니터링 대시보드</title>
+  <link rel="stylesheet" href="/src/styles/globals.css">
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+    
+    // Main Dashboard Component
+    const Dashboard = () => {
+      const [isDark, setIsDark] = useState(false);
+      const [timeRange, setTimeRange] = useState('24h');
+      const [loading, setLoading] = useState(false);
+      const [metrics, setMetrics] = useState({
+        responseTime: 94,
+        throughput: 12543,
+        errorRate: 0.24,
+        activeUsers: 1847,
+        cpuUsage: 68,
+        memoryUsage: 74,
+        diskUsage: 52,
+        networkIO: 234
+      });
+
+      useEffect(() => {
+        // Apply dark mode class
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }, [isDark]);
+
+      useEffect(() => {
+        // Simulate real-time data updates
+        const interval = setInterval(() => {
+          setMetrics(prev => ({
+            ...prev,
+            responseTime: Math.floor(80 + Math.random() * 40),
+            throughput: Math.floor(10000 + Math.random() * 5000),
+            errorRate: (Math.random() * 2).toFixed(2),
+            activeUsers: Math.floor(1500 + Math.random() * 1000),
+            cpuUsage: Math.floor(50 + Math.random() * 40),
+            memoryUsage: Math.floor(60 + Math.random() * 30),
+            diskUsage: Math.floor(40 + Math.random() * 30),
+            networkIO: Math.floor(200 + Math.random() * 100)
+          }));
+        }, 5000);
+
+        return () => clearInterval(interval);
+      }, []);
+
+      const refreshData = () => {
+        setLoading(true);
+        setTimeout(() => {
+          setLoading(false);
+        }, 1000);
+      };
+
+      return (
+        <div className="min-h-screen bg-background text-foreground">
+          {/* Header */}
+          <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="container flex h-14 items-center">
+              <div className="mr-4 flex items-center space-x-2">
+                <span className="font-bold text-xl">AIRIS APM</span>
+                <span className="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">
+                  v2.0
+                </span>
+              </div>
+              
+              {/* Navigation */}
+              <nav className="flex items-center space-x-6 text-sm">
+                <a href="#" className="font-medium text-foreground/80 hover:text-foreground transition-colors">
+                  대시보드
+                </a>
+                <a href="/j2ee-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
+                  J2EE 모니터링
+                </a>
+                <a href="/was-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
+                  WAS 모니터링
+                </a>
+                <a href="/exception-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
+                  예외 추적
+                </a>
+                <a href="/topology-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
+                  서비스 토폴로지
+                </a>
+                <a href="/alert-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
+                  알림 관리
+                </a>
+              </nav>
+
+              {/* Right side actions */}
+              <div className="ml-auto flex items-center space-x-4">
+                <select 
+                  value={timeRange} 
+                  onChange={(e) => setTimeRange(e.target.value)}
+                  className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+                >
+                  <option value="15m">15분</option>
+                  <option value="1h">1시간</option>
+                  <option value="6h">6시간</option>
+                  <option value="24h">24시간</option>
+                  <option value="7d">7일</option>
+                </select>
+                
+                <button
+                  onClick={refreshData}
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                  ) : (
+                    '새로고침'
+                  )}
+                </button>
+                
+                <button
+                  onClick={() => setIsDark(!isDark)}
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 w-9 border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+                >
+                  {isDark ? '🌞' : '🌙'}
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Page Header */}
+          <div className="border-b">
+            <div className="container flex h-16 items-center px-4">
+              <div>
+                <h1 className="text-2xl font-semibold">통합 모니터링 대시보드</h1>
+                <p className="text-sm text-muted-foreground">실시간 시스템 성능 및 상태 모니터링</p>
+              </div>
+              <div className="ml-auto flex items-center space-x-2">
+                <span className="inline-flex items-center rounded-md bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
+                  <span className="mr-1.5 h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                  시스템 정상
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <main className="container py-6 space-y-6">
+            {/* Metric Cards */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <MetricCard
+                title="평균 응답시간"
+                value={`${metrics.responseTime}ms`}
+                description="최근 5분 평균"
+                trend={metrics.responseTime < 100 ? 'success' : 'warning'}
+                trendValue={metrics.responseTime < 100 ? '정상' : '주의'}
+                icon="⚡"
+              />
+              <MetricCard
+                title="처리량"
+                value={`${(metrics.throughput / 1000).toFixed(1)}K`}
+                description="분당 요청 수"
+                trend="success"
+                trendValue="+12.5%"
+                icon="📊"
+              />
+              <MetricCard
+                title="에러율"
+                value={`${metrics.errorRate}%`}
+                description="전체 요청 대비"
+                trend={metrics.errorRate < 1 ? 'success' : 'error'}
+                trendValue={metrics.errorRate < 1 ? '양호' : '높음'}
+                icon="⚠️"
+              />
+              <MetricCard
+                title="활성 사용자"
+                value={metrics.activeUsers.toLocaleString()}
+                description="현재 접속 중"
+                trend="success"
+                trendValue="+8.2%"
+                icon="👥"
+              />
+            </div>
+
+            {/* Charts Row */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <ChartCard title="응답시간 추이" type="line" />
+              <ChartCard title="처리량 분석" type="bar" />
+            </div>
+
+            {/* System Resources */}
+            <div className="rounded-lg border bg-card">
+              <div className="p-6">
+                <h3 className="text-lg font-semibold mb-4">시스템 리소스 현황</h3>
+                <div className="grid gap-4 md:grid-cols-4">
+                  <ResourceMeter label="CPU" value={metrics.cpuUsage} unit="%" />
+                  <ResourceMeter label="Memory" value={metrics.memoryUsage} unit="%" />
+                  <ResourceMeter label="Disk" value={metrics.diskUsage} unit="%" />
+                  <ResourceMeter label="Network I/O" value={metrics.networkIO} unit="MB/s" />
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Alerts */}
+            <div className="rounded-lg border bg-card">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">최근 알림</h3>
+                  <a href="/alert-dashboard.html" className="text-sm text-primary hover:underline">
+                    모두 보기 →
+                  </a>
+                </div>
+                <div className="space-y-2">
+                  <AlertItem 
+                    level="warning"
+                    message="WAS 서버 메모리 사용률 80% 초과"
+                    time="2분 전"
+                  />
+                  <AlertItem 
+                    level="info"
+                    message="배치 작업 'DailyReport' 완료"
+                    time="15분 전"
+                  />
+                  <AlertItem 
+                    level="error"
+                    message="데이터베이스 연결 타임아웃 발생"
+                    time="1시간 전"
+                  />
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      );
+    };
+
+    // Metric Card Component
+    const MetricCard = ({ title, value, description, trend, trendValue, icon }) => {
+      const getTrendColor = () => {
+        switch (trend) {
+          case 'success': return 'text-green-600 dark:text-green-400';
+          case 'warning': return 'text-yellow-600 dark:text-yellow-400';
+          case 'error': return 'text-red-600 dark:text-red-400';
+          default: return 'text-blue-600 dark:text-blue-400';
+        }
+      };
+
+      return (
+        <div className="rounded-lg border bg-card p-6">
+          <div className="flex items-center justify-between space-y-0 pb-2">
+            <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
+            <span className="text-2xl">{icon}</span>
+          </div>
+          <div className="text-2xl font-bold">{value}</div>
+          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          {trendValue && (
+            <div className={`text-xs font-medium mt-2 ${getTrendColor()}`}>
+              {trendValue}
+            </div>
+          )}
+        </div>
+      );
+    };
+
+    // Chart Card Component
+    const ChartCard = ({ title, type }) => {
+      const canvasRef = useRef(null);
+      const chartRef = useRef(null);
+
+      useEffect(() => {
+        if (canvasRef.current) {
+          const ctx = canvasRef.current.getContext('2d');
+          
+          if (chartRef.current) {
+            chartRef.current.destroy();
+          }
+
+          const data = {
+            labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+            datasets: [{
+              label: title,
+              data: Array.from({ length: 6 }, () => Math.floor(Math.random() * 100)),
+              borderColor: 'hsl(var(--primary))',
+              backgroundColor: type === 'bar' ? 'hsl(var(--primary))' : 'hsl(var(--primary) / 0.1)',
+              tension: 0.4,
+              fill: type === 'line'
+            }]
+          };
+
+          chartRef.current = new Chart(ctx, {
+            type: type,
+            data: data,
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false }
+              },
+              scales: {
+                y: { beginAtZero: true }
+              }
+            }
+          });
+        }
+
+        return () => {
+          if (chartRef.current) {
+            chartRef.current.destroy();
+          }
+        };
+      }, [title, type]);
+
+      return (
+        <div className="rounded-lg border bg-card p-6">
+          <h3 className="text-lg font-semibold mb-4">{title}</h3>
+          <div className="h-64">
+            <canvas ref={canvasRef}></canvas>
+          </div>
+        </div>
+      );
+    };
+
+    // Resource Meter Component
+    const ResourceMeter = ({ label, value, unit }) => {
+      const getColor = () => {
+        if (value < 60) return 'bg-green-500';
+        if (value < 80) return 'bg-yellow-500';
+        return 'bg-red-500';
+      };
+
+      return (
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm font-medium">{label}</span>
+            <span className="text-sm font-bold">{value}{unit}</span>
+          </div>
+          <div className="w-full bg-secondary rounded-full h-2">
+            <div 
+              className={`h-2 rounded-full transition-all ${getColor()}`}
+              style={{ width: `${Math.min(value, 100)}%` }}
+            />
+          </div>
+        </div>
+      );
+    };
+
+    // Alert Item Component
+    const AlertItem = ({ level, message, time }) => {
+      const getLevelStyles = () => {
+        switch (level) {
+          case 'error': return 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20';
+          case 'warning': return 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20';
+          case 'info': return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
+          default: return 'bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20';
+        }
+      };
+
+      const getLevelIcon = () => {
+        switch (level) {
+          case 'error': return '🔴';
+          case 'warning': return '🟡';
+          case 'info': return '🔵';
+          default: return '⚪';
+        }
+      };
+
+      return (
+        <div className={`flex items-center justify-between p-3 rounded-lg border ${getLevelStyles()}`}>
+          <div className="flex items-center space-x-3">
+            <span className="text-lg">{getLevelIcon()}</span>
+            <span className="text-sm font-medium">{message}</span>
+          </div>
+          <span className="text-xs opacity-75">{time}</span>
+        </div>
+      );
+    };
+
+    // Render the app
+    ReactDOM.render(<Dashboard />, document.getElementById('root'));
+  </script>
+</body>
+</html>

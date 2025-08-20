@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIRIS APM | shadcn/ui 테스트</title>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            border: 'hsl(214.3, 31.8%, 91.4%)',
+            input: 'hsl(214.3, 31.8%, 91.4%)',
+            ring: 'hsl(222.2, 84%, 4.9%)',
+            background: 'hsl(0, 0%, 100%)',
+            foreground: 'hsl(222.2, 84%, 4.9%)',
+            primary: {
+              DEFAULT: 'hsl(222.2, 47.4%, 11.2%)',
+              foreground: 'hsl(210, 40%, 98%)',
+            },
+            secondary: {
+              DEFAULT: 'hsl(210, 40%, 96%)',
+              foreground: 'hsl(222.2, 47.4%, 11.2%)',
+            },
+            destructive: {
+              DEFAULT: 'hsl(0, 84.2%, 60.2%)',
+              foreground: 'hsl(210, 40%, 98%)',
+            },
+            muted: {
+              DEFAULT: 'hsl(210, 40%, 96%)',
+              foreground: 'hsl(215.4, 16.3%, 46.9%)',
+            },
+            accent: {
+              DEFAULT: 'hsl(210, 40%, 96%)',
+              foreground: 'hsl(222.2, 47.4%, 11.2%)',
+            },
+            popover: {
+              DEFAULT: 'hsl(0, 0%, 100%)',
+              foreground: 'hsl(222.2, 84%, 4.9%)',
+            },
+            card: {
+              DEFAULT: 'hsl(0, 0%, 100%)',
+              foreground: 'hsl(222.2, 84%, 4.9%)',
+            },
+          },
+          borderRadius: {
+            lg: '0.5rem',
+            md: 'calc(0.5rem - 2px)',
+            sm: 'calc(0.5rem - 4px)',
+          },
+        },
+      },
+    }
+  </script>
+  
+  <style>
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    .dark {
+      --tw-bg-opacity: 1;
+      background-color: hsl(222.2 84% 4.9% / var(--tw-bg-opacity));
+      --tw-text-opacity: 1;
+      color: hsl(210 40% 98% / var(--tw-text-opacity));
+    }
+  </style>
+</head>
+<body class="bg-background text-foreground antialiased">
+  <div id="root"></div>
+  
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+    
+    const Dashboard = () => {
+      const [isDark, setIsDark] = useState(false);
+      const [metrics, setMetrics] = useState({
+        responseTime: 94,
+        throughput: 12543,
+        errorRate: 0.24,
+        activeUsers: 1847,
+      });
+
+      useEffect(() => {
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }, [isDark]);
+
+      useEffect(() => {
+        const interval = setInterval(() => {
+          setMetrics(prev => ({
+            ...prev,
+            responseTime: Math.floor(80 + Math.random() * 40),
+            throughput: Math.floor(10000 + Math.random() * 5000),
+            errorRate: (Math.random() * 2).toFixed(2),
+            activeUsers: Math.floor(1500 + Math.random() * 1000),
+          }));
+        }, 3000);
+        return () => clearInterval(interval);
+      }, []);
+
+      return (
+        <div className="min-h-screen bg-background text-foreground">
+          {/* shadcn/ui Header */}
+          <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
+            <div className="container mx-auto flex h-16 max-w-screen-2xl items-center px-4">
+              <div className="mr-6 flex items-center space-x-2">
+                <div className="flex items-center space-x-2">
+                  <div className="h-6 w-6 rounded bg-primary"></div>
+                  <h1 className="text-xl font-bold">AIRIS APM</h1>
+                </div>
+                <span className="rounded-md bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
+                  shadcn/ui 적용
+                </span>
+              </div>
+              
+              <nav className="flex items-center space-x-6 text-sm font-medium">
+                <a className="text-foreground transition-colors hover:text-primary" href="#">
+                  대시보드
+                </a>
+                <a className="text-muted-foreground transition-colors hover:text-foreground" href="#">
+                  J2EE 모니터링
+                </a>
+                <a className="text-muted-foreground transition-colors hover:text-foreground" href="#">
+                  WAS 모니터링
+                </a>
+                <a className="text-muted-foreground transition-colors hover:text-foreground" href="#">
+                  예외 추적
+                </a>
+              </nav>
+
+              <div className="ml-auto flex items-center space-x-4">
+                <button
+                  onClick={() => setIsDark(!isDark)}
+                  className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 w-9"
+                >
+                  {isDark ? '🌞' : '🌙'}
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Page Header */}
+          <div className="border-b">
+            <div className="container mx-auto max-w-screen-2xl px-4 py-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <h2 className="text-2xl font-semibold tracking-tight">통합 모니터링 대시보드</h2>
+                  <p className="text-sm text-muted-foreground">
+                    실시간 시스템 성능 및 상태 모니터링 - shadcn/ui 디자인 시스템 적용 완료 ✨
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-green-600 bg-green-50 border-green-200">
+                    <div className="mr-1 h-2 w-2 animate-pulse rounded-full bg-green-500"></div>
+                    시스템 정상
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="container mx-auto max-w-screen-2xl px-4 py-6">
+            <div className="grid gap-6">
+              {/* Metric Cards */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <MetricCard
+                  title="평균 응답시간"
+                  value={`${metrics.responseTime}ms`}
+                  description="최근 5분 평균"
+                  trend={metrics.responseTime < 100 ? 'up' : 'down'}
+                  className="border bg-card text-card-foreground shadow-sm"
+                />
+                <MetricCard
+                  title="처리량"
+                  value={`${(metrics.throughput / 1000).toFixed(1)}K`}
+                  description="분당 요청 수"
+                  trend="up"
+                  className="border bg-card text-card-foreground shadow-sm"
+                />
+                <MetricCard
+                  title="에러율"
+                  value={`${metrics.errorRate}%`}
+                  description="전체 요청 대비"
+                  trend={metrics.errorRate < 1 ? 'up' : 'down'}
+                  className="border bg-card text-card-foreground shadow-sm"
+                />
+                <MetricCard
+                  title="활성 사용자"
+                  value={metrics.activeUsers.toLocaleString()}
+                  description="현재 접속 중"
+                  trend="up"
+                  className="border bg-card text-card-foreground shadow-sm"
+                />
+              </div>
+
+              {/* Feature Cards */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <FeatureCard
+                  title="J2EE 모니터링"
+                  description="Servlet, JSP, EJB 실시간 성능 추적"
+                  icon="☕"
+                  className="border bg-card text-card-foreground shadow-sm"
+                />
+                <FeatureCard
+                  title="WAS 모니터링"
+                  description="Tomcat, WebLogic, WebSphere 통합 관리"
+                  icon="🏗️"
+                  className="border bg-card text-card-foreground shadow-sm"
+                />
+                <FeatureCard
+                  title="예외 추적 시스템"
+                  description="실시간 예외 분석 및 해결 방안 제시"
+                  icon="🚨"
+                  className="border bg-card text-card-foreground shadow-sm"
+                />
+              </div>
+
+              {/* shadcn/ui 디자인 시스템 확인 카드 */}
+              <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-semibold">🎨 shadcn/ui 디자인 시스템 적용 확인</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Tailwind CSS + shadcn/ui 컴포넌트가 정상적으로 작동하고 있습니다.
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold transition-colors text-emerald-600 bg-emerald-50 border-emerald-200">
+                      ✅ 작동 중
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="h-2 w-2 rounded-full bg-primary"></div>
+                      <span>Primary 컬러</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="h-2 w-2 rounded-full bg-secondary"></div>
+                      <span>Secondary 컬러</span>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="h-2 w-2 rounded-full bg-muted"></div>
+                      <span>Muted 컬러</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="h-2 w-2 rounded-full bg-accent"></div>
+                      <span>Accent 컬러</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // Metric Card Component
+    const MetricCard = ({ title, value, description, trend, className = "" }) => {
+      return (
+        <div className={`rounded-lg p-6 ${className}`}>
+          <div className="flex items-center justify-between space-y-0 pb-2">
+            <h3 className="text-sm font-medium tracking-tight">{title}</h3>
+            <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+          </div>
+          <div className="text-2xl font-bold">{value}</div>
+          <p className="text-xs text-muted-foreground">{description}</p>
+          <div className="mt-2 flex items-center text-xs">
+            <svg className={`mr-1 h-3 w-3 ${trend === 'up' ? 'text-emerald-500' : 'text-red-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={trend === 'up' ? "M7 14l3-3 3 3 5-5" : "M7 10l3 3 3-3 5 5"} />
+            </svg>
+            <span className={trend === 'up' ? 'text-emerald-600' : 'text-red-600'}>
+              {trend === 'up' ? '+' : '-'}12.5%
+            </span>
+            <span className="text-muted-foreground ml-1">지난 주 대비</span>
+          </div>
+        </div>
+      );
+    };
+
+    // Feature Card Component
+    const FeatureCard = ({ title, description, icon, className = "" }) => {
+      return (
+        <div className={`rounded-lg p-6 transition-colors hover:bg-accent/50 ${className}`}>
+          <div className="flex items-center space-x-4">
+            <div className="text-4xl">{icon}</div>
+            <div className="space-y-1">
+              <h3 className="font-medium leading-none">{title}</h3>
+              <p className="text-sm text-muted-foreground">{description}</p>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    ReactDOM.render(<Dashboard />, document.getElementById('root'));
+  </script>
+</body>
+</html>
