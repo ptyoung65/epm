@@ -34,6 +34,9 @@
     "baseUrl": "./src",
     "paths": {
       "@/*": ["*"],
+      "@components/*": ["components/*"],
+      "@lib/*": ["lib/*"],
+      "@hooks/*": ["hooks/*"],
       "@config/*": ["../config/*"],
       "@types/*": ["types/*"],
       "@utils/*": ["utils/*"],

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TweakCN Theme Test - AIRIS APM</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+    
+    /* shadcn/ui CSS Variables */
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 222.2 84% 4.9%;
+      --card: 0 0% 100%;
+      --card-foreground: 222.2 84% 4.9%;
+      --popover: 0 0% 100%;
+      --popover-foreground: 222.2 84% 4.9%;
+      --primary: 222.2 47.4% 11.2%;
+      --primary-foreground: 210 40% 98%;
+      --secondary: 210 40% 96%;
+      --secondary-foreground: 222.2 47.4% 11.2%;
+      --muted: 210 40% 96%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --accent: 210 40% 96%;
+      --accent-foreground: 222.2 47.4% 11.2%;
+      --destructive: 0 84.2% 60.2%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 214.3 31.8% 91.4%;
+      --input: 214.3 31.8% 91.4%;
+      --ring: 222.2 84% 4.9%;
+      --radius: 0.5rem;
+    }
+
+    .dark {
+      --background: 222.2 84% 4.9%;
+      --foreground: 210 40% 98%;
+      --card: 222.2 84% 4.9%;
+      --card-foreground: 210 40% 98%;
+      --popover: 222.2 84% 4.9%;
+      --popover-foreground: 210 40% 98%;
+      --primary: 210 40% 98%;
+      --primary-foreground: 222.2 47.4% 11.2%;
+      --secondary: 217.2 32.6% 17.5%;
+      --secondary-foreground: 210 40% 98%;
+      --muted: 217.2 32.6% 17.5%;
+      --muted-foreground: 215 20.2% 65.1%;
+      --accent: 217.2 32.6% 17.5%;
+      --accent-foreground: 210 40% 98%;
+      --destructive: 0 62.8% 30.6%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 217.2 32.6% 17.5%;
+      --input: 217.2 32.6% 17.5%;
+      --ring: 212.7 26.8% 83.9%;
+    }
+
+    /* Test Styles */
+    body {
+      background-color: hsl(var(--background));
+      color: hsl(var(--foreground));
+      transition: all 0.3s ease;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .test-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .test-card {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius));
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    }
+
+    .test-button {
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      border: none;
+      border-radius: calc(var(--radius));
+      padding: 0.75rem 1.5rem;
+      margin: 0.5rem;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .test-button:hover {
+      background: hsl(var(--primary) / 0.9);
+    }
+
+    .test-button.secondary {
+      background: hsl(var(--secondary));
+      color: hsl(var(--secondary-foreground));
+    }
+
+    .color-preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .color-item {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius));
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .color-swatch {
+      width: 100%;
+      height: 60px;
+      border-radius: calc(var(--radius) - 2px);
+      margin-bottom: 0.5rem;
+    }
+
+    .info-panel {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius));
+      padding: 1rem;
+      min-width: 300px;
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    }
+
+    .current-values {
+      font-family: monospace;
+      font-size: 0.875rem;
+      background: hsl(var(--muted));
+      padding: 0.5rem;
+      border-radius: calc(var(--radius) - 2px);
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <div class="test-card">
+      <h1>TweakCN Theme Test - AIRIS APM</h1>
+      <p>이 페이지는 TweakCN 테마 시스템의 작동을 테스트하기 위한 간단한 테스트 페이지입니다.</p>
+      
+      <div style="margin-top: 2rem;">
+        <h2>테마 버튼 테스트</h2>
+        <p>TweakCN 테마 버튼이 로드되면 화면 왼쪽 하단에 나타날 것입니다.</p>
+        <button class="test-button" onclick="testThemes()">테마 테스트 시작</button>
+        <button class="test-button secondary" onclick="showDebugInfo()">디버그 정보 표시</button>
+        <button class="test-button secondary" onclick="openThemePanel()">테마 패널 열기</button>
+      </div>
+    </div>
+
+    <div class="test-card">
+      <h2>색상 미리보기</h2>
+      <div class="color-preview">
+        <div class="color-item">
+          <div class="color-swatch" style="background: hsl(var(--background));"></div>
+          <div>Background</div>
+          <small id="bg-value">--</small>
+        </div>
+        <div class="color-item">
+          <div class="color-swatch" style="background: hsl(var(--primary));"></div>
+          <div>Primary</div>
+          <small id="primary-value">--</small>
+        </div>
+        <div class="color-item">
+          <div class="color-swatch" style="background: hsl(var(--secondary));"></div>
+          <div>Secondary</div>
+          <small id="secondary-value">--</small>
+        </div>
+        <div class="color-item">
+          <div class="color-swatch" style="background: hsl(var(--accent));"></div>
+          <div>Accent</div>
+          <small id="accent-value">--</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="test-card">
+      <h2>컴포넌트 테스트</h2>
+      <p style="color: hsl(var(--muted-foreground));">다양한 shadcn/ui 스타일 컴포넌트들</p>
+      
+      <div style="margin-top: 1rem;">
+        <button class="test-button">Primary Button</button>
+        <button class="test-button secondary">Secondary Button</button>
+      </div>
+
+      <div style="margin-top: 1rem; padding: 1rem; background: hsl(var(--muted)); border-radius: calc(var(--radius));">
+        <strong>Muted Background Area</strong>
+        <p style="color: hsl(var(--muted-foreground));">This area uses muted colors</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-panel">
+    <h3>현재 테마 정보</h3>
+    <div>TweakCN 상태: <span id="tweakcn-status">로딩 중...</span></div>
+    <div>테마 로더: <span id="loader-status">확인 중...</span></div>
+    
+    <div class="current-values" id="current-values">
+      CSS 변수 값들이 여기에 표시됩니다...
+    </div>
+
+    <div style="margin-top: 1rem;">
+      <button class="test-button" onclick="refreshValues()">값 새로고침</button>
+    </div>
+  </div>
+
+  <!-- Load TweakCN Theme System -->
+  <script src="/js/tweakcn-loader.js"></script>
+
+  <script>
+    // Test functions
+    function updateColorValues() {
+      const root = document.documentElement;
+      const computedStyle = getComputedStyle(root);
+      
+      // Update color value displays
+      document.getElementById('bg-value').textContent = computedStyle.getPropertyValue('--background').trim();
+      document.getElementById('primary-value').textContent = computedStyle.getPropertyValue('--primary').trim();
+      document.getElementById('secondary-value').textContent = computedStyle.getPropertyValue('--secondary').trim();
+      document.getElementById('accent-value').textContent = computedStyle.getPropertyValue('--accent').trim();
+      
+      // Update current values panel
+      const values = [
+        '--background', '--foreground', '--primary', '--secondary', 
+        '--accent', '--card', '--border'
+      ].map(varName => {
+        const value = computedStyle.getPropertyValue(varName).trim();
+        return `${varName}: ${value}`;
+      }).join('\n');
+      
+      document.getElementById('current-values').textContent = values;
+    }
+
+    function checkTweakCNStatus() {
+      const status = window.TweakCNLoader ? '✅ 로드됨' : '❌ 로드 실패';
+      document.getElementById('tweakcn-status').textContent = status;
+      
+      const loaderStatus = typeof window.TweakCNLoader?.applyPreset === 'function' ? '✅ 정상' : '❌ 함수 없음';
+      document.getElementById('loader-status').textContent = loaderStatus;
+    }
+
+    function testThemes() {
+      if (!window.TweakCNLoader) {
+        alert('TweakCN이 로드되지 않았습니다!');
+        return;
+      }
+
+      const themes = ['default', 'ocean', 'forest', 'sunset', 'midnight'];
+      let index = 0;
+
+      const applyNextTheme = () => {
+        if (index < themes.length) {
+          const theme = themes[index];
+          console.log(`Testing theme: ${theme}`);
+          window.TweakCNLoader.applyPreset(theme);
+          updateColorValues();
+          
+          setTimeout(() => {
+            index++;
+            applyNextTheme();
+          }, 2000);
+        } else {
+          alert('모든 테마 테스트 완료!');
+        }
+      };
+
+      applyNextTheme();
+    }
+
+    function showDebugInfo() {
+      if (window.TweakCNLoader) {
+        window.TweakCNLoader.debugCurrentTheme();
+        alert('디버그 정보가 콘솔에 출력되었습니다. (F12를 눌러서 확인하세요)');
+      } else {
+        alert('TweakCN이 로드되지 않았습니다!');
+      }
+    }
+
+    function openThemePanel() {
+      if (window.TweakCNLoader) {
+        window.TweakCNLoader.toggleThemePanel();
+      } else {
+        alert('TweakCN이 로드되지 않았습니다!');
+      }
+    }
+
+    function refreshValues() {
+      updateColorValues();
+      checkTweakCNStatus();
+    }
+
+    // Initialize on load
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        updateColorValues();
+        checkTweakCNStatus();
+      }, 1000);
+      
+      // Update values every 2 seconds
+      setInterval(updateColorValues, 2000);
+    });
+
+    // Listen for theme changes
+    document.addEventListener('click', () => {
+      setTimeout(updateColorValues, 100);
+    });
+  </script>
+</body>
+</html>

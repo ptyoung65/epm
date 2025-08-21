@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TweakCN Theme Switcher - AIRIS APM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../styles/tweakcn-theme.css">
+    <script src="../config/tweakcn.config.js"></script>
+    <style>
+        /* Import TweakCN theme variables */
+        @import url('../styles/tweakcn-theme.css');
+    </style>
+</head>
+<body class="bg-background text-foreground">
+    <div class="container mx-auto p-8 max-w-6xl">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold mb-2">TweakCN Theme Manager</h1>
+            <p class="text-muted-foreground">Visual theme customization for AIRIS APM dashboards</p>
+        </div>
+
+        <!-- Theme Presets Grid -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Theme Presets</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Default Theme -->
+                <div class="theme-preset-card border rounded-lg p-4 cursor-pointer hover:shadow-lg transition-shadow" 
+                     onclick="applyPreset('default')">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold">Default</h3>
+                        <div class="flex gap-1">
+                            <div class="w-6 h-6 rounded" style="background: hsl(240, 5.9%, 10%)"></div>
+                            <div class="w-6 h-6 rounded" style="background: hsl(240, 4.8%, 95.9%)"></div>
+                            <div class="w-6 h-6 rounded" style="background: hsl(0, 0%, 100%)"></div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-muted-foreground">Standard AIRIS APM theme</p>
+                </div>
+
+                <!-- Ocean Theme -->
+                <div class="theme-preset-card border rounded-lg p-4 cursor-pointer hover:shadow-lg transition-shadow"
+                     onclick="applyPreset('ocean')">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold">Ocean</h3>
+                        <div class="flex gap-1">
+                            <div class="w-6 h-6 rounded" style="background: hsl(217, 91%, 60%)"></div>
+                            <div class="w-6 h-6 rounded" style="background: hsl(215, 20%, 65%)"></div>
+                            <div class="w-6 h-6 rounded" style="background: hsl(199, 89%, 48%)"></div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-muted-foreground">Blue-focused monitoring theme</p>
+                </div>
+
+                <!-- Forest Theme -->
+                <div class="theme-preset-card border rounded-lg p-4 cursor-pointer hover:shadow-lg transition-shadow"
+                     onclick="applyPreset('forest')">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold">Forest</h3>
+                        <div class="flex gap-1">
+                            <div class="w-6 h-6 rounded" style="background: hsl(142, 76%, 36%)"></div>
+                            <div class="w-6 h-6 rounded" style="background: hsl(142, 43%, 89%)"></div>
+                            <div class="w-6 h-6 rounded" style="background: hsl(161, 79%, 37%)"></div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-muted-foreground">Green theme for healthy status</p>
+                </div>
+
+                <!-- Sunset Theme -->
+                <div class="theme-preset-card border rounded-lg p-4 cursor-pointer hover:shadow-lg transition-shadow"
+                     onclick="applyPreset('sunset')">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold">Sunset</h3>
+                        <div class="flex gap-1">
+                            <div class="w-6 h-6 rounded" style="background: hsl(25, 95%, 53%)"></div>
+                            <div class="w-6 h-6 rounded" style="background: hsl(28, 80%, 90%)"></div>
+                            <div class="w-6 h-6 rounded" style="background: hsl(12, 76%, 61%)"></div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-muted-foreground">Warm theme for alerts</p>
+                </div>
+
+                <!-- Midnight Theme -->
+                <div class="theme-preset-card border rounded-lg p-4 cursor-pointer hover:shadow-lg transition-shadow"
+                     onclick="applyPreset('midnight')">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold">Midnight</h3>
+                        <div class="flex gap-1">
+                            <div class="w-6 h-6 rounded" style="background: hsl(217, 91%, 60%)"></div>
+                            <div class="w-6 h-6 rounded" style="background: hsl(215, 27%, 17%)"></div>
+                            <div class="w-6 h-6 rounded" style="background: hsl(222, 47%, 11%)"></div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-muted-foreground">Dark theme for extended use</p>
+                </div>
+
+                <!-- Custom Theme -->
+                <div class="theme-preset-card border rounded-lg p-4 cursor-pointer hover:shadow-lg transition-shadow border-dashed"
+                     onclick="openTweakcnEditor()">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-semibold">Create Custom</h3>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M12 4v16m8-8H4"></path>
+                        </svg>
+                    </div>
+                    <p class="text-sm text-muted-foreground">Open TweakCN visual editor</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Preview Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Live Preview</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Sample Card -->
+                <div class="bg-card text-card-foreground rounded-lg border p-6">
+                    <h3 class="text-lg font-semibold mb-4">Sample Dashboard Card</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-muted-foreground">Response Time</span>
+                            <span class="text-2xl font-bold text-primary">125ms</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-muted-foreground">Throughput</span>
+                            <span class="text-2xl font-bold text-secondary-foreground">1.2K/s</span>
+                        </div>
+                        <div class="flex gap-2 mt-4">
+                            <button class="px-4 py-2 bg-primary text-primary-foreground rounded-md">
+                                Primary Button
+                            </button>
+                            <button class="px-4 py-2 bg-secondary text-secondary-foreground rounded-md">
+                                Secondary
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sample Alert -->
+                <div class="space-y-3">
+                    <div class="bg-destructive/10 border border-destructive/50 text-destructive rounded-lg p-4">
+                        <div class="font-semibold">Critical Alert</div>
+                        <div class="text-sm mt-1">Database connection timeout detected</div>
+                    </div>
+                    <div class="bg-yellow-500/10 border border-yellow-500/50 text-yellow-700 dark:text-yellow-400 rounded-lg p-4">
+                        <div class="font-semibold">Warning</div>
+                        <div class="text-sm mt-1">Memory usage above 80%</div>
+                    </div>
+                    <div class="bg-green-500/10 border border-green-500/50 text-green-700 dark:text-green-400 rounded-lg p-4">
+                        <div class="font-semibold">Success</div>
+                        <div class="text-sm mt-1">All services operational</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Color Variables Display -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Current Theme Variables</h2>
+            <div class="bg-card rounded-lg border p-6">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="colorVariables">
+                    <!-- Color variables will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Export/Import Section -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Export & Import</h2>
+            <div class="flex gap-4">
+                <button onclick="exportTheme()" 
+                        class="px-6 py-2 bg-primary text-primary-foreground rounded-md">
+                    Export Current Theme
+                </button>
+                <button onclick="document.getElementById('importFile').click()" 
+                        class="px-6 py-2 bg-secondary text-secondary-foreground rounded-md">
+                    Import Theme
+                </button>
+                <input type="file" id="importFile" class="hidden" accept=".json,.css" onchange="importTheme(event)">
+                <button onclick="openTweakcnEditor()" 
+                        class="px-6 py-2 bg-accent text-accent-foreground rounded-md">
+                    Open TweakCN Editor →
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard Quick Links -->
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold mb-4">Apply Theme to Dashboards</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <a href="/index.html" class="text-center p-3 bg-card rounded-lg border hover:shadow-lg transition-shadow">
+                    <div class="text-2xl mb-1">📊</div>
+                    <div class="text-sm">Main</div>
+                </a>
+                <a href="/j2ee-dashboard.html" class="text-center p-3 bg-card rounded-lg border hover:shadow-lg transition-shadow">
+                    <div class="text-2xl mb-1">☕</div>
+                    <div class="text-sm">J2EE</div>
+                </a>
+                <a href="/was-dashboard.html" class="text-center p-3 bg-card rounded-lg border hover:shadow-lg transition-shadow">
+                    <div class="text-2xl mb-1">🏗️</div>
+                    <div class="text-sm">WAS</div>
+                </a>
+                <a href="/exception-dashboard.html" class="text-center p-3 bg-card rounded-lg border hover:shadow-lg transition-shadow">
+                    <div class="text-2xl mb-1">🚨</div>
+                    <div class="text-sm">Exception</div>
+                </a>
+                <a href="/topology-dashboard.html" class="text-center p-3 bg-card rounded-lg border hover:shadow-lg transition-shadow">
+                    <div class="text-2xl mb-1">🗺️</div>
+                    <div class="text-sm">Topology</div>
+                </a>
+                <a href="/alert-dashboard.html" class="text-center p-3 bg-card rounded-lg border hover:shadow-lg transition-shadow">
+                    <div class="text-2xl mb-1">🔔</div>
+                    <div class="text-sm">Alert</div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load saved theme on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = tweakcnConfig.loadSavedTheme();
+            updateColorVariablesDisplay();
+            highlightActivePreset(savedTheme);
+        });
+
+        // Apply preset theme
+        function applyPreset(preset) {
+            tweakcnConfig.applyTheme(preset);
+            updateColorVariablesDisplay();
+            highlightActivePreset(preset);
+            showNotification(`Applied ${preset} theme`);
+        }
+
+        // Update color variables display
+        function updateColorVariablesDisplay() {
+            const container = document.getElementById('colorVariables');
+            const root = document.documentElement;
+            const variables = [
+                'primary', 'secondary', 'accent', 'background', 'foreground',
+                'card', 'popover', 'muted', 'destructive', 'border', 'input', 'ring'
+            ];
+            
+            container.innerHTML = variables.map(varName => {
+                const value = getComputedStyle(root).getPropertyValue(`--${varName}`).trim();
+                const hslValue = `hsl(${value})`;
+                return `
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded border" style="background: ${hslValue}"></div>
+                        <div class="text-sm">
+                            <div class="font-medium">${varName}</div>
+                            <div class="text-muted-foreground text-xs">${value}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Highlight active preset
+        function highlightActivePreset(preset) {
+            document.querySelectorAll('.theme-preset-card').forEach(card => {
+                card.classList.remove('ring-2', 'ring-primary');
+            });
+            // Add highlight to active preset (implementation depends on card structure)
+        }
+
+        // Export current theme
+        function exportTheme() {
+            const root = document.documentElement;
+            const theme = {};
+            const variables = [
+                'primary', 'secondary', 'accent', 'background', 'foreground',
+                'card', 'popover', 'muted', 'destructive', 'border', 'input', 'ring',
+                'radius', 'chart-1', 'chart-2', 'chart-3', 'chart-4', 'chart-5'
+            ];
+            
+            variables.forEach(varName => {
+                theme[varName] = getComputedStyle(root).getPropertyValue(`--${varName}`).trim();
+            });
+            
+            const blob = new Blob([JSON.stringify(theme, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'airis-apm-theme.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showNotification('Theme exported successfully');
+        }
+
+        // Import theme
+        function importTheme(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const theme = JSON.parse(e.target.result);
+                    const root = document.documentElement;
+                    
+                    Object.entries(theme).forEach(([key, value]) => {
+                        root.style.setProperty(`--${key}`, value);
+                    });
+                    
+                    updateColorVariablesDisplay();
+                    showNotification('Theme imported successfully');
+                } catch (error) {
+                    showNotification('Error importing theme', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Open TweakCN editor
+        function openTweakcnEditor() {
+            window.open('https://tweakcn.com', '_blank');
+            showNotification('Opening TweakCN visual editor in new tab');
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg transform transition-all duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            }`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

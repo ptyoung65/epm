@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TweakCN 테마 테스트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Default theme variables */
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 240 10% 3.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 240 10% 3.9%;
+            --primary: 240 5.9% 10%;
+            --primary-foreground: 0 0% 98%;
+            --secondary: 240 4.8% 95.9%;
+            --secondary-foreground: 240 5.9% 10%;
+            --border: 240 5.9% 90%;
+            --radius: 0.5rem;
+        }
+        
+        .bg-background { background-color: hsl(var(--background)); }
+        .text-foreground { color: hsl(var(--foreground)); }
+        .bg-card { background-color: hsl(var(--card)); }
+        .text-card-foreground { color: hsl(var(--card-foreground)); }
+        .bg-primary { background-color: hsl(var(--primary)); }
+        .text-primary-foreground { color: hsl(var(--primary-foreground)); }
+        .bg-secondary { background-color: hsl(var(--secondary)); }
+        .text-secondary-foreground { color: hsl(var(--secondary-foreground)); }
+        .border-color { border-color: hsl(var(--border)); }
+    </style>
+</head>
+<body class="bg-background text-foreground p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8">TweakCN 테마 테스트 페이지</h1>
+        
+        <!-- Theme Buttons -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4">테마 선택:</h2>
+            <div class="flex gap-4 flex-wrap">
+                <button onclick="applyTheme('default')" class="px-4 py-2 bg-primary text-primary-foreground rounded">
+                    Default
+                </button>
+                <button onclick="applyTheme('ocean')" class="px-4 py-2 bg-primary text-primary-foreground rounded">
+                    Ocean
+                </button>
+                <button onclick="applyTheme('forest')" class="px-4 py-2 bg-primary text-primary-foreground rounded">
+                    Forest
+                </button>
+                <button onclick="applyTheme('sunset')" class="px-4 py-2 bg-primary text-primary-foreground rounded">
+                    Sunset
+                </button>
+                <button onclick="applyTheme('midnight')" class="px-4 py-2 bg-primary text-primary-foreground rounded">
+                    Midnight
+                </button>
+            </div>
+        </div>
+        
+        <!-- Test Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-card text-card-foreground p-6 rounded-lg border border-color">
+                <h3 class="text-lg font-semibold mb-2">카드 컴포넌트</h3>
+                <p class="mb-4">이것은 카드 배경색과 텍스트 색상을 테스트하는 카드입니다.</p>
+                <div class="flex gap-2">
+                    <button class="px-3 py-1 bg-primary text-primary-foreground rounded text-sm">
+                        Primary Button
+                    </button>
+                    <button class="px-3 py-1 bg-secondary text-secondary-foreground rounded text-sm">
+                        Secondary Button
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-card text-card-foreground p-6 rounded-lg border border-color">
+                <h3 class="text-lg font-semibold mb-2">현재 색상 값</h3>
+                <div id="colorDisplay" class="space-y-1 text-sm">
+                    <!-- Color values will be displayed here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Background Test -->
+        <div class="mt-8 p-6 border-2 border-dashed border-color rounded-lg">
+            <h3 class="text-lg font-semibold mb-2">배경색 테스트 영역</h3>
+            <p>이 영역의 배경색은 페이지 전체 배경색과 동일해야 합니다.</p>
+            <div class="mt-4 p-4 bg-background rounded border border-color">
+                <p>Background 색상: <span id="bgColor"></span></p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Theme presets (same as in tweakcn-loader.js)
+        const themes = {
+            default: {
+                '--background': '0 0% 100%',
+                '--foreground': '240 10% 3.9%',
+                '--card': '0 0% 100%',
+                '--card-foreground': '240 10% 3.9%',
+                '--primary': '240 5.9% 10%',
+                '--primary-foreground': '0 0% 98%',
+                '--secondary': '240 4.8% 95.9%',
+                '--secondary-foreground': '240 5.9% 10%',
+                '--border': '240 5.9% 90%'
+            },
+            ocean: {
+                '--background': '210 40% 98%',
+                '--foreground': '222 47% 11%',
+                '--card': '210 40% 98%',
+                '--card-foreground': '222 47% 11%',
+                '--primary': '217 91% 60%',
+                '--primary-foreground': '0 0% 100%',
+                '--secondary': '215 20% 65%',
+                '--secondary-foreground': '222 47% 11%',
+                '--border': '215 20% 85%'
+            },
+            forest: {
+                '--background': '138 16% 97%',
+                '--foreground': '140 61% 11%',
+                '--card': '138 16% 97%',
+                '--card-foreground': '140 61% 11%',
+                '--primary': '142 76% 36%',
+                '--primary-foreground': '0 0% 100%',
+                '--secondary': '142 43% 89%',
+                '--secondary-foreground': '140 61% 11%',
+                '--border': '142 20% 85%'
+            },
+            sunset: {
+                '--background': '20 14% 96%',
+                '--foreground': '24 10% 10%',
+                '--card': '20 14% 96%',
+                '--card-foreground': '24 10% 10%',
+                '--primary': '25 95% 53%',
+                '--primary-foreground': '0 0% 100%',
+                '--secondary': '28 80% 90%',
+                '--secondary-foreground': '24 10% 10%',
+                '--border': '25 20% 85%'
+            },
+            midnight: {
+                '--background': '222 47% 11%',
+                '--foreground': '210 40% 98%',
+                '--card': '222 47% 14%',
+                '--card-foreground': '210 40% 98%',
+                '--primary': '217 91% 60%',
+                '--primary-foreground': '222 47% 11%',
+                '--secondary': '215 27% 17%',
+                '--secondary-foreground': '210 40% 98%',
+                '--border': '215 27% 25%'
+            }
+        };
+        
+        function applyTheme(themeName) {
+            const theme = themes[themeName];
+            if (!theme) return;
+            
+            const root = document.documentElement;
+            Object.entries(theme).forEach(([key, value]) => {
+                root.style.setProperty(key, value);
+            });
+            
+            // Update color display
+            updateColorDisplay();
+            
+            // Show notification
+            showNotification(`${themeName} 테마가 적용되었습니다!`);
+        }
+        
+        function updateColorDisplay() {
+            const root = document.documentElement;
+            const display = document.getElementById('colorDisplay');
+            const bgColorSpan = document.getElementById('bgColor');
+            
+            const variables = ['--background', '--foreground', '--card', '--primary', '--secondary'];
+            
+            display.innerHTML = variables.map(varName => {
+                const value = getComputedStyle(root).getPropertyValue(varName).trim();
+                return `<div>${varName}: ${value}</div>`;
+            }).join('');
+            
+            bgColorSpan.textContent = getComputedStyle(root).getPropertyValue('--background').trim();
+        }
+        
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'fixed bottom-4 right-4 px-4 py-2 bg-primary text-primary-foreground rounded shadow-lg';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 2000);
+        }
+        
+        // Initialize
+        updateColorDisplay();
+    </script>
+</body>
+</html>

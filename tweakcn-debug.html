@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TweakCN Debug v2.0</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: hsl(var(--background, 0 0% 100%));
+            color: hsl(var(--foreground, 240 10% 3.9%));
+            transition: all 0.3s;
+        }
+        .test-card {
+            background: hsl(var(--card, 0 0% 100%));
+            color: hsl(var(--card-foreground, 240 10% 3.9%));
+            border: 1px solid hsl(var(--border, 240 5.9% 90%));
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: var(--radius, 0.5rem);
+        }
+        .test-button {
+            background: hsl(var(--primary, 240 5.9% 10%));
+            color: hsl(var(--primary-foreground, 0 0% 98%));
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--radius, 0.5rem);
+            margin: 5px;
+            cursor: pointer;
+        }
+        .theme-buttons {
+            margin-bottom: 20px;
+        }
+        .debug-info {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>TweakCN v2.0 Debug 페이지</h1>
+    
+    <div class="theme-buttons">
+        <h3>테마 선택:</h3>
+        <button class="test-button" onclick="testTheme('default')">Default</button>
+        <button class="test-button" onclick="testTheme('ocean')">Ocean</button>
+        <button class="test-button" onclick="testTheme('forest')">Forest</button>
+        <button class="test-button" onclick="testTheme('sunset')">Sunset</button>
+        <button class="test-button" onclick="testTheme('midnight')">Midnight</button>
+        <button class="test-button" onclick="showCurrentCSS()">현재 CSS 변수 보기</button>
+    </div>
+
+    <div class="test-card">
+        <h3>테스트 카드</h3>
+        <p>이 카드의 배경색과 텍스트 색상이 변경되어야 합니다.</p>
+        <p>Background: <span id="bgValue">-</span></p>
+        <p>Foreground: <span id="fgValue">-</span></p>
+        <p>Card: <span id="cardValue">-</span></p>
+        <p>Primary: <span id="primaryValue">-</span></p>
+    </div>
+
+    <div id="debugInfo" class="debug-info">
+        디버그 정보가 여기에 표시됩니다.
+    </div>
+
+    <div id="cssVariables" class="debug-info" style="display: none;">
+        CSS 변수 정보가 여기에 표시됩니다.
+    </div>
+
+    <script>
+        // TweakCN 테마 정의 (v2.0)
+        const testThemes = {
+            default: {
+                '--background': '0 0% 100%',
+                '--foreground': '240 10% 3.9%',
+                '--card': '0 0% 100%',
+                '--card-foreground': '240 10% 3.9%',
+                '--primary': '240 5.9% 10%',
+                '--primary-foreground': '0 0% 98%',
+                '--secondary': '240 4.8% 95.9%',
+                '--secondary-foreground': '240 5.9% 10%',
+                '--border': '240 5.9% 90%',
+                '--radius': '0.5rem'
+            },
+            ocean: {
+                '--background': '210 40% 98%',
+                '--foreground': '222 47% 11%',
+                '--card': '210 40% 98%',
+                '--card-foreground': '222 47% 11%',
+                '--primary': '217 91% 60%',
+                '--primary-foreground': '0 0% 100%',
+                '--secondary': '215 20% 65%',
+                '--secondary-foreground': '222 47% 11%',
+                '--border': '215 20% 85%',
+                '--radius': '0.5rem'
+            },
+            forest: {
+                '--background': '138 16% 97%',
+                '--foreground': '140 61% 11%',
+                '--card': '138 16% 97%',
+                '--card-foreground': '140 61% 11%',
+                '--primary': '142 76% 36%',
+                '--primary-foreground': '0 0% 100%',
+                '--secondary': '142 43% 89%',
+                '--secondary-foreground': '140 61% 11%',
+                '--border': '142 20% 85%',
+                '--radius': '0.5rem'
+            },
+            sunset: {
+                '--background': '20 14% 96%',
+                '--foreground': '24 10% 10%',
+                '--card': '20 14% 96%',
+                '--card-foreground': '24 10% 10%',
+                '--primary': '25 95% 53%',
+                '--primary-foreground': '0 0% 100%',
+                '--secondary': '28 80% 90%',
+                '--secondary-foreground': '24 10% 10%',
+                '--border': '25 20% 85%',
+                '--radius': '0.5rem'
+            },
+            midnight: {
+                '--background': '222 47% 11%',
+                '--foreground': '210 40% 98%',
+                '--card': '222 47% 14%',
+                '--card-foreground': '210 40% 98%',
+                '--primary': '217 91% 60%',
+                '--primary-foreground': '222 47% 11%',
+                '--secondary': '215 27% 17%',
+                '--secondary-foreground': '210 40% 98%',
+                '--border': '215 27% 25%',
+                '--radius': '0.5rem'
+            }
+        };
+
+        function testTheme(themeName) {
+            const theme = testThemes[themeName];
+            if (!theme) return;
+
+            const root = document.documentElement;
+            const debugInfo = document.getElementById('debugInfo');
+            
+            debugInfo.innerHTML = `<strong>[${new Date().toLocaleTimeString()}] ${themeName} 테마 적용 중...</strong><br>`;
+
+            Object.entries(theme).forEach(([key, value]) => {
+                root.style.setProperty(key, value);
+                debugInfo.innerHTML += `${key}: ${value}<br>`;
+            });
+
+            debugInfo.innerHTML += `<strong>완료!</strong><br><br>`;
+            updateCurrentValues();
+        }
+
+        function updateCurrentValues() {
+            const root = document.documentElement;
+            const computedStyle = getComputedStyle(root);
+
+            document.getElementById('bgValue').textContent = computedStyle.getPropertyValue('--background').trim();
+            document.getElementById('fgValue').textContent = computedStyle.getPropertyValue('--foreground').trim();
+            document.getElementById('cardValue').textContent = computedStyle.getPropertyValue('--card').trim();
+            document.getElementById('primaryValue').textContent = computedStyle.getPropertyValue('--primary').trim();
+        }
+
+        function showCurrentCSS() {
+            const cssDiv = document.getElementById('cssVariables');
+            const root = document.documentElement;
+            const computedStyle = getComputedStyle(root);
+            
+            const variables = ['--background', '--foreground', '--card', '--card-foreground', 
+                             '--primary', '--primary-foreground', '--secondary', '--secondary-foreground',
+                             '--border', '--radius'];
+            
+            let content = '<strong>현재 CSS 변수들:</strong><br><br>';
+            variables.forEach(varName => {
+                const value = computedStyle.getPropertyValue(varName).trim();
+                content += `${varName}: "${value}"<br>`;
+            });
+            
+            cssDiv.innerHTML = content;
+            cssDiv.style.display = cssDiv.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // 초기 값 업데이트
+        window.onload = function() {
+            updateCurrentValues();
+            console.log('[TweakCN Debug] v2.0 디버그 페이지가 로드되었습니다.');
+        };
+    </script>
+</body>
+</html>

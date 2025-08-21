@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>간단한 테마 테스트</title>
+    <style>
+        /* HTML에 정의된 기본 CSS 변수 (실제 대시보드와 동일) */
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --radius: 0.5rem;
+        }
+        
+        /* CSS 클래스 (실제 대시보드와 동일) */
+        .bg-background { background-color: hsl(var(--background)); }
+        .text-foreground { color: hsl(var(--foreground)); }
+        .bg-card { background-color: hsl(var(--card)); }
+        .text-card-foreground { color: hsl(var(--card-foreground)); }
+        .bg-primary { background-color: hsl(var(--primary)); }
+        .text-primary-foreground { color: hsl(var(--primary-foreground)); }
+        
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            margin: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .test-card {
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+        }
+        
+        .test-button {
+            border: none;
+            padding: 10px 20px;
+            border-radius: var(--radius);
+            margin: 5px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .current-values {
+            font-family: monospace;
+            font-size: 12px;
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground">
+    <div class="test-container">
+        <h1>간단한 테마 테스트</h1>
+        <p>이 페이지는 실제 대시보드와 동일한 CSS 구조를 사용합니다.</p>
+        
+        <div>
+            <h3>테마 선택:</h3>
+            <button class="test-button bg-primary text-primary-foreground" onclick="applyTestTheme('ocean')">
+                Ocean 테마 적용
+            </button>
+            <button class="test-button bg-primary text-primary-foreground" onclick="applyTestTheme('forest')">
+                Forest 테마 적용  
+            </button>
+            <button class="test-button bg-primary text-primary-foreground" onclick="applyTestTheme('sunset')">
+                Sunset 테마 적용
+            </button>
+            <button class="test-button bg-primary text-primary-foreground" onclick="applyTestTheme('default')">
+                기본 테마로 되돌리기
+            </button>
+        </div>
+
+        <div class="test-card bg-card text-card-foreground">
+            <h3>테스트 카드</h3>
+            <p>이 카드의 배경색이 변경되어야 합니다.</p>
+            <p>현재 body의 클래스: <code>bg-background text-foreground</code></p>
+            <p>현재 카드의 클래스: <code>bg-card text-card-foreground</code></p>
+        </div>
+
+        <div class="current-values" id="currentValues">
+            <!-- 현재 CSS 변수 값들이 여기에 표시됩니다 -->
+        </div>
+
+        <div id="debugLog" style="background: #fff; border: 1px solid #ccc; padding: 10px; margin: 20px 0; font-family: monospace; font-size: 11px; max-height: 200px; overflow-y: auto;">
+            <!-- 디버그 로그가 여기에 표시됩니다 -->
+        </div>
+    </div>
+
+    <script>
+        // 테마 정의
+        const testThemes = {
+            default: {
+                '--background': '0 0% 100%',
+                '--foreground': '222.2 84% 4.9%',
+                '--card': '0 0% 100%',
+                '--card-foreground': '222.2 84% 4.9%',
+                '--primary': '222.2 47.4% 11.2%',
+                '--primary-foreground': '210 40% 98%'
+            },
+            ocean: {
+                '--background': '210 40% 98%',
+                '--foreground': '222 47% 11%',
+                '--card': '210 40% 95%',
+                '--card-foreground': '222 47% 11%',
+                '--primary': '217 91% 60%',
+                '--primary-foreground': '0 0% 100%'
+            },
+            forest: {
+                '--background': '138 16% 97%',
+                '--foreground': '140 61% 11%',
+                '--card': '138 16% 94%',
+                '--card-foreground': '140 61% 11%',
+                '--primary': '142 76% 36%',
+                '--primary-foreground': '0 0% 100%'
+            },
+            sunset: {
+                '--background': '20 14% 96%',
+                '--foreground': '24 10% 10%',
+                '--card': '20 14% 93%',
+                '--card-foreground': '24 10% 10%',
+                '--primary': '25 95% 53%',
+                '--primary-foreground': '0 0% 100%'
+            }
+        };
+
+        function applyTestTheme(themeName) {
+            const theme = testThemes[themeName];
+            if (!theme) {
+                log('❌ 테마를 찾을 수 없습니다: ' + themeName);
+                return;
+            }
+
+            log('🎨 테마 적용 시작: ' + themeName);
+            const root = document.documentElement;
+            
+            // 먼저 현재 값들을 로그에 출력
+            log('📝 적용 전 현재 CSS 변수:');
+            Object.keys(theme).forEach(key => {
+                const currentValue = getComputedStyle(root).getPropertyValue(key).trim();
+                log(`  ${key}: "${currentValue}"`);
+            });
+
+            // 새 값 적용
+            log('📝 새로운 값 적용:');
+            Object.entries(theme).forEach(([key, value]) => {
+                root.style.setProperty(key, value);
+                log(`  ${key}: "${value}"`);
+            });
+
+            // 적용 후 확인
+            log('📝 적용 후 실제 값:');
+            setTimeout(() => {
+                Object.keys(theme).forEach(key => {
+                    const appliedValue = getComputedStyle(root).getPropertyValue(key).trim();
+                    log(`  ${key}: "${appliedValue}"`);
+                });
+                updateCurrentValues();
+                log('✅ 테마 적용 완료\n');
+            }, 100);
+        }
+
+        function updateCurrentValues() {
+            const root = document.documentElement;
+            const computedStyle = getComputedStyle(root);
+            const valuesDiv = document.getElementById('currentValues');
+            
+            const variables = ['--background', '--foreground', '--card', '--card-foreground', '--primary', '--primary-foreground'];
+            
+            let html = '<strong>현재 CSS 변수 값:</strong><br>';
+            variables.forEach(varName => {
+                const value = computedStyle.getPropertyValue(varName).trim();
+                const computedColor = `hsl(${value})`;
+                html += `${varName}: "${value}" → <span style="background: ${computedColor}; padding: 2px 8px; border: 1px solid #999;">${computedColor}</span><br>`;
+            });
+            
+            valuesDiv.innerHTML = html;
+        }
+
+        function log(message) {
+            const logDiv = document.getElementById('debugLog');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}<br>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[테마테스트] ${message}`);
+        }
+
+        // 초기화
+        window.onload = function() {
+            log('🚀 페이지 로드 완료');
+            updateCurrentValues();
+        };
+    </script>
+</body>
+</html>
