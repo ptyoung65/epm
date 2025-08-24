@@ -4,9 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIRIS APM | J2EE 모니터링 대시보드</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -124,6 +121,21 @@
     .status-warning { color: #f59e0b; }
     .status-error { color: #ef4444; }
     .status-info { color: #3b82f6; }
+
+    /* Tab Styles */
+    .tab-active {
+      background-color: hsl(var(--background));
+      color: hsl(var(--foreground));
+      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    }
+    
+    .tab-inactive {
+      color: hsl(var(--muted-foreground));
+    }
+    
+    .tab-inactive:hover {
+      color: hsl(var(--foreground));
+    }
   </style>
   
   <script>
@@ -177,499 +189,578 @@
   </script>
 </head>
 <body class="bg-background text-foreground">
-  <div id="root"></div>
-  
-  <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
+  <div class="min-h-screen bg-background text-foreground">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div class="container mx-auto flex h-14 items-center px-4">
+        <div class="mr-4 flex items-center space-x-2">
+          <span class="font-bold text-xl">AIRIS APM</span>
+          <span class="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">
+            J2EE
+          </span>
+        </div>
+        
+        <!-- Navigation -->
+        <nav class="flex items-center space-x-6 text-sm">
+          <button onclick="window.location.href = '/'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+            대시보드
+          </button>
+          <span class="font-medium text-foreground/80 hover:text-foreground transition-colors">
+            J2EE 모니터링
+          </span>
+          <button onclick="window.location.href = '/was-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+            WAS 모니터링
+          </button>
+          <button onclick="window.location.href = '/exception-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+            예외 추적
+          </button>
+          <button onclick="window.location.href = '/topology-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+            서비스 토폴로지
+          </button>
+          <button onclick="window.location.href = '/alert-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+            알림 관리
+          </button>
+        </nav>
+
+        <!-- Right side actions -->
+        <div class="ml-auto flex items-center space-x-4">
+          <select 
+            id="timeRange"
+            class="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
+          >
+            <option value="15m">15분</option>
+            <option value="1h" selected>1시간</option>
+            <option value="6h">6시간</option>
+            <option value="24h">24시간</option>
+            <option value="7d">7일</option>
+          </select>
+          
+          <button
+            id="refreshBtn"
+            class="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            새로고침
+          </button>
+          
+          <button
+            id="themeToggle"
+            class="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 w-9 border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+          >
+            🌙
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Header -->
+    <div class="border-b">
+      <div class="container mx-auto flex h-16 items-center px-4">
+        <div>
+          <h1 class="text-2xl font-semibold flex items-center space-x-2">
+            <span>☕</span>
+            <span>J2EE 컴포넌트 모니터링</span>
+          </h1>
+          <p class="text-sm text-muted-foreground">Servlet, JSP, EJB 실시간 성능 및 상태 추적</p>
+        </div>
+        <div class="ml-auto flex items-center space-x-2">
+          <span class="inline-flex items-center rounded-md bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
+            <span class="mr-1.5 h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+            J2EE 서버 정상
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto py-6 space-y-6 px-4">
+      <!-- Overview Cards -->
+      <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div class="rounded-lg border bg-card p-6">
+          <div class="flex items-center justify-between space-y-0 pb-2">
+            <h3 class="text-sm font-medium text-muted-foreground">활성 Servlet</h3>
+            <span class="text-2xl">🔧</span>
+          </div>
+          <div class="text-2xl font-bold" id="activeServlets">24</div>
+          <p class="text-xs text-muted-foreground mt-1">현재 실행 중</p>
+          <div class="text-xs font-medium mt-2 text-green-600 dark:text-green-400">
+            정상
+          </div>
+        </div>
+        
+        <div class="rounded-lg border bg-card p-6">
+          <div class="flex items-center justify-between space-y-0 pb-2">
+            <h3 class="text-sm font-medium text-muted-foreground">JSP 컴파일 캐시</h3>
+            <span class="text-2xl">📄</span>
+          </div>
+          <div class="text-2xl font-bold" id="jspCacheHit">94.2%</div>
+          <p class="text-xs text-muted-foreground mt-1">캐시 히트율</p>
+          <div class="text-xs font-medium mt-2 text-green-600 dark:text-green-400">
+            우수
+          </div>
+        </div>
+        
+        <div class="rounded-lg border bg-card p-6">
+          <div class="flex items-center justify-between space-y-0 pb-2">
+            <h3 class="text-sm font-medium text-muted-foreground">EJB 풀 사용률</h3>
+            <span class="text-2xl">🫘</span>
+          </div>
+          <div class="text-2xl font-bold" id="ejbPoolUtil">68.5%</div>
+          <p class="text-xs text-muted-foreground mt-1">빈 풀 활용도</p>
+          <div class="text-xs font-medium mt-2 text-green-600 dark:text-green-400" id="ejbPoolStatus">
+            정상
+          </div>
+        </div>
+        
+        <div class="rounded-lg border bg-card p-6">
+          <div class="flex items-center justify-between space-y-0 pb-2">
+            <h3 class="text-sm font-medium text-muted-foreground">활성 트랜잭션</h3>
+            <span class="text-2xl">🔄</span>
+          </div>
+          <div class="text-2xl font-bold" id="activeTransactions">18</div>
+          <p class="text-xs text-muted-foreground mt-1">실행 중인 트랜잭션</p>
+          <div class="text-xs font-medium mt-2 text-green-600 dark:text-green-400">
+            +5.2%
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs Navigation -->
+      <div class="rounded-lg border bg-card">
+        <div class="p-6">
+          <div class="flex space-x-1 rounded-lg bg-muted p-1 mb-6" id="tabNavigation">
+            <button
+              class="flex-1 flex items-center justify-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors tab-active"
+              onclick="switchTab('servlet', this)"
+            >
+              <span>🔧</span>
+              <span>Servlet 모니터링</span>
+            </button>
+            <button
+              class="flex-1 flex items-center justify-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors tab-inactive"
+              onclick="switchTab('jsp', this)"
+            >
+              <span>📄</span>
+              <span>JSP 분석</span>
+            </button>
+            <button
+              class="flex-1 flex items-center justify-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors tab-inactive"
+              onclick="switchTab('ejb', this)"
+            >
+              <span>🫘</span>
+              <span>EJB 상태</span>
+            </button>
+            <button
+              class="flex-1 flex items-center justify-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors tab-inactive"
+              onclick="switchTab('transaction', this)"
+            >
+              <span>🔄</span>
+              <span>트랜잭션</span>
+            </button>
+          </div>
+
+          <!-- Tab Content -->
+          <div id="tabContent">
+            <!-- Servlet Panel (default) -->
+            <div id="servlet-panel" class="space-y-4">
+              <div class="grid gap-4 md:grid-cols-3">
+                <div class="space-y-2">
+                  <h4 class="text-sm font-medium text-muted-foreground">활성 Servlet</h4>
+                  <div class="text-2xl font-bold" id="servletActive">24</div>
+                </div>
+                <div class="space-y-2">
+                  <h4 class="text-sm font-medium text-muted-foreground">총 요청 수</h4>
+                  <div class="text-2xl font-bold" id="servletTotalRequests">15,847</div>
+                </div>
+                <div class="space-y-2">
+                  <h4 class="text-sm font-medium text-muted-foreground">평균 응답시간</h4>
+                  <div class="text-2xl font-bold" id="servletAvgResponse">127ms</div>
+                </div>
+              </div>
+              <div class="border rounded-lg p-4">
+                <h4 class="font-medium mb-2">최근 Servlet 활동</h4>
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center text-sm">
+                    <span>/api/users</span>
+                    <span class="text-muted-foreground">245 req/min</span>
+                  </div>
+                  <div class="flex justify-between items-center text-sm">
+                    <span>/api/orders</span>
+                    <span class="text-muted-foreground">189 req/min</span>
+                  </div>
+                  <div class="flex justify-between items-center text-sm">
+                    <span>/api/products</span>
+                    <span class="text-muted-foreground">156 req/min</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- JSP Panel -->
+            <div id="jsp-panel" class="space-y-4" style="display: none;">
+              <div class="grid gap-4 md:grid-cols-3">
+                <div class="space-y-2">
+                  <h4 class="text-sm font-medium text-muted-foreground">컴파일된 페이지</h4>
+                  <div class="text-2xl font-bold">67</div>
+                </div>
+                <div class="space-y-2">
+                  <h4 class="text-sm font-medium text-muted-foreground">컴파일 시간</h4>
+                  <div class="text-2xl font-bold" id="jspCompilationTime">2.3s</div>
+                </div>
+                <div class="space-y-2">
+                  <h4 class="text-sm font-medium text-muted-foreground">캐시 히트율</h4>
+                  <div class="text-2xl font-bold" id="jspCacheHitRate">94.2%</div>
+                </div>
+              </div>
+              <div class="border rounded-lg p-4">
+                <h4 class="font-medium mb-2">JSP 페이지 상태</h4>
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center text-sm">
+                    <span>index.jsp</span>
+                    <span class="bg-green-500/10 text-green-600 dark:text-green-400 px-2 py-1 rounded text-xs">활성</span>
+                  </div>
+                  <div class="flex justify-between items-center text-sm">
+                    <span>dashboard.jsp</span>
+                    <span class="bg-green-500/10 text-green-600 dark:text-green-400 px-2 py-1 rounded text-xs">활성</span>
+                  </div>
+                  <div class="flex justify-between items-center text-sm">
+                    <span>report.jsp</span>
+                    <span class="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 px-2 py-1 rounded text-xs">컴파일 중</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- EJB Panel -->
+            <div id="ejb-panel" class="space-y-4" style="display: none;">
+              <div class="grid gap-4 md:grid-cols-3">
+                <div class="space-y-2">
+                  <h4 class="text-sm font-medium text-muted-foreground">Session Bean</h4>
+                  <div class="text-2xl font-bold">12</div>
+                </div>
+                <div class="space-y-2">
+                  <h4 class="text-sm font-medium text-muted-foreground">Entity Bean</h4>
+                  <div class="text-2xl font-bold">8</div>
+                </div>
+                <div class="space-y-2">
+                  <h4 class="text-sm font-medium text-muted-foreground">Message Bean</h4>
+                  <div class="text-2xl font-bold">5</div>
+                </div>
+              </div>
+              <div class="border rounded-lg p-4">
+                <h4 class="font-medium mb-2">EJB 풀 상태</h4>
+                <div class="space-y-3">
+                  <div>
+                    <div class="flex justify-between text-sm mb-1">
+                      <span>풀 사용률</span>
+                      <span id="ejbPoolUtilization">68.5%</span>
+                    </div>
+                    <div class="w-full bg-secondary rounded-full h-2">
+                      <div 
+                        id="ejbPoolBar"
+                        class="h-2 rounded-full transition-all bg-green-500"
+                        style="width: 68.5%"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Transaction Panel -->
+            <div id="transaction-panel" class="space-y-4" style="display: none;">
+              <div class="grid gap-4 md:grid-cols-4">
+                <div class="space-y-2">
+                  <h4 class="text-sm font-medium text-muted-foreground">활성</h4>
+                  <div class="text-2xl font-bold" id="transactionActive">18</div>
+                </div>
+                <div class="space-y-2">
+                  <h4 class="text-sm font-medium text-muted-foreground">커밋됨</h4>
+                  <div class="text-2xl font-bold" id="transactionCommitted">9,234</div>
+                </div>
+                <div class="space-y-2">
+                  <h4 class="text-sm font-medium text-muted-foreground">롤백됨</h4>
+                  <div class="text-2xl font-bold">15</div>
+                </div>
+                <div class="space-y-2">
+                  <h4 class="text-sm font-medium text-muted-foreground">평균 실행시간</h4>
+                  <div class="text-2xl font-bold" id="transactionAvgDuration">89ms</div>
+                </div>
+              </div>
+              <div class="border rounded-lg p-4">
+                <h4 class="font-medium mb-2">트랜잭션 상태 분포</h4>
+                <div class="space-y-2">
+                  <div class="flex justify-between items-center text-sm">
+                    <span>성공률</span>
+                    <span class="text-green-600 dark:text-green-400 font-medium">98.4%</span>
+                  </div>
+                  <div class="flex justify-between items-center text-sm">
+                    <span>실패율</span>
+                    <span class="text-red-600 dark:text-red-400 font-medium">1.6%</span>
+                  </div>
+                  <div class="flex justify-between items-center text-sm">
+                    <span>평균 대기시간</span>
+                    <span class="text-muted-foreground">12ms</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-time Charts -->
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="rounded-lg border bg-card p-6">
+          <h3 class="text-lg font-semibold mb-4">Servlet 응답시간 추이</h3>
+          <div class="h-64">
+            <canvas id="servletChart"></canvas>
+          </div>
+        </div>
+        <div class="rounded-lg border bg-card p-6">
+          <h3 class="text-lg font-semibold mb-4">트랜잭션 처리량</h3>
+          <div class="h-64">
+            <canvas id="transactionChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Global variables
+    let isDark = false;
+    let selectedTab = 'servlet';
+    let servletChart = null;
+    let transactionChart = null;
     
-    // J2EE Dashboard Component
-    const J2EEDashboard = () => {
-      const [isDark, setIsDark] = useState(false);
-      const [timeRange, setTimeRange] = useState('1h');
-      const [loading, setLoading] = useState(false);
-      const [selectedTab, setSelectedTab] = useState('servlet');
-      const [j2eeMetrics, setJ2eeMetrics] = useState({
-        servlets: {
-          active: 24,
-          totalRequests: 15847,
-          avgResponseTime: 127,
-          errorCount: 3
+    // Sample metrics data
+    let j2eeMetrics = {
+      servlets: {
+        active: 24,
+        totalRequests: 15847,
+        avgResponseTime: 127,
+        errorCount: 3
+      },
+      jsp: {
+        compiledPages: 67,
+        compilationTime: 2.3,
+        cacheHitRate: 94.2,
+        errors: 1
+      },
+      ejb: {
+        sessionBeans: 12,
+        entityBeans: 8,
+        messageBeans: 5,
+        poolUtilization: 68.5
+      },
+      transactions: {
+        active: 18,
+        committed: 9234,
+        rolledBack: 15,
+        avgDuration: 89
+      }
+    };
+
+    // Initialize the dashboard
+    function initDashboard() {
+      // Set up theme toggle
+      document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+      
+      // Set up refresh button
+      document.getElementById('refreshBtn').addEventListener('click', refreshData);
+      
+      // Initialize charts
+      initCharts();
+      
+      // Start data refresh interval
+      setInterval(updateMetrics, 3000);
+    }
+
+    // Theme toggle function
+    function toggleTheme() {
+      isDark = !isDark;
+      const themeToggle = document.getElementById('themeToggle');
+      
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        themeToggle.textContent = '🌞';
+      } else {
+        document.documentElement.classList.remove('dark');
+        themeToggle.textContent = '🌙';
+      }
+    }
+
+    // Tab switching function
+    function switchTab(tabName, button) {
+      // Hide all panels
+      const panels = ['servlet-panel', 'jsp-panel', 'ejb-panel', 'transaction-panel'];
+      panels.forEach(panelId => {
+        document.getElementById(panelId).style.display = 'none';
+      });
+      
+      // Show selected panel
+      document.getElementById(tabName + '-panel').style.display = 'block';
+      
+      // Update tab button states
+      const tabs = document.querySelectorAll('#tabNavigation button');
+      tabs.forEach(tab => {
+        tab.className = tab.className.replace('tab-active', 'tab-inactive');
+      });
+      button.className = button.className.replace('tab-inactive', 'tab-active');
+      
+      selectedTab = tabName;
+    }
+
+    // Refresh data function
+    function refreshData() {
+      const refreshBtn = document.getElementById('refreshBtn');
+      refreshBtn.innerHTML = '<span class="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></span>';
+      refreshBtn.disabled = true;
+      
+      setTimeout(() => {
+        refreshBtn.textContent = '새로고침';
+        refreshBtn.disabled = false;
+        updateMetrics();
+      }, 1000);
+    }
+
+    // Update metrics function
+    function updateMetrics() {
+      // Update servlet metrics
+      j2eeMetrics.servlets.active = Math.floor(20 + Math.random() * 10);
+      j2eeMetrics.servlets.totalRequests += Math.floor(Math.random() * 100);
+      j2eeMetrics.servlets.avgResponseTime = Math.floor(100 + Math.random() * 50);
+      
+      // Update JSP metrics
+      j2eeMetrics.jsp.cacheHitRate = parseFloat((90 + Math.random() * 10).toFixed(1));
+      j2eeMetrics.jsp.compilationTime = parseFloat((2 + Math.random()).toFixed(1));
+      
+      // Update EJB metrics
+      j2eeMetrics.ejb.poolUtilization = parseFloat((60 + Math.random() * 20).toFixed(1));
+      
+      // Update transaction metrics
+      j2eeMetrics.transactions.active = Math.floor(15 + Math.random() * 10);
+      j2eeMetrics.transactions.committed += Math.floor(Math.random() * 50);
+      j2eeMetrics.transactions.avgDuration = Math.floor(80 + Math.random() * 30);
+      
+      // Update DOM elements
+      updateDOMElements();
+      
+      // Update charts
+      updateCharts();
+    }
+
+    // Update DOM elements with new values
+    function updateDOMElements() {
+      document.getElementById('activeServlets').textContent = j2eeMetrics.servlets.active;
+      document.getElementById('jspCacheHit').textContent = j2eeMetrics.jsp.cacheHitRate + '%';
+      document.getElementById('ejbPoolUtil').textContent = j2eeMetrics.ejb.poolUtilization + '%';
+      document.getElementById('activeTransactions').textContent = j2eeMetrics.transactions.active;
+      
+      // Update EJB pool status
+      const ejbStatus = document.getElementById('ejbPoolStatus');
+      if (j2eeMetrics.ejb.poolUtilization > 80) {
+        ejbStatus.textContent = '높음';
+        ejbStatus.className = 'text-xs font-medium mt-2 text-yellow-600 dark:text-yellow-400';
+      } else {
+        ejbStatus.textContent = '정상';
+        ejbStatus.className = 'text-xs font-medium mt-2 text-green-600 dark:text-green-400';
+      }
+      
+      // Update tab content values
+      document.getElementById('servletActive').textContent = j2eeMetrics.servlets.active;
+      document.getElementById('servletTotalRequests').textContent = j2eeMetrics.servlets.totalRequests.toLocaleString();
+      document.getElementById('servletAvgResponse').textContent = j2eeMetrics.servlets.avgResponseTime + 'ms';
+      
+      document.getElementById('jspCompilationTime').textContent = j2eeMetrics.jsp.compilationTime + 's';
+      document.getElementById('jspCacheHitRate').textContent = j2eeMetrics.jsp.cacheHitRate + '%';
+      
+      document.getElementById('ejbPoolUtilization').textContent = j2eeMetrics.ejb.poolUtilization + '%';
+      const poolBar = document.getElementById('ejbPoolBar');
+      poolBar.style.width = j2eeMetrics.ejb.poolUtilization + '%';
+      poolBar.className = j2eeMetrics.ejb.poolUtilization > 80 ? 
+        'h-2 rounded-full transition-all bg-red-500' : 
+        'h-2 rounded-full transition-all bg-green-500';
+      
+      document.getElementById('transactionActive').textContent = j2eeMetrics.transactions.active;
+      document.getElementById('transactionCommitted').textContent = j2eeMetrics.transactions.committed.toLocaleString();
+      document.getElementById('transactionAvgDuration').textContent = j2eeMetrics.transactions.avgDuration + 'ms';
+    }
+
+    // Initialize charts
+    function initCharts() {
+      // Servlet response time chart
+      const servletCtx = document.getElementById('servletChart').getContext('2d');
+      servletChart = new Chart(servletCtx, {
+        type: 'line',
+        data: {
+          labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+          datasets: [{
+            label: 'Servlet 응답시간 (ms)',
+            data: [120, 135, 142, 128, 151, 139],
+            borderColor: 'hsl(var(--primary))',
+            backgroundColor: 'hsl(var(--primary) / 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
         },
-        jsp: {
-          compiledPages: 67,
-          compilationTime: 2.3,
-          cacheHitRate: 94.2,
-          errors: 1
-        },
-        ejb: {
-          sessionBeans: 12,
-          entityBeans: 8,
-          messageBeans: 5,
-          poolUtilization: 68.5
-        },
-        transactions: {
-          active: 18,
-          committed: 9234,
-          rolledBack: 15,
-          avgDuration: 89
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          },
+          animation: { duration: 0 }
         }
       });
 
-      useEffect(() => {
-        if (isDark) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
+      // Transaction throughput chart
+      const transactionCtx = document.getElementById('transactionChart').getContext('2d');
+      transactionChart = new Chart(transactionCtx, {
+        type: 'bar',
+        data: {
+          labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+          datasets: [{
+            label: '트랜잭션 처리량',
+            data: [45, 52, 61, 58, 67, 63],
+            backgroundColor: 'hsl(var(--primary))',
+            borderColor: 'hsl(var(--primary))',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          },
+          animation: { duration: 0 }
         }
-      }, [isDark]);
+      });
+    }
 
-      useEffect(() => {
-        const interval = setInterval(() => {
-          setJ2eeMetrics(prev => ({
-            servlets: {
-              ...prev.servlets,
-              active: Math.floor(20 + Math.random() * 10),
-              totalRequests: prev.servlets.totalRequests + Math.floor(Math.random() * 100),
-              avgResponseTime: Math.floor(100 + Math.random() * 50),
-              errorCount: Math.floor(Math.random() * 5)
-            },
-            jsp: {
-              ...prev.jsp,
-              cacheHitRate: (90 + Math.random() * 10).toFixed(1),
-              compilationTime: (2 + Math.random()).toFixed(1)
-            },
-            ejb: {
-              ...prev.ejb,
-              poolUtilization: (60 + Math.random() * 20).toFixed(1)
-            },
-            transactions: {
-              ...prev.transactions,
-              active: Math.floor(15 + Math.random() * 10),
-              committed: prev.transactions.committed + Math.floor(Math.random() * 50),
-              avgDuration: Math.floor(80 + Math.random() * 30)
-            }
-          }));
-        }, 3000);
+    // Update charts with new data
+    function updateCharts() {
+      if (servletChart && transactionChart) {
+        // Update servlet chart
+        servletChart.data.datasets[0].data = servletChart.data.datasets[0].data.slice(1).concat([j2eeMetrics.servlets.avgResponseTime]);
+        servletChart.update('none');
+        
+        // Update transaction chart
+        const newTransactionValue = Math.floor(40 + Math.random() * 30);
+        transactionChart.data.datasets[0].data = transactionChart.data.datasets[0].data.slice(1).concat([newTransactionValue]);
+        transactionChart.update('none');
+      }
+    }
 
-        return () => clearInterval(interval);
-      }, []);
-
-      const refreshData = () => {
-        setLoading(true);
-        setTimeout(() => setLoading(false), 1000);
-      };
-
-      return (
-        <div className="min-h-screen bg-background text-foreground">
-          {/* Header */}
-          <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container flex h-14 items-center">
-              <div className="mr-4 flex items-center space-x-2">
-                <span className="font-bold text-xl">AIRIS APM</span>
-                <span className="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">
-                  J2EE
-                </span>
-              </div>
-              
-              {/* Navigation */}
-              <nav className="flex items-center space-x-6 text-sm">
-                <a href="/src/dashboards/index.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  대시보드
-                </a>
-                <a href="#" className="font-medium text-foreground/80 hover:text-foreground transition-colors">
-                  J2EE 모니터링
-                </a>
-                <a href="/src/dashboards/was-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  WAS 모니터링
-                </a>
-                <a href="/src/dashboards/exception-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  예외 추적
-                </a>
-                <a href="/src/dashboards/topology-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  서비스 토폴로지
-                </a>
-                <a href="/src/dashboards/alert-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  알림 관리
-                </a>
-              </nav>
-
-              {/* Right side actions */}
-              <div className="ml-auto flex items-center space-x-4">
-                <select 
-                  value={timeRange} 
-                  onChange={(e) => setTimeRange(e.target.value)}
-                  className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                >
-                  <option value="15m">15분</option>
-                  <option value="1h">1시간</option>
-                  <option value="6h">6시간</option>
-                  <option value="24h">24시간</option>
-                  <option value="7d">7일</option>
-                </select>
-                
-                <button
-                  onClick={refreshData}
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-                  ) : (
-                    '새로고침'
-                  )}
-                </button>
-                
-                <button
-                  onClick={() => setIsDark(!isDark)}
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 w-9 border border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                >
-                  {isDark ? '🌞' : '🌙'}
-                </button>
-              </div>
-            </div>
-          </header>
-
-          {/* Page Header */}
-          <div className="border-b">
-            <div className="container flex h-16 items-center px-4">
-              <div>
-                <h1 className="text-2xl font-semibold flex items-center space-x-2">
-                  <span>☕</span>
-                  <span>J2EE 컴포넌트 모니터링</span>
-                </h1>
-                <p className="text-sm text-muted-foreground">Servlet, JSP, EJB 실시간 성능 및 상태 추적</p>
-              </div>
-              <div className="ml-auto flex items-center space-x-2">
-                <span className="inline-flex items-center rounded-md bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
-                  <span className="mr-1.5 h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-                  J2EE 서버 정상
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <main className="container py-6 space-y-6">
-            {/* Overview Cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <MetricCard
-                title="활성 Servlet"
-                value={j2eeMetrics.servlets.active}
-                description="현재 실행 중"
-                trend="success"
-                trendValue="정상"
-                icon="🔧"
-              />
-              <MetricCard
-                title="JSP 컴파일 캐시"
-                value={`${j2eeMetrics.jsp.cacheHitRate}%`}
-                description="캐시 히트율"
-                trend="success"
-                trendValue="우수"
-                icon="📄"
-              />
-              <MetricCard
-                title="EJB 풀 사용률"
-                value={`${j2eeMetrics.ejb.poolUtilization}%`}
-                description="빈 풀 활용도"
-                trend={j2eeMetrics.ejb.poolUtilization > 80 ? 'warning' : 'success'}
-                trendValue={j2eeMetrics.ejb.poolUtilization > 80 ? '높음' : '정상'}
-                icon="🫘"
-              />
-              <MetricCard
-                title="활성 트랜잭션"
-                value={j2eeMetrics.transactions.active}
-                description="실행 중인 트랜잭션"
-                trend="success"
-                trendValue="+5.2%"
-                icon="🔄"
-              />
-            </div>
-
-            {/* Tabs Navigation */}
-            <div className="rounded-lg border bg-card">
-              <div className="p-6">
-                <div className="flex space-x-1 rounded-lg bg-muted p-1 mb-6">
-                  {[
-                    { key: 'servlet', label: 'Servlet 모니터링', icon: '🔧' },
-                    { key: 'jsp', label: 'JSP 분석', icon: '📄' },
-                    { key: 'ejb', label: 'EJB 상태', icon: '🫘' },
-                    { key: 'transaction', label: '트랜잭션', icon: '🔄' }
-                  ].map((tab) => (
-                    <button
-                      key={tab.key}
-                      onClick={() => setSelectedTab(tab.key)}
-                      className={`flex-1 flex items-center justify-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                        selectedTab === tab.key
-                          ? 'bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      <span>{tab.icon}</span>
-                      <span>{tab.label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Tab Content */}
-                {selectedTab === 'servlet' && <ServletPanel metrics={j2eeMetrics.servlets} />}
-                {selectedTab === 'jsp' && <JSPPanel metrics={j2eeMetrics.jsp} />}
-                {selectedTab === 'ejb' && <EJBPanel metrics={j2eeMetrics.ejb} />}
-                {selectedTab === 'transaction' && <TransactionPanel metrics={j2eeMetrics.transactions} />}
-              </div>
-            </div>
-
-            {/* Real-time Charts */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <ChartCard title="Servlet 응답시간 추이" type="line" dataKey="servlet" />
-              <ChartCard title="트랜잭션 처리량" type="bar" dataKey="transaction" />
-            </div>
-          </main>
-        </div>
-      );
-    };
-
-    // Servlet Panel Component
-    const ServletPanel = ({ metrics }) => (
-      <div className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">활성 Servlet</h4>
-            <div className="text-2xl font-bold">{metrics.active}</div>
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">총 요청 수</h4>
-            <div className="text-2xl font-bold">{metrics.totalRequests.toLocaleString()}</div>
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">평균 응답시간</h4>
-            <div className="text-2xl font-bold">{metrics.avgResponseTime}ms</div>
-          </div>
-        </div>
-        <div className="border rounded-lg p-4">
-          <h4 className="font-medium mb-2">최근 Servlet 활동</h4>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-sm">
-              <span>/api/users</span>
-              <span className="text-muted-foreground">245 req/min</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span>/api/orders</span>
-              <span className="text-muted-foreground">189 req/min</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span>/api/products</span>
-              <span className="text-muted-foreground">156 req/min</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-
-    // JSP Panel Component
-    const JSPPanel = ({ metrics }) => (
-      <div className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">컴파일된 페이지</h4>
-            <div className="text-2xl font-bold">{metrics.compiledPages}</div>
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">컴파일 시간</h4>
-            <div className="text-2xl font-bold">{metrics.compilationTime}s</div>
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">캐시 히트율</h4>
-            <div className="text-2xl font-bold">{metrics.cacheHitRate}%</div>
-          </div>
-        </div>
-        <div className="border rounded-lg p-4">
-          <h4 className="font-medium mb-2">JSP 페이지 상태</h4>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-sm">
-              <span>index.jsp</span>
-              <span className="bg-green-500/10 text-green-600 dark:text-green-400 px-2 py-1 rounded text-xs">활성</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span>dashboard.jsp</span>
-              <span className="bg-green-500/10 text-green-600 dark:text-green-400 px-2 py-1 rounded text-xs">활성</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span>report.jsp</span>
-              <span className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 px-2 py-1 rounded text-xs">컴파일 중</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-
-    // EJB Panel Component
-    const EJBPanel = ({ metrics }) => (
-      <div className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">Session Bean</h4>
-            <div className="text-2xl font-bold">{metrics.sessionBeans}</div>
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">Entity Bean</h4>
-            <div className="text-2xl font-bold">{metrics.entityBeans}</div>
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">Message Bean</h4>
-            <div className="text-2xl font-bold">{metrics.messageBeans}</div>
-          </div>
-        </div>
-        <div className="border rounded-lg p-4">
-          <h4 className="font-medium mb-2">EJB 풀 상태</h4>
-          <div className="space-y-3">
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span>풀 사용률</span>
-                <span>{metrics.poolUtilization}%</span>
-              </div>
-              <div className="w-full bg-secondary rounded-full h-2">
-                <div 
-                  className={`h-2 rounded-full transition-all ${metrics.poolUtilization > 80 ? 'bg-red-500' : 'bg-green-500'}`}
-                  style={{ width: `${metrics.poolUtilization}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-
-    // Transaction Panel Component
-    const TransactionPanel = ({ metrics }) => (
-      <div className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-4">
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">활성</h4>
-            <div className="text-2xl font-bold">{metrics.active}</div>
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">커밋됨</h4>
-            <div className="text-2xl font-bold">{metrics.committed.toLocaleString()}</div>
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">롤백됨</h4>
-            <div className="text-2xl font-bold">{metrics.rolledBack}</div>
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium text-muted-foreground">평균 실행시간</h4>
-            <div className="text-2xl font-bold">{metrics.avgDuration}ms</div>
-          </div>
-        </div>
-        <div className="border rounded-lg p-4">
-          <h4 className="font-medium mb-2">트랜잭션 상태 분포</h4>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-sm">
-              <span>성공률</span>
-              <span className="text-green-600 dark:text-green-400 font-medium">98.4%</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span>실패율</span>
-              <span className="text-red-600 dark:text-red-400 font-medium">1.6%</span>
-            </div>
-            <div className="flex justify-between items-center text-sm">
-              <span>평균 대기시간</span>
-              <span className="text-muted-foreground">12ms</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-
-    // Reusable Components
-    const MetricCard = ({ title, value, description, trend, trendValue, icon }) => {
-      const getTrendColor = () => {
-        switch (trend) {
-          case 'success': return 'text-green-600 dark:text-green-400';
-          case 'warning': return 'text-yellow-600 dark:text-yellow-400';
-          case 'error': return 'text-red-600 dark:text-red-400';
-          default: return 'text-blue-600 dark:text-blue-400';
-        }
-      };
-
-      return (
-        <div className="rounded-lg border bg-card p-6">
-          <div className="flex items-center justify-between space-y-0 pb-2">
-            <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
-            <span className="text-2xl">{icon}</span>
-          </div>
-          <div className="text-2xl font-bold">{value}</div>
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
-          {trendValue && (
-            <div className={`text-xs font-medium mt-2 ${getTrendColor()}`}>
-              {trendValue}
-            </div>
-          )}
-        </div>
-      );
-    };
-
-    const ChartCard = ({ title, type, dataKey }) => {
-      const canvasRef = useRef(null);
-      const chartRef = useRef(null);
-
-      useEffect(() => {
-        if (canvasRef.current) {
-          const ctx = canvasRef.current.getContext('2d');
-          
-          if (chartRef.current) {
-            chartRef.current.destroy();
-          }
-
-          const data = {
-            labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-            datasets: [{
-              label: title,
-              data: Array.from({ length: 6 }, () => Math.floor(Math.random() * 100)),
-              borderColor: 'hsl(var(--primary))',
-              backgroundColor: type === 'bar' ? 'hsl(var(--primary))' : 'hsl(var(--primary) / 0.1)',
-              tension: 0.4,
-              fill: type === 'line'
-            }]
-          };
-
-          chartRef.current = new Chart(ctx, {
-            type: type,
-            data: data,
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false }
-              },
-              scales: {
-                y: { beginAtZero: true }
-              }
-            }
-          });
-        }
-
-        return () => {
-          if (chartRef.current) {
-            chartRef.current.destroy();
-          }
-        };
-      }, [title, type, dataKey]);
-
-      return (
-        <div className="rounded-lg border bg-card p-6">
-          <h3 className="text-lg font-semibold mb-4">{title}</h3>
-          <div className="h-64">
-            <canvas ref={canvasRef}></canvas>
-          </div>
-        </div>
-      );
-    };
-
-    // Render the app
-    ReactDOM.render(<J2EEDashboard />, document.getElementById('root'));
+    // Initialize dashboard when page loads
+    document.addEventListener('DOMContentLoaded', initDashboard);
   </script>
-  <!-- TweakCN Theme System -->
-  <script src="/js/tweakcn-loader.js"></script>
 </body>
 </html>
