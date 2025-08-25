@@ -131,6 +131,36 @@ class AIRISMonAPIGateway {
     }
 
     setupRoutes() {
+        // Root endpoint - Welcome page
+        this.app.get('/', (req, res) => {
+            res.json({
+                service: 'AIRIS-MON API Gateway',
+                version: '2.0.0',
+                description: 'AI 위험 및 지능 시스템 모니터링 API',
+                status: '정상 작동 중',
+                korean_time: new Intl.DateTimeFormat('ko-KR', {
+                    timeZone: 'Asia/Seoul',
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                }).format(new Date()),
+                endpoints: {
+                    'API 문서': '/api/docs',
+                    '시스템 상태': '/api/v1/status',
+                    '건강 상태': '/health',
+                    '메트릭 API': '/api/v1/metrics',
+                    '알림 API': '/api/v1/alerts',
+                    '대시보드 API': '/api/v1/dashboard',
+                    '분석 API': '/api/v1/analytics',
+                    '배포 관리 API': '/api/v1/deployment'
+                },
+                ui_dashboard: 'http://localhost:3002'
+            });
+        });
+
         // Health check - Korean status messages
         this.app.get('/health', (req, res) => {
             res.json({

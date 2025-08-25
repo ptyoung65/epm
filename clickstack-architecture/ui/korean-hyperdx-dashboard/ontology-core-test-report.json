@@ -1,0 +1,66 @@
+{
+  "timestamp": "2025-08-25T02:22:30.291Z",
+  "testName": "온톨로지 뷰어 핵심 기능 테스트",
+  "testUrl": "http://localhost:3001/ontology.html",
+  "results": {
+    "pageLoad": {
+      "status": "PASS",
+      "statistics": {
+        "nodes": "16",
+        "relations": "17",
+        "categories": "5",
+        "connections": "1"
+      },
+      "timestamp": "2025-08-25T02:22:32.056Z"
+    },
+    "graphRendering": {
+      "status": "PASS",
+      "elements": {
+        "nodes": 16,
+        "links": 17,
+        "labels": 16
+      },
+      "legendVisible": true,
+      "timestamp": "2025-08-25T02:22:37.536Z"
+    },
+    "knowledgeBase": {
+      "status": "PASS",
+      "categories": {
+        "total": 5,
+        "hasActive": true,
+        "activeTitle": "핵심 개념\n                    \n                    3개 항목"
+      },
+      "content": {
+        "hasContent": true,
+        "hasTitle": true,
+        "titleText": "핵심 개념"
+      },
+      "timestamp": "2025-08-25T02:22:39.541Z"
+    },
+    "structure": {
+      "status": "PASS",
+      "treeInfo": {
+        "nodeCount": 21,
+        "childrenCount": 5,
+        "toggleCount": 5,
+        "firstChildVisible": true
+      },
+      "timestamp": "2025-08-25T02:22:42.710Z"
+    },
+    "tabSwitching": {
+      "status": "FAIL",
+      "error": "Too many arguments. If you need to pass more than 1 argument to the function wrap them in an object.",
+      "timestamp": "2025-08-25T02:22:44.728Z"
+    }
+  },
+  "screenshots": [
+    "core-test-graph.png",
+    "core-test-knowledge.png",
+    "core-test-structure.png"
+  ],
+  "summary": {
+    "passed": 4,
+    "failed": 1,
+    "total": 5
+  }
+}

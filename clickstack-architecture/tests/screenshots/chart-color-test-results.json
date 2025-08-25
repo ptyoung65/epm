@@ -1,0 +1,90 @@
+[
+  {
+    "name": "J2EE Dashboard",
+    "url": "http://localhost:3002/j2ee-dashboard.html",
+    "status": "passed",
+    "issues": [],
+    "chartInfo": [
+      {
+        "index": 1,
+        "dimensions": "694x256",
+        "blackPixels": 0,
+        "blackPercentage": "0.00",
+        "hasBluePixels": true
+      },
+      {
+        "index": 2,
+        "dimensions": "694x256",
+        "blackPixels": 109,
+        "blackPercentage": "0.25",
+        "hasBluePixels": true
+      }
+    ]
+  },
+  {
+    "name": "WAS Dashboard",
+    "url": "http://localhost:3002/was-dashboard.html",
+    "status": "passed",
+    "issues": [],
+    "chartInfo": [
+      {
+        "index": 1,
+        "dimensions": "710x256",
+        "blackPixels": 0,
+        "blackPercentage": "0.00",
+        "hasBluePixels": true
+      },
+      {
+        "index": 2,
+        "dimensions": "710x256",
+        "blackPixels": 1,
+        "blackPercentage": "0.00",
+        "hasBluePixels": true
+      }
+    ]
+  },
+  {
+    "name": "Exception Dashboard",
+    "url": "http://localhost:3002/exception-dashboard.html",
+    "status": "passed",
+    "issues": [],
+    "chartInfo": [
+      {
+        "index": 1,
+        "dimensions": "710x256",
+        "blackPixels": 0,
+        "blackPercentage": "0.00",
+        "hasBluePixels": true
+      },
+      {
+        "index": 2,
+        "dimensions": "710x256",
+        "blackPixels": 0,
+        "blackPercentage": "0.00",
+        "hasBluePixels": true
+      }
+    ]
+  },
+  {
+    "name": "Alert Dashboard",
+    "url": "http://localhost:3002/alert-dashboard.html",
+    "status": "passed",
+    "issues": [],
+    "chartInfo": [
+      {
+        "index": 1,
+        "dimensions": "710x256",
+        "blackPixels": 0,
+        "blackPercentage": "0.00",
+        "hasBluePixels": true
+      },
+      {
+        "index": 2,
+        "dimensions": "710x256",
+        "blackPixels": 0,
+        "blackPercentage": "0.00",
+        "hasBluePixels": true
+      }
+    ]
+  }
+]

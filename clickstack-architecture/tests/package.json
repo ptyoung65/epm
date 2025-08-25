@@ -1,0 +1,23 @@
+{
+  "name": "chart-color-analysis",
+  "version": "1.0.0",
+  "description": "Test suite for analyzing chart color issues in APM dashboards",
+  "main": "chart-color-analysis.js",
+  "scripts": {
+    "test": "node chart-color-analysis.js",
+    "install-playwright": "npx playwright install",
+    "test:colors": "node chart-color-analysis.js"
+  },
+  "dependencies": {
+    "playwright": "^1.55.0"
+  },
+  "keywords": [
+    "playwright",
+    "testing",
+    "chart",
+    "color",
+    "analysis"
+  ],
+  "author": "AIRIS APM Team",
+  "license": "MIT"
+}

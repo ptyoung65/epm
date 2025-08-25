@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧠 AIRIS APM - 완전한 온톨로지</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- D3.js v7 -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* shadcn/ui CSS Variables */
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 47.4% 11.2%;
+            --border: 214.3 31.8% 91.4%;
+            --radius: 0.5rem;
+        }
+
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+        }
+
+        /* Modern Card Styles */
+        .modern-card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: calc(var(--radius));
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+
+        /* SVG 요소 스타일 */
+        .ontology-node {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ontology-node:hover {
+            stroke-width: 3px;
+        }
+
+        .ontology-link {
+            fill: none;
+            stroke-width: 2px;
+            opacity: 0.6;
+        }
+
+        .ontology-link.highlighted {
+            opacity: 1;
+            stroke-width: 3px;
+        }
+
+        .node-label {
+            font-size: 11px;
+            text-anchor: middle;
+            pointer-events: none;
+            fill: #374151;
+        }
+
+        .link-label {
+            font-size: 9px;
+            text-anchor: middle;
+            pointer-events: none;
+            fill: #6b7280;
+        }
+
+        /* 속성 노드 전용 스타일 */
+        .property-node {
+            opacity: 0.8;
+        }
+
+        .property-node:hover {
+            opacity: 1;
+        }
+
+        /* 레전드 스타일 */
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .legend-circle {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        /* 필터 컨트롤 */
+        .filter-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .filter-button {
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid hsl(var(--border));
+            background: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-button.active {
+            background: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+
+        .filter-button:hover {
+            background: hsl(var(--accent));
+        }
+
+        /* 툴팁 스타일 */
+        .tooltip {
+            position: absolute;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="modern-card mx-4 mt-4 mb-6">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-xl font-bold text-gray-900">🧠 AIRIS APM 온톨로지</h1>
+                    <span class="text-sm text-gray-500">완전한 클래스, 속성, 관계 표현</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="px-4 py-2 text-sm text-blue-600 hover:text-blue-800">통합 대시보드</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 pb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- 컨트롤 패널 -->
+            <div class="lg:col-span-1">
+                <div class="modern-card mb-4">
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold mb-4">컨트롤</h3>
+                        
+                        <!-- 줌 컨트롤 -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">줌 & 뷰</label>
+                            <div class="flex flex-col space-y-2">
+                                <button id="zoom-in" class="filter-button">확대 (+)</button>
+                                <button id="zoom-out" class="filter-button">축소 (-)</button>
+                                <button id="reset-view" class="filter-button">초기화</button>
+                                <button id="fit-view" class="filter-button">전체보기</button>
+                            </div>
+                        </div>
+
+                        <!-- 노드 타입 필터 -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">노드 타입</label>
+                            <div class="filter-controls flex-col">
+                                <button class="filter-button active" onclick="toggleNodeType('class')">클래스</button>
+                                <button class="filter-button active" onclick="toggleNodeType('property')">속성</button>
+                                <button class="filter-button" onclick="toggleAllNodes()">전체</button>
+                            </div>
+                        </div>
+
+                        <!-- 관계 타입 필터 -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">관계 타입</label>
+                            <div class="filter-controls flex-col">
+                                <button class="filter-button active" onclick="toggleRelationType('subClassOf')">상속</button>
+                                <button class="filter-button active" onclick="toggleRelationType('hasProperty')">속성</button>
+                                <button class="filter-button active" onclick="toggleRelationType('monitors')">모니터링</button>
+                                <button class="filter-button" onclick="toggleAllRelations()">전체</button>
+                            </div>
+                        </div>
+
+                        <!-- 레이아웃 설정 -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">레이아웃</label>
+                            <select id="layout-select" class="w-full p-2 border border-gray-300 rounded text-sm">
+                                <option value="force">Force Layout</option>
+                                <option value="hierarchical">계층형</option>
+                                <option value="circular">원형</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 통계 정보 -->
+                <div class="modern-card mb-4">
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold mb-4">온톨로지 통계</h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span>총 노드:</span>
+                                <span id="total-nodes" class="font-medium">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>클래스:</span>
+                                <span id="class-nodes" class="font-medium">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>속성:</span>
+                                <span id="property-nodes" class="font-medium">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>관계:</span>
+                                <span id="total-links" class="font-medium">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 레전드 -->
+                <div class="modern-card">
+                    <div class="p-4">
+                        <h3 class="text-lg font-semibold mb-4">카테고리 레전드</h3>
+                        <div id="legend-container" class="text-sm space-y-2">
+                            <!-- 동적으로 생성됨 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 메인 온톨로지 그래프 -->
+            <div class="lg:col-span-3">
+                <div class="modern-card" style="height: 800px;">
+                    <div class="p-4 border-b">
+                        <h3 class="text-lg font-semibold">완전한 온톨로지 그래프</h3>
+                        <p class="text-sm text-gray-600 mt-1">
+                            모든 클래스, 속성, 관계가 표현된 AIRIS APM 온톨로지
+                        </p>
+                    </div>
+                    <div class="relative" style="height: calc(100% - 80px);">
+                        <svg id="ontology-graph" width="100%" height="100%"></svg>
+                        <div id="node-info" class="absolute top-4 right-4 modern-card p-3 hidden" style="max-width: 300px; z-index: 10;">
+                            <h4 class="font-semibold text-sm mb-2" id="info-title"></h4>
+                            <p class="text-xs text-gray-600 mb-2" id="info-description"></p>
+                            <div id="info-properties" class="text-xs"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 툴팁 -->
+    <div id="tooltip" class="tooltip hidden"></div>
+
+    <!-- 온톨로지 데이터 스크립트 -->
+    <script src="./ontology-complete-enhanced.js"></script>
+
+    <script>
+        // 전역 변수
+        let svg, g, simulation, nodes, links;
+        let visibleNodeTypes = new Set(['class', 'property']);
+        let visibleRelationTypes = new Set(['subClassOf', 'hasProperty', 'monitors']);
+        let currentLayout = 'force';
+
+        // 색상 매핑
+        const categoryColors = {
+            core: '#4338ca',
+            infrastructure: '#059669', 
+            pillars: '#dc2626',
+            performance: '#ea580c',
+            resources: '#7c3aed',
+            faults: '#be185d',
+            cloud: '#0891b2',
+            containers: '#0d9488',
+            kubernetes: '#1d4ed8',
+            security: '#991b1b',
+            aiml: '#6b21a8',
+            business: '#92400e',
+            data: '#374151',
+            tools: '#065f46',
+            airis: '#7c2d12',
+            properties: '#6b7280'
+        };
+
+        const relationColors = {
+            subClassOf: '#ef4444',
+            hasProperty: '#3b82f6',
+            monitors: '#10b981',
+            triggeredBy: '#f59e0b',
+            uses: '#8b5cf6',
+            detects: '#ec4899',
+            supports: '#06b6d4',
+            includes: '#84cc16',
+            respondTo: '#f97316',
+            enables: '#6366f1'
+        };
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeGraph();
+            setupControls();
+            updateStatistics();
+            createLegend();
+        });
+
+        function initializeGraph() {
+            const container = document.getElementById('ontology-graph');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            svg = d3.select('#ontology-graph')
+                .attr('viewBox', [0, 0, width, height]);
+
+            // 줌 기능은 setupControls()에서 설정
+
+            g = svg.append('g');
+
+            // 화살표 마커 정의
+            const defs = svg.append('defs');
+            
+            Object.keys(relationColors).forEach(relType => {
+                defs.append('marker')
+                    .attr('id', `arrow-${relType}`)
+                    .attr('viewBox', '0 -5 10 10')
+                    .attr('refX', 20)
+                    .attr('refY', 0)
+                    .attr('markerWidth', 6)
+                    .attr('markerHeight', 6)
+                    .attr('orient', 'auto')
+                    .append('path')
+                    .attr('d', 'M0,-5L10,0L0,5')
+                    .attr('fill', relationColors[relType]);
+            });
+
+            // 시뮬레이션 설정
+            simulation = d3.forceSimulation()
+                .force('link', d3.forceLink().id(d => d.id).distance(100).strength(0.1))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(d => d.type === 'property' ? 12 : 20))
+                .force('x', d3.forceX(width / 2).strength(0.05))
+                .force('y', d3.forceY(height / 2).strength(0.05))
+                .alphaDecay(0.02);
+
+            loadOntologyData();
+        }
+
+        function loadOntologyData() {
+            if (!window.ontologyCompleteEnhancedData) {
+                console.error('온톨로지 데이터를 찾을 수 없습니다.');
+                return;
+            }
+
+            const data = window.ontologyCompleteEnhancedData;
+            nodes = [...data.nodes];
+            links = [...data.links];
+
+            updateGraph();
+        }
+
+        function updateGraph() {
+            // 현재 필터에 따라 노드와 링크 필터링
+            const visibleNodes = nodes.filter(d => 
+                visibleNodeTypes.has(d.type || 'class')
+            );
+
+            const visibleNodeIds = new Set(visibleNodes.map(d => d.id));
+            const visibleLinks = links.filter(d => 
+                visibleRelationTypes.has(d.type) &&
+                visibleNodeIds.has(d.source.id || d.source) &&
+                visibleNodeIds.has(d.target.id || d.target)
+            );
+
+            // 링크 렌더링
+            const link = g.selectAll('.ontology-link')
+                .data(visibleLinks, d => `${d.source.id || d.source}-${d.target.id || d.target}-${d.type}`);
+
+            link.exit().remove();
+
+            const linkEnter = link.enter()
+                .append('line')
+                .attr('class', 'ontology-link')
+                .attr('stroke', d => relationColors[d.type] || '#999')
+                .attr('marker-end', d => `url(#arrow-${d.type})`);
+
+            const linkMerge = linkEnter.merge(link);
+
+            // 링크 레이블
+            const linkLabel = g.selectAll('.link-label')
+                .data(visibleLinks, d => `${d.source.id || d.source}-${d.target.id || d.target}-${d.type}`);
+
+            linkLabel.exit().remove();
+
+            const linkLabelEnter = linkLabel.enter()
+                .append('text')
+                .attr('class', 'link-label')
+                .text(d => d.label || d.type);
+
+            const linkLabelMerge = linkLabelEnter.merge(linkLabel);
+
+            // 노드 렌더링
+            const node = g.selectAll('.ontology-node')
+                .data(visibleNodes, d => d.id);
+
+            node.exit().remove();
+
+            const nodeEnter = node.enter()
+                .append('g')
+                .attr('class', 'ontology-node')
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended));
+
+            // 노드 원
+            nodeEnter.append('circle')
+                .attr('r', d => d.type === 'property' ? 8 : 15)
+                .attr('fill', d => {
+                    if (d.type === 'property') return categoryColors.properties;
+                    return categoryColors[d.category] || '#999';
+                })
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 2);
+
+            // 노드 레이블
+            nodeEnter.append('text')
+                .attr('class', 'node-label')
+                .attr('dy', '.35em')
+                .text(d => d.label)
+                .attr('font-size', d => d.type === 'property' ? '8px' : '10px');
+
+            const nodeMerge = nodeEnter.merge(node);
+
+            // 이벤트 핸들러
+            nodeMerge
+                .on('mouseover', handleNodeMouseOver)
+                .on('mouseout', handleNodeMouseOut)
+                .on('click', handleNodeClick);
+
+            // 시뮬레이션 업데이트
+            simulation.nodes(visibleNodes);
+            simulation.force('link').links(visibleLinks);
+            simulation.alpha(1).restart();
+
+            simulation.on('tick', () => {
+                linkMerge
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+
+                linkLabelMerge
+                    .attr('x', d => (d.source.x + d.target.x) / 2)
+                    .attr('y', d => (d.source.y + d.target.y) / 2);
+
+                nodeMerge
+                    .attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+        }
+
+        function handleNodeMouseOver(event, d) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.className = 'tooltip';
+            tooltip.innerHTML = `
+                <strong>${d.label}</strong><br/>
+                <em>타입: ${d.type === 'property' ? '속성' : '클래스'}</em><br/>
+                <small>${d.description || '설명 없음'}</small>
+                ${d.properties ? `<br/><br/><strong>속성들:</strong><br/>${d.properties.join(', ')}` : ''}
+                ${d.dataType ? `<br/><strong>데이터 타입:</strong> ${d.dataType}` : ''}
+            `;
+            tooltip.style.left = (event.pageX + 10) + 'px';
+            tooltip.style.top = (event.pageY - 10) + 'px';
+        }
+
+        function handleNodeMouseOut() {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.className = 'tooltip hidden';
+        }
+
+        function handleNodeClick(event, d) {
+            const infoPanel = document.getElementById('node-info');
+            const title = document.getElementById('info-title');
+            const description = document.getElementById('info-description');
+            const properties = document.getElementById('info-properties');
+
+            title.textContent = d.label;
+            description.textContent = d.description || '설명 없음';
+            
+            if (d.type === 'property') {
+                properties.innerHTML = `
+                    <div><strong>타입:</strong> 속성</div>
+                    ${d.dataType ? `<div><strong>데이터 타입:</strong> ${d.dataType}</div>` : ''}
+                `;
+            } else {
+                properties.innerHTML = `
+                    <div><strong>카테고리:</strong> ${d.category}</div>
+                    ${d.properties ? `<div><strong>속성들:</strong><br/>${d.properties.join('<br/>')}</div>` : ''}
+                `;
+            }
+
+            infoPanel.classList.remove('hidden');
+        }
+
+        // 컨트롤 함수들
+        function toggleNodeType(type) {
+            if (visibleNodeTypes.has(type)) {
+                visibleNodeTypes.delete(type);
+                event.target.classList.remove('active');
+            } else {
+                visibleNodeTypes.add(type);
+                event.target.classList.add('active');
+            }
+            updateGraph();
+            updateStatistics();
+        }
+
+        function toggleRelationType(type) {
+            if (visibleRelationTypes.has(type)) {
+                visibleRelationTypes.delete(type);
+                event.target.classList.remove('active');
+            } else {
+                visibleRelationTypes.add(type);
+                event.target.classList.add('active');
+            }
+            updateGraph();
+        }
+
+        function toggleAllNodes() {
+            const allTypes = ['class', 'property'];
+            const allVisible = allTypes.every(type => visibleNodeTypes.has(type));
+            
+            if (allVisible) {
+                visibleNodeTypes.clear();
+            } else {
+                allTypes.forEach(type => visibleNodeTypes.add(type));
+            }
+            
+            // 버튼 상태 업데이트
+            document.querySelectorAll('.filter-button').forEach(btn => {
+                if (btn.textContent.includes('클래스') || btn.textContent.includes('속성')) {
+                    if (allVisible) {
+                        btn.classList.remove('active');
+                    } else {
+                        btn.classList.add('active');
+                    }
+                }
+            });
+            
+            updateGraph();
+            updateStatistics();
+        }
+
+        function toggleAllRelations() {
+            const allTypes = ['subClassOf', 'hasProperty', 'monitors', 'triggeredBy', 'uses', 'detects', 'supports', 'includes', 'respondTo', 'enables'];
+            const allVisible = allTypes.every(type => visibleRelationTypes.has(type));
+            
+            if (allVisible) {
+                visibleRelationTypes.clear();
+            } else {
+                allTypes.forEach(type => visibleRelationTypes.add(type));
+            }
+            
+            updateGraph();
+        }
+
+        function setupControls() {
+            // 줌 객체를 전역으로 유지
+            const zoomBehavior = d3.zoom()
+                .scaleExtent([0.1, 4])
+                .on('zoom', function(event) {
+                    g.attr('transform', event.transform);
+                });
+
+            svg.call(zoomBehavior);
+
+            // 줌 컨트롤
+            document.getElementById('zoom-in').onclick = () => {
+                console.log('Zoom in clicked');
+                svg.transition().duration(300).call(
+                    zoomBehavior.scaleBy, 1.5
+                );
+            };
+
+            document.getElementById('zoom-out').onclick = () => {
+                console.log('Zoom out clicked');
+                svg.transition().duration(300).call(
+                    zoomBehavior.scaleBy, 1 / 1.5
+                );
+            };
+
+            document.getElementById('reset-view').onclick = () => {
+                console.log('Reset view clicked');
+                svg.transition().duration(500).call(
+                    zoomBehavior.transform,
+                    d3.zoomIdentity
+                );
+            };
+
+            document.getElementById('fit-view').onclick = () => {
+                console.log('Fit view clicked');
+                try {
+                    const bounds = g.node().getBBox();
+                    console.log('Graph bounds:', bounds);
+                    if (bounds.width === 0 || bounds.height === 0) {
+                        console.warn('Graph bounds are empty, using default view');
+                        svg.transition().duration(500).call(
+                            zoomBehavior.transform,
+                            d3.zoomIdentity
+                        );
+                        return;
+                    }
+
+                    const parent = svg.node().getBoundingClientRect();
+                    const fullWidth = parent.width;
+                    const fullHeight = parent.height;
+                    const width = bounds.width;
+                    const height = bounds.height;
+                    const midX = bounds.x + width / 2;
+                    const midY = bounds.y + height / 2;
+                    
+                    const scale = Math.min(fullWidth / width, fullHeight / height) * 0.8;
+                    const translate = [fullWidth / 2 - scale * midX, fullHeight / 2 - scale * midY];
+
+                    svg.transition().duration(750).call(
+                        zoomBehavior.transform,
+                        d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+                    );
+                } catch (error) {
+                    console.error('Fit view error:', error);
+                    // 기본 뷰로 복귀
+                    svg.transition().duration(500).call(
+                        zoomBehavior.transform,
+                        d3.zoomIdentity
+                    );
+                }
+            };
+
+            // 레이아웃 변경
+            document.getElementById('layout-select').onchange = function() {
+                currentLayout = this.value;
+                console.log('Layout changed to:', currentLayout);
+                applyLayout();
+                
+                // Force layout일 때는 링크를 다시 설정
+                if (currentLayout === 'force') {
+                    const visibleNodes = nodes.filter(d => visibleNodeTypes.has(d.type || 'class'));
+                    const visibleNodeIds = new Set(visibleNodes.map(d => d.id));
+                    const visibleLinks = links.filter(d => 
+                        visibleRelationTypes.has(d.type) &&
+                        visibleNodeIds.has(d.source.id || d.source) &&
+                        visibleNodeIds.has(d.target.id || d.target)
+                    );
+                    
+                    simulation.force('link').links(visibleLinks);
+                }
+            };
+        }
+
+        function applyLayout() {
+            console.log('Applying layout:', currentLayout);
+            
+            switch (currentLayout) {
+                case 'hierarchical':
+                    applyHierarchicalLayout();
+                    break;
+                case 'circular':
+                    applyCircularLayout();
+                    break;
+                default:
+                    applyForceLayout();
+                    break;
+            }
+        }
+
+        function applyForceLayout() {
+            console.log('Applying force layout');
+            
+            // Clear all fixed positions to allow force simulation
+            nodes.forEach(d => {
+                d.fx = null;
+                d.fy = null;
+            });
+
+            const container = document.getElementById('ontology-graph');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            // Reconfigure simulation forces
+            simulation
+                .force('link', d3.forceLink().id(d => d.id).distance(100).strength(0.1))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(centerX, centerY))
+                .force('collision', d3.forceCollide().radius(d => d.type === 'property' ? 12 : 20))
+                .force('x', d3.forceX(centerX).strength(0.05))
+                .force('y', d3.forceY(centerY).strength(0.05));
+
+            // Restart simulation with higher alpha for significant change
+            simulation.alpha(1).alphaDecay(0.02).restart();
+        }
+
+        function applyHierarchicalLayout() {
+            console.log('Applying hierarchical layout');
+            
+            // Clear force simulation for manual positioning
+            simulation
+                .force('charge', null)
+                .force('center', null)
+                .force('x', null)
+                .force('y', null);
+
+            // Group nodes by category
+            const levels = {};
+            const visibleNodes = nodes.filter(d => visibleNodeTypes.has(d.type || 'class'));
+            
+            visibleNodes.forEach(d => {
+                const level = d.category || 'default';
+                if (!levels[level]) levels[level] = [];
+                levels[level].push(d);
+            });
+
+            let y = 80;
+            const levelKeys = Object.keys(levels);
+            
+            levelKeys.forEach((level, levelIndex) => {
+                const levelNodes = levels[level];
+                const startX = 100;
+                const nodeWidth = 150;
+                
+                levelNodes.forEach((d, i) => {
+                    d.fx = startX + (i * nodeWidth);
+                    d.fy = y;
+                });
+                y += 120;
+            });
+
+            simulation.alpha(0.3).restart();
+        }
+
+        function applyCircularLayout() {
+            console.log('Applying circular layout');
+            
+            // Clear force simulation for manual positioning
+            simulation
+                .force('charge', null)
+                .force('center', null)
+                .force('x', null)
+                .force('y', null);
+
+            const container = document.getElementById('ontology-graph');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            const radius = Math.min(width, height) * 0.35;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            const visibleNodes = nodes.filter(d => visibleNodeTypes.has(d.type || 'class'));
+            
+            visibleNodes.forEach((d, i) => {
+                const angle = (2 * Math.PI * i) / visibleNodes.length;
+                d.fx = centerX + radius * Math.cos(angle);
+                d.fy = centerY + radius * Math.sin(angle);
+            });
+
+            simulation.alpha(0.3).restart();
+        }
+
+        function updateStatistics() {
+            const visibleNodes = nodes.filter(d => visibleNodeTypes.has(d.type || 'class'));
+            const classNodes = visibleNodes.filter(d => (d.type || 'class') === 'class');
+            const propertyNodes = visibleNodes.filter(d => d.type === 'property');
+            
+            document.getElementById('total-nodes').textContent = visibleNodes.length;
+            document.getElementById('class-nodes').textContent = classNodes.length;
+            document.getElementById('property-nodes').textContent = propertyNodes.length;
+            document.getElementById('total-links').textContent = links.length;
+        }
+
+        function createLegend() {
+            const legendContainer = document.getElementById('legend-container');
+            const categories = window.ontologyCompleteEnhancedData?.categories || {};
+            
+            Object.entries(categories).forEach(([key, category]) => {
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+                item.innerHTML = `
+                    <div class="legend-circle" style="background-color: ${categoryColors[key]}"></div>
+                    <span>${category.name}</span>
+                `;
+                legendContainer.appendChild(item);
+            });
+        }
+
+        // 드래그 이벤트 핸들러
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        // 전역 함수로 등록
+        window.toggleNodeType = toggleNodeType;
+        window.toggleRelationType = toggleRelationType;
+        window.toggleAllNodes = toggleAllNodes;
+        window.toggleAllRelations = toggleAllRelations;
+
+        // 창 리사이즈 이벤트
+        window.addEventListener('resize', function() {
+            const container = document.getElementById('ontology-graph');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            
+            svg.attr('viewBox', [0, 0, width, height]);
+            simulation.force('center', d3.forceCenter(width / 2, height / 2));
+        });
+    </script>
+</body>
+</html>

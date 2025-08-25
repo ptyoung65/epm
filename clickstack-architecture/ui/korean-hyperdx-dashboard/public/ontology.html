@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🧠 AIRIS APM - 온톨로지</title>
+    <title>🧠 AIRIS APM - 완전한 온톨로지 시스템</title>
     
-    <!-- Tailwind CSS -->
+    <!-- Local Tailwind CSS -->
     <link href="./css/tailwind.css" rel="stylesheet">
     
     <!-- D3.js v7 -->
@@ -25,8 +25,6 @@
             --foreground: 222.2 84% 4.9%;
             --card: 0 0% 100%;
             --card-foreground: 222.2 84% 4.9%;
-            --popover: 0 0% 100%;
-            --popover-foreground: 222.2 84% 4.9%;
             --primary: 222.2 47.4% 11.2%;
             --primary-foreground: 210 40% 98%;
             --secondary: 210 40% 96%;
@@ -35,55 +33,10 @@
             --muted-foreground: 215.4 16.3% 46.9%;
             --accent: 210 40% 96%;
             --accent-foreground: 222.2 47.4% 11.2%;
-            --destructive: 0 84.2% 60.2%;
-            --destructive-foreground: 210 40% 98%;
             --border: 214.3 31.8% 91.4%;
-            --input: 214.3 31.8% 91.4%;
-            --ring: 222.2 84% 4.9%;
             --radius: 0.5rem;
         }
 
-        .dark {
-            --background: 222.2 84% 4.9%;
-            --foreground: 210 40% 98%;
-            --card: 222.2 84% 4.9%;
-            --card-foreground: 210 40% 98%;
-            --popover: 222.2 84% 4.9%;
-            --popover-foreground: 210 40% 98%;
-            --primary: 210 40% 98%;
-            --primary-foreground: 222.2 47.4% 11.2%;
-            --secondary: 217.2 32.6% 17.5%;
-            --secondary-foreground: 210 40% 98%;
-            --muted: 217.2 32.6% 17.5%;
-            --muted-foreground: 215 20.2% 65.1%;
-            --accent: 217.2 32.6% 17.5%;
-            --accent-foreground: 210 40% 98%;
-            --destructive: 0 62.8% 30.6%;
-            --destructive-foreground: 210 40% 98%;
-            --border: 217.2 32.6% 17.5%;
-            --input: 217.2 32.6% 17.5%;
-            --ring: 212.7 26.8% 83.9%;
-        }
-
-        /* shadcn/ui Utility Classes */
-        .bg-background { background-color: hsl(var(--background)); }
-        .text-foreground { color: hsl(var(--foreground)); }
-        .bg-card { background-color: hsl(var(--card)); }
-        .text-card-foreground { color: hsl(var(--card-foreground)); }
-        .bg-primary { background-color: hsl(var(--primary)); }
-        .text-primary { color: hsl(var(--primary)); }
-        .text-primary-foreground { color: hsl(var(--primary-foreground)); }
-        .bg-secondary { background-color: hsl(var(--secondary)); }
-        .text-secondary-foreground { color: hsl(var(--secondary-foreground)); }
-        .bg-muted { background-color: hsl(var(--muted)); }
-        .text-muted-foreground { color: hsl(var(--muted-foreground)); }
-        .bg-accent { background-color: hsl(var(--accent)); }
-        .text-accent-foreground { color: hsl(var(--accent-foreground)); }
-        .bg-destructive { background-color: hsl(var(--destructive)); }
-        .text-destructive-foreground { color: hsl(var(--destructive-foreground)); }
-        .border { border: 1px solid hsl(var(--border)); }
-        .border-input { border: 1px solid hsl(var(--input)); }
-        
         /* Modern Card Styles */
         .modern-card {
             background: hsl(var(--card));
@@ -92,15 +45,203 @@
             box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
         }
 
-        .modern-card-header {
-            padding: 1.5rem 1.5rem 1rem 1.5rem;
-            border-bottom: 1px solid hsl(var(--border));
+        /* Tab Styles - Enhanced Visibility */
+        .tab-container {
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 8px 8px 0 0;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
         }
 
-        .modern-card-content {
-            padding: 1.5rem;
+        .tab-list {
+            display: flex;
+            gap: 0;
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            width: 100%;
         }
 
+        .tab-list li {
+            flex: 1;
+        }
+
+        .tab-button {
+            padding: 16px 24px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: #64748b;
+            transition: all 0.3s ease;
+            position: relative;
+            width: 100%;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+            margin-right: 2px;
+        }
+
+        .tab-button:hover {
+            color: #1e293b;
+            background: #f1f5f9;
+            transform: translateY(-2px);
+        }
+
+        .tab-button.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+            background: white;
+            border-top-color: #3b82f6;
+            border-left-color: #3b82f6;
+            border-right-color: #3b82f6;
+            z-index: 10;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Graph Styles */
+        .ontology-node {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ontology-node:hover {
+            stroke-width: 3px;
+        }
+
+        .ontology-link {
+            fill: none;
+            stroke-width: 2px;
+            opacity: 0.6;
+        }
+
+        .node-label {
+            font-size: 11px;
+            text-anchor: middle;
+            pointer-events: none;
+            fill: #374151;
+        }
+
+        .filter-button {
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid hsl(var(--border));
+            background: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-button.active {
+            background: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+
+        .filter-button:hover {
+            background: hsl(var(--accent));
+        }
+
+        /* Tree Styles */
+        .tree-node {
+            margin: 8px 0;
+            padding: 8px 12px;
+            border-left: 3px solid #e5e7eb;
+            background: #f9fafb;
+            border-radius: 4px;
+        }
+
+        .tree-node.level-0 {
+            border-left-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .tree-node.level-1 {
+            border-left-color: #10b981;
+            background: #ecfdf5;
+            margin-left: 20px;
+        }
+
+        .tree-node.level-2 {
+            border-left-color: #f59e0b;
+            background: #fffbeb;
+            margin-left: 40px;
+        }
+
+        .tree-node.level-3 {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+            margin-left: 60px;
+        }
+
+        /* Knowledge Card Styles */
+        .knowledge-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 16px 0;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+
+        .knowledge-card h3 {
+            color: #1f2937;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .knowledge-card .analogy {
+            background: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+            padding: 12px 16px;
+            margin: 12px 0;
+            border-radius: 4px;
+        }
+
+        .knowledge-card .examples {
+            background: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            padding: 12px 16px;
+            margin: 12px 0;
+            border-radius: 4px;
+        }
+
+        .tooltip {
+            position: absolute;
+            padding: 8px 12px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        /* shadcn/ui Utility Classes */
+        .bg-background { background-color: hsl(var(--background)); }
+        .text-foreground { color: hsl(var(--foreground)); }
+        .bg-primary { background-color: hsl(var(--primary)); }
+        .text-primary { color: hsl(var(--primary)); }
+        .text-primary-foreground { color: hsl(var(--primary-foreground)); }
+        .border { border: 1px solid hsl(var(--border)); }
+        
         /* Button Styles */
         .btn-primary {
             display: inline-flex;
@@ -137,156 +278,9 @@
             background: hsl(var(--accent));
             color: hsl(var(--accent-foreground));
         }
-
-        .btn-ghost.active {
-            background: hsl(var(--primary));
-            color: hsl(var(--primary-foreground));
-        }
-
-        /* Tab Styles */
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Graph Styles */
-        #ontologyGraph {
-            width: 100%;
-            height: 500px;
-            border: 1px solid hsl(var(--border));
-            border-radius: calc(var(--radius));
-        }
-
-        .node-tooltip {
-            position: absolute;
-            padding: 8px;
-            background: hsl(var(--popover));
-            border: 1px solid hsl(var(--border));
-            border-radius: calc(var(--radius));
-            pointer-events: none;
-            font-size: 12px;
-            box-shadow: 0 4px 12px rgb(0 0 0 / 0.15);
-            z-index: 1000;
-        }
-
-        /* Knowledge Base Styles */
-        .knowledge-categories {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-
-        .knowledge-category {
-            padding: 1rem;
-            margin-bottom: 0.5rem;
-            border-radius: calc(var(--radius));
-            border: 1px solid hsl(var(--border));
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .knowledge-category:hover {
-            background: hsl(var(--muted));
-        }
-
-        .knowledge-category.active {
-            background: hsl(var(--primary));
-            color: hsl(var(--primary-foreground));
-            border-color: hsl(var(--primary));
-        }
-
-        .knowledge-content {
-            max-height: 500px;
-            overflow-y: auto;
-            padding: 1.5rem;
-            background: hsl(var(--muted));
-            border-radius: calc(var(--radius));
-        }
-
-        /* Tree Structure Styles */
-        .tree-container {
-            max-height: 500px;
-            overflow-y: auto;
-            padding: 1rem;
-        }
-
-        .tree-node {
-            padding: 0.5rem 0;
-            margin-left: 1rem;
-            border-left: 1px solid hsl(var(--border));
-            position: relative;
-        }
-
-        .tree-node::before {
-            content: '';
-            position: absolute;
-            left: -1px;
-            top: 50%;
-            width: 12px;
-            height: 1px;
-            background: hsl(var(--border));
-        }
-
-        .tree-node-content {
-            padding: 0.25rem 0.5rem;
-            border-radius: calc(var(--radius));
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .tree-node-content:hover {
-            background: hsl(var(--muted));
-        }
-
-        .tree-toggle {
-            margin-right: 0.5rem;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .tree-children {
-            margin-left: 1rem;
-        }
-
-        .tree-children.collapsed {
-            display: none;
-        }
-
-        /* Status Indicators */
-        .status-success { 
-            background: hsl(120 100% 25%);
-            color: white;
-        }
-        .status-warning { 
-            background: hsl(38 92% 50%);
-            color: white;
-        }
-        .status-error { 
-            background: hsl(var(--destructive));
-            color: hsl(var(--destructive-foreground));
-        }
-        .status-info { 
-            background: hsl(221 83% 53%);
-            color: white;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .grid-cols-1 {
-                grid-template-columns: 1fr;
-            }
-            .knowledge-categories {
-                max-height: 200px;
-                margin-bottom: 1rem;
-            }
-            .knowledge-content {
-                max-height: 300px;
-            }
-        }
     </style>
 </head>
-<body class="bg-background text-foreground">
+<body class="bg-gray-50">
     <!-- Header with Navigation -->
     <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div class="container mx-auto flex h-14 items-center px-4">
@@ -299,41 +293,33 @@
             
             <!-- Navigation -->
             <nav class="flex items-center space-x-6 text-sm">
-                <a href="/" 
-                   onclick="window.location.href = '/'" 
-                   class="text-muted-foreground hover:text-foreground transition-colors">
+                <button onclick="window.location.href = '/'" 
+                        class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
                     통합 대시보드
-                </a>
-                <a href="/j2ee-dashboard.html" 
-                   onclick="window.location.href = '/j2ee-dashboard.html'"
-                   class="text-muted-foreground hover:text-foreground transition-colors">
+                </button>
+                <button onclick="window.location.href = '/j2ee-dashboard.html'" 
+                        class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
                     J2EE 모니터링
-                </a>
-                <a href="/was-dashboard.html" 
-                   onclick="window.location.href = '/was-dashboard.html'"
-                   class="text-muted-foreground hover:text-foreground transition-colors">
+                </button>
+                <button onclick="window.location.href = '/was-dashboard.html'" 
+                        class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
                     WAS 모니터링
-                </a>
-                <a href="/exception-dashboard.html" 
-                   onclick="window.location.href = '/exception-dashboard.html'"
-                   class="text-muted-foreground hover:text-foreground transition-colors">
+                </button>
+                <button onclick="window.location.href = '/exception-dashboard.html'" 
+                        class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
                     예외 추적
-                </a>
-                <a href="/topology-dashboard.html" 
-                   onclick="window.location.href = '/topology-dashboard.html'"
-                   class="text-muted-foreground hover:text-foreground transition-colors">
+                </button>
+                <button onclick="window.location.href = '/topology-dashboard.html'" 
+                        class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
                     서비스 토폴로지
-                </a>
-                <a href="/alert-dashboard.html" 
-                   onclick="window.location.href = '/alert-dashboard.html'"
-                   class="text-muted-foreground hover:text-foreground transition-colors">
+                </button>
+                <button onclick="window.location.href = '/alert-dashboard.html'" 
+                        class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
                     알림 관리
-                </a>
-                <a href="/ontology.html" 
-                   onclick="window.location.href = '/ontology.html'"
-                   class="font-medium text-foreground hover:text-primary transition-colors">
+                </button>
+                <span class="font-medium text-foreground/80 hover:text-foreground transition-colors">
                     온톨로지
-                </a>
+                </span>
             </nav>
 
             <!-- Right side actions -->
@@ -348,796 +334,1091 @@
         </div>
     </header>
 
-    <!-- Page Title Section -->
-    <div class="container mx-auto px-4 py-6">
-        <div class="text-center mb-6">
-            <h1 class="text-3xl font-bold text-foreground mb-2">🧠 온톨로지 시각화</h1>
-            <p class="text-muted-foreground">관찰가능성 지식 체계 및 구조 시각화</p>
+    <div style="max-width: 1280px; margin: 0 auto; padding: 0 16px; padding-bottom: 32px;">
+        <!-- Tab Navigation -->
+        <div class="tab-container">
+            <ul class="tab-list">
+                <li><button class="tab-button active" onclick="showTab('graph')">🗺️ 온톨로지 그래프</button></li>
+                <li><button class="tab-button" onclick="showTab('knowledge')">📚 지식베이스</button></li>
+                <li><button class="tab-button" onclick="showTab('hierarchy')">🏗️ 계층구조</button></li>
+                <li><button class="tab-button" onclick="showTab('extracted')">💎 추출 지식</button></li>
+            </ul>
         </div>
-    </div>
 
-    <!-- Navigation Tabs -->
-    <div class="container mx-auto px-4 mb-6">
-        <div class="modern-card">
-        <div class="modern-card-content">
-            <div class="flex flex-wrap gap-2 border-b border-border pb-4">
-                <button class="btn-ghost active" onclick="showTab('graph')" id="tab-graph">
-                    🧠 온톨로지 그래프
-                </button>
-                <button class="btn-ghost" onclick="showTab('knowledge')" id="tab-knowledge">
-                    📚 지식베이스
-                </button>
-                <button class="btn-ghost" onclick="showTab('structure')" id="tab-structure">
-                    🏗️ 온톨로지 계층구조
-                </button>
-            </div>
-        </div>
-    </div>
+        <!-- Tab 1: 온톨로지 그래프 -->
+        <div id="graph-tab" class="tab-content active">
+            <div style="display: flex; gap: 24px;">
+                <!-- 컨트롤 패널 -->
+                <div style="width: 300px; flex-shrink: 0;">
+                    <div class="modern-card mb-4">
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold mb-4">컨트롤</h3>
+                            
+                            <!-- 줌 컨트롤 -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">줌 & 뷰</label>
+                                <div class="flex flex-col space-y-2">
+                                    <button id="zoom-in" class="filter-button">확대 (+)</button>
+                                    <button id="zoom-out" class="filter-button">축소 (-)</button>
+                                    <button id="reset-view" class="filter-button">초기화</button>
+                                    <button id="fit-view" class="filter-button">전체보기</button>
+                                </div>
+                            </div>
 
-    </div>
-    
-    <!-- Content Area -->
-    <div class="container mx-auto px-4 mb-6">
-        <div class="modern-card">
-        <div class="modern-card-content">
-            <!-- Graph Tab -->
-            <div id="graph-content" class="tab-content active">
-                <div class="mb-4">
-                    <div class="flex flex-wrap gap-2 mb-4">
-                        <button class="btn-primary" onclick="centerGraph()">🎯 센터링</button>
-                        <button class="btn-primary" onclick="resetZoom()">🔍 줌 리셋</button>
-                        <button class="btn-primary" onclick="togglePhysics()">⚡ 물리엔진</button>
+                            <!-- 노드 타입 필터 -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">노드 타입</label>
+                                <div class="flex flex-col space-y-1">
+                                    <button class="filter-button active" onclick="toggleNodeType('class')">클래스</button>
+                                    <button class="filter-button active" onclick="toggleNodeType('property')">속성</button>
+                                </div>
+                            </div>
+
+                            <!-- 레이아웃 설정 -->
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">레이아웃</label>
+                                <select id="layout-select" class="w-full p-2 border border-gray-300 rounded text-sm">
+                                    <option value="force">Force Layout</option>
+                                    <option value="hierarchical">계층형</option>
+                                    <option value="circular">원형</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 통계 정보 -->
+                    <div class="modern-card">
+                        <div class="p-4">
+                            <h3 class="text-lg font-semibold mb-4">온톨로지 통계</h3>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span>총 노드:</span>
+                                    <span id="total-nodes" class="font-medium">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>클래스:</span>
+                                    <span id="class-nodes" class="font-medium">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>속성:</span>
+                                    <span id="property-nodes" class="font-medium">0</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>관계:</span>
+                                    <span id="total-links" class="font-medium">0</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div id="ontologyGraph" class="bg-card"></div>
+
+                <!-- 메인 온톨로지 그래프 -->
+                <div style="flex: 1;">
+                    <div class="modern-card" style="height: 800px;">
+                        <div class="p-4 border-b">
+                            <h3 class="text-lg font-semibold">완전한 온톨로지 그래프</h3>
+                            <p class="text-sm text-gray-600 mt-1">
+                                모든 클래스, 속성, 관계가 표현된 AIRIS APM 온톨로지
+                            </p>
+                        </div>
+                        <div class="relative" style="height: calc(100% - 80px);">
+                            <svg id="ontology-graph" width="100%" height="100%"></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: 지식베이스 -->
+        <div id="knowledge-tab" class="tab-content">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 20px;">
+                <div>
+                    <div class="knowledge-card">
+                        <h3>🏛️ 관찰성 (Observability) 기본 개념</h3>
+                        <p class="text-gray-700 mb-3">
+                            IT 시스템의 내부 상태를 외부에서 파악할 수 있는 능력입니다. 마치 의사가 환자의 건강 상태를 진단하기 위해 다양한 검사를 하는 것처럼, 시스템의 "건강"을 지속적으로 관찰합니다.
+                        </p>
+                        <div class="analogy">
+                            <strong>🏥 실생활 비유:</strong><br>
+                            병원에서 환자의 체온, 혈압, 맥박을 측정하여 건강 상태를 파악하는 것과 같습니다. 시스템도 다양한 지표를 통해 상태를 확인할 수 있어야 합니다.
+                        </div>
+                        <div class="examples">
+                            <strong>💡 실제 적용 사례:</strong><br>
+                            • 웹사이트 응답 속도 모니터링<br>
+                            • 서버 CPU 사용률 추적<br>
+                            • 데이터베이스 연결 상태 확인<br>
+                            • 사용자 접속 패턴 분석
+                        </div>
+                    </div>
+
+                    <div class="knowledge-card">
+                        <h3>📊 관찰성의 세 기둥</h3>
+                        <p class="text-gray-700 mb-3">
+                            시스템을 완전히 이해하기 위한 세 가지 핵심 데이터 유형입니다.
+                        </p>
+                        
+                        <h4 class="font-semibold text-blue-600 mt-4 mb-2">📝 로그 (Logs)</h4>
+                        <p class="text-sm text-gray-600 mb-2">시스템이 남기는 상세한 기록입니다.</p>
+                        <div class="analogy">
+                            <strong>📔 비유:</strong> 일기장이나 항해 일지처럼 "언제, 무엇이, 어떻게" 일어났는지 시간순으로 기록
+                        </div>
+                        
+                        <h4 class="font-semibold text-green-600 mt-4 mb-2">📈 메트릭 (Metrics)</h4>
+                        <p class="text-sm text-gray-600 mb-2">시스템 성능을 숫자로 나타낸 측정값입니다.</p>
+                        <div class="analogy">
+                            <strong>🌡️ 비유:</strong> 체온계, 혈압계처럼 현재 상태를 구체적인 숫자로 보여주는 계기판
+                        </div>
+                        
+                        <h4 class="font-semibold text-purple-600 mt-4 mb-2">🛤️ 트레이스 (Traces)</h4>
+                        <p class="text-sm text-gray-600 mb-2">하나의 요청이 시스템을 통과하는 전체 여정을 추적합니다.</p>
+                        <div class="analogy">
+                            <strong>📦 비유:</strong> 택배 배송 추적처럼 요청이 어디를 거쳐서 최종 목적지에 도달하는지 전체 경로를 보여줌
+                        </div>
+                    </div>
+
+                    <div class="knowledge-card">
+                        <h3>🏗️ 시스템 인프라스트럭처</h3>
+                        <p class="text-gray-700 mb-3">
+                            IT 시스템을 구성하는 핵심 요소들입니다.
+                        </p>
+                        
+                        <h4 class="font-semibold text-blue-600 mt-4 mb-2">💻 서버 (Server)</h4>
+                        <div class="analogy">
+                            <strong>🍽️ 비유:</strong> 식당의 주방과 같습니다. 고객(사용자)의 주문(요청)을 받아서 요리(처리)를 만들어 제공합니다.
+                        </div>
+                        <div class="examples">
+                            <strong>주요 특성:</strong> CPU, 메모리, 저장공간, 네트워크 연결
+                        </div>
+                        
+                        <h4 class="font-semibold text-green-600 mt-4 mb-2">📱 애플리케이션 (Application)</h4>
+                        <div class="analogy">
+                            <strong>🏪 비유:</strong> 상점의 계산대처럼 고객이 직접 이용하는 서비스 창구입니다.
+                        </div>
+                        <div class="examples">
+                            <strong>예시:</strong> 온라인 쇼핑몰, 은행 앱, 소셜미디어 플랫폼
+                        </div>
+                        
+                        <h4 class="font-semibold text-yellow-600 mt-4 mb-2">🗄️ 데이터베이스 (Database)</h4>
+                        <div class="analogy">
+                            <strong>📚 비유:</strong> 도서관의 체계적인 분류 시스템처럼 정보를 정리하고 빠르게 찾을 수 있게 저장합니다.
+                        </div>
+                        <div class="examples">
+                            <strong>저장 정보:</strong> 사용자 데이터, 거래 기록, 상품 정보, 로그 데이터
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="knowledge-card">
+                        <h3>⚡ 시스템 성능 지표</h3>
+                        <p class="text-gray-700 mb-3">
+                            시스템이 얼마나 잘 동작하는지 측정하는 핵심 지표들입니다.
+                        </p>
+                        
+                        <h4 class="font-semibold text-red-600 mt-4 mb-2">⏱️ 응답 시간 (Response Time)</h4>
+                        <div class="analogy">
+                            <strong>☎️ 비유:</strong> 전화를 걸었을 때 상대방이 받기까지의 시간, 또는 음식을 주문하고 나올 때까지의 대기 시간
+                        </div>
+                        <div class="examples">
+                            <strong>목표:</strong> 웹페이지는 3초 이내, API는 100ms 이내
+                        </div>
+                        
+                        <h4 class="font-semibold text-blue-600 mt-4 mb-2">🚀 처리량 (Throughput)</h4>
+                        <div class="analogy">
+                            <strong>🛣️ 비유:</strong> 고속도로의 시간당 통과 차량 수나 은행 창구의 시간당 처리 고객 수
+                        </div>
+                        <div class="examples">
+                            <strong>측정 단위:</strong> 초당 요청 수(RPS), 분당 거래 수(TPM)
+                        </div>
+                        
+                        <h4 class="font-semibold text-orange-600 mt-4 mb-2">📈 가용성 (Availability)</h4>
+                        <div class="analogy">
+                            <strong>🏪 비유:</strong> 상점의 영업시간처럼 서비스를 이용할 수 있는 시간의 비율
+                        </div>
+                        <div class="examples">
+                            <strong>목표:</strong> 99.9% (월 43분 다운타임), 99.99% (월 4분 다운타임)
+                        </div>
+                    </div>
+
+                    <div class="knowledge-card">
+                        <h3>🚨 장애 관리 시스템</h3>
+                        <p class="text-gray-700 mb-3">
+                            시스템 문제를 빠르게 감지하고 해결하는 체계입니다.
+                        </p>
+                        
+                        <h4 class="font-semibold text-red-600 mt-4 mb-2">🔔 알림 (Alerts)</h4>
+                        <div class="analogy">
+                            <strong>🚨 비유:</strong> 화재 경보기나 도난 경보기처럼 위험한 상황을 즉시 담당자에게 알려주는 시스템
+                        </div>
+                        
+                        <h4 class="font-semibold text-yellow-600 mt-4 mb-2">⚠️ 인시던트 (Incidents)</h4>
+                        <div class="analogy">
+                            <strong>🚑 비유:</strong> 병원의 응급상황이나 교통사고처럼 즉시 대응이 필요한 문제 상황
+                        </div>
+                        
+                        <h4 class="font-semibold text-purple-600 mt-4 mb-2">📊 이상 탐지 (Anomaly Detection)</h4>
+                        <div class="analogy">
+                            <strong>👮 비유:</strong> 보안 요원이 평소와 다른 수상한 행동을 감지하는 것처럼 비정상적인 패턴을 찾아내는 기술
+                        </div>
+                    </div>
+
+                    <div class="knowledge-card">
+                        <h3>☁️ 클라우드 & 컨테이너</h3>
+                        <p class="text-gray-700 mb-3">
+                            현대적인 IT 인프라 기술들입니다.
+                        </p>
+                        
+                        <h4 class="font-semibold text-blue-600 mt-4 mb-2">☁️ 클라우드 서비스</h4>
+                        <div class="analogy">
+                            <strong>🚗 비유:</strong> 자동차를 직접 사지 않고 필요할 때만 렌트카를 이용하는 것처럼, 서버를 소유하지 않고 필요한 만큼만 빌려 사용
+                        </div>
+                        
+                        <h4 class="font-semibold text-green-600 mt-4 mb-2">📦 컨테이너 (Container)</h4>
+                        <div class="analogy">
+                            <strong>📦 비유:</strong> 이사할 때 물건을 박스에 깔끔하게 포장하면 어디든 옮길 수 있듯이, 프로그램을 컨테이너에 담으면 어떤 서버에서든 동일하게 실행 가능
+                        </div>
+                        
+                        <h4 class="font-semibold text-purple-600 mt-4 mb-2">🎛️ 쿠버네티스 (Kubernetes)</h4>
+                        <div class="analogy">
+                            <strong>🏭 비유:</strong> 대형 물류센터의 자동화 시스템이 수천 개의 상품을 효율적으로 관리하는 것처럼 수많은 컨테이너를 자동으로 관리
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: 계층구조 -->
+        <div id="hierarchy-tab" class="tab-content" style="margin-top: 20px;">
+            <div class="modern-card" style="padding: 24px;">
+                <h2 class="text-2xl font-bold mb-6">🏗️ AIRIS APM 온톨로지 계층구조</h2>
                 
-                <!-- Legend -->
-                <div class="mt-4 p-4 bg-muted rounded-lg">
-                    <h4 class="font-semibold mb-2">범례</h4>
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-2 text-sm">
-                        <div class="flex items-center gap-2">
-                            <div class="w-4 h-4 rounded-full bg-red-500"></div>
-                            <span>핵심 개념</span>
+                <!-- Level 0: Root -->
+                <div class="tree-node level-0">
+                    <h3 class="text-lg font-semibold text-blue-800">🔍 관찰 엔터티 (ObservabilityEntity)</h3>
+                    <p class="text-sm text-gray-600 mt-2">모든 관찰 가능한 시스템의 최상위 개념. 시스템 모니터링의 근본이 되는 추상적 개념입니다.</p>
+                    
+                    <!-- Level 1: Infrastructure Components -->
+                    <div class="tree-node level-1">
+                        <h4 class="font-semibold text-green-700">🏗️ 인프라 컴포넌트 (InfrastructureComponent)</h4>
+                        <p class="text-sm text-gray-600">IT 시스템의 물리적/논리적 구성 요소들</p>
+                        
+                        <!-- Level 2: Specific Infrastructure -->
+                        <div class="tree-node level-2">
+                            <strong class="text-blue-600">💻 서버 (Server)</strong> - 서비스를 제공하는 컴퓨팅 자원<br>
+                            <small class="text-gray-500">속성: hostname, ipAddress, os, cpuCores, ramSize, uptime</small>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-4 h-4 rounded-full bg-green-500"></div>
-                            <span>인프라</span>
+                        
+                        <div class="tree-node level-2">
+                            <strong class="text-green-600">📱 애플리케이션 (Application)</strong> - 사용자가 이용하는 소프트웨어<br>
+                            <small class="text-gray-500">속성: version, language, framework, port, dependencies</small>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-4 h-4 rounded-full bg-blue-500"></div>
-                            <span>관찰성 도구</span>
+                        
+                        <div class="tree-node level-2">
+                            <strong class="text-yellow-600">🗄️ 데이터베이스 (Database)</strong> - 데이터 저장 및 관리 시스템<br>
+                            <small class="text-gray-500">속성: dbType, version, connectionString, poolSize, indexStats</small>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-4 h-4 rounded-full bg-yellow-500"></div>
-                            <span>성능 관리</span>
+                        
+                        <div class="tree-node level-2">
+                            <strong class="text-purple-600">🌐 네트워크 (Network)</strong> - 시스템 간 통신 인프라<br>
+                            <small class="text-gray-500">속성: networkType, bandwidth, latency, packetLoss, protocol</small>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <div class="w-4 h-4 rounded-full bg-purple-500"></div>
-                            <span>장애 관리</span>
+                        
+                        <div class="tree-node level-2">
+                            <strong class="text-indigo-600">⚖️ 로드 밸런서 (LoadBalancer)</strong> - 부하 분산 시스템<br>
+                            <small class="text-gray-500">속성: algorithm, backendServers, healthChecks, throughput</small>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Knowledge Base Tab -->
-            <div id="knowledge-content" class="tab-content">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Categories Sidebar -->
-                    <div class="knowledge-categories space-y-2">
-                        <h3 class="font-semibold text-lg mb-4">지식 카테고리</h3>
-                        <div class="knowledge-category active" data-category="core-concepts">
-                            <div class="flex items-center gap-3">
-                                <span class="text-2xl">⭐</span>
-                                <div>
-                                    <h4 class="font-semibold">핵심 개념</h4>
-                                    <p class="text-sm text-muted-foreground">관찰가능성 기본 원리</p>
-                                </div>
+                    
+                    <!-- Level 1: Observability Data -->
+                    <div class="tree-node level-1">
+                        <h4 class="font-semibold text-red-700">📊 관찰성 데이터 (ObservabilityData)</h4>
+                        <p class="text-sm text-gray-600">시스템 상태를 파악하기 위한 모든 데이터</p>
+                        
+                        <div class="tree-node level-2">
+                            <strong class="text-blue-600">📝 로그 (Log)</strong> - 시간순 이벤트 기록<br>
+                            <small class="text-gray-500">속성: logLevel, message, timestamp, source, format, size</small>
+                            
+                            <div class="tree-node level-3">
+                                <strong class="text-red-500">🔐 접근 로그 (AccessLog)</strong> - 시스템 접근 기록<br>
+                                <small class="text-gray-400">속성: userId, ipAddress, resource, action, result</small>
                             </div>
                         </div>
-                        <div class="knowledge-category" data-category="infrastructure">
-                            <div class="flex items-center gap-3">
-                                <span class="text-2xl">🖥️</span>
-                                <div>
-                                    <h4 class="font-semibold">인프라스트럭처</h4>
-                                    <p class="text-sm text-muted-foreground">시스템 구성요소</p>
-                                </div>
+                        
+                        <div class="tree-node level-2">
+                            <strong class="text-green-600">📈 메트릭 (Metric)</strong> - 수치화된 성능 지표<br>
+                            <small class="text-gray-500">속성: metricName, value, unit, timestamp, labels</small>
+                            
+                            <div class="tree-node level-3">
+                                <strong class="text-orange-500">⚡ 성능 지표 (PerformanceIndicator)</strong><br>
+                                <small class="text-gray-400">→ 응답시간, 처리량, 오류율, 가용성</small>
+                            </div>
+                            
+                            <div class="tree-node level-3">
+                                <strong class="text-purple-500">💾 자원 사용률 (ResourceUtilization)</strong><br>
+                                <small class="text-gray-400">→ CPU, 메모리, 디스크, 네트워크 사용량</small>
+                            </div>
+                            
+                            <div class="tree-node level-3">
+                                <strong class="text-blue-500">💼 비즈니스 메트릭 (BusinessMetric)</strong><br>
+                                <small class="text-gray-400">→ SLA, 사용자 경험 지표</small>
                             </div>
                         </div>
-                        <div class="knowledge-category" data-category="observability">
-                            <div class="flex items-center gap-3">
-                                <span class="text-2xl">👁️</span>
-                                <div>
-                                    <h4 class="font-semibold">관찰성 도구</h4>
-                                    <p class="text-sm text-muted-foreground">모니터링 도구</p>
-                                </div>
+                        
+                        <div class="tree-node level-2">
+                            <strong class="text-purple-600">🛤️ 트레이스 (Trace)</strong> - 요청 경로 추적<br>
+                            <small class="text-gray-500">속성: traceId, duration, spans, operationName</small>
+                            
+                            <div class="tree-node level-3">
+                                <strong class="text-indigo-500">📍 스팬 (Span)</strong> - 트레이스의 개별 단위<br>
+                                <small class="text-gray-400">속성: spanId, parentSpanId, startTime, duration</small>
                             </div>
-                        </div>
-                        <div class="knowledge-category" data-category="performance">
-                            <div class="flex items-center gap-3">
-                                <span class="text-2xl">⚡</span>
-                                <div>
-                                    <h4 class="font-semibold">성능 관리</h4>
-                                    <p class="text-sm text-muted-foreground">성능 최적화</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="knowledge-category" data-category="fault-management">
-                            <div class="flex items-center gap-3">
-                                <span class="text-2xl">🚨</span>
-                                <div>
-                                    <h4 class="font-semibold">장애 관리</h4>
-                                    <p class="text-sm text-muted-foreground">장애 대응</p>
-                                </div>
+                            
+                            <div class="tree-node level-3">
+                                <strong class="text-cyan-500">🌐 분산 추적 (DistributedTracing)</strong><br>
+                                <small class="text-gray-400">여러 시스템에 걸친 요청 추적</small>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Content Area -->
-                    <div class="lg:col-span-2">
-                        <div id="knowledgeContent" class="knowledge-content">
-                            <h3 class="font-semibold text-lg mb-4">⭐ 핵심 개념</h3>
-                            <div class="space-y-4">
-                                <div class="p-4 border border-border rounded-lg">
-                                    <h4 class="font-semibold text-primary">관찰가능성 (Observability)</h4>
-                                    <p class="text-muted-foreground mt-2">시스템의 내부 상태를 외부 출력으로부터 추론할 수 있는 능력을 의미합니다.</p>
-                                </div>
-                                <div class="p-4 border border-border rounded-lg">
-                                    <h4 class="font-semibold text-primary">세 가지 기둥 (Three Pillars)</h4>
-                                    <ul class="list-disc list-inside text-muted-foreground mt-2 space-y-1">
-                                        <li><strong>Metrics:</strong> 수치형 데이터로 시스템 성능 측정</li>
-                                        <li><strong>Logs:</strong> 시스템 이벤트의 상세 기록</li>
-                                        <li><strong>Traces:</strong> 요청의 전체 경로 추적</li>
-                                    </ul>
-                                </div>
-                                <div class="p-4 border border-border rounded-lg">
-                                    <h4 class="font-semibold text-primary">모니터링 vs 관찰가능성</h4>
-                                    <p class="text-muted-foreground mt-2">모니터링은 이미 알고 있는 문제를 감지하지만, 관찰가능성은 예상치 못한 문제도 발견할 수 있게 합니다.</p>
-                                </div>
+                    <!-- Level 1: Cloud Infrastructure -->
+                    <div class="tree-node level-1">
+                        <h4 class="font-semibold text-cyan-700">☁️ 클라우드 인프라 (CloudInfrastructure)</h4>
+                        <p class="text-sm text-gray-600">클라우드 기반 컴퓨팅 자원</p>
+                        
+                        <div class="tree-node level-2">
+                            <strong class="text-blue-600">🖥️ 가상 머신 (VirtualMachine)</strong><br>
+                            <small class="text-gray-500">속성: vmId, instanceType, cpu, memory, hypervisor</small>
+                        </div>
+                        
+                        <div class="tree-node level-2">
+                            <strong class="text-green-600">☁️ 클라우드 서비스 (CloudService)</strong><br>
+                            <small class="text-gray-500">속성: serviceName, tier, sla, cost, apiEndpoint</small>
+                        </div>
+                        
+                        <div class="tree-node level-2">
+                            <strong class="text-purple-600">🐳 컨테이너 (Container)</strong><br>
+                            <small class="text-gray-500">속성: containerId, image, ports, volumes, resources</small>
+                            
+                            <div class="tree-node level-3">
+                                <strong class="text-blue-500">🐋 도커 컨테이너 (DockerContainer)</strong><br>
+                                <small class="text-gray-400">속성: dockerVersion, imageTag, registryUrl</small>
+                            </div>
+                        </div>
+                        
+                        <div class="tree-node level-2">
+                            <strong class="text-indigo-600">⚙️ 쿠버네티스 (Kubernetes)</strong><br>
+                            <small class="text-gray-500">컨테이너 오케스트레이션 플랫폼</small>
+                            
+                            <div class="tree-node level-3">
+                                <strong class="text-green-500">🏷️ 파드 (Pod)</strong> - 최소 실행 단위<br>
+                                <strong class="text-blue-500">🔗 서비스 (Service)</strong> - 네트워크 접근 제공<br>
+                                <strong class="text-purple-500">📦 디플로이먼트 (Deployment)</strong> - 배포 관리<br>
+                                <strong class="text-orange-500">🖥️ 노드 (Node)</strong> - 워커 서버<br>
+                                <strong class="text-cyan-500">🏢 네임스페이스 (Namespace)</strong> - 논리적 분리
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Level 1: AI/ML Systems -->
+                    <div class="tree-node level-1">
+                        <h4 class="font-semibold text-violet-700">🤖 AIOps 시스템</h4>
+                        <p class="text-sm text-gray-600">AI 기반 IT 운영 자동화</p>
+                        
+                        <div class="tree-node level-2">
+                            <strong class="text-purple-600">🧠 머신러닝 (MachineLearning)</strong><br>
+                            <small class="text-gray-500">속성: algorithm, dataset, accuracy, modelSize</small>
+                        </div>
+                        
+                        <div class="tree-node level-2">
+                            <strong class="text-red-600">🔍 이상 탐지 (AnomalyDetection)</strong><br>
+                            <small class="text-gray-500">속성: detectionMethod, sensitivity, falsePositiveRate</small>
+                        </div>
+                        
+                        <div class="tree-node level-2">
+                            <strong class="text-blue-600">🔮 예측 분석 (PredictiveAnalytics)</strong><br>
+                            <small class="text-gray-500">속성: predictionModel, timeHorizon, confidence</small>
+                        </div>
+                        
+                        <!-- Level 2: AIRIS Platform -->
+                        <div class="tree-node level-2">
+                            <strong class="text-orange-600">🎯 AIRIS APM 플랫폼</strong><br>
+                            <small class="text-gray-500">AI 기반 종합 성능 관리 시스템</small>
+                            
+                            <div class="tree-node level-3">
+                                <strong class="text-green-500">🧠 지능형 분석 (IntelligentAnalysis)</strong><br>
+                                <strong class="text-blue-500">🤖 자동화 대응 (AutomatedResponse)</strong>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Structure Tab -->
-            <div id="structure-content" class="tab-content">
-                <div class="tree-container">
-                    <h3 class="font-semibold text-lg mb-4">🏗️ 온톨로지 계층구조</h3>
-                    <div id="ontologyTree"></div>
+        <!-- Tab 4: 추출 지식 -->
+        <div id="extracted-tab" class="tab-content" style="margin-top: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                <div>
+                    <div class="knowledge-card">
+                        <h3>🎯 성능 최적화 실무 지식</h3>
+                        
+                        <h4 class="font-semibold text-red-600 mt-4 mb-2">🚀 웹사이트 속도 개선</h4>
+                        <div class="examples">
+                            <strong>구체적 방법:</strong><br>
+                            • <strong>응답시간 3초 → 1초:</strong> CDN 사용, 이미지 압축, 코드 최적화<br>
+                            • <strong>데이터베이스 쿼리:</strong> 인덱스 생성으로 검색 속도 10배 향상<br>
+                            • <strong>서버 부하:</strong> 로드밸런서로 여러 서버에 작업 분산
+                        </div>
+                        
+                        <h4 class="font-semibold text-blue-600 mt-4 mb-2">📊 메모리 사용 최적화</h4>
+                        <div class="examples">
+                            <strong>실용적 가이드:</strong><br>
+                            • <strong>80% 이상 사용시:</strong> 메모리 증설 또는 불필요한 프로세스 종료<br>
+                            • <strong>메모리 누수:</strong> 주기적 재시작 스케줄링으로 안정성 확보<br>
+                            • <strong>캐시 활용:</strong> 자주 사용하는 데이터를 메모리에 미리 저장
+                        </div>
+                        
+                        <h4 class="font-semibold text-green-600 mt-4 mb-2">🔄 자동 확장 (Auto Scaling)</h4>
+                        <div class="analogy">
+                            <strong>🏪 비유:</strong> 쇼핑몰이 세일 기간에 임시 직원을 더 고용하듯이, 트래픽 증가시 서버를 자동으로 추가
+                        </div>
+                        <div class="examples">
+                            <strong>설정 방법:</strong><br>
+                            • CPU 사용률 70% 초과시 서버 추가<br>
+                            • 트래픽 감소시 서버 자동 제거로 비용 절약<br>
+                            • 최소 2대, 최대 10대 서버 범위 설정
+                        </div>
+                    </div>
+
+                    <div class="knowledge-card">
+                        <h3>🚨 장애 대응 실무 매뉴얼</h3>
+                        
+                        <h4 class="font-semibold text-red-600 mt-4 mb-2">⚠️ 장애 발생 시 5단계 대응</h4>
+                        <div class="examples">
+                            <strong>1단계 - 즉시 대응 (1분 이내):</strong><br>
+                            • 알림 확인 및 장애 심각도 판단<br>
+                            • 사용자 영향도 파악<br><br>
+                            
+                            <strong>2단계 - 응급 처치 (5분 이내):</strong><br>
+                            • 문제 서버 격리 또는 재시작<br>
+                            • 백업 시스템으로 트래픽 우회<br><br>
+                            
+                            <strong>3단계 - 원인 분석 (30분 이내):</strong><br>
+                            • 로그 분석으로 근본 원인 파악<br>
+                            • 메트릭 데이터로 패턴 확인<br><br>
+                            
+                            <strong>4단계 - 완전 복구:</strong><br>
+                            • 임시 조치가 아닌 근본적 해결<br>
+                            • 서비스 정상성 확인<br><br>
+                            
+                            <strong>5단계 - 재발 방지:</strong><br>
+                            • 장애 보고서 작성<br>
+                            • 모니터링 알림 규칙 개선
+                        </div>
+                        
+                        <h4 class="font-semibold text-orange-600 mt-4 mb-2">📞 장애 에스컬레이션 체계</h4>
+                        <div class="examples">
+                            <strong>심각도별 대응 체계:</strong><br>
+                            • <strong>Critical:</strong> 즉시 전화 + SMS → 팀장 → CTO<br>
+                            • <strong>High:</strong> 30분 내 이메일 → 담당자 → 팀장<br>
+                            • <strong>Medium:</strong> 2시간 내 일반 알림<br>
+                            • <strong>Low:</strong> 일일 보고서에 포함
+                        </div>
+                    </div>
                 </div>
-                
-                <!-- Statistics -->
-                <div class="mt-6 p-4 bg-muted rounded-lg">
-                    <h4 class="font-semibold mb-4">📊 구조 통계</h4>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                        <div class="p-3 bg-card rounded-lg border">
-                            <div class="text-2xl font-bold text-primary" id="nodeCount">64</div>
-                            <div class="text-sm text-muted-foreground">노드</div>
+
+                <div>
+                    <div class="knowledge-card">
+                        <h3>💡 모니터링 베스트 프랙티스</h3>
+                        
+                        <h4 class="font-semibold text-purple-600 mt-4 mb-2">📊 핵심 지표 모니터링 (Golden Signals)</h4>
+                        <div class="examples">
+                            <strong>4대 핵심 지표:</strong><br>
+                            
+                            <strong>1. 지연시간 (Latency):</strong><br>
+                            • 웹: 2초 이하 목표<br>
+                            • API: 100ms 이하 목표<br>
+                            • 데이터베이스: 10ms 이하 목표<br><br>
+                            
+                            <strong>2. 트래픽 (Traffic):</strong><br>
+                            • 초당 요청 수 (RPS) 추적<br>
+                            • 피크 시간대 패턴 분석<br>
+                            • 예상 대비 실제 트래픽 비교<br><br>
+                            
+                            <strong>3. 에러율 (Errors):</strong><br>
+                            • 목표: 0.1% 이하 유지<br>
+                            • HTTP 5xx 오류 즉시 알림<br>
+                            • 비즈니스 에러(결제 실패 등) 별도 추적<br><br>
+                            
+                            <strong>4. 포화도 (Saturation):</strong><br>
+                            • CPU: 70% 이하<br>
+                            • 메모리: 80% 이하<br>
+                            • 디스크: 85% 이하
                         </div>
-                        <div class="p-3 bg-card rounded-lg border">
-                            <div class="text-2xl font-bold text-green-600" id="relationCount">73</div>
-                            <div class="text-sm text-muted-foreground">관계</div>
+                        
+                        <h4 class="font-semibold text-blue-600 mt-4 mb-2">🎯 알림 규칙 최적화</h4>
+                        <div class="examples">
+                            <strong>스마트 알림 설정:</strong><br>
+                            • <strong>임계치 설정:</strong> 정상 범위의 20% 초과시 경고<br>
+                            • <strong>연속 확인:</strong> 3회 연속 임계치 초과시만 알림<br>
+                            • <strong>시간대 고려:</strong> 업무시간/야간 다른 기준 적용<br>
+                            • <strong>알림 그룹화:</strong> 유사한 문제는 하나로 묶어서 발송
                         </div>
-                        <div class="p-3 bg-card rounded-lg border">
-                            <div class="text-2xl font-bold text-blue-600" id="categoryCount">5</div>
-                            <div class="text-sm text-muted-foreground">카테고리</div>
+                    </div>
+
+                    <div class="knowledge-card">
+                        <h3>🤖 AI 기반 지능형 운영</h3>
+                        
+                        <h4 class="font-semibold text-green-600 mt-4 mb-2">🔍 이상 패턴 자동 감지</h4>
+                        <div class="examples">
+                            <strong>AI가 자동으로 찾는 문제들:</strong><br>
+                            • <strong>이상 트래픽:</strong> 평소보다 300% 이상 급증<br>
+                            • <strong>성능 저하:</strong> 응답시간이 점진적으로 증가하는 패턴<br>
+                            • <strong>메모리 누수:</strong> 메모리 사용량이 계속 증가하는 추세<br>
+                            • <strong>디스크 부족:</strong> 현재 증가율로 예측한 위험 시점
                         </div>
-                        <div class="p-3 bg-card rounded-lg border">
-                            <div class="text-2xl font-bold text-purple-600" id="depthCount">4</div>
-                            <div class="text-sm text-muted-foreground">최대 깊이</div>
+                        
+                        <h4 class="font-semibold text-purple-600 mt-4 mb-2">🔮 예측 기반 사전 대응</h4>
+                        <div class="analogy">
+                            <strong>🌦️ 비유:</strong> 일기예보처럼 과거 데이터를 분석해서 미래 문제를 예측하고 미리 준비
+                        </div>
+                        <div class="examples">
+                            <strong>예측 가능한 시나리오:</strong><br>
+                            • <strong>용량 부족:</strong> 3일 후 디스크 공간 부족 예상<br>
+                            • <strong>성능 저하:</strong> 다음 주 마케팅 이벤트로 인한 부하 증가<br>
+                            • <strong>장애 예측:</strong> CPU 온도 상승으로 하드웨어 문제 가능성
+                        </div>
+                        
+                        <h4 class="font-semibold text-red-600 mt-4 mb-2">🛠️ 자동화된 복구 액션</h4>
+                        <div class="examples">
+                            <strong>AIRIS가 자동으로 실행:</strong><br>
+                            • <strong>서버 재시작:</strong> 메모리 사용량 95% 초과시<br>
+                            • <strong>트래픽 분산:</strong> 특정 서버 과부하시 다른 서버로 우회<br>
+                            • <strong>스케일 아웃:</strong> CPU 사용량 지속 증가시 서버 추가<br>
+                            • <strong>캐시 정리:</strong> 디스크 공간 부족시 임시 파일 자동 삭제
+                        </div>
+                    </div>
+
+                    <div class="knowledge-card">
+                        <h3>📈 비즈니스 관점 운영 지식</h3>
+                        
+                        <h4 class="font-semibold text-blue-600 mt-4 mb-2">💰 비용 최적화 전략</h4>
+                        <div class="examples">
+                            <strong>클라우드 비용 절약:</strong><br>
+                            • <strong>사용량 기반 요금:</strong> 야간/주말 서버 자동 축소로 30% 절약<br>
+                            • <strong>예약 인스턴스:</strong> 1년 약정으로 40% 할인<br>
+                            • <strong>스팟 인스턴스:</strong> 배치 작업용으로 90% 할인<br>
+                            • <strong>불필요한 자원:</strong> 30일 이상 미사용 자원 자동 정리
+                        </div>
+                        
+                        <h4 class="font-semibold text-orange-600 mt-4 mb-2">📊 사용자 경험 지표</h4>
+                        <div class="examples">
+                            <strong>고객 만족도와 직결:</strong><br>
+                            • <strong>페이지 로딩:</strong> 1초 지연시 전환율 7% 감소<br>
+                            • <strong>서비스 다운타임:</strong> 1시간 장애시 매출 손실 계산<br>
+                            • <strong>모바일 성능:</strong> 모바일 사용자 70% 고려한 최적화<br>
+                            • <strong>지역별 성능:</strong> CDN으로 글로벌 서비스 품질 균등화
+                        </div>
+                        
+                        <h4 class="font-semibold text-green-600 mt-4 mb-2">🎯 SLA 관리 실무</h4>
+                        <div class="examples">
+                            <strong>서비스 수준 약속:</strong><br>
+                            • <strong>가용성:</strong> 99.9% (월 43분 이하 다운타임)<br>
+                            • <strong>응답시간:</strong> 95%의 요청이 2초 이내 응답<br>
+                            • <strong>복구시간:</strong> 장애 발생시 30분 이내 복구<br>
+                            • <strong>보상규정:</strong> SLA 미달성시 서비스 크레딧 제공
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        </div>
     </div>
 
-    <!-- Tooltip for graph -->
-    <div id="tooltip" class="node-tooltip" style="display: none;"></div>
+    <!-- 툴팁 -->
+    <div id="tooltip" class="tooltip hidden"></div>
 
-<script src="ontology-complete-data.js"></script>
-<script>
-// Global variables
-let ontologyData = null;
-let simulation = null;
-let physicsEnabled = true;
-let currentCategory = 'core-concepts';
+    <!-- 온톨로지 데이터 스크립트 -->
+    <script src="./ontology-complete-enhanced.js"></script>
 
-// Knowledge Database
-const knowledgeDatabase = {
-    "core-concepts": {
-        title: "⭐ 핵심 개념",
-        items: [
-            {
-                title: "관찰가능성 (Observability)",
-                description: "시스템의 내부 상태를 외부 출력으로부터 추론할 수 있는 능력을 의미합니다."
-            },
-            {
-                title: "세 가지 기둥 (Three Pillars)",
-                description: "Metrics(수치), Logs(로그), Traces(추적)로 구성된 관찰가능성의 핵심 요소입니다."
-            },
-            {
-                title: "모니터링 vs 관찰가능성",
-                description: "모니터링은 이미 알고 있는 문제를 감지하지만, 관찰가능성은 예상치 못한 문제도 발견할 수 있게 합니다."
-            }
-        ]
-    },
-    "infrastructure": {
-        title: "🖥️ 인프라스트럭처",
-        items: [
-            {
-                title: "컨테이너 오케스트레이션",
-                description: "Kubernetes, Docker Swarm 등을 통한 컨테이너 관리 및 자동화"
-            },
-            {
-                title: "마이크로서비스 아키텍처",
-                description: "서비스 간 통신, 서비스 디스커버리, 로드 밸런싱"
-            },
-            {
-                title: "클라우드 네이티브",
-                description: "클라우드 환경에 최적화된 애플리케이션 개발 및 배포"
-            }
-        ]
-    },
-    "observability": {
-        title: "👁️ 관찰성 도구",
-        items: [
-            {
-                title: "Prometheus & Grafana",
-                description: "메트릭 수집, 저장 및 시각화를 위한 표준 도구"
-            },
-            {
-                title: "Jaeger & Zipkin",
-                description: "분산 추적을 위한 오픈소스 도구"
-            },
-            {
-                title: "ELK Stack",
-                description: "Elasticsearch, Logstash, Kibana를 통한 로그 분석"
-            }
-        ]
-    },
-    "performance": {
-        title: "⚡ 성능 관리",
-        items: [
-            {
-                title: "응답 시간 최적화",
-                description: "레이턴시 감소 및 처리량 증가를 위한 기법"
-            },
-            {
-                title: "자원 사용률 모니터링",
-                description: "CPU, 메모리, 디스크, 네트워크 사용률 추적"
-            },
-            {
-                title: "성능 병목 지점 식별",
-                description: "프로파일링을 통한 성능 저하 원인 분석"
-            }
-        ]
-    },
-    "fault-management": {
-        title: "🚨 장애 관리",
-        items: [
-            {
-                title: "장애 감지 및 알림",
-                description: "실시간 이상 상황 감지 및 신속한 알림 체계"
-            },
-            {
-                title: "근본 원인 분석",
-                description: "장애의 실제 원인을 찾기 위한 체계적 접근"
-            },
-            {
-                title: "복구 및 예방",
-                description: "빠른 복구와 재발 방지를 위한 프로세스"
-            }
-        ]
-    }
-};
+    <script>
+        // 전역 변수
+        let svg, g, simulation, nodes, links;
+        let visibleNodeTypes = new Set(['class', 'property']);
+        let visibleRelationTypes = new Set(['subClassOf', 'hasProperty', 'monitors']);
+        let currentLayout = 'force';
 
-// Graph Data
-const ontologyGraphData = {
-    nodes: [
-        // Core Concepts
-        {id: "observability", name: "관찰가능성", group: "core", category: "core-concepts", x: 400, y: 200},
-        {id: "monitoring", name: "모니터링", group: "core", category: "core-concepts", x: 500, y: 150},
-        {id: "metrics", name: "메트릭", group: "core", category: "core-concepts", x: 350, y: 150},
-        {id: "logs", name: "로그", group: "core", category: "core-concepts", x: 450, y: 120},
-        {id: "traces", name: "트레이스", group: "core", category: "core-concepts", x: 400, y: 100},
-        
-        // Infrastructure
-        {id: "kubernetes", name: "Kubernetes", group: "infra", category: "infrastructure", x: 200, y: 300},
-        {id: "docker", name: "Docker", group: "infra", category: "infrastructure", x: 150, y: 250},
-        {id: "microservices", name: "마이크로서비스", group: "infra", category: "infrastructure", x: 250, y: 250},
-        
-        // Observability Tools
-        {id: "prometheus", name: "Prometheus", group: "tools", category: "observability", x: 600, y: 250},
-        {id: "grafana", name: "Grafana", group: "tools", category: "observability", x: 650, y: 200},
-        {id: "jaeger", name: "Jaeger", group: "tools", category: "observability", x: 600, y: 150},
-        
-        // Performance
-        {id: "latency", name: "응답시간", group: "perf", category: "performance", x: 300, y: 400},
-        {id: "throughput", name: "처리량", group: "perf", category: "performance", x: 350, y: 450},
-        
-        // Fault Management
-        {id: "alerting", name: "알림", group: "fault", category: "fault-management", x: 550, y: 400},
-        {id: "incident", name: "장애대응", group: "fault", category: "fault-management", x: 500, y: 450},
-        {id: "sla", name: "SLA", group: "fault", category: "fault-management", x: 450, y: 400}
-    ],
-    links: [
-        // Core relationships
-        {source: "observability", target: "monitoring", type: "includes"},
-        {source: "observability", target: "metrics", type: "includes"},
-        {source: "observability", target: "logs", type: "includes"},
-        {source: "observability", target: "traces", type: "includes"},
-        
-        // Infrastructure relationships
-        {source: "kubernetes", target: "docker", type: "uses"},
-        {source: "microservices", target: "kubernetes", type: "deployedOn"},
-        {source: "monitoring", target: "kubernetes", type: "monitors"},
-        
-        // Tool relationships
-        {source: "metrics", target: "prometheus", type: "collectedBy"},
-        {source: "prometheus", target: "grafana", type: "visualizedBy"},
-        {source: "traces", target: "jaeger", type: "tracedBy"},
-        
-        // Performance relationships
-        {source: "monitoring", target: "latency", type: "measures"},
-        {source: "monitoring", target: "throughput", type: "measures"},
-        
-        // Fault management relationships
-        {source: "monitoring", target: "alerting", type: "triggers"},
-        {source: "alerting", target: "incident", type: "initiates"},
-        {source: "incident", target: "sla", type: "affects"}
-    ]
-};
+        // 색상 매핑
+        const categoryColors = {
+            core: '#4338ca',
+            infrastructure: '#059669',
+            pillars: '#dc2626',
+            performance: '#ea580c',
+            resources: '#7c3aed',
+            faults: '#be185d',
+            cloud: '#0891b2',
+            containers: '#0d9488',
+            kubernetes: '#1d4ed8',
+            security: '#991b1b',
+            aiml: '#6b21a8',
+            business: '#92400e',
+            data: '#374151',
+            tools: '#065f46',
+            airis: '#7c2d12',
+            properties: '#6b7280'
+        };
 
-// Initialize application
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM Content Loaded');
-    
-    // Check if external data is available
-    if (typeof window.ontologyData !== 'undefined' && window.ontologyData) {
-        ontologyData = window.ontologyData;
-        console.log('External ontology data loaded:', ontologyData);
-    } else {
-        ontologyData = ontologyGraphData;
-        console.log('Using internal graph data');
-    }
-    
-    // Initialize all components
-    initializeGraph();
-    initializeKnowledgeBase();
-    initializeTreeStructure();
-    updateStatistics();
-    
-    console.log('Application initialized successfully');
-});
+        const relationColors = {
+            subClassOf: '#ef4444',
+            hasProperty: '#3b82f6',
+            monitors: '#10b981',
+            triggeredBy: '#f59e0b',
+            uses: '#8b5cf6',
+            detects: '#ec4899',
+            supports: '#06b6d4',
+            includes: '#84cc16',
+            respondTo: '#f97316',
+            enables: '#6366f1'
+        };
 
-// Tab Management
-function showTab(tabName) {
-    // Hide all tab contents
-    const tabContents = document.querySelectorAll('.tab-content');
-    tabContents.forEach(content => content.classList.remove('active'));
-    
-    // Remove active class from all tab buttons
-    const tabButtons = document.querySelectorAll('[id^="tab-"]');
-    tabButtons.forEach(button => button.classList.remove('active'));
-    
-    // Show selected tab content
-    const selectedContent = document.getElementById(tabName + '-content');
-    if (selectedContent) {
-        selectedContent.classList.add('active');
-    }
-    
-    // Add active class to selected tab button
-    const selectedButton = document.getElementById('tab-' + tabName);
-    if (selectedButton) {
-        selectedButton.classList.add('active');
-    }
-    
-    console.log('Switching to tab:', tabName);
-    
-    // Initialize specific tab content if needed
-    if (tabName === 'graph') {
-        setTimeout(initializeGraph, 100);
-    } else if (tabName === 'structure') {
-        setTimeout(initializeTreeStructure, 100);
-    }
-}
-
-// Graph Functions
-function initializeGraph() {
-    console.log('Graph initialization called');
-    
-    const graphContainer = d3.select('#ontologyGraph');
-    graphContainer.selectAll('*').remove();
-    
-    if (!ontologyData || !ontologyData.nodes || !ontologyData.links) {
-        console.error('No valid ontology data available');
-        return;
-    }
-    
-    const containerRect = document.getElementById('ontologyGraph').getBoundingClientRect();
-    const width = containerRect.width;
-    const height = containerRect.height;
-    
-    const svg = graphContainer
-        .append('svg')
-        .attr('width', width)
-        .attr('height', height)
-        .style('border', '1px solid hsl(var(--border))')
-        .style('border-radius', 'calc(var(--radius))');
-    
-    const g = svg.append('g');
-    
-    // Color mapping for categories
-    const colorMap = {
-        'core-concepts': '#ef4444',
-        'infrastructure': '#22c55e', 
-        'observability': '#3b82f6',
-        'performance': '#eab308',
-        'fault-management': '#a855f7'
-    };
-    
-    // Create simulation
-    simulation = d3.forceSimulation(ontologyData.nodes)
-        .force('link', d3.forceLink(ontologyData.links).id(d => d.id).distance(80))
-        .force('charge', d3.forceManyBody().strength(-300))
-        .force('center', d3.forceCenter(width / 2, height / 2))
-        .force('collision', d3.forceCollide().radius(25));
-    
-    // Add links
-    const link = g.selectAll('.link')
-        .data(ontologyData.links)
-        .enter().append('line')
-        .attr('class', 'link')
-        .attr('stroke', 'hsl(var(--border))')
-        .attr('stroke-width', 2)
-        .attr('stroke-opacity', 0.6);
-    
-    // Add nodes
-    const node = g.selectAll('.node')
-        .data(ontologyData.nodes)
-        .enter().append('circle')
-        .attr('class', 'node')
-        .attr('r', 20)
-        .attr('fill', d => colorMap[d.category] || '#6b7280')
-        .attr('stroke', '#ffffff')
-        .attr('stroke-width', 2)
-        .style('cursor', 'pointer')
-        .call(d3.drag()
-            .on('start', dragstarted)
-            .on('drag', dragged)
-            .on('end', dragended));
-    
-    // Add labels
-    const label = g.selectAll('.label')
-        .data(ontologyData.nodes)
-        .enter().append('text')
-        .attr('class', 'label')
-        .text(d => d.name)
-        .attr('font-size', '12px')
-        .attr('font-weight', '500')
-        .attr('text-anchor', 'middle')
-        .attr('dy', '0.35em')
-        .attr('fill', 'hsl(var(--foreground))')
-        .style('pointer-events', 'none');
-    
-    // Add zoom behavior
-    const zoom = d3.zoom()
-        .scaleExtent([0.1, 3])
-        .on('zoom', (event) => {
-            g.attr('transform', event.transform);
-        });
-    
-    svg.call(zoom);
-    
-    // Tooltip events
-    node.on('mouseover', function(event, d) {
-        const tooltip = d3.select('#tooltip');
-        tooltip.style('display', 'block')
-            .html(`<strong>${d.name}</strong><br/>카테고리: ${d.category}<br/>ID: ${d.id}`)
-            .style('left', (event.pageX + 10) + 'px')
-            .style('top', (event.pageY - 10) + 'px');
-    })
-    .on('mouseout', function() {
-        d3.select('#tooltip').style('display', 'none');
-    });
-    
-    // Update positions on simulation tick
-    simulation.on('tick', () => {
-        link
-            .attr('x1', d => d.source.x)
-            .attr('y1', d => d.source.y)
-            .attr('x2', d => d.target.x)
-            .attr('y2', d => d.target.y);
-        
-        node
-            .attr('cx', d => d.x)
-            .attr('cy', d => d.y);
-        
-        label
-            .attr('x', d => d.x)
-            .attr('y', d => d.y);
-    });
-    
-    console.log('D3 graph initialization completed');
-}
-
-function centerGraph() {
-    if (simulation) {
-        const svg = d3.select('#ontologyGraph svg');
-        const g = svg.select('g');
-        const containerRect = document.getElementById('ontologyGraph').getBoundingClientRect();
-        const width = containerRect.width;
-        const height = containerRect.height;
-        
-        svg.transition().duration(750).call(
-            d3.zoom().transform,
-            d3.zoomIdentity.translate(width / 2, height / 2).scale(1)
-        );
-    }
-}
-
-function resetZoom() {
-    const svg = d3.select('#ontologyGraph svg');
-    svg.transition().duration(750).call(
-        d3.zoom().transform,
-        d3.zoomIdentity
-    );
-}
-
-function togglePhysics() {
-    if (simulation) {
-        if (physicsEnabled) {
-            simulation.stop();
-            physicsEnabled = false;
-            document.querySelector('[onclick="togglePhysics()"]').textContent = '▶️ 물리엔진 시작';
-        } else {
-            simulation.restart();
-            physicsEnabled = true;
-            document.querySelector('[onclick="togglePhysics()"]').textContent = '⏸️ 물리엔진 정지';
-        }
-    }
-}
-
-function dragstarted(event, d) {
-    if (!event.active && simulation) simulation.alphaTarget(0.3).restart();
-    d.fx = d.x;
-    d.fy = d.y;
-}
-
-function dragged(event, d) {
-    d.fx = event.x;
-    d.fy = event.y;
-}
-
-function dragended(event, d) {
-    if (!event.active && simulation) simulation.alphaTarget(0);
-    d.fx = null;
-    d.fy = null;
-}
-
-// Knowledge Base Functions
-function initializeKnowledgeBase() {
-    const categories = document.querySelectorAll('.knowledge-category');
-    categories.forEach(category => {
-        category.addEventListener('click', function() {
-            const categoryId = this.dataset.category;
-            showKnowledgeCategory(categoryId);
-        });
-    });
-    
-    // Show initial category
-    showKnowledgeCategory(currentCategory);
-}
-
-function showKnowledgeCategory(categoryId) {
-    console.log('showKnowledgeCategory called with:', categoryId);
-    
-    // Update active category
-    const categories = document.querySelectorAll('.knowledge-category');
-    categories.forEach(cat => cat.classList.remove('active'));
-    
-    const selectedCategory = document.querySelector(`[data-category="${categoryId}"]`);
-    if (selectedCategory) {
-        selectedCategory.classList.add('active');
-    }
-    
-    // Update content
-    const contentArea = document.getElementById('knowledgeContent');
-    const categoryData = knowledgeDatabase[categoryId];
-    
-    if (categoryData && contentArea) {
-        let contentHTML = `<h3 class="font-semibold text-lg mb-4">${categoryData.title}</h3>`;
-        contentHTML += '<div class="space-y-4">';
-        
-        categoryData.items.forEach(item => {
-            contentHTML += `
-                <div class="p-4 border border-border rounded-lg">
-                    <h4 class="font-semibold text-primary">${item.title}</h4>
-                    <p class="text-muted-foreground mt-2">${item.description}</p>
-                </div>
-            `;
-        });
-        
-        contentHTML += '</div>';
-        contentArea.innerHTML = contentHTML;
-        
-        console.log('Knowledge category content updated successfully');
-    }
-    
-    currentCategory = categoryId;
-}
-
-// Tree Structure Functions
-function initializeTreeStructure() {
-    console.log('Initializing tree structure...');
-    
-    const treeContainer = document.getElementById('ontologyTree');
-    if (!treeContainer) return;
-    
-    // Enhanced tree structure
-    const treeData = {
-        name: "AIRIS APM 온톨로지",
-        children: [
-            {
-                name: "핵심 개념",
-                children: [
-                    {name: "관찰가능성", children: []},
-                    {name: "모니터링", children: []},
-                    {name: "메트릭", children: []},
-                    {name: "로그", children: []},
-                    {name: "트레이스", children: []}
-                ]
-            },
-            {
-                name: "인프라스트럭처",
-                children: [
-                    {name: "컨테이너 오케스트레이션", children: [{name: "Kubernetes"}, {name: "Docker Swarm"}]},
-                    {name: "마이크로서비스", children: [{name: "서비스 디스커버리"}, {name: "로드 밸런싱"}]},
-                    {name: "클라우드 네이티브", children: []}
-                ]
-            },
-            {
-                name: "관찰성 도구",
-                children: [
-                    {name: "메트릭 도구", children: [{name: "Prometheus"}, {name: "Grafana"}]},
-                    {name: "로그 도구", children: [{name: "ELK Stack"}, {name: "Fluentd"}]},
-                    {name: "추적 도구", children: [{name: "Jaeger"}, {name: "Zipkin"}]}
-                ]
-            },
-            {
-                name: "성능 관리",
-                children: [
-                    {name: "응답 시간", children: []},
-                    {name: "처리량", children: []},
-                    {name: "자원 사용률", children: []}
-                ]
-            },
-            {
-                name: "장애 관리", 
-                children: [
-                    {name: "장애 감지", children: []},
-                    {name: "알림 시스템", children: []},
-                    {name: "근본 원인 분석", children: []}
-                ]
-            }
-        ]
-    };
-    
-    // Build tree HTML
-    function buildTreeHTML(node, level = 0) {
-        let html = '';
-        const hasChildren = node.children && node.children.length > 0;
-        const indent = level * 20;
-        
-        html += `<div class="tree-node" style="margin-left: ${indent}px;">`;
-        html += `<div class="tree-node-content flex items-center">`;
-        
-        if (hasChildren) {
-            html += `<span class="tree-toggle mr-2 text-primary cursor-pointer" onclick="toggleTreeNode(this)">▼</span>`;
-        } else {
-            html += `<span class="tree-toggle mr-2 opacity-50">•</span>`;
-        }
-        
-        html += `<span class="font-medium">${node.name}</span>`;
-        html += `</div>`;
-        
-        if (hasChildren) {
-            html += `<div class="tree-children">`;
-            node.children.forEach(child => {
-                html += buildTreeHTML(child, level + 1);
+        // Tab 전환 함수
+        function showTab(tabName) {
+            // 모든 탭 숨기기
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
             });
-            html += `</div>`;
+            
+            // 모든 탭 버튼 비활성화
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 선택된 탭 표시
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+            
+            // 그래프 탭일 때만 그래프 초기화
+            if (tabName === 'graph') {
+                setTimeout(() => {
+                    initializeGraph();
+                }, 100);
+            }
         }
-        
-        html += `</div>`;
-        return html;
-    }
-    
-    treeContainer.innerHTML = buildTreeHTML(treeData);
-    console.log('Tree structure initialized with enhanced content');
-}
 
-function toggleTreeNode(toggleElement) {
-    const childrenContainer = toggleElement.closest('.tree-node').querySelector('.tree-children');
-    if (childrenContainer) {
-        const isCollapsed = childrenContainer.classList.contains('collapsed');
-        if (isCollapsed) {
-            childrenContainer.classList.remove('collapsed');
-            toggleElement.textContent = '▼';
-        } else {
-            childrenContainer.classList.add('collapsed');
-            toggleElement.textContent = '▶';
+        // 그래프 초기화
+        function initializeGraph() {
+            if (!document.getElementById('ontology-graph')) return;
+            
+            const container = document.getElementById('ontology-graph');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            // 기존 SVG 내용 제거
+            d3.select('#ontology-graph').selectAll('*').remove();
+
+            svg = d3.select('#ontology-graph')
+                .attr('viewBox', [0, 0, width, height]);
+
+            g = svg.append('g');
+
+            // 줌 기능 설정
+            const zoomBehavior = d3.zoom()
+                .scaleExtent([0.1, 4])
+                .on('zoom', function(event) {
+                    g.attr('transform', event.transform);
+                });
+
+            svg.call(zoomBehavior);
+
+            // 화살표 마커 정의
+            const defs = svg.append('defs');
+            
+            Object.keys(relationColors).forEach(relType => {
+                defs.append('marker')
+                    .attr('id', `arrow-${relType}`)
+                    .attr('viewBox', '0 -5 10 10')
+                    .attr('refX', 20)
+                    .attr('refY', 0)
+                    .attr('markerWidth', 6)
+                    .attr('markerHeight', 6)
+                    .attr('orient', 'auto')
+                    .append('path')
+                    .attr('d', 'M0,-5L10,0L0,5')
+                    .attr('fill', relationColors[relType]);
+            });
+
+            // 시뮬레이션 설정
+            simulation = d3.forceSimulation()
+                .force('link', d3.forceLink().id(d => d.id).distance(100).strength(0.1))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(d => d.type === 'property' ? 12 : 20))
+                .force('x', d3.forceX(width / 2).strength(0.05))
+                .force('y', d3.forceY(height / 2).strength(0.05))
+                .alphaDecay(0.02);
+
+            loadOntologyData();
+            setupControls(zoomBehavior);
         }
-    }
-}
 
-// Statistics Functions
-function updateStatistics() {
-    console.log('Updating statistics...');
-    
-    let nodeCount = 64;
-    let relationCount = 73;
-    let categoryCount = 5;
-    let depthCount = 4;
-    
-    if (ontologyData && ontologyData.nodes) {
-        nodeCount = ontologyData.nodes.length;
-        relationCount = ontologyData.links ? ontologyData.links.length : 0;
-        
-        // Count unique categories
-        const categories = new Set(ontologyData.nodes.map(n => n.category || n.group));
-        categoryCount = categories.size;
-        
-        console.log('Using ontology data for statistics');
-    }
-    
-    // Update DOM elements
-    const nodeCountEl = document.getElementById('nodeCount');
-    const relationCountEl = document.getElementById('relationCount');
-    const categoryCountEl = document.getElementById('categoryCount');
-    const depthCountEl = document.getElementById('depthCount');
-    
-    if (nodeCountEl) nodeCountEl.textContent = nodeCount;
-    if (relationCountEl) relationCountEl.textContent = relationCount;
-    if (categoryCountEl) categoryCountEl.textContent = categoryCount;
-    if (depthCountEl) depthCountEl.textContent = depthCount;
-    
-    console.log('Statistics updated successfully');
-}
+        function loadOntologyData() {
+            if (!window.ontologyCompleteEnhancedData) {
+                console.error('온톨로지 데이터를 찾을 수 없습니다.');
+                return;
+            }
 
-// Header Functions
-function toggleDarkMode() {
-    const isDark = document.documentElement.classList.contains('dark');
-    if (isDark) {
-        document.documentElement.classList.remove('dark');
-        document.getElementById('theme-icon').textContent = '🌙';
-    } else {
-        document.documentElement.classList.add('dark');
-        document.getElementById('theme-icon').textContent = '☀️';
-    }
-}
+            const data = window.ontologyCompleteEnhancedData;
+            nodes = [...data.nodes];
+            links = [...data.links];
 
-function refreshData() {
-    // Refresh all components
-    if (simulation) {
-        simulation.restart();
-    }
-    initializeKnowledgeBase();
-    updateStatistics();
-    
-    // Show loading state briefly
-    const button = document.querySelector('[onclick="refreshData()"]');
-    const originalText = button.textContent;
-    button.textContent = '🔄 새로고침 중...';
-    button.disabled = true;
-    
-    setTimeout(() => {
-        button.textContent = originalText;
-        button.disabled = false;
-    }, 1000);
-}
-</script>
+            updateGraph();
+            updateStatistics();
+        }
+
+        function updateGraph() {
+            // 현재 필터에 따라 노드와 링크 필터링
+            const visibleNodes = nodes.filter(d => 
+                visibleNodeTypes.has(d.type || 'class')
+            );
+
+            const visibleNodeIds = new Set(visibleNodes.map(d => d.id));
+            const visibleLinks = links.filter(d => 
+                visibleRelationTypes.has(d.type) &&
+                visibleNodeIds.has(d.source.id || d.source) &&
+                visibleNodeIds.has(d.target.id || d.target)
+            );
+
+            // 링크 렌더링
+            const link = g.selectAll('.ontology-link')
+                .data(visibleLinks, d => `${d.source.id || d.source}-${d.target.id || d.target}-${d.type}`);
+
+            link.exit().remove();
+
+            const linkEnter = link.enter()
+                .append('line')
+                .attr('class', 'ontology-link')
+                .attr('stroke', d => relationColors[d.type] || '#999')
+                .attr('marker-end', d => `url(#arrow-${d.type})`);
+
+            const linkMerge = linkEnter.merge(link);
+
+            // 노드 렌더링
+            const node = g.selectAll('.ontology-node')
+                .data(visibleNodes, d => d.id);
+
+            node.exit().remove();
+
+            const nodeEnter = node.enter()
+                .append('g')
+                .attr('class', 'ontology-node')
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended));
+
+            // 노드 원
+            nodeEnter.append('circle')
+                .attr('r', d => d.type === 'property' ? 8 : 15)
+                .attr('fill', d => {
+                    if (d.type === 'property') return categoryColors.properties;
+                    return categoryColors[d.category] || '#999';
+                })
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 2);
+
+            // 노드 레이블
+            nodeEnter.append('text')
+                .attr('class', 'node-label')
+                .attr('dy', '.35em')
+                .text(d => d.label)
+                .attr('font-size', d => d.type === 'property' ? '8px' : '10px');
+
+            const nodeMerge = nodeEnter.merge(node);
+
+            // 이벤트 핸들러
+            nodeMerge
+                .on('mouseover', handleNodeMouseOver)
+                .on('mouseout', handleNodeMouseOut);
+
+            // 시뮬레이션 업데이트
+            simulation.nodes(visibleNodes);
+            simulation.force('link').links(visibleLinks);
+            simulation.alpha(1).restart();
+
+            simulation.on('tick', () => {
+                linkMerge
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+
+                nodeMerge
+                    .attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+        }
+
+        function handleNodeMouseOver(event, d) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.className = 'tooltip';
+            tooltip.innerHTML = `
+                <strong>${d.label}</strong><br/>
+                <em>타입: ${d.type === 'property' ? '속성' : '클래스'}</em><br/>
+                <small>${d.description || '설명 없음'}</small>
+                ${d.properties ? `<br/><br/><strong>속성들:</strong><br/>${d.properties.join(', ')}` : ''}
+                ${d.dataType ? `<br/><strong>데이터 타입:</strong> ${d.dataType}` : ''}
+            `;
+            tooltip.style.left = (event.pageX + 10) + 'px';
+            tooltip.style.top = (event.pageY - 10) + 'px';
+        }
+
+        function handleNodeMouseOut() {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.className = 'tooltip hidden';
+        }
+
+        function setupControls(zoomBehavior) {
+            // 줌 컨트롤
+            const zoomInBtn = document.getElementById('zoom-in');
+            const zoomOutBtn = document.getElementById('zoom-out');
+            const resetViewBtn = document.getElementById('reset-view');
+            const fitViewBtn = document.getElementById('fit-view');
+
+            if (zoomInBtn) {
+                zoomInBtn.onclick = () => {
+                    svg.transition().duration(300).call(zoomBehavior.scaleBy, 1.5);
+                };
+            }
+
+            if (zoomOutBtn) {
+                zoomOutBtn.onclick = () => {
+                    svg.transition().duration(300).call(zoomBehavior.scaleBy, 1 / 1.5);
+                };
+            }
+
+            if (resetViewBtn) {
+                resetViewBtn.onclick = () => {
+                    svg.transition().duration(500).call(zoomBehavior.transform, d3.zoomIdentity);
+                };
+            }
+
+            if (fitViewBtn) {
+                fitViewBtn.onclick = () => {
+                    try {
+                        const bounds = g.node().getBBox();
+                        if (bounds.width === 0 || bounds.height === 0) {
+                            svg.transition().duration(500).call(zoomBehavior.transform, d3.zoomIdentity);
+                            return;
+                        }
+
+                        const parent = svg.node().getBoundingClientRect();
+                        const fullWidth = parent.width;
+                        const fullHeight = parent.height;
+                        const width = bounds.width;
+                        const height = bounds.height;
+                        const midX = bounds.x + width / 2;
+                        const midY = bounds.y + height / 2;
+                        
+                        const scale = Math.min(fullWidth / width, fullHeight / height) * 0.8;
+                        const translate = [fullWidth / 2 - scale * midX, fullHeight / 2 - scale * midY];
+
+                        svg.transition().duration(750).call(
+                            zoomBehavior.transform,
+                            d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+                        );
+                    } catch (error) {
+                        svg.transition().duration(500).call(zoomBehavior.transform, d3.zoomIdentity);
+                    }
+                };
+            }
+
+            // 레이아웃 변경
+            const layoutSelect = document.getElementById('layout-select');
+            if (layoutSelect) {
+                layoutSelect.onchange = function() {
+                    currentLayout = this.value;
+                    applyLayout();
+                };
+            }
+        }
+
+        function applyLayout() {
+            switch (currentLayout) {
+                case 'hierarchical':
+                    applyHierarchicalLayout();
+                    break;
+                case 'circular':
+                    applyCircularLayout();
+                    break;
+                default:
+                    applyForceLayout();
+                    break;
+            }
+        }
+
+        function applyForceLayout() {
+            nodes.forEach(d => {
+                d.fx = null;
+                d.fy = null;
+            });
+
+            const container = document.getElementById('ontology-graph');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            simulation
+                .force('link', d3.forceLink().id(d => d.id).distance(100).strength(0.1))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(centerX, centerY))
+                .force('collision', d3.forceCollide().radius(d => d.type === 'property' ? 12 : 20))
+                .force('x', d3.forceX(centerX).strength(0.05))
+                .force('y', d3.forceY(centerY).strength(0.05));
+
+            simulation.alpha(1).alphaDecay(0.02).restart();
+        }
+
+        function applyHierarchicalLayout() {
+            simulation
+                .force('charge', null)
+                .force('center', null)
+                .force('x', null)
+                .force('y', null);
+
+            const levels = {};
+            const visibleNodes = nodes.filter(d => visibleNodeTypes.has(d.type || 'class'));
+            
+            visibleNodes.forEach(d => {
+                const level = d.category || 'default';
+                if (!levels[level]) levels[level] = [];
+                levels[level].push(d);
+            });
+
+            let y = 80;
+            Object.keys(levels).forEach(level => {
+                const levelNodes = levels[level];
+                levelNodes.forEach((d, i) => {
+                    d.fx = 100 + (i * 150);
+                    d.fy = y;
+                });
+                y += 120;
+            });
+
+            simulation.alpha(0.3).restart();
+        }
+
+        function applyCircularLayout() {
+            simulation
+                .force('charge', null)
+                .force('center', null)
+                .force('x', null)
+                .force('y', null);
+
+            const container = document.getElementById('ontology-graph');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            const radius = Math.min(width, height) * 0.35;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            const visibleNodes = nodes.filter(d => visibleNodeTypes.has(d.type || 'class'));
+            
+            visibleNodes.forEach((d, i) => {
+                const angle = (2 * Math.PI * i) / visibleNodes.length;
+                d.fx = centerX + radius * Math.cos(angle);
+                d.fy = centerY + radius * Math.sin(angle);
+            });
+
+            simulation.alpha(0.3).restart();
+        }
+
+        function toggleNodeType(type) {
+            if (visibleNodeTypes.has(type)) {
+                visibleNodeTypes.delete(type);
+                event.target.classList.remove('active');
+            } else {
+                visibleNodeTypes.add(type);
+                event.target.classList.add('active');
+            }
+            updateGraph();
+            updateStatistics();
+        }
+
+        function updateStatistics() {
+            const visibleNodes = nodes.filter(d => visibleNodeTypes.has(d.type || 'class'));
+            const classNodes = visibleNodes.filter(d => (d.type || 'class') === 'class');
+            const propertyNodes = visibleNodes.filter(d => d.type === 'property');
+            
+            const totalNodesElem = document.getElementById('total-nodes');
+            const classNodesElem = document.getElementById('class-nodes');
+            const propertyNodesElem = document.getElementById('property-nodes');
+            const totalLinksElem = document.getElementById('total-links');
+
+            if (totalNodesElem) totalNodesElem.textContent = visibleNodes.length;
+            if (classNodesElem) classNodesElem.textContent = classNodes.length;
+            if (propertyNodesElem) propertyNodesElem.textContent = propertyNodes.length;
+            if (totalLinksElem) totalLinksElem.textContent = links.length;
+        }
+
+        // 드래그 이벤트 핸들러
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        // Header Functions
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.contains('dark');
+            if (isDark) {
+                document.documentElement.classList.remove('dark');
+                document.getElementById('theme-icon').textContent = '🌙';
+            } else {
+                document.documentElement.classList.add('dark');
+                document.getElementById('theme-icon').textContent = '☀️';
+            }
+        }
+
+        function refreshData() {
+            if (simulation) {
+                simulation.restart();
+            }
+            updateStatistics();
+            
+            // Show loading state briefly
+            const button = document.querySelector('[onclick="refreshData()"]');
+            const originalText = button.textContent;
+            button.textContent = '🔄 새로고침 중...';
+            button.disabled = true;
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.disabled = false;
+            }, 1000);
+        }
+
+        // 전역 함수로 등록
+        window.showTab = showTab;
+        window.toggleNodeType = toggleNodeType;
+        window.toggleDarkMode = toggleDarkMode;
+        window.refreshData = refreshData;
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            // 첫 번째 탭 (그래프)을 기본으로 표시
+            setTimeout(() => {
+                initializeGraph();
+            }, 100);
+        });
+    </script>
 </body>
 </html>

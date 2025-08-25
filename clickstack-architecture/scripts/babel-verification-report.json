@@ -1,0 +1,189 @@
+{
+  "dashboards": [
+    {
+      "name": "Main Dashboard",
+      "url": "http://localhost:3002/",
+      "title": "AIRIS APM | 통합 모니터링 대시보드",
+      "consoleMessages": [],
+      "errors": [
+        {
+          "type": "pageerror",
+          "text": "Unexpected token '<'",
+          "stack": ""
+        }
+      ],
+      "uiElements": {
+        "hasCharts": false,
+        "hasCards": false,
+        "hasButtons": false
+      },
+      "screenshot": "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/scripts/screenshots/main-dashboard-verification.png"
+    },
+    {
+      "name": "WAS Dashboard",
+      "url": "http://localhost:3002/was-dashboard.html",
+      "title": "403 Forbidden",
+      "consoleMessages": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+          "location": {
+            "url": "http://localhost:3002/was-dashboard.html",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "errors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+          "location": {
+            "url": "http://localhost:3002/was-dashboard.html",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "uiElements": {
+        "hasCharts": false,
+        "hasCards": false,
+        "hasButtons": false
+      },
+      "screenshot": "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/scripts/screenshots/was-dashboard-verification.png"
+    },
+    {
+      "name": "Exception Dashboard",
+      "url": "http://localhost:3002/exception-dashboard.html",
+      "title": "403 Forbidden",
+      "consoleMessages": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+          "location": {
+            "url": "http://localhost:3002/exception-dashboard.html",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "errors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+          "location": {
+            "url": "http://localhost:3002/exception-dashboard.html",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "uiElements": {
+        "hasCharts": false,
+        "hasCards": false,
+        "hasButtons": false
+      },
+      "screenshot": "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/scripts/screenshots/exception-dashboard-verification.png"
+    },
+    {
+      "name": "Alert Dashboard",
+      "url": "http://localhost:3002/alert-dashboard.html",
+      "title": "403 Forbidden",
+      "consoleMessages": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+          "location": {
+            "url": "http://localhost:3002/alert-dashboard.html",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "errors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+          "location": {
+            "url": "http://localhost:3002/alert-dashboard.html",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "uiElements": {
+        "hasCharts": false,
+        "hasCards": false,
+        "hasButtons": false
+      },
+      "screenshot": "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/scripts/screenshots/alert-dashboard-verification.png"
+    },
+    {
+      "name": "J2EE Dashboard",
+      "url": "http://localhost:3002/j2ee-dashboard.html",
+      "title": "AIRIS APM | J2EE 모니터링 대시보드",
+      "consoleMessages": [
+        {
+          "type": "warning",
+          "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+          "location": {
+            "url": "https://cdn.tailwindcss.com/",
+            "lineNumber": 63,
+            "columnNumber": 1710
+          }
+        }
+      ],
+      "errors": [],
+      "uiElements": {
+        "hasCharts": true,
+        "hasCards": true,
+        "hasButtons": true
+      },
+      "screenshot": "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/scripts/screenshots/j2ee-dashboard-verification.png"
+    },
+    {
+      "name": "Service Topology",
+      "url": "http://localhost:3002/topology-dashboard.html",
+      "title": "403 Forbidden",
+      "consoleMessages": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+          "location": {
+            "url": "http://localhost:3002/topology-dashboard.html",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "errors": [
+        {
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)",
+          "location": {
+            "url": "http://localhost:3002/topology-dashboard.html",
+            "lineNumber": 0,
+            "columnNumber": 0
+          }
+        }
+      ],
+      "uiElements": {
+        "hasCharts": false,
+        "hasCards": false,
+        "hasButtons": false
+      },
+      "screenshot": "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/scripts/screenshots/service-topology-verification.png"
+    }
+  ],
+  "babelWarningsFound": false,
+  "totalErrors": 5,
+  "totalWarnings": 1,
+  "screenshots": [
+    "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/scripts/screenshots/main-dashboard-verification.png",
+    "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/scripts/screenshots/was-dashboard-verification.png",
+    "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/scripts/screenshots/exception-dashboard-verification.png",
+    "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/scripts/screenshots/alert-dashboard-verification.png",
+    "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/scripts/screenshots/j2ee-dashboard-verification.png",
+    "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/scripts/screenshots/service-topology-verification.png"
+  ]
+}
