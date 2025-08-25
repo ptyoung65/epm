@@ -4,11 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIRIS APM | 알림 관리 대시보드</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="./css/tailwind.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
@@ -49,11 +46,11 @@
       --popover-foreground: 210 40% 98%;
       --primary: 210 40% 98%;
       --primary-foreground: 222.2 47.4% 11.2%;
-      --secondary: 217.2 32.6% 17.5%;
+      --secondary: 222.2 84% 4.9%;
       --secondary-foreground: 210 40% 98%;
-      --muted: 217.2 32.6% 17.5%;
-      --muted-foreground: 215 20.2% 65.1%;
-      --accent: 217.2 32.6% 17.5%;
+      --muted: 222.2 84% 4.9%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --accent: 222.2 84% 4.9%;
       --accent-foreground: 210 40% 98%;
       --destructive: 0 62.8% 30.6%;
       --destructive-foreground: 210 40% 98%;
@@ -62,927 +59,524 @@
       --ring: 212.7 26.8% 83.9%;
     }
 
-    /* shadcn/ui Utility Classes */
     .bg-background { background-color: hsl(var(--background)); }
     .text-foreground { color: hsl(var(--foreground)); }
     .bg-card { background-color: hsl(var(--card)); }
     .text-card-foreground { color: hsl(var(--card-foreground)); }
     .bg-primary { background-color: hsl(var(--primary)); }
-    .text-primary { color: hsl(var(--primary)); }
     .text-primary-foreground { color: hsl(var(--primary-foreground)); }
-    .bg-secondary { background-color: hsl(var(--secondary)); }
-    .text-secondary-foreground { color: hsl(var(--secondary-foreground)); }
-    .bg-muted { background-color: hsl(var(--muted)); }
+    .text-primary { color: hsl(var(--primary)); }
     .text-muted-foreground { color: hsl(var(--muted-foreground)); }
-    .bg-accent { background-color: hsl(var(--accent)); }
-    .text-accent-foreground { color: hsl(var(--accent-foreground)); }
+    .border-border { border-color: hsl(var(--border)); }
+    .text-destructive { color: hsl(var(--destructive)); }
     .bg-destructive { background-color: hsl(var(--destructive)); }
-    .text-destructive-foreground { color: hsl(var(--destructive-foreground)); }
-    .border { border: 1px solid hsl(var(--border)); }
-    .border-input { border: 1px solid hsl(var(--input)); }
     
-    /* Modern Card Styles */
-    .modern-card {
-      background: hsl(var(--card));
-      border: 1px solid hsl(var(--border));
-      border-radius: calc(var(--radius));
-      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    .alert-card {
+      transition: all 0.2s ease-in-out;
     }
     
-    /* Button Styles */
-    .btn-primary {
-      background: hsl(var(--primary));
-      color: hsl(var(--primary-foreground));
-      border: none;
-      border-radius: calc(var(--radius));
-      padding: 0.5rem 1rem;
-      font-weight: 500;
-      transition: all 0.2s;
+    .alert-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
     }
     
-    .btn-primary:hover {
-      background: hsl(var(--primary) / 0.9);
+    .chart-container {
+      position: relative;
+      height: 256px;
+      width: 100%;
     }
-    
-    .btn-ghost {
-      background: transparent;
-      border: 1px solid hsl(var(--border));
-      color: hsl(var(--foreground));
-      border-radius: calc(var(--radius));
-      padding: 0.5rem 1rem;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-    
-    .btn-ghost:hover {
-      background: hsl(var(--accent));
-      color: hsl(var(--accent-foreground));
-    }
-
-    /* Status Indicators */
-    .status-success { color: #10b981; }
-    .status-warning { color: #f59e0b; }
-    .status-error { color: #ef4444; }
-    .status-info { color: #3b82f6; }
   </style>
-  
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            border: 'hsl(var(--border))',
-            input: 'hsl(var(--input))',
-            ring: 'hsl(var(--ring))',
-            background: 'hsl(var(--background))',
-            foreground: 'hsl(var(--foreground))',
-            primary: {
-              DEFAULT: 'hsl(var(--primary))',
-              foreground: 'hsl(var(--primary-foreground))',
-            },
-            secondary: {
-              DEFAULT: 'hsl(var(--secondary))',
-              foreground: 'hsl(var(--secondary-foreground))',
-            },
-            destructive: {
-              DEFAULT: 'hsl(var(--destructive))',
-              foreground: 'hsl(var(--destructive-foreground))',
-            },
-            muted: {
-              DEFAULT: 'hsl(var(--muted))',
-              foreground: 'hsl(var(--muted-foreground))',
-            },
-            accent: {
-              DEFAULT: 'hsl(var(--accent))',
-              foreground: 'hsl(var(--accent-foreground))',
-            },
-            popover: {
-              DEFAULT: 'hsl(var(--popover))',
-              foreground: 'hsl(var(--popover-foreground))',
-            },
-            card: {
-              DEFAULT: 'hsl(var(--card))',
-              foreground: 'hsl(var(--card-foreground))',
-            },
-          },
-          borderRadius: {
-            lg: 'var(--radius)',
-            md: 'calc(var(--radius) - 2px)',
-            sm: 'calc(var(--radius) - 4px)',
-          },
-        },
-      },
-    }
-  </script>
 </head>
 <body class="bg-background text-foreground">
-  <div id="root"></div>
-  
-  <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
-    
-    // Alert Dashboard Component
-    const AlertDashboard = () => {
-      const [isDark, setIsDark] = useState(false);
-      const [timeRange, setTimeRange] = useState('24h');
-      const [loading, setLoading] = useState(false);
-      const [selectedTab, setSelectedTab] = useState('overview');
-      const [alertFilter, setAlertFilter] = useState('all');
-      const [showModal, setShowModal] = useState(false);
-      const [newRule, setNewRule] = useState({ name: '', condition: '', threshold: '', action: 'email' });
+  <!-- Header -->
+  <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
+    <div class="container mx-auto flex h-14 items-center px-4">
+      <div class="mr-4 flex items-center space-x-2">
+        <h1 class="font-bold text-xl text-foreground">AIRIS APM</h1>
+        <span class="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">알림 관리</span>
+      </div>
       
-      const [alertData, setAlertData] = useState({
-        summary: {
-          totalAlerts: 47,
-          criticalAlerts: 3,
-          warningAlerts: 12,
-          infoAlerts: 32,
-          resolvedToday: 28,
-          avgResolutionTime: '4.2m'
+      <!-- Navigation -->
+      <nav class="flex items-center space-x-6 text-sm">
+        <a href="/" class="text-foreground/60 hover:text-foreground/80 transition-colors">통합 대시보드</a>
+        <a href="/j2ee-dashboard.html" class="text-foreground/60 hover:text-foreground/80 transition-colors">J2EE 모니터링</a>
+        <a href="/was-dashboard.html" class="text-foreground/60 hover:text-foreground/80 transition-colors">WAS 모니터링</a>
+        <a href="/exception-dashboard.html" class="text-foreground/60 hover:text-foreground/80 transition-colors">예외 추적</a>
+        <a href="/topology-dashboard.html" class="text-foreground/60 hover:text-foreground/80 transition-colors">서비스 토폴로지</a>
+        <span class="font-medium text-foreground/80">알림 관리</span>
+        <a href="/ontology.html" class="text-foreground/60 hover:text-foreground/80 transition-colors">온톨로지</a>
+      </nav>
+
+      <!-- Right side actions -->
+      <div class="ml-auto flex items-center space-x-4">
+        <button id="newAlertBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4">
+          + 알림 규칙 추가
+        </button>
+        
+        <button id="refreshBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-border bg-background hover:bg-accent h-9 px-3">
+          새로고침
+        </button>
+        
+        <button id="themeToggle" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-border bg-background hover:bg-accent h-9 w-9">
+          🌙
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-6">
+    <!-- Alert Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-muted-foreground">활성 알림</p>
+            <p id="activeAlerts" class="text-2xl font-bold text-destructive">42</p>
+            <p class="text-xs text-muted-foreground mt-1">현재 처리 중</p>
+          </div>
+          <div class="h-8 w-8 bg-destructive/10 rounded-full flex items-center justify-center">
+            🔔
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-muted-foreground">Critical 알림</p>
+            <p id="criticalAlerts" class="text-2xl font-bold text-red-600">8</p>
+            <p class="text-xs text-muted-foreground mt-1">즉시 조치 필요</p>
+          </div>
+          <div class="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
+            🚨
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-muted-foreground">알림 규칙</p>
+            <p id="totalRules" class="text-2xl font-bold">127</p>
+            <p class="text-xs text-muted-foreground mt-1">설정된 규칙 수</p>
+          </div>
+          <div class="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center">
+            📋
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-muted-foreground">평균 응답시간</p>
+            <p id="avgResponseTime" class="text-2xl font-bold text-green-600">3.2분</p>
+            <p class="text-xs text-muted-foreground mt-1">알림 → 확인</p>
+          </div>
+          <div class="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+            ⏱️
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <!-- Alert Trend Chart -->
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <h3 class="text-lg font-semibold mb-4">알림 발생 추이</h3>
+        <div class="chart-container">
+          <canvas id="alertTrendChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Alert by Type Chart -->
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <h3 class="text-lg font-semibold mb-4">유형별 알림 분포</h3>
+        <div class="chart-container">
+          <canvas id="alertTypeChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert Rules Table -->
+    <div class="bg-card border border-border rounded-lg p-6 shadow-sm mb-8">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">알림 규칙 목록</h3>
+        <div class="flex space-x-2">
+          <select id="filterType" class="text-sm border border-border rounded-md px-3 py-1 bg-background">
+            <option value="all">전체</option>
+            <option value="performance">성능</option>
+            <option value="error">에러</option>
+            <option value="availability">가용성</option>
+            <option value="security">보안</option>
+          </select>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border">
+              <th class="text-left py-2 px-4">규칙명</th>
+              <th class="text-left py-2 px-4">유형</th>
+              <th class="text-left py-2 px-4">임계치</th>
+              <th class="text-left py-2 px-4">심각도</th>
+              <th class="text-left py-2 px-4">상태</th>
+              <th class="text-left py-2 px-4">액션</th>
+            </tr>
+          </thead>
+          <tbody id="rulesTableBody">
+            <!-- Table rows will be populated here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Recent Alerts -->
+    <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+      <h3 class="text-lg font-semibold mb-4">최근 알림</h3>
+      <div class="space-y-4" id="recentAlertsList">
+        <!-- Alert items will be populated here -->
+      </div>
+    </div>
+  </main>
+
+  <!-- New Alert Rule Modal -->
+  <div id="alertModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-card border border-border rounded-lg p-6 max-w-2xl w-full mx-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">알림 규칙 추가</h3>
+        <button id="closeModal" class="text-foreground/60 hover:text-foreground">✕</button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="text-sm font-medium text-muted-foreground">규칙명</label>
+          <input type="text" id="ruleName" class="w-full mt-1 px-3 py-2 border border-border rounded-md bg-background">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm font-medium text-muted-foreground">유형</label>
+            <select id="ruleType" class="w-full mt-1 px-3 py-2 border border-border rounded-md bg-background">
+              <option value="performance">성능</option>
+              <option value="error">에러</option>
+              <option value="availability">가용성</option>
+              <option value="security">보안</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-muted-foreground">심각도</label>
+            <select id="ruleSeverity" class="w-full mt-1 px-3 py-2 border border-border rounded-md bg-background">
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-muted-foreground">임계치 설정</label>
+          <input type="text" id="ruleThreshold" class="w-full mt-1 px-3 py-2 border border-border rounded-md bg-background" placeholder="예: CPU > 80%">
+        </div>
+        <div>
+          <label class="text-sm font-medium text-muted-foreground">알림 채널</label>
+          <div class="mt-2 space-y-2">
+            <label class="flex items-center">
+              <input type="checkbox" value="email" class="mr-2"> Email
+            </label>
+            <label class="flex items-center">
+              <input type="checkbox" value="slack" class="mr-2"> Slack
+            </label>
+            <label class="flex items-center">
+              <input type="checkbox" value="sms" class="mr-2"> SMS
+            </label>
+            <label class="flex items-center">
+              <input type="checkbox" value="webhook" class="mr-2"> Webhook
+            </label>
+          </div>
+        </div>
+        <div class="flex justify-end space-x-2 pt-4">
+          <button id="cancelBtn" class="px-4 py-2 border border-border rounded-md hover:bg-accent">취소</button>
+          <button id="saveBtn" class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90">저장</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize data
+    let alertData = {
+      active: 42,
+      critical: 8,
+      rules: 127,
+      avgResponse: 3.2
+    };
+
+    // Theme toggle functionality
+    const themeToggle = document.getElementById('themeToggle');
+    let isDark = false;
+
+    themeToggle.addEventListener('click', () => {
+      isDark = !isDark;
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        themeToggle.textContent = '☀️';
+      } else {
+        document.documentElement.classList.remove('dark');
+        themeToggle.textContent = '🌙';
+      }
+    });
+
+    // Modal functionality
+    document.getElementById('newAlertBtn').addEventListener('click', () => {
+      document.getElementById('alertModal').classList.remove('hidden');
+      document.getElementById('alertModal').classList.add('flex');
+    });
+
+    document.getElementById('closeModal').addEventListener('click', () => {
+      document.getElementById('alertModal').classList.add('hidden');
+      document.getElementById('alertModal').classList.remove('flex');
+    });
+
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      document.getElementById('alertModal').classList.add('hidden');
+      document.getElementById('alertModal').classList.remove('flex');
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      // Save logic here
+      alert('알림 규칙이 저장되었습니다.');
+      document.getElementById('alertModal').classList.add('hidden');
+      document.getElementById('alertModal').classList.remove('flex');
+    });
+
+    // Refresh functionality
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      updateData();
+      updateCharts();
+      loadRulesTable();
+      loadRecentAlerts();
+    });
+
+    // Initialize charts
+    let trendChart, typeChart;
+
+    function initCharts() {
+      // Alert Trend Chart
+      const trendCtx = document.getElementById('alertTrendChart').getContext('2d');
+      trendChart = new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+          datasets: [{
+            label: 'Critical',
+            data: [3, 5, 8, 6, 7, 8],
+            borderColor: 'rgb(239, 68, 68)',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            tension: 0.4
+          }, {
+            label: 'Warning',
+            data: [12, 18, 15, 22, 25, 20],
+            borderColor: 'rgb(251, 191, 36)',
+            backgroundColor: 'rgba(251, 191, 36, 0.1)',
+            tension: 0.4
+          }, {
+            label: 'Info',
+            data: [8, 10, 12, 9, 11, 14],
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4
+          }]
         },
-        recentAlerts: [
-          {
-            id: 1,
-            timestamp: '2025-08-20 14:45:23',
-            severity: 'critical',
-            title: 'WAS 서버 메모리 사용률 임계치 초과',
-            description: 'Tomcat 서버의 JVM 힙 메모리 사용률이 85%를 초과했습니다.',
-            source: 'WAS Monitor',
-            status: 'active',
-            assignee: '김전문',
-            tags: ['memory', 'performance', 'was']
-          },
-          {
-            id: 2,
-            timestamp: '2025-08-20 14:32:15',
-            severity: 'warning',
-            title: '데이터베이스 커넥션 풀 고갈',
-            description: 'PostgreSQL 커넥션 풀의 활성 연결 수가 설정된 임계치에 근접했습니다.',
-            source: 'Database Monitor',
-            status: 'acknowledged',
-            assignee: '이개발',
-            tags: ['database', 'connection', 'performance']
-          },
-          {
-            id: 3,
-            timestamp: '2025-08-20 14:28:41',
-            severity: 'info',
-            title: '정기 백업 작업 완료',
-            description: '일일 데이터베이스 백업 작업이 성공적으로 완료되었습니다.',
-            source: 'Backup System',
-            status: 'resolved',
-            assignee: '박운영',
-            tags: ['backup', 'maintenance', 'success']
-          },
-          {
-            id: 4,
-            timestamp: '2025-08-20 14:15:33',
-            severity: 'warning',
-            title: 'API 응답시간 증가',
-            description: '/api/orders 엔드포인트의 평균 응답시간이 200ms를 초과했습니다.',
-            source: 'API Gateway',
-            status: 'investigating',
-            assignee: '최성능',
-            tags: ['api', 'performance', 'latency']
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
           }
-        ],
-        alertRules: [
-          {
-            id: 1,
-            name: 'CPU 사용률 모니터링',
-            condition: 'cpu_usage > 80',
-            threshold: '80%',
-            action: 'email,slack',
-            enabled: true,
-            lastTriggered: '2025-08-19 09:30:15'
-          },
-          {
-            id: 2,
-            name: '메모리 사용률 경고',
-            condition: 'memory_usage > 85',
-            threshold: '85%',
-            action: 'email',
-            enabled: true,
-            lastTriggered: '2025-08-20 14:45:23'
-          },
-          {
-            id: 3,
-            name: '에러율 임계치',
-            condition: 'error_rate > 5',
-            threshold: '5%',
-            action: 'slack,webhook',
-            enabled: true,
-            lastTriggered: '아직 없음'
-          }
-        ],
-        notificationChannels: [
-          {
-            id: 1,
-            type: 'email',
-            name: '개발팀 이메일',
-            destination: 'dev-team@company.com',
-            enabled: true,
-            lastUsed: '2025-08-20 14:45:23'
-          },
-          {
-            id: 2,
-            type: 'slack',
-            name: '디빅용 슬랙',
-            destination: '#alerts-critical',
-            enabled: true,
-            lastUsed: '2025-08-20 14:32:15'
-          },
-          {
-            id: 3,
-            type: 'webhook',
-            name: 'PagerDuty 연동',
-            destination: 'https://api.pagerduty.com/webhook',
-            enabled: false,
-            lastUsed: '2025-08-18 22:15:00'
-          }
-        ]
+        }
       });
 
-      useEffect(() => {
-        if (isDark) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      }, [isDark]);
-
-      useEffect(() => {
-        const interval = setInterval(() => {
-          setAlertData(prev => ({
-            ...prev,
-            summary: {
-              ...prev.summary,
-              totalAlerts: prev.summary.totalAlerts + Math.floor(Math.random() * 3),
-              criticalAlerts: Math.max(0, prev.summary.criticalAlerts + Math.floor(Math.random() * 2) - 1)
+      // Alert Type Chart
+      const typeCtx = document.getElementById('alertTypeChart').getContext('2d');
+      typeChart = new Chart(typeCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['성능', '에러', '가용성', '보안', '기타'],
+          datasets: [{
+            data: [35, 25, 20, 10, 10],
+            backgroundColor: [
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(239, 68, 68, 0.8)',
+              'rgba(34, 197, 94, 0.8)',
+              'rgba(251, 191, 36, 0.8)',
+              'rgba(156, 163, 175, 0.8)'
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
             }
-          }));
-        }, 10000);
-
-        return () => clearInterval(interval);
-      }, []);
-
-      const refreshData = () => {
-        setLoading(true);
-        setTimeout(() => setLoading(false), 1000);
-      };
-
-      const getSeverityColor = (severity) => {
-        switch (severity) {
-          case 'critical': return 'text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/20';
-          case 'warning': return 'text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
-          case 'info': return 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20';
-          default: return 'text-gray-600 dark:text-gray-400 bg-gray-500/10 border-gray-500/20';
-        }
-      };
-
-      const getStatusColor = (status) => {
-        switch (status) {
-          case 'active': return 'bg-red-500/10 text-red-600 dark:text-red-400';
-          case 'acknowledged': return 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400';
-          case 'investigating': return 'bg-blue-500/10 text-blue-600 dark:text-blue-400';
-          case 'resolved': return 'bg-green-500/10 text-green-600 dark:text-green-400';
-          default: return 'bg-gray-500/10 text-gray-600 dark:text-gray-400';
-        }
-      };
-
-      const getSeverityIcon = (severity) => {
-        switch (severity) {
-          case 'critical': return '🔴';
-          case 'warning': return '🟡';
-          case 'info': return '🔵';
-          default: return '⚪';
-        }
-      };
-
-      const filteredAlerts = alertFilter === 'all' 
-        ? alertData.recentAlerts 
-        : alertData.recentAlerts.filter(alert => alert.severity === alertFilter);
-
-      const handleCreateRule = () => {
-        if (newRule.name && newRule.condition && newRule.threshold) {
-          const rule = {
-            id: alertData.alertRules.length + 1,
-            ...newRule,
-            enabled: true,
-            lastTriggered: '아직 없음'
-          };
-          setAlertData(prev => ({
-            ...prev,
-            alertRules: [...prev.alertRules, rule]
-          }));
-          setNewRule({ name: '', condition: '', threshold: '', action: 'email' });
-          setShowModal(false);
-        }
-      };
-
-      return (
-        <div className="min-h-screen bg-background text-foreground">
-          {/* Header */}
-          <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container flex h-14 items-center">
-              <div className="mr-4 flex items-center space-x-2">
-                <span className="font-bold text-xl">AIRIS APM</span>
-                <span className="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">
-                  알림
-                </span>
-              </div>
-              
-              {/* Navigation */}
-              <nav className="flex items-center space-x-6 text-sm">
-                <a href="/src/dashboards/index.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  대시보드
-                </a>
-                <a href="/src/dashboards/j2ee-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  J2EE 모니터링
-                </a>
-                <a href="/src/dashboards/was-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  WAS 모니터링
-                </a>
-                <a href="/src/dashboards/exception-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  예외 추적
-                </a>
-                <a href="/src/dashboards/topology-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  서비스 토폴로지
-                </a>
-                <a href="#" className="font-medium text-foreground/80 hover:text-foreground transition-colors">
-                  알림 관리
-                </a>
-              </nav>
-
-              {/* Right side actions */}
-              <div className="ml-auto flex items-center space-x-4">
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="h-9 px-3 py-1 text-sm rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  + 알림 규칙 추가
-                </button>
-                
-                <select 
-                  value={alertFilter} 
-                  onChange={(e) => setAlertFilter(e.target.value)}
-                  className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                >
-                  <option value="all">전체 알림</option>
-                  <option value="critical">치명적</option>
-                  <option value="warning">경고</option>
-                  <option value="info">정보</option>
-                </select>
-                
-                <select 
-                  value={timeRange} 
-                  onChange={(e) => setTimeRange(e.target.value)}
-                  className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                >
-                  <option value="1h">1시간</option>
-                  <option value="6h">6시간</option>
-                  <option value="24h">24시간</option>
-                  <option value="7d">7일</option>
-                </select>
-                
-                <button
-                  onClick={refreshData}
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-                  ) : (
-                    '새로고침'
-                  )}
-                </button>
-                
-                <button
-                  onClick={() => setIsDark(!isDark)}
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 w-9 border border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                >
-                  {isDark ? '🌞' : '🌙'}
-                </button>
-              </div>
-            </div>
-          </header>
-
-          {/* Page Header */}
-          <div className="border-b">
-            <div className="container flex h-16 items-center px-4">
-              <div>
-                <h1 className="text-2xl font-semibold flex items-center space-x-2">
-                  <span>🔔</span>
-                  <span>알림 및 경보 관리</span>
-                </h1>
-                <p className="text-sm text-muted-foreground">실시간 알림 모니터링 및 알림 규칙 설정</p>
-              </div>
-              <div className="ml-auto flex items-center space-x-2">
-                <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium ${
-                  alertData.summary.criticalAlerts > 0 
-                    ? 'bg-red-500/10 text-red-600 dark:text-red-400' 
-                    : 'bg-green-500/10 text-green-600 dark:text-green-400'
-                }`}>
-                  <span className={`mr-1.5 h-2 w-2 rounded-full animate-pulse ${
-                    alertData.summary.criticalAlerts > 0 ? 'bg-red-500' : 'bg-green-500'
-                  }`}></span>
-                  {alertData.summary.criticalAlerts > 0 ? `${alertData.summary.criticalAlerts}개 위급 알림` : '알림 시스템 정상'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <main className="container py-6 space-y-6">
-            {/* Overview Cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <MetricCard
-                title="전체 알림"
-                value={alertData.summary.totalAlerts.toLocaleString()}
-                description="최근 24시간"
-                trend="info"
-                trendValue="+5"
-                icon="📋"
-              />
-              <MetricCard
-                title="위급 알림"
-                value={alertData.summary.criticalAlerts}
-                description="즉시 조치 필요"
-                trend={alertData.summary.criticalAlerts > 0 ? 'error' : 'success'}
-                trendValue={alertData.summary.criticalAlerts > 0 ? '주의 요름' : '안전'}
-                icon="🚨"
-              />
-              <MetricCard
-                title="오늘 해결"
-                value={alertData.summary.resolvedToday}
-                description="해결된 알림 수"
-                trend="success"
-                trendValue="+23%"
-                icon="✅"
-              />
-              <MetricCard
-                title="평균 해결시간"
-                value={alertData.summary.avgResolutionTime}
-                description="사고 대응 속도"
-                trend="success"
-                trendValue="-18%"
-                icon="⏱️"
-              />
-            </div>
-
-            {/* Alert Trends Chart */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <ChartCard title="알림 발생 추이" type="line" dataKey="alerts" />
-              <ChartCard title="심각도별 분포" type="doughnut" dataKey="severity" />
-            </div>
-
-            {/* Tabs Navigation */}
-            <div className="rounded-lg border bg-card">
-              <div className="p-6">
-                <div className="flex space-x-1 rounded-lg bg-muted p-1 mb-6">
-                  {[
-                    { key: 'overview', label: '알림 개요', icon: '📋' },
-                    { key: 'rules', label: '알림 규칙', icon: '⚙️' },
-                    { key: 'channels', label: '알림 채널', icon: '📢' },
-                    { key: 'history', label: '알림 이력', icon: '📈' }
-                  ].map((tab) => (
-                    <button
-                      key={tab.key}
-                      onClick={() => setSelectedTab(tab.key)}
-                      className={`flex-1 flex items-center justify-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                        selectedTab === tab.key
-                          ? 'bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      <span>{tab.icon}</span>
-                      <span>{tab.label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Tab Content */}
-                {selectedTab === 'overview' && <OverviewPanel alerts={filteredAlerts} getSeverityColor={getSeverityColor} getStatusColor={getStatusColor} getSeverityIcon={getSeverityIcon} />}
-                {selectedTab === 'rules' && <RulesPanel rules={alertData.alertRules} />}
-                {selectedTab === 'channels' && <ChannelsPanel channels={alertData.notificationChannels} />}
-                {selectedTab === 'history' && <HistoryPanel />}
-              </div>
-            </div>
-          </main>
-
-          {/* New Rule Modal */}
-          {showModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-              <div className="bg-background border rounded-lg p-6 w-full max-w-md mx-4">
-                <h3 className="text-lg font-semibold mb-4">새 알림 규칙 추가</h3>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium block mb-1">규칙 이름</label>
-                    <input
-                      type="text"
-                      value={newRule.name}
-                      onChange={(e) => setNewRule({...newRule, name: e.target.value})}
-                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                      placeholder="예: CPU 사용률 모니터링"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium block mb-1">조건</label>
-                    <input
-                      type="text"
-                      value={newRule.condition}
-                      onChange={(e) => setNewRule({...newRule, condition: e.target.value})}
-                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                      placeholder="예: cpu_usage > 80"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium block mb-1">임계치</label>
-                    <input
-                      type="text"
-                      value={newRule.threshold}
-                      onChange={(e) => setNewRule({...newRule, threshold: e.target.value})}
-                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                      placeholder="예: 80%"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium block mb-1">알림 방식</label>
-                    <select
-                      value={newRule.action}
-                      onChange={(e) => setNewRule({...newRule, action: e.target.value})}
-                      className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                    >
-                      <option value="email">이메일</option>
-                      <option value="slack">슬랙</option>
-                      <option value="email,slack">이메일 + 슬랙</option>
-                      <option value="webhook">웹훅</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="flex justify-end space-x-2 mt-6">
-                  <button
-                    onClick={() => setShowModal(false)}
-                    className="h-9 px-4 py-2 text-sm border border-input rounded-md hover:bg-accent"
-                  >
-                    취소
-                  </button>
-                  <button
-                    onClick={handleCreateRule}
-                    className="h-9 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-                  >
-                    추가
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    };
-
-    // Overview Panel Component
-    const OverviewPanel = ({ alerts, getSeverityColor, getStatusColor, getSeverityIcon }) => (
-      <div className="space-y-4">
-        <h4 className="text-lg font-semibold">최근 알림 목록</h4>
-        <div className="space-y-3">
-          {alerts.map((alert) => (
-            <AlertCard 
-              key={alert.id} 
-              alert={alert} 
-              getSeverityColor={getSeverityColor}
-              getStatusColor={getStatusColor}
-              getSeverityIcon={getSeverityIcon}
-            />
-          ))}
-        </div>
-      </div>
-    );
-
-    // Alert Card Component
-    const AlertCard = ({ alert, getSeverityColor, getStatusColor, getSeverityIcon }) => {
-      const [isExpanded, setIsExpanded] = useState(false);
-
-      return (
-        <div className={`border rounded-lg p-4 ${getSeverityColor(alert.severity)}`}>
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center space-x-2 mb-2">
-                <span className="text-lg">{getSeverityIcon(alert.severity)}</span>
-                <span className="font-semibold">{alert.title}</span>
-                <span className={`text-xs px-2 py-1 rounded ${getStatusColor(alert.status)}`}>
-                  {alert.status === 'active' ? '활성' :
-                   alert.status === 'acknowledged' ? '인지됨' :
-                   alert.status === 'investigating' ? '조사 중' : '해결됨'}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {alert.source}
-                </span>
-              </div>
-              <p className="text-sm mb-2">{alert.description}</p>
-              <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                <span>{alert.timestamp}</span>
-                <span>담당자: {alert.assignee}</span>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="text-xs px-3 py-1 bg-background hover:bg-background/80 rounded border"
-            >
-              {isExpanded ? '접기' : '상세'}
-            </button>
-          </div>
-          
-          {isExpanded && (
-            <div className="mt-4 pt-4 border-t border-current/20 space-y-3">
-              <div>
-                <h5 className="text-sm font-medium mb-2">태그</h5>
-                <div className="flex flex-wrap gap-1">
-                  {alert.tags.map((tag, index) => (
-                    <span key={index} className="text-xs px-2 py-1 bg-background/50 rounded">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="flex space-x-2">
-                <button className="text-xs px-3 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded border border-blue-500/20 hover:bg-blue-500/20">
-                  인지
-                </button>
-                <button className="text-xs px-3 py-1 bg-green-500/10 text-green-600 dark:text-green-400 rounded border border-green-500/20 hover:bg-green-500/20">
-                  해결
-                </button>
-                <button className="text-xs px-3 py-1 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 rounded border border-yellow-500/20 hover:bg-yellow-500/20">
-                  에스컨레이션
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    };
-
-    // Rules Panel Component
-    const RulesPanel = ({ rules }) => (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h4 className="text-lg font-semibold">알림 규칙 관리</h4>
-          <span className="text-sm text-muted-foreground">{rules.length}개의 규칙이 설정됨</span>
-        </div>
-        <div className="space-y-3">
-          {rules.map((rule) => (
-            <div key={rule.id} className="border rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-3">
-                  <span className={`w-3 h-3 rounded-full ${
-                    rule.enabled ? 'bg-green-500' : 'bg-gray-400'
-                  }`}></span>
-                  <span className="font-medium">{rule.name}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button className="text-xs px-2 py-1 border rounded hover:bg-accent">
-                    수정
-                  </button>
-                  <button className={`text-xs px-2 py-1 rounded ${
-                    rule.enabled 
-                      ? 'bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20'
-                      : 'bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20'
-                  }`}>
-                    {rule.enabled ? '비활성화' : '활성화'}
-                  </button>
-                </div>
-              </div>
-              <div className="grid gap-2 md:grid-cols-3 text-sm">
-                <div>
-                  <span className="text-muted-foreground">조건: </span>
-                  <code className="bg-muted px-1 rounded text-xs">{rule.condition}</code>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">임계치: </span>
-                  <span className="font-medium">{rule.threshold}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">알림방식: </span>
-                  <span className="font-medium">{rule.action}</span>
-                </div>
-              </div>
-              <div className="text-xs text-muted-foreground mt-2">
-                마지막 발동: {rule.lastTriggered}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-
-    // Channels Panel Component
-    const ChannelsPanel = ({ channels }) => (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h4 className="text-lg font-semibold">알림 채널 설정</h4>
-          <span className="text-sm text-muted-foreground">{channels.filter(c => c.enabled).length}/{channels.length} 채널 활성</span>
-        </div>
-        <div className="space-y-3">
-          {channels.map((channel) => (
-            <div key={channel.id} className="border rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center space-x-3">
-                  <span className="text-lg">
-                    {channel.type === 'email' ? '📧' :
-                     channel.type === 'slack' ? '🟢' : '🔗'}
-                  </span>
-                  <div>
-                    <div className="font-medium">{channel.name}</div>
-                    <div className="text-sm text-muted-foreground">{channel.destination}</div>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className={`text-xs px-2 py-1 rounded ${
-                    channel.enabled 
-                      ? 'bg-green-500/10 text-green-600 dark:text-green-400'
-                      : 'bg-gray-500/10 text-gray-600 dark:text-gray-400'
-                  }`}>
-                    {channel.enabled ? '활성' : '비활성'}
-                  </span>
-                  <button className="text-xs px-2 py-1 border rounded hover:bg-accent">
-                    설정
-                  </button>
-                  <button className="text-xs px-2 py-1 bg-primary text-primary-foreground rounded hover:bg-primary/90">
-                    테스트
-                  </button>
-                </div>
-              </div>
-              <div className="text-xs text-muted-foreground">
-                마지막 사용: {channel.lastUsed}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-
-    // History Panel Component
-    const HistoryPanel = () => (
-      <div className="space-y-4">
-        <h4 className="text-lg font-semibold">알림 이력 및 통계</h4>
-        
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="border rounded-lg p-4">
-            <h5 className="font-medium mb-3">오늘 알림 현황</h5>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">새로 발생</span>
-                <span className="font-medium">47</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">해결됨</span>
-                <span className="font-medium text-green-600 dark:text-green-400">28</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">진행 중</span>
-                <span className="font-medium text-yellow-600 dark:text-yellow-400">19</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="border rounded-lg p-4">
-            <h5 className="font-medium mb-3">성능 지표</h5>
-            <div className="space-y-2 text-sm">
-              <div>가장 빠른 해결: 45초</div>
-              <div>가장 느린 해결: 2.3시간</div>
-              <div>평균 응답시간: 4.2분</div>
-              <div>SLA 달성률: 94.2%</div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="border rounded-lg p-4">
-          <h5 className="font-medium mb-3">주간 트렌드</h5>
-          <div className="space-y-3">
-            <div className="bg-blue-500/10 text-blue-700 dark:text-blue-300 p-3 rounded">
-              <strong>개선:</strong> 이번 주 알림 해결 시간이 지난주 대비 18% 단축되었습니다.
-            </div>
-            <div className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 p-3 rounded">
-              <strong>주의:</strong> 메모리 관련 알림이 증가 추세를 보이고 있습니다.
-            </div>
-            <div className="bg-green-500/10 text-green-700 dark:text-green-300 p-3 rounded">
-              <strong>성과:</strong> 자동화된 알림 발송 시스템으로 대응 속도가 향상되었습니다.
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-
-    // Reusable Components
-    const MetricCard = ({ title, value, description, trend, trendValue, icon }) => {
-      const getTrendColor = () => {
-        switch (trend) {
-          case 'success': return 'text-green-600 dark:text-green-400';
-          case 'warning': return 'text-yellow-600 dark:text-yellow-400';
-          case 'error': return 'text-red-600 dark:text-red-400';
-          default: return 'text-blue-600 dark:text-blue-400';
-        }
-      };
-
-      return (
-        <div className="rounded-lg border bg-card p-6">
-          <div className="flex items-center justify-between space-y-0 pb-2">
-            <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
-            <span className="text-2xl">{icon}</span>
-          </div>
-          <div className="text-2xl font-bold">{value}</div>
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
-          {trendValue && (
-            <div className={`text-xs font-medium mt-2 ${getTrendColor()}`}>
-              {trendValue}
-            </div>
-          )}
-        </div>
-      );
-    };
-
-    const ChartCard = ({ title, type, dataKey }) => {
-      const canvasRef = useRef(null);
-      const chartRef = useRef(null);
-
-      useEffect(() => {
-        if (canvasRef.current) {
-          const ctx = canvasRef.current.getContext('2d');
-          
-          if (chartRef.current) {
-            chartRef.current.destroy();
           }
-
-          let data;
-          if (type === 'doughnut') {
-            data = {
-              labels: ['치명적', '경고', '정보'],
-              datasets: [{
-                data: [15, 35, 50],
-                backgroundColor: [
-                  'hsl(0, 84%, 60%)',
-                  'hsl(45, 93%, 47%)',
-                  'hsl(211, 100%, 50%)'
-                ],
-                borderWidth: 2,
-                borderColor: 'hsl(var(--background))'
-              }]
-            };
-          } else {
-            data = {
-              labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-              datasets: [{
-                label: title,
-                data: Array.from({ length: 6 }, () => Math.floor(Math.random() * 30 + 10)),
-                borderColor: 'hsl(var(--primary))',
-                backgroundColor: 'hsl(var(--primary) / 0.1)',
-                tension: 0.4,
-                fill: true
-              }]
-            };
-          }
-
-          chartRef.current = new Chart(ctx, {
-            type: type,
-            data: data,
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { 
-                  display: type === 'doughnut',
-                  position: 'bottom'
-                }
-              },
-              scales: type === 'doughnut' ? {} : {
-                y: { beginAtZero: true }
-              }
-            }
-          });
         }
+      });
+    }
 
-        return () => {
-          if (chartRef.current) {
-            chartRef.current.destroy();
-          }
-        };
-      }, [title, type, dataKey]);
+    function updateData() {
+      alertData = {
+        active: Math.floor(30 + Math.random() * 30),
+        critical: Math.floor(5 + Math.random() * 10),
+        rules: Math.floor(120 + Math.random() * 20),
+        avgResponse: (2 + Math.random() * 3).toFixed(1)
+      };
 
-      return (
-        <div className="rounded-lg border bg-card p-6">
-          <h3 className="text-lg font-semibold mb-4">{title}</h3>
-          <div className="h-64">
-            <canvas ref={canvasRef}></canvas>
+      document.getElementById('activeAlerts').textContent = alertData.active;
+      document.getElementById('criticalAlerts').textContent = alertData.critical;
+      document.getElementById('totalRules').textContent = alertData.rules;
+      document.getElementById('avgResponseTime').textContent = alertData.avgResponse + '분';
+    }
+
+    function updateCharts() {
+      if (trendChart && typeChart) {
+        // Update with new data
+        trendChart.update();
+        typeChart.update();
+      }
+    }
+
+    function loadRulesTable() {
+      const tbody = document.getElementById('rulesTableBody');
+      const rules = [
+        { name: 'CPU 사용률 초과', type: '성능', threshold: 'CPU > 80%', severity: 'Critical', status: '활성' },
+        { name: '메모리 부족 경고', type: '성능', threshold: 'Memory > 90%', severity: 'High', status: '활성' },
+        { name: '응답시간 지연', type: '성능', threshold: 'Response > 5s', severity: 'Medium', status: '활성' },
+        { name: '에러율 증가', type: '에러', threshold: 'Error Rate > 5%', severity: 'High', status: '활성' },
+        { name: '서비스 다운', type: '가용성', threshold: 'Health Check Failed', severity: 'Critical', status: '활성' }
+      ];
+
+      tbody.innerHTML = '';
+      rules.forEach(rule => {
+        const severityColor = {
+          'Critical': 'text-red-600',
+          'High': 'text-orange-600',
+          'Medium': 'text-yellow-600',
+          'Low': 'text-blue-600'
+        }[rule.severity];
+
+        const tr = document.createElement('tr');
+        tr.className = 'border-b border-border hover:bg-accent/50';
+        tr.innerHTML = `
+          <td class="py-2 px-4 font-medium">${rule.name}</td>
+          <td class="py-2 px-4">${rule.type}</td>
+          <td class="py-2 px-4">${rule.threshold}</td>
+          <td class="py-2 px-4"><span class="${severityColor}">${rule.severity}</span></td>
+          <td class="py-2 px-4">
+            <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">${rule.status}</span>
+          </td>
+          <td class="py-2 px-4">
+            <button class="text-sm text-primary hover:underline">편집</button>
+            <button class="text-sm text-destructive hover:underline ml-2">삭제</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function loadRecentAlerts() {
+      const alertsList = document.getElementById('recentAlertsList');
+      const alerts = [
+        {
+          id: 'ALT001',
+          title: 'CPU 사용률 임계치 초과',
+          service: 'Order Service',
+          severity: 'Critical',
+          time: '2분 전',
+          status: '미확인'
+        },
+        {
+          id: 'ALT002',
+          title: '메모리 사용량 경고',
+          service: 'Payment Service',
+          severity: 'High',
+          time: '5분 전',
+          status: '확인됨'
+        },
+        {
+          id: 'ALT003',
+          title: '응답시간 지연 감지',
+          service: 'User Service',
+          severity: 'Medium',
+          time: '12분 전',
+          status: '처리중'
+        }
+      ];
+
+      alertsList.innerHTML = '';
+      alerts.forEach(alert => {
+        const severityColor = {
+          'Critical': 'bg-red-50 text-red-600',
+          'High': 'bg-orange-50 text-orange-600',
+          'Medium': 'bg-yellow-50 text-yellow-600',
+          'Low': 'bg-blue-50 text-blue-600'
+        }[alert.severity];
+
+        const statusColor = {
+          '미확인': 'bg-red-50 text-red-600',
+          '확인됨': 'bg-blue-50 text-blue-600',
+          '처리중': 'bg-orange-50 text-orange-600',
+          '해결됨': 'bg-green-50 text-green-600'
+        }[alert.status];
+
+        const item = document.createElement('div');
+        item.className = 'alert-card bg-card border border-border rounded-lg p-4';
+        item.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="flex items-center space-x-2 mb-2">
+                <span class="font-mono text-sm text-primary">${alert.id}</span>
+                <span class="px-2 py-1 text-xs rounded-full ${severityColor}">${alert.severity}</span>
+                <span class="px-2 py-1 text-xs rounded-full ${statusColor}">${alert.status}</span>
+              </div>
+              <h4 class="font-semibold text-foreground mb-1">${alert.title}</h4>
+              <div class="flex items-center space-x-4 text-xs text-muted-foreground">
+                <span>📍 ${alert.service}</span>
+                <span>🕒 ${alert.time}</span>
+              </div>
+            </div>
+            <button class="text-muted-foreground hover:text-foreground">→</button>
           </div>
-        </div>
-      );
-    };
+        `;
+        alertsList.appendChild(item);
+      });
+    }
 
-    // Render the app
-    ReactDOM.render(<AlertDashboard />, document.getElementById('root'));
+    // Filter functionality
+    document.getElementById('filterType').addEventListener('change', (e) => {
+      // Filter logic here
+      loadRulesTable();
+    });
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      initCharts();
+      updateData();
+      loadRulesTable();
+      loadRecentAlerts();
+    });
+
+    // Auto-update every 30 seconds
+    setInterval(() => {
+      updateData();
+      updateCharts();
+      loadRecentAlerts();
+    }, 30000);
   </script>
-  <!-- TweakCN Theme System -->
-  <script src="/js/tweakcn-loader.js"></script>
 </body>
 </html>

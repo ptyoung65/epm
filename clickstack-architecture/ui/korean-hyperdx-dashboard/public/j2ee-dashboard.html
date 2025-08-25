@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIRIS APM | J2EE 모니터링 대시보드</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="./css/tailwind.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
@@ -21,15 +21,15 @@
       --card-foreground: 222.2 84% 4.9%;
       --popover: 0 0% 100%;
       --popover-foreground: 222.2 84% 4.9%;
-      --primary: 222.2 47.4% 11.2%;
+      --primary: 222.2 47.4% 45%;
       --primary-foreground: 210 40% 98%;
-      --secondary: 210 40% 96%;
+      --secondary: 210 40% 85%;
       --secondary-foreground: 222.2 47.4% 11.2%;
       --muted: 210 40% 96%;
       --muted-foreground: 215.4 16.3% 46.9%;
-      --accent: 210 40% 96%;
+      --accent: 142 76% 45%;
       --accent-foreground: 222.2 47.4% 11.2%;
-      --destructive: 0 84.2% 60.2%;
+      --destructive: 0 84.2% 55%;
       --destructive-foreground: 210 40% 98%;
       --border: 214.3 31.8% 91.4%;
       --input: 214.3 31.8% 91.4%;
@@ -138,55 +138,6 @@
     }
   </style>
   
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            border: 'hsl(var(--border))',
-            input: 'hsl(var(--input))',
-            ring: 'hsl(var(--ring))',
-            background: 'hsl(var(--background))',
-            foreground: 'hsl(var(--foreground))',
-            primary: {
-              DEFAULT: 'hsl(var(--primary))',
-              foreground: 'hsl(var(--primary-foreground))',
-            },
-            secondary: {
-              DEFAULT: 'hsl(var(--secondary))',
-              foreground: 'hsl(var(--secondary-foreground))',
-            },
-            destructive: {
-              DEFAULT: 'hsl(var(--destructive))',
-              foreground: 'hsl(var(--destructive-foreground))',
-            },
-            muted: {
-              DEFAULT: 'hsl(var(--muted))',
-              foreground: 'hsl(var(--muted-foreground))',
-            },
-            accent: {
-              DEFAULT: 'hsl(var(--accent))',
-              foreground: 'hsl(var(--accent-foreground))',
-            },
-            popover: {
-              DEFAULT: 'hsl(var(--popover))',
-              foreground: 'hsl(var(--popover-foreground))',
-            },
-            card: {
-              DEFAULT: 'hsl(var(--card))',
-              foreground: 'hsl(var(--card-foreground))',
-            },
-          },
-          borderRadius: {
-            lg: 'var(--radius)',
-            md: 'calc(var(--radius) - 2px)',
-            sm: 'calc(var(--radius) - 4px)',
-          },
-        },
-      },
-    }
-  </script>
 </head>
 <body class="bg-background text-foreground">
   <div class="min-h-screen bg-background text-foreground">
@@ -203,7 +154,7 @@
         <!-- Navigation -->
         <nav class="flex items-center space-x-6 text-sm">
           <button onclick="window.location.href = '/'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-            대시보드
+            통합 대시보드
           </button>
           <span class="font-medium text-foreground/80 hover:text-foreground transition-colors">
             J2EE 모니터링
@@ -219,6 +170,9 @@
           </button>
           <button onclick="window.location.href = '/alert-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
             알림 관리
+          </button>
+          <button onclick="window.location.href = '/ontology.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+            온톨로지
           </button>
         </nav>
 
@@ -687,8 +641,24 @@
       document.getElementById('transactionAvgDuration').textContent = j2eeMetrics.transactions.avgDuration + 'ms';
     }
 
+    // Helper function to get computed CSS color values
+    function getThemeColors() {
+      const style = getComputedStyle(document.documentElement);
+      const primaryHsl = style.getPropertyValue('--primary').trim();
+      const borderHsl = style.getPropertyValue('--border').trim(); 
+      const mutedForegroundHsl = style.getPropertyValue('--muted-foreground').trim();
+      
+      return {
+        primary: `hsl(${primaryHsl})`,
+        primaryTransparent: `hsl(${primaryHsl} / 0.1)`,
+        border: `hsl(${borderHsl})`,
+        mutedForeground: `hsl(${mutedForegroundHsl})`
+      };
+    }
+
     // Initialize charts
     function initCharts() {
+      const colors = getThemeColors();
       // Servlet response time chart
       const servletCtx = document.getElementById('servletChart').getContext('2d');
       servletChart = new Chart(servletCtx, {
@@ -698,8 +668,8 @@
           datasets: [{
             label: 'Servlet 응답시간 (ms)',
             data: [120, 135, 142, 128, 151, 139],
-            borderColor: 'hsl(var(--primary))',
-            backgroundColor: 'hsl(var(--primary) / 0.1)',
+            borderColor: colors.primary,
+            backgroundColor: colors.primaryTransparent,
             tension: 0.4,
             fill: true
           }]
@@ -711,7 +681,23 @@
             legend: { display: false }
           },
           scales: {
-            y: { beginAtZero: true }
+            y: { 
+              beginAtZero: true,
+              grid: {
+                color: colors.border
+              },
+              ticks: {
+                color: colors.mutedForeground
+              }
+            },
+            x: {
+              grid: {
+                color: colors.border
+              },
+              ticks: {
+                color: colors.mutedForeground
+              }
+            }
           },
           animation: { duration: 0 }
         }
@@ -726,8 +712,8 @@
           datasets: [{
             label: '트랜잭션 처리량',
             data: [45, 52, 61, 58, 67, 63],
-            backgroundColor: 'hsl(var(--primary))',
-            borderColor: 'hsl(var(--primary))',
+            backgroundColor: colors.primary,
+            borderColor: colors.primary,
             borderWidth: 1
           }]
         },
@@ -738,7 +724,23 @@
             legend: { display: false }
           },
           scales: {
-            y: { beginAtZero: true }
+            y: { 
+              beginAtZero: true,
+              grid: {
+                color: colors.border
+              },
+              ticks: {
+                color: colors.mutedForeground
+              }
+            },
+            x: {
+              grid: {
+                color: colors.border
+              },
+              ticks: {
+                color: colors.mutedForeground
+              }
+            }
           },
           animation: { duration: 0 }
         }

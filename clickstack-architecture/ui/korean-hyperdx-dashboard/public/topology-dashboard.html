@@ -3,13 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AIRIS APM | 서비스 토폴로지 대시보드</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <title>AIRIS APM | 서비스 토폴로지</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="./css/tailwind.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
@@ -50,11 +46,11 @@
       --popover-foreground: 210 40% 98%;
       --primary: 210 40% 98%;
       --primary-foreground: 222.2 47.4% 11.2%;
-      --secondary: 217.2 32.6% 17.5%;
+      --secondary: 222.2 84% 4.9%;
       --secondary-foreground: 210 40% 98%;
-      --muted: 217.2 32.6% 17.5%;
-      --muted-foreground: 215 20.2% 65.1%;
-      --accent: 217.2 32.6% 17.5%;
+      --muted: 222.2 84% 4.9%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --accent: 222.2 84% 4.9%;
       --accent-foreground: 210 40% 98%;
       --destructive: 0 62.8% 30.6%;
       --destructive-foreground: 210 40% 98%;
@@ -63,813 +59,536 @@
       --ring: 212.7 26.8% 83.9%;
     }
 
-    /* shadcn/ui Utility Classes */
     .bg-background { background-color: hsl(var(--background)); }
     .text-foreground { color: hsl(var(--foreground)); }
     .bg-card { background-color: hsl(var(--card)); }
     .text-card-foreground { color: hsl(var(--card-foreground)); }
     .bg-primary { background-color: hsl(var(--primary)); }
-    .text-primary { color: hsl(var(--primary)); }
     .text-primary-foreground { color: hsl(var(--primary-foreground)); }
-    .bg-secondary { background-color: hsl(var(--secondary)); }
-    .text-secondary-foreground { color: hsl(var(--secondary-foreground)); }
-    .bg-muted { background-color: hsl(var(--muted)); }
+    .text-primary { color: hsl(var(--primary)); }
     .text-muted-foreground { color: hsl(var(--muted-foreground)); }
-    .bg-accent { background-color: hsl(var(--accent)); }
-    .text-accent-foreground { color: hsl(var(--accent-foreground)); }
-    .bg-destructive { background-color: hsl(var(--destructive)); }
-    .text-destructive-foreground { color: hsl(var(--destructive-foreground)); }
-    .border { border: 1px solid hsl(var(--border)); }
-    .border-input { border: 1px solid hsl(var(--input)); }
+    .border-border { border-color: hsl(var(--border)); }
+    .text-destructive { color: hsl(var(--destructive)); }
     
-    /* Modern Card Styles */
-    .modern-card {
-      background: hsl(var(--card));
-      border: 1px solid hsl(var(--border));
-      border-radius: calc(var(--radius));
-      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-    }
-    
-    /* Button Styles */
-    .btn-primary {
-      background: hsl(var(--primary));
-      color: hsl(var(--primary-foreground));
-      border: none;
-      border-radius: calc(var(--radius));
-      padding: 0.5rem 1rem;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-    
-    .btn-primary:hover {
-      background: hsl(var(--primary) / 0.9);
-    }
-    
-    .btn-ghost {
-      background: transparent;
-      border: 1px solid hsl(var(--border));
-      color: hsl(var(--foreground));
-      border-radius: calc(var(--radius));
-      padding: 0.5rem 1rem;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-    
-    .btn-ghost:hover {
-      background: hsl(var(--accent));
-      color: hsl(var(--accent-foreground));
-    }
-
-    /* Status Indicators */
-    .status-success { color: #10b981; }
-    .status-warning { color: #f59e0b; }
-    .status-error { color: #ef4444; }
-    .status-info { color: #3b82f6; }
-  
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            border: 'hsl(var(--border))',
-            input: 'hsl(var(--input))',
-            ring: 'hsl(var(--ring))',
-            background: 'hsl(var(--background))',
-            foreground: 'hsl(var(--foreground))',
-            primary: {
-              DEFAULT: 'hsl(var(--primary))',
-              foreground: 'hsl(var(--primary-foreground))',
-            },
-            secondary: {
-              DEFAULT: 'hsl(var(--secondary))',
-              foreground: 'hsl(var(--secondary-foreground))',
-            },
-            destructive: {
-              DEFAULT: 'hsl(var(--destructive))',
-              foreground: 'hsl(var(--destructive-foreground))',
-            },
-            muted: {
-              DEFAULT: 'hsl(var(--muted))',
-              foreground: 'hsl(var(--muted-foreground))',
-            },
-            accent: {
-              DEFAULT: 'hsl(var(--accent))',
-              foreground: 'hsl(var(--accent-foreground))',
-            },
-            popover: {
-              DEFAULT: 'hsl(var(--popover))',
-              foreground: 'hsl(var(--popover-foreground))',
-            },
-            card: {
-              DEFAULT: 'hsl(var(--card))',
-              foreground: 'hsl(var(--card-foreground))',
-            },
-          },
-          borderRadius: {
-            lg: 'var(--radius)',
-            md: 'calc(var(--radius) - 2px)',
-            sm: 'calc(var(--radius) - 4px)',
-          },
-        },
-      },
-    }
-  </script>
-    .topology-container {
-      position: relative;
-      border: 1px solid hsl(var(--border));
-      border-radius: 0.5rem;
-      background: hsl(var(--card));
-      overflow: hidden;
-    }
+    /* D3.js Topology Styles */
     .node {
       cursor: pointer;
-      transition: all 0.3s ease;
     }
-    .node:hover {
-      stroke-width: 3px;
-    }
-    .link {
-      stroke: hsl(var(--muted-foreground));
+    
+    .node circle {
       stroke-width: 2px;
-      opacity: 0.6;
       transition: all 0.3s ease;
     }
-    .link.active {
-      stroke: hsl(var(--primary));
+    
+    .node:hover circle {
       stroke-width: 3px;
-      opacity: 1;
+      filter: brightness(1.1);
     }
-    .node-label {
+    
+    .node text {
       font-size: 12px;
-      font-weight: 500;
-      fill: hsl(var(--foreground));
-      text-anchor: middle;
       pointer-events: none;
     }
+    
+    .link {
+      fill: none;
+      stroke: #999;
+      stroke-opacity: 0.6;
+      stroke-width: 2px;
+    }
+    
+    .link.critical {
+      stroke: #ef4444;
+      stroke-width: 3px;
+    }
+    
+    .link.warning {
+      stroke: #f59e0b;
+    }
+    
+    .link.healthy {
+      stroke: #10b981;
+    }
+    
     .tooltip {
       position: absolute;
       padding: 8px 12px;
-      background: hsl(var(--popover));
-      border: 1px solid hsl(var(--border));
-      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      border-radius: 4px;
       font-size: 12px;
       pointer-events: none;
-      z-index: 1000;
       opacity: 0;
       transition: opacity 0.2s;
+    }
+    
+    #topology-container {
+      width: 100%;
+      height: 600px;
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: 8px;
+      overflow: hidden;
     }
   </style>
 </head>
 <body class="bg-background text-foreground">
-  <div id="root"></div>
-  
-  <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
-    
-    // Service Topology Dashboard Component
-    const TopologyDashboard = () => {
-      const [isDark, setIsDark] = useState(false);
-      const [timeRange, setTimeRange] = useState('1h');
-      const [loading, setLoading] = useState(false);
-      const [selectedLayout, setSelectedLayout] = useState('force');
-      const [selectedNode, setSelectedNode] = useState(null);
-      const [showMetrics, setShowMetrics] = useState(true);
+  <!-- Header -->
+  <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
+    <div class="container mx-auto flex h-14 items-center px-4">
+      <div class="mr-4 flex items-center space-x-2">
+        <h1 class="font-bold text-xl text-foreground">AIRIS APM</h1>
+        <span class="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">서비스 토폴로지</span>
+      </div>
       
-      const [topologyData, setTopologyData] = useState({
-        services: [
-          { id: 'api-gateway', name: 'API Gateway', type: 'gateway', status: 'healthy', x: 400, y: 100, connections: 8, responseTime: 45, errorRate: 0.1 },
-          { id: 'user-service', name: 'User Service', type: 'microservice', status: 'healthy', x: 200, y: 250, connections: 12, responseTime: 89, errorRate: 0.3 },
-          { id: 'order-service', name: 'Order Service', type: 'microservice', status: 'warning', x: 400, y: 250, connections: 15, responseTime: 156, errorRate: 1.2 },
-          { id: 'payment-service', name: 'Payment Service', type: 'microservice', status: 'healthy', x: 600, y: 250, connections: 8, responseTime: 78, errorRate: 0.2 },
-          { id: 'notification-service', name: 'Notification Service', type: 'microservice', status: 'healthy', x: 300, y: 400, connections: 6, responseTime: 34, errorRate: 0.1 },
-          { id: 'postgres-db', name: 'PostgreSQL', type: 'database', status: 'healthy', x: 150, y: 400, connections: 25, responseTime: 12, errorRate: 0.0 },
-          { id: 'redis-cache', name: 'Redis Cache', type: 'cache', status: 'healthy', x: 500, y: 400, connections: 18, responseTime: 3, errorRate: 0.0 },
-          { id: 'kafka-queue', name: 'Kafka Queue', type: 'queue', status: 'healthy', x: 650, y: 400, connections: 12, responseTime: 8, errorRate: 0.0 }
-        ],
-        connections: [
-          { source: 'api-gateway', target: 'user-service', traffic: 245, latency: 34 },
-          { source: 'api-gateway', target: 'order-service', traffic: 189, latency: 67 },
-          { source: 'api-gateway', target: 'payment-service', traffic: 156, latency: 23 },
-          { source: 'user-service', target: 'postgres-db', traffic: 89, latency: 12 },
-          { source: 'user-service', target: 'redis-cache', traffic: 145, latency: 3 },
-          { source: 'order-service', target: 'postgres-db', traffic: 67, latency: 15 },
-          { source: 'order-service', target: 'kafka-queue', traffic: 34, latency: 8 },
-          { source: 'payment-service', target: 'postgres-db', traffic: 23, latency: 10 },
-          { source: 'payment-service', target: 'notification-service', traffic: 12, latency: 5 }
-        ],
-        metrics: {
-          totalServices: 8,
-          healthyServices: 7,
-          warningServices: 1,
-          criticalServices: 0,
-          avgResponseTime: 64,
-          totalTraffic: 2847
-        }
-      });
+      <!-- Navigation -->
+      <nav class="flex items-center space-x-6 text-sm">
+        <a href="/" class="text-foreground/60 hover:text-foreground/80 transition-colors">통합 대시보드</a>
+        <a href="/j2ee-dashboard.html" class="text-foreground/60 hover:text-foreground/80 transition-colors">J2EE 모니터링</a>
+        <a href="/was-dashboard.html" class="text-foreground/60 hover:text-foreground/80 transition-colors">WAS 모니터링</a>
+        <a href="/exception-dashboard.html" class="text-foreground/60 hover:text-foreground/80 transition-colors">예외 추적</a>
+        <span class="font-medium text-foreground/80">서비스 토폴로지</span>
+        <a href="/alert-dashboard.html" class="text-foreground/60 hover:text-foreground/80 transition-colors">알림 관리</a>
+        <a href="/ontology.html" class="text-foreground/60 hover:text-foreground/80 transition-colors">온톨로지</a>
+      </nav>
 
-      const svgRef = useRef(null);
-      const tooltipRef = useRef(null);
-
-      useEffect(() => {
-        if (isDark) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      }, [isDark]);
-
-      useEffect(() => {
-        const interval = setInterval(() => {
-          setTopologyData(prev => ({
-            ...prev,
-            services: prev.services.map(service => ({
-              ...service,
-              responseTime: Math.max(10, service.responseTime + (Math.random() - 0.5) * 20),
-              errorRate: Math.max(0, service.errorRate + (Math.random() - 0.5) * 0.5),
-              connections: service.connections + Math.floor((Math.random() - 0.5) * 4)
-            })),
-            connections: prev.connections.map(conn => ({
-              ...conn,
-              traffic: Math.max(1, conn.traffic + Math.floor((Math.random() - 0.5) * 20)),
-              latency: Math.max(1, conn.latency + Math.floor((Math.random() - 0.5) * 10))
-            }))
-          }));
-        }, 5000);
-
-        return () => clearInterval(interval);
-      }, []);
-
-      useEffect(() => {
-        renderTopology();
-      }, [topologyData, selectedLayout, isDark]);
-
-      const refreshData = () => {
-        setLoading(true);
-        setTimeout(() => setLoading(false), 1000);
-      };
-
-      const renderTopology = () => {
-        if (!svgRef.current) return;
-
-        const svg = d3.select(svgRef.current);
-        const width = 800;
-        const height = 500;
+      <!-- Right side actions -->
+      <div class="ml-auto flex items-center space-x-4">
+        <button id="layoutBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-border bg-background hover:bg-accent h-9 px-3">
+          레이아웃 변경
+        </button>
         
-        svg.selectAll('*').remove();
-        svg.attr('width', width).attr('height', height);
-
-        // Create groups for links and nodes
-        const linkGroup = svg.append('g').attr('class', 'links');
-        const nodeGroup = svg.append('g').attr('class', 'nodes');
-
-        // Create links
-        const links = linkGroup.selectAll('.link')
-          .data(topologyData.connections)
-          .enter().append('line')
-          .attr('class', 'link')
-          .style('stroke-width', d => Math.max(1, d.traffic / 50));
-
-        // Create nodes
-        const nodes = nodeGroup.selectAll('.node')
-          .data(topologyData.services)
-          .enter().append('g')
-          .attr('class', 'node')
-          .style('cursor', 'pointer');
-
-        // Add circles for nodes
-        nodes.append('circle')
-          .attr('r', d => {
-            switch(d.type) {
-              case 'gateway': return 25;
-              case 'microservice': return 20;
-              case 'database': return 18;
-              case 'cache': return 15;
-              case 'queue': return 15;
-              default: return 15;
-            }
-          })
-          .style('fill', d => {
-            switch(d.status) {
-              case 'healthy': return 'hsl(142, 76%, 36%)';
-              case 'warning': return 'hsl(48, 96%, 53%)';
-              case 'critical': return 'hsl(0, 84%, 60%)';
-              default: return 'hsl(210, 16%, 82%)';
-            }
-          })
-          .style('stroke', d => {
-            switch(d.type) {
-              case 'gateway': return 'hsl(262, 83%, 58%)';
-              case 'microservice': return 'hsl(211, 100%, 50%)';
-              case 'database': return 'hsl(33, 100%, 50%)';
-              case 'cache': return 'hsl(0, 100%, 50%)';
-              case 'queue': return 'hsl(120, 100%, 25%)';
-              default: return 'hsl(210, 16%, 82%)';
-            }
-          })
-          .style('stroke-width', 3);
-
-        // Add labels
-        nodes.append('text')
-          .attr('class', 'node-label')
-          .attr('dy', d => {
-            switch(d.type) {
-              case 'gateway': return 35;
-              case 'microservice': return 30;
-              default: return 25;
-            }
-          })
-          .text(d => d.name)
-          .style('font-size', '11px')
-          .style('font-weight', '500');
-
-        // Add service type icons (simplified with text)
-        nodes.append('text')
-          .attr('class', 'node-icon')
-          .attr('text-anchor', 'middle')
-          .attr('dy', 4)
-          .style('font-size', '12px')
-          .style('font-weight', 'bold')
-          .style('fill', 'white')
-          .text(d => {
-            switch(d.type) {
-              case 'gateway': return 'GW';
-              case 'microservice': return 'MS';
-              case 'database': return 'DB';
-              case 'cache': return 'C';
-              case 'queue': return 'Q';
-              default: return '?';
-            }
-          });
-
-        // Position nodes and links
-        const updatePositions = () => {
-          // Update link positions
-          links
-            .attr('x1', d => {
-              const source = topologyData.services.find(s => s.id === d.source);
-              return source ? source.x : 0;
-            })
-            .attr('y1', d => {
-              const source = topologyData.services.find(s => s.id === d.source);
-              return source ? source.y : 0;
-            })
-            .attr('x2', d => {
-              const target = topologyData.services.find(s => s.id === d.target);
-              return target ? target.x : 0;
-            })
-            .attr('y2', d => {
-              const target = topologyData.services.find(s => s.id === d.target);
-              return target ? target.y : 0;
-            });
-
-          // Update node positions
-          nodes.attr('transform', d => `translate(${d.x},${d.y})`);
-        };
-
-        updatePositions();
-
-        // Add drag behavior
-        const drag = d3.drag()
-          .on('start', function(event, d) {
-            d3.select(this).raise();
-          })
-          .on('drag', function(event, d) {
-            d.x = event.x;
-            d.y = event.y;
-            updatePositions();
-          });
-
-        nodes.call(drag);
-
-        // Add click handlers
-        nodes.on('click', function(event, d) {
-          setSelectedNode(selectedNode?.id === d.id ? null : d);
-        });
-
-        // Add hover tooltips
-        nodes
-          .on('mouseover', function(event, d) {
-            const tooltip = d3.select(tooltipRef.current);
-            tooltip.style('opacity', 1)
-              .html(`
-                <div><strong>${d.name}</strong></div>
-                <div>상태: ${d.status === 'healthy' ? '정상' : d.status === 'warning' ? '경고' : '위험'}</div>
-                <div>연결: ${d.connections}개</div>
-                <div>응답시간: ${Math.round(d.responseTime)}ms</div>
-                <div>에러율: ${d.errorRate.toFixed(1)}%</div>
-              `)
-              .style('left', (event.pageX + 10) + 'px')
-              .style('top', (event.pageY - 10) + 'px');
-          })
-          .on('mouseout', function() {
-            d3.select(tooltipRef.current).style('opacity', 0);
-          });
-      };
-
-      const applyLayout = (layout) => {
-        setSelectedLayout(layout);
-        // Simple layout algorithms
-        if (layout === 'circular') {
-          const centerX = 400;
-          const centerY = 250;
-          const radius = 180;
-          setTopologyData(prev => ({
-            ...prev,
-            services: prev.services.map((service, index) => {
-              const angle = (index / prev.services.length) * 2 * Math.PI;
-              return {
-                ...service,
-                x: centerX + radius * Math.cos(angle),
-                y: centerY + radius * Math.sin(angle)
-              };
-            })
-          }));
-        } else if (layout === 'hierarchical') {
-          setTopologyData(prev => ({
-            ...prev,
-            services: prev.services.map((service, index) => {
-              const row = Math.floor(index / 3);
-              const col = index % 3;
-              return {
-                ...service,
-                x: 150 + col * 250,
-                y: 100 + row * 150
-              };
-            })
-          }));
-        }
-      };
-
-      return (
-        <div className="min-h-screen bg-background text-foreground">
-          {/* Header */}
-          <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container flex h-14 items-center">
-              <div className="mr-4 flex items-center space-x-2">
-                <span className="font-bold text-xl">AIRIS APM</span>
-                <span className="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">
-                  토폴로지
-                </span>
-              </div>
-              
-              {/* Navigation */}
-              <nav className="flex items-center space-x-6 text-sm">
-                <a href="/src/dashboards/index.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  대시보드
-                </a>
-                <a href="/src/dashboards/j2ee-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  J2EE 모니터링
-                </a>
-                <a href="/src/dashboards/was-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  WAS 모니터링
-                </a>
-                <a href="/src/dashboards/exception-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  예외 추적
-                </a>
-                <a href="#" className="font-medium text-foreground/80 hover:text-foreground transition-colors">
-                  서비스 토폴로지
-                </a>
-                <a href="/src/dashboards/alert-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  알림 관리
-                </a>
-              </nav>
-
-              {/* Right side actions */}
-              <div className="ml-auto flex items-center space-x-4">
-                <select 
-                  value={selectedLayout} 
-                  onChange={(e) => applyLayout(e.target.value)}
-                  className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                >
-                  <option value="force">자동 배치</option>
-                  <option value="circular">원형 레이아웃</option>
-                  <option value="hierarchical">계층형 레이아웃</option>
-                </select>
-                
-                <button
-                  onClick={() => setShowMetrics(!showMetrics)}
-                  className={`h-9 px-3 py-1 text-sm rounded-md border border-input transition-colors ${
-                    showMetrics ? 'bg-primary text-primary-foreground' : 'bg-background hover:bg-accent'
-                  }`}
-                >
-                  메트릭 표시
-                </button>
-                
-                <select 
-                  value={timeRange} 
-                  onChange={(e) => setTimeRange(e.target.value)}
-                  className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                >
-                  <option value="15m">15분</option>
-                  <option value="1h">1시간</option>
-                  <option value="6h">6시간</option>
-                  <option value="24h">24시간</option>
-                </select>
-                
-                <button
-                  onClick={refreshData}
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-                  ) : (
-                    '새로고침'
-                  )}
-                </button>
-                
-                <button
-                  onClick={() => setIsDark(!isDark)}
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 w-9 border border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                >
-                  {isDark ? '🌞' : '🌙'}
-                </button>
-              </div>
-            </div>
-          </header>
-
-          {/* Page Header */}
-          <div className="border-b">
-            <div className="container flex h-16 items-center px-4">
-              <div>
-                <h1 className="text-2xl font-semibold flex items-center space-x-2">
-                  <span>🗺️</span>
-                  <span>서비스 토폴로지 맵</span>
-                </h1>
-                <p className="text-sm text-muted-foreground">실시간 서비스 의존성 및 통신 현황 시각화</p>
-              </div>
-              <div className="ml-auto flex items-center space-x-2">
-                <span className="inline-flex items-center rounded-md bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
-                  <span className="mr-1.5 h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-                  모든 서비스 정상
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <main className="container py-6 space-y-6">
-            {/* Overview Metrics */}
-            {showMetrics && (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <MetricCard
-                  title="전체 서비스"
-                  value={topologyData.metrics.totalServices}
-                  description="모니터링 대상"
-                  trend="success"
-                  trendValue="정상"
-                  icon="🔧"
-                />
-                <MetricCard
-                  title="정상 서비스"
-                  value={topologyData.metrics.healthyServices}
-                  description={`전체 대비 ${Math.round((topologyData.metrics.healthyServices / topologyData.metrics.totalServices) * 100)}%`}
-                  trend="success"
-                  trendValue="우수"
-                  icon="✅"
-                />
-                <MetricCard
-                  title="평균 응답시간"
-                  value={`${topologyData.metrics.avgResponseTime}ms`}
-                  description="서비스 간 통신"
-                  trend="success"
-                  trendValue="양호"
-                  icon="⏱️"
-                />
-                <MetricCard
-                  title="총 트래픽"
-                  value={`${(topologyData.metrics.totalTraffic / 1000).toFixed(1)}K`}
-                  description="분당 요청 수"
-                  trend="success"
-                  trendValue="+8.2%"
-                  icon="📈"
-                />
-              </div>
-            )}
-
-            {/* Topology Visualization */}
-            <div className="grid gap-4 md:grid-cols-4">
-              <div className="md:col-span-3">
-                <div className="rounded-lg border bg-card p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold">서비스 맵</h3>
-                    <div className="flex items-center space-x-2 text-xs">
-                      <div className="flex items-center space-x-1">
-                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                        <span>정상</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                        <span>경고</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                        <span>위험</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="topology-container">
-                    <svg ref={svgRef}></svg>
-                    <div ref={tooltipRef} className="tooltip"></div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Service Details Panel */}
-              <div className="space-y-4">
-                <div className="rounded-lg border bg-card p-4">
-                  <h4 className="font-semibold mb-3">서비스 상세 정보</h4>
-                  {selectedNode ? (
-                    <ServiceDetails service={selectedNode} />
-                  ) : (
-                    <div className="text-sm text-muted-foreground text-center py-8">
-                      서비스를 클릭하여
-                      <br />
-                      상세 정보를 확인하세요
-                    </div>
-                  )}
-                </div>
-                
-                <div className="rounded-lg border bg-card p-4">
-                  <h4 className="font-semibold mb-3">토폴로지 통계</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>노드 수</span>
-                      <span className="font-medium">{topologyData.services.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>연결 수</span>
-                      <span className="font-medium">{topologyData.connections.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>가용성</span>
-                      <span className="font-medium text-green-600 dark:text-green-400">99.2%</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>최대 깊이</span>
-                      <span className="font-medium">3</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Connection Analysis */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-lg border bg-card p-6">
-                <h3 className="text-lg font-semibold mb-4">연결 상태 분석</h3>
-                <div className="space-y-3">
-                  {topologyData.connections.slice(0, 5).map((conn, index) => {
-                    const source = topologyData.services.find(s => s.id === conn.source);
-                    const target = topologyData.services.find(s => s.id === conn.target);
-                    return (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded">
-                        <div className="flex-1">
-                          <div className="text-sm font-medium">
-                            {source?.name} → {target?.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            트래픽: {conn.traffic} req/min
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-medium">{conn.latency}ms</div>
-                          <div className={`text-xs ${
-                            conn.latency < 20 ? 'text-green-600 dark:text-green-400' :
-                            conn.latency < 50 ? 'text-yellow-600 dark:text-yellow-400' :
-                            'text-red-600 dark:text-red-400'
-                          }`}>
-                            {conn.latency < 20 ? '우수' : conn.latency < 50 ? '보통' : '느림'}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              
-              <div className="rounded-lg border bg-card p-6">
-                <h3 className="text-lg font-semibold mb-4">임계 경로 분석</h3>
-                <div className="space-y-4">
-                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded">
-                    <div className="text-sm font-medium text-red-700 dark:text-red-300">
-                      ⚠️ 임계 경로 감지
-                    </div>
-                    <div className="text-xs text-red-600 dark:text-red-400 mt-1">
-                      API Gateway → Order Service → PostgreSQL
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Order Service에서 응답시간 증가 감지
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h5 className="text-sm font-medium">핵심 서비스</h5>
-                    <div className="text-xs space-y-1">
-                      <div className="flex justify-between">
-                        <span>API Gateway</span>
-                        <span className="text-red-600 dark:text-red-400 font-medium">고위험</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>PostgreSQL</span>
-                        <span className="text-yellow-600 dark:text-yellow-400 font-medium">중위험</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Order Service</span>
-                        <span className="text-yellow-600 dark:text-yellow-400 font-medium">중위험</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </main>
-        </div>
-      );
-    };
-
-    // Service Details Component
-    const ServiceDetails = ({ service }) => (
-      <div className="space-y-3">
-        <div className="flex items-center space-x-2">
-          <div className={`w-3 h-3 rounded-full ${
-            service.status === 'healthy' ? 'bg-green-500' :
-            service.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
-          }`}></div>
-          <h5 className="font-medium">{service.name}</h5>
-        </div>
+        <button id="refreshBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4">
+          새로고침
+        </button>
         
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span>타입</span>
-            <span className="font-medium capitalize">{service.type}</span>
+        <button id="themeToggle" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-border bg-background hover:bg-accent h-9 w-9">
+          🌙
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-6">
+    <!-- Service Health Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-card border border-border rounded-lg p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-muted-foreground">총 서비스</p>
+            <p class="text-2xl font-bold">12</p>
           </div>
-          <div className="flex justify-between">
-            <span>상태</span>
-            <span className={`font-medium ${
-              service.status === 'healthy' ? 'text-green-600 dark:text-green-400' :
-              service.status === 'warning' ? 'text-yellow-600 dark:text-yellow-400' :
-              'text-red-600 dark:text-red-400'
-            }`}>
-              {service.status === 'healthy' ? '정상' :
-               service.status === 'warning' ? '경고' : '위험'}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span>연결 수</span>
-            <span className="font-medium">{service.connections}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>응답시간</span>
-            <span className="font-medium">{Math.round(service.responseTime)}ms</span>
-          </div>
-          <div className="flex justify-between">
-            <span>에러율</span>
-            <span className="font-medium">{service.errorRate.toFixed(1)}%</span>
-          </div>
-        </div>
-        
-        <div className="pt-2 border-t">
-          <div className="text-xs text-muted-foreground">
-            클릭하여 상세 메트릭 확인
+          <div class="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center">
+            🔗
           </div>
         </div>
       </div>
-    );
-
-    // Reusable Components
-    const MetricCard = ({ title, value, description, trend, trendValue, icon }) => {
-      const getTrendColor = () => {
-        switch (trend) {
-          case 'success': return 'text-green-600 dark:text-green-400';
-          case 'warning': return 'text-yellow-600 dark:text-yellow-400';
-          case 'error': return 'text-red-600 dark:text-red-400';
-          default: return 'text-blue-600 dark:text-blue-400';
-        }
-      };
-
-      return (
-        <div className="rounded-lg border bg-card p-6">
-          <div className="flex items-center justify-between space-y-0 pb-2">
-            <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
-            <span className="text-2xl">{icon}</span>
+      
+      <div class="bg-card border border-border rounded-lg p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-muted-foreground">정상</p>
+            <p class="text-2xl font-bold text-green-600">9</p>
           </div>
-          <div className="text-2xl font-bold">{value}</div>
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
-          {trendValue && (
-            <div className={`text-xs font-medium mt-2 ${getTrendColor()}`}>
-              {trendValue}
-            </div>
-          )}
+          <div class="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+            ✅
+          </div>
         </div>
-      );
+      </div>
+      
+      <div class="bg-card border border-border rounded-lg p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-muted-foreground">경고</p>
+            <p class="text-2xl font-bold text-orange-600">2</p>
+          </div>
+          <div class="h-8 w-8 bg-orange-100 rounded-full flex items-center justify-center">
+            ⚠️
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-card border border-border rounded-lg p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-muted-foreground">장애</p>
+            <p class="text-2xl font-bold text-red-600">1</p>
+          </div>
+          <div class="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
+            🚨
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Topology Visualization -->
+    <div class="bg-card border border-border rounded-lg p-6 mb-6">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">서비스 의존성 맵</h3>
+        <div class="flex space-x-2">
+          <button id="zoomIn" class="px-3 py-1 text-sm border border-border rounded hover:bg-accent">+</button>
+          <button id="zoomOut" class="px-3 py-1 text-sm border border-border rounded hover:bg-accent">-</button>
+          <button id="zoomReset" class="px-3 py-1 text-sm border border-border rounded hover:bg-accent">Reset</button>
+        </div>
+      </div>
+      <div id="topology-container"></div>
+    </div>
+
+    <!-- Service Details Table -->
+    <div class="bg-card border border-border rounded-lg p-6">
+      <h3 class="text-lg font-semibold mb-4">서비스 상세 정보</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border">
+              <th class="text-left py-2 px-4">서비스명</th>
+              <th class="text-left py-2 px-4">상태</th>
+              <th class="text-left py-2 px-4">응답시간</th>
+              <th class="text-left py-2 px-4">처리량</th>
+              <th class="text-left py-2 px-4">에러율</th>
+              <th class="text-left py-2 px-4">의존성</th>
+            </tr>
+          </thead>
+          <tbody id="serviceTableBody">
+            <!-- Table rows will be populated here -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Service Details Modal -->
+  <div id="serviceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-card border border-border rounded-lg p-6 max-w-2xl w-full mx-4">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">서비스 상세 정보</h3>
+        <button id="closeModal" class="text-foreground/60 hover:text-foreground">✕</button>
+      </div>
+      <div id="modalContent">
+        <!-- Modal content will be populated here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Service topology data
+    const topologyData = {
+      nodes: [
+        { id: "gateway", name: "API Gateway", type: "gateway", status: "healthy", responseTime: 45, throughput: 12000 },
+        { id: "auth", name: "Auth Service", type: "service", status: "healthy", responseTime: 23, throughput: 8500 },
+        { id: "user", name: "User Service", type: "service", status: "healthy", responseTime: 67, throughput: 5600 },
+        { id: "order", name: "Order Service", type: "service", status: "warning", responseTime: 234, throughput: 3200 },
+        { id: "payment", name: "Payment Service", type: "service", status: "critical", responseTime: 567, throughput: 1200 },
+        { id: "inventory", name: "Inventory Service", type: "service", status: "healthy", responseTime: 89, throughput: 4500 },
+        { id: "notification", name: "Notification Service", type: "service", status: "healthy", responseTime: 34, throughput: 9800 },
+        { id: "analytics", name: "Analytics Service", type: "service", status: "warning", responseTime: 156, throughput: 2100 },
+        { id: "db-main", name: "Main Database", type: "database", status: "healthy", responseTime: 12, throughput: 15000 },
+        { id: "db-cache", name: "Redis Cache", type: "cache", status: "healthy", responseTime: 2, throughput: 45000 },
+        { id: "mq", name: "Message Queue", type: "queue", status: "healthy", responseTime: 8, throughput: 8900 },
+        { id: "storage", name: "Object Storage", type: "storage", status: "healthy", responseTime: 45, throughput: 3400 }
+      ],
+      links: [
+        { source: "gateway", target: "auth", status: "healthy" },
+        { source: "gateway", target: "user", status: "healthy" },
+        { source: "gateway", target: "order", status: "warning" },
+        { source: "gateway", target: "payment", status: "critical" },
+        { source: "auth", target: "db-main", status: "healthy" },
+        { source: "auth", target: "db-cache", status: "healthy" },
+        { source: "user", target: "db-main", status: "healthy" },
+        { source: "user", target: "db-cache", status: "healthy" },
+        { source: "order", target: "inventory", status: "healthy" },
+        { source: "order", target: "payment", status: "critical" },
+        { source: "order", target: "db-main", status: "healthy" },
+        { source: "payment", target: "db-main", status: "critical" },
+        { source: "inventory", target: "db-main", status: "healthy" },
+        { source: "notification", target: "mq", status: "healthy" },
+        { source: "analytics", target: "db-main", status: "warning" },
+        { source: "analytics", target: "storage", status: "healthy" }
+      ]
     };
 
-    // Render the app
-    ReactDOM.render(<TopologyDashboard />, document.getElementById('root'));
+    // Theme toggle functionality
+    const themeToggle = document.getElementById('themeToggle');
+    let isDark = false;
+
+    themeToggle.addEventListener('click', () => {
+      isDark = !isDark;
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        themeToggle.textContent = '☀️';
+      } else {
+        document.documentElement.classList.remove('dark');
+        themeToggle.textContent = '🌙';
+      }
+      updateTopology();
+    });
+
+    // D3.js Topology Visualization
+    let svg, simulation, currentLayout = 'force';
+
+    function initTopology() {
+      const container = d3.select("#topology-container");
+      const width = container.node().getBoundingClientRect().width;
+      const height = 600;
+
+      // Clear existing SVG
+      container.selectAll("*").remove();
+
+      // Create SVG
+      svg = container.append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+      // Create container for zoom
+      const g = svg.append("g");
+
+      // Add zoom behavior
+      const zoom = d3.zoom()
+        .scaleExtent([0.5, 5])
+        .on("zoom", (event) => {
+          g.attr("transform", event.transform);
+        });
+
+      svg.call(zoom);
+
+      // Zoom controls
+      document.getElementById('zoomIn').addEventListener('click', () => {
+        svg.transition().call(zoom.scaleBy, 1.2);
+      });
+
+      document.getElementById('zoomOut').addEventListener('click', () => {
+        svg.transition().call(zoom.scaleBy, 0.8);
+      });
+
+      document.getElementById('zoomReset').addEventListener('click', () => {
+        svg.transition().call(zoom.transform, d3.zoomIdentity);
+      });
+
+      // Create simulation
+      simulation = d3.forceSimulation(topologyData.nodes)
+        .force("link", d3.forceLink(topologyData.links).id(d => d.id).distance(100))
+        .force("charge", d3.forceManyBody().strength(-500))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+      // Create links
+      const link = g.append("g")
+        .selectAll("line")
+        .data(topologyData.links)
+        .enter().append("line")
+        .attr("class", d => `link ${d.status}`)
+        .attr("stroke-width", 2);
+
+      // Create nodes
+      const node = g.append("g")
+        .selectAll("g")
+        .data(topologyData.nodes)
+        .enter().append("g")
+        .attr("class", "node")
+        .call(d3.drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended));
+
+      // Add circles to nodes
+      node.append("circle")
+        .attr("r", d => {
+          if (d.type === 'gateway') return 20;
+          if (d.type === 'database' || d.type === 'cache' || d.type === 'queue' || d.type === 'storage') return 15;
+          return 18;
+        })
+        .attr("fill", d => {
+          if (d.status === 'critical') return '#ef4444';
+          if (d.status === 'warning') return '#f59e0b';
+          return '#10b981';
+        })
+        .attr("stroke", "#fff");
+
+      // Add labels to nodes
+      node.append("text")
+        .text(d => d.name)
+        .attr("x", 0)
+        .attr("y", 30)
+        .attr("text-anchor", "middle")
+        .attr("fill", isDark ? "#e5e7eb" : "#374151");
+
+      // Add icons to nodes
+      node.append("text")
+        .text(d => {
+          if (d.type === 'gateway') return '🌐';
+          if (d.type === 'database') return '🗄️';
+          if (d.type === 'cache') return '⚡';
+          if (d.type === 'queue') return '📨';
+          if (d.type === 'storage') return '💾';
+          return '⚙️';
+        })
+        .attr("x", 0)
+        .attr("y", 5)
+        .attr("text-anchor", "middle")
+        .attr("font-size", "16px");
+
+      // Add click handler for nodes
+      node.on("click", (event, d) => {
+        showServiceDetails(d);
+      });
+
+      // Update positions on tick
+      simulation.on("tick", () => {
+        link
+          .attr("x1", d => d.source.x)
+          .attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x)
+          .attr("y2", d => d.target.y);
+
+        node
+          .attr("transform", d => `translate(${d.x},${d.y})`);
+      });
+    }
+
+    function dragstarted(event, d) {
+      if (!event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    }
+
+    function dragged(event, d) {
+      d.fx = event.x;
+      d.fy = event.y;
+    }
+
+    function dragended(event, d) {
+      if (!event.active) simulation.alphaTarget(0);
+      d.fx = null;
+      d.fy = null;
+    }
+
+    function updateTopology() {
+      initTopology();
+    }
+
+    // Layout change
+    document.getElementById('layoutBtn').addEventListener('click', () => {
+      currentLayout = currentLayout === 'force' ? 'tree' : 'force';
+      updateTopology();
+    });
+
+    // Refresh button
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      updateTopology();
+      loadServiceTable();
+    });
+
+    // Load service table
+    function loadServiceTable() {
+      const tbody = document.getElementById('serviceTableBody');
+      tbody.innerHTML = '';
+
+      topologyData.nodes.forEach(node => {
+        if (node.type === 'service' || node.type === 'gateway') {
+          const tr = document.createElement('tr');
+          tr.className = 'border-b border-border hover:bg-accent/50 cursor-pointer';
+          
+          const statusColor = {
+            'healthy': 'text-green-600',
+            'warning': 'text-orange-600',
+            'critical': 'text-red-600'
+          }[node.status];
+
+          const statusIcon = {
+            'healthy': '✅',
+            'warning': '⚠️',
+            'critical': '🚨'
+          }[node.status];
+
+          tr.innerHTML = `
+            <td class="py-2 px-4 font-medium">${node.name}</td>
+            <td class="py-2 px-4"><span class="${statusColor}">${statusIcon} ${node.status}</span></td>
+            <td class="py-2 px-4">${node.responseTime}ms</td>
+            <td class="py-2 px-4">${node.throughput.toLocaleString()}/min</td>
+            <td class="py-2 px-4">${(Math.random() * 2).toFixed(2)}%</td>
+            <td class="py-2 px-4">${topologyData.links.filter(l => l.source === node.id || l.target === node.id).length}</td>
+          `;
+
+          tr.addEventListener('click', () => showServiceDetails(node));
+          tbody.appendChild(tr);
+        }
+      });
+    }
+
+    // Show service details modal
+    function showServiceDetails(service) {
+      const modal = document.getElementById('serviceModal');
+      const modalContent = document.getElementById('modalContent');
+
+      const dependencies = topologyData.links
+        .filter(l => l.source === service.id || l.target === service.id)
+        .map(l => l.source === service.id ? l.target : l.source);
+
+      modalContent.innerHTML = `
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">서비스명</label>
+              <p class="font-semibold">${service.name}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">상태</label>
+              <p class="${service.status === 'healthy' ? 'text-green-600' : service.status === 'warning' ? 'text-orange-600' : 'text-red-600'}">
+                ${service.status}
+              </p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">응답시간</label>
+              <p>${service.responseTime}ms</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">처리량</label>
+              <p>${service.throughput.toLocaleString()}/min</p>
+            </div>
+          </div>
+          
+          <div>
+            <label class="text-sm font-medium text-muted-foreground">의존성</label>
+            <div class="mt-2 space-y-1">
+              ${dependencies.map(dep => `<div class="text-sm">• ${dep}</div>`).join('')}
+            </div>
+          </div>
+          
+          <div>
+            <label class="text-sm font-medium text-muted-foreground">최근 이슈</label>
+            <div class="mt-2 space-y-2">
+              ${service.status !== 'healthy' ? `
+                <div class="bg-orange-50 dark:bg-orange-900/20 p-2 rounded text-sm">
+                  응답 시간이 임계값을 초과했습니다.
+                </div>
+              ` : '<div class="text-sm text-muted-foreground">이슈 없음</div>'}
+            </div>
+          </div>
+        </div>
+      `;
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    // Close modal
+    document.getElementById('closeModal').addEventListener('click', () => {
+      const modal = document.getElementById('serviceModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    });
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      initTopology();
+      loadServiceTable();
+    });
+
+    // Auto-refresh every 30 seconds
+    setInterval(() => {
+      updateTopology();
+      loadServiceTable();
+    }, 30000);
   </script>
-  <!-- TweakCN Theme System -->
-  <script src="/js/tweakcn-loader.js"></script>
 </body>
 </html>

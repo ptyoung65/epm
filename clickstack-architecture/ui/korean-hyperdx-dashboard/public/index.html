@@ -4,11 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIRIS APM | 통합 모니터링 대시보드</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="./css/tailwind.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
@@ -49,11 +46,11 @@
       --popover-foreground: 210 40% 98%;
       --primary: 210 40% 98%;
       --primary-foreground: 222.2 47.4% 11.2%;
-      --secondary: 217.2 32.6% 17.5%;
+      --secondary: 222.2 84% 4.9%;
       --secondary-foreground: 210 40% 98%;
-      --muted: 217.2 32.6% 17.5%;
-      --muted-foreground: 215 20.2% 65.1%;
-      --accent: 217.2 32.6% 17.5%;
+      --muted: 222.2 84% 4.9%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --accent: 222.2 84% 4.9%;
       --accent-foreground: 210 40% 98%;
       --destructive: 0 62.8% 30.6%;
       --destructive-foreground: 210 40% 98%;
@@ -62,492 +59,362 @@
       --ring: 212.7 26.8% 83.9%;
     }
 
-    /* shadcn/ui Utility Classes */
     .bg-background { background-color: hsl(var(--background)); }
     .text-foreground { color: hsl(var(--foreground)); }
     .bg-card { background-color: hsl(var(--card)); }
     .text-card-foreground { color: hsl(var(--card-foreground)); }
     .bg-primary { background-color: hsl(var(--primary)); }
-    .text-primary { color: hsl(var(--primary)); }
     .text-primary-foreground { color: hsl(var(--primary-foreground)); }
-    .bg-secondary { background-color: hsl(var(--secondary)); }
-    .text-secondary-foreground { color: hsl(var(--secondary-foreground)); }
-    .bg-muted { background-color: hsl(var(--muted)); }
+    .text-primary { color: hsl(var(--primary)); }
     .text-muted-foreground { color: hsl(var(--muted-foreground)); }
-    .bg-accent { background-color: hsl(var(--accent)); }
-    .text-accent-foreground { color: hsl(var(--accent-foreground)); }
-    .bg-destructive { background-color: hsl(var(--destructive)); }
-    .text-destructive-foreground { color: hsl(var(--destructive-foreground)); }
-    .border { border: 1px solid hsl(var(--border)); }
-    .border-input { border: 1px solid hsl(var(--input)); }
+    .border-border { border-color: hsl(var(--border)); }
+    .text-destructive { color: hsl(var(--destructive)); }
     
-    /* Modern Card Styles */
-    .modern-card {
-      background: hsl(var(--card));
-      border: 1px solid hsl(var(--border));
-      border-radius: calc(var(--radius));
-      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    .metric-card {
+      transition: all 0.2s ease-in-out;
     }
     
-    /* Button Styles */
-    .btn-primary {
-      background: hsl(var(--primary));
-      color: hsl(var(--primary-foreground));
-      border: none;
-      border-radius: calc(var(--radius));
-      padding: 0.5rem 1rem;
-      font-weight: 500;
-      transition: all 0.2s;
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     }
     
-    .btn-primary:hover {
-      background: hsl(var(--primary) / 0.9);
+    .chart-container {
+      position: relative;
+      height: 256px;
+      width: 100%;
     }
-    
-    .btn-ghost {
-      background: transparent;
-      border: 1px solid hsl(var(--border));
-      color: hsl(var(--foreground));
-      border-radius: calc(var(--radius));
-      padding: 0.5rem 1rem;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-    
-    .btn-ghost:hover {
-      background: hsl(var(--accent));
-      color: hsl(var(--accent-foreground));
-    }
-
-    /* Status Indicators */
-    .status-success { color: #10b981; }
-    .status-warning { color: #f59e0b; }
-    .status-error { color: #ef4444; }
-    .status-info { color: #3b82f6; }
   </style>
-  
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            border: 'hsl(var(--border))',
-            input: 'hsl(var(--input))',
-            ring: 'hsl(var(--ring))',
-            background: 'hsl(var(--background))',
-            foreground: 'hsl(var(--foreground))',
-            primary: {
-              DEFAULT: 'hsl(var(--primary))',
-              foreground: 'hsl(var(--primary-foreground))',
-            },
-            secondary: {
-              DEFAULT: 'hsl(var(--secondary))',
-              foreground: 'hsl(var(--secondary-foreground))',
-            },
-            destructive: {
-              DEFAULT: 'hsl(var(--destructive))',
-              foreground: 'hsl(var(--destructive-foreground))',
-            },
-            muted: {
-              DEFAULT: 'hsl(var(--muted))',
-              foreground: 'hsl(var(--muted-foreground))',
-            },
-            accent: {
-              DEFAULT: 'hsl(var(--accent))',
-              foreground: 'hsl(var(--accent-foreground))',
-            },
-            popover: {
-              DEFAULT: 'hsl(var(--popover))',
-              foreground: 'hsl(var(--popover-foreground))',
-            },
-            card: {
-              DEFAULT: 'hsl(var(--card))',
-              foreground: 'hsl(var(--card-foreground))',
-            },
-          },
-          borderRadius: {
-            lg: 'var(--radius)',
-            md: 'calc(var(--radius) - 2px)',
-            sm: 'calc(var(--radius) - 4px)',
-          },
-        },
-      },
-    }
-  </script>
 </head>
 <body class="bg-background text-foreground">
-  <div id="root"></div>
-  
-  <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
-    
-    // Main Dashboard Component with shadcn/ui styling
-    const Dashboard = () => {
-      const [isDark, setIsDark] = useState(false);
-      const [timeRange, setTimeRange] = useState('24h');
-      const [loading, setLoading] = useState(false);
-      const [metrics, setMetrics] = useState({
-        responseTime: 94,
-        throughput: 12543,
-        errorRate: 0.24,
-        activeUsers: 1847,
-        cpuUsage: 68,
-        memoryUsage: 74,
-        diskUsage: 52,
-        networkIO: 234
+  <!-- Modern Header -->
+  <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
+    <div class="container mx-auto flex h-14 items-center px-4">
+      <div class="mr-4 flex items-center space-x-2">
+        <h1 class="font-bold text-xl text-foreground">AIRIS APM</h1>
+        <span class="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">통합 모니터링</span>
+      </div>
+      
+      <!-- Navigation Menu -->
+      <nav class="flex items-center space-x-6 text-sm ml-6">
+        <span class="font-medium text-foreground/80 hover:text-foreground transition-colors">
+          통합 대시보드
+        </span>
+        <button onclick="window.location.href = '/j2ee-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+          J2EE 모니터링
+        </button>
+        <button onclick="window.location.href = '/was-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+          WAS 모니터링
+        </button>
+        <button onclick="window.location.href = '/exception-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+          예외 추적
+        </button>
+        <button onclick="window.location.href = '/topology-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+          서비스 토폴로지
+        </button>
+        <button onclick="window.location.href = '/alert-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+          알림 관리
+        </button>
+      </nav>
+      
+      <div class="flex items-center space-x-4 ml-auto">
+        <select id="timeRange" class="text-sm border border-border rounded-md px-3 py-1 bg-background">
+          <option value="1h">최근 1시간</option>
+          <option value="24h" selected>최근 24시간</option>
+          <option value="7d">최근 7일</option>
+          <option value="30d">최근 30일</option>
+        </select>
+        
+        <button id="refreshBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+          새로고침
+        </button>
+        
+        <button id="themeToggle" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 w-9">
+          🌙
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-6">
+    <!-- Key Metrics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="metric-card bg-card border border-border rounded-lg p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-muted-foreground">평균 응답시간</p>
+            <p id="responseTime" class="text-2xl font-bold">94ms</p>
+            <p class="text-xs text-muted-foreground mt-1">최근 5분 평균</p>
+          </div>
+          <div class="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center">
+            ⚡
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-card bg-card border border-border rounded-lg p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-muted-foreground">처리량</p>
+            <p id="throughput" class="text-2xl font-bold">12,543</p>
+            <p class="text-xs text-muted-foreground mt-1">분당 요청 수</p>
+          </div>
+          <div class="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center">
+            📊
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-card bg-card border border-border rounded-lg p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-muted-foreground">에러율</p>
+            <p id="errorRate" class="text-2xl font-bold text-destructive">0.24%</p>
+            <p class="text-xs text-muted-foreground mt-1">전체 요청 대비</p>
+          </div>
+          <div class="h-8 w-8 bg-destructive/10 rounded-full flex items-center justify-center">
+            ⚠️
+          </div>
+        </div>
+      </div>
+
+      <div class="metric-card bg-card border border-border rounded-lg p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-muted-foreground">활성 사용자</p>
+            <p id="activeUsers" class="text-2xl font-bold">1,847</p>
+            <p class="text-xs text-muted-foreground mt-1">현재 접속 중</p>
+          </div>
+          <div class="h-8 w-8 bg-primary/10 rounded-full flex items-center justify-center">
+            👥
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <!-- Performance Chart -->
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <h3 class="text-lg font-semibold mb-4">성능 지표 추이</h3>
+        <div class="chart-container">
+          <canvas id="performanceChart"></canvas>
+        </div>
+      </div>
+
+      <!-- System Resources Chart -->
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <h3 class="text-lg font-semibold mb-4">시스템 리소스</h3>
+        <div class="chart-container">
+          <canvas id="resourceChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service Status Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <h4 class="font-semibold mb-3">J2EE 컴포넌트</h4>
+        <div class="space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="text-sm">Servlet</span>
+            <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">정상</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-sm">JSP</span>
+            <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">정상</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-sm">EJB</span>
+            <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">주의</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <h4 class="font-semibold mb-3">WAS 상태</h4>
+        <div class="space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="text-sm">Tomcat</span>
+            <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">정상</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-sm">Thread Pool</span>
+            <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">정상</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-sm">JVM Heap</span>
+            <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">68%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <h4 class="font-semibold mb-3">최근 알림</h4>
+        <div class="space-y-2">
+          <div class="text-sm">
+            <span class="text-yellow-600">⚠️</span> 메모리 사용량 증가
+            <div class="text-xs text-muted-foreground">5분 전</div>
+          </div>
+          <div class="text-sm">
+            <span class="text-green-600">✅</span> 배포 완료
+            <div class="text-xs text-muted-foreground">30분 전</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Initialize metrics data
+    let metrics = {
+      responseTime: 94,
+      throughput: 12543,
+      errorRate: 0.24,
+      activeUsers: 1847,
+      cpuUsage: 68,
+      memoryUsage: 74,
+      diskUsage: 52,
+      networkIO: 234
+    };
+
+    // Theme toggle functionality
+    const themeToggle = document.getElementById('themeToggle');
+    let isDark = false;
+
+    themeToggle.addEventListener('click', () => {
+      isDark = !isDark;
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        themeToggle.textContent = '☀️';
+      } else {
+        document.documentElement.classList.remove('dark');
+        themeToggle.textContent = '🌙';
+      }
+    });
+
+    // Refresh button functionality
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      updateMetrics();
+      updateCharts();
+    });
+
+    // Update metrics function
+    function updateMetrics() {
+      metrics = {
+        responseTime: Math.floor(80 + Math.random() * 40),
+        throughput: Math.floor(10000 + Math.random() * 5000),
+        errorRate: (Math.random() * 2).toFixed(2),
+        activeUsers: Math.floor(1500 + Math.random() * 1000),
+        cpuUsage: Math.floor(50 + Math.random() * 40),
+        memoryUsage: Math.floor(60 + Math.random() * 30),
+        diskUsage: Math.floor(40 + Math.random() * 30),
+        networkIO: Math.floor(200 + Math.random() * 100)
+      };
+
+      // Update DOM elements
+      document.getElementById('responseTime').textContent = metrics.responseTime + 'ms';
+      document.getElementById('throughput').textContent = metrics.throughput.toLocaleString();
+      document.getElementById('errorRate').textContent = metrics.errorRate + '%';
+      document.getElementById('activeUsers').textContent = metrics.activeUsers.toLocaleString();
+    }
+
+    // Initialize charts
+    let performanceChart, resourceChart;
+
+    function initCharts() {
+      // Performance Chart
+      const perfCtx = document.getElementById('performanceChart').getContext('2d');
+      performanceChart = new Chart(perfCtx, {
+        type: 'line',
+        data: {
+          labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+          datasets: [{
+            label: '응답시간 (ms)',
+            data: [85, 92, 78, 94, 89, 95],
+            borderColor: 'rgb(99, 102, 241)',
+            backgroundColor: 'rgba(99, 102, 241, 0.1)',
+            tension: 0.4
+          }, {
+            label: '에러율 (%)',
+            data: [0.1, 0.3, 0.2, 0.24, 0.18, 0.15],
+            borderColor: 'rgb(239, 68, 68)',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            tension: 0.4,
+            yAxisID: 'y1'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              type: 'linear',
+              display: true,
+              position: 'left',
+            },
+            y1: {
+              type: 'linear',
+              display: true,
+              position: 'right',
+              grid: {
+                drawOnChartArea: false,
+              },
+            }
+          }
+        }
       });
 
-      useEffect(() => {
-        if (isDark) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      }, [isDark]);
-
-      useEffect(() => {
-        const interval = setInterval(() => {
-          setMetrics(prev => ({
-            ...prev,
-            responseTime: Math.floor(80 + Math.random() * 40),
-            throughput: Math.floor(10000 + Math.random() * 5000),
-            errorRate: (Math.random() * 2).toFixed(2),
-            activeUsers: Math.floor(1500 + Math.random() * 1000),
-            cpuUsage: Math.floor(50 + Math.random() * 40),
-            memoryUsage: Math.floor(60 + Math.random() * 30),
-            diskUsage: Math.floor(40 + Math.random() * 30),
-            networkIO: Math.floor(200 + Math.random() * 100)
-          }));
-        }, 5000);
-
-        return () => clearInterval(interval);
-      }, []);
-
-      const refreshData = () => {
-        setLoading(true);
-        setTimeout(() => setLoading(false), 1000);
-      };
-
-      return (
-        <div className="min-h-screen bg-background text-foreground">
-          {/* Modern Header with shadcn/ui styling */}
-          <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container mx-auto flex h-14 items-center px-4">
-              <div className="mr-4 flex items-center space-x-2">
-                <h1 className="font-bold text-xl text-foreground">AIRIS APM</h1>
-                <span className="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">
-                  v2.0 shadcn/ui
-                </span>
-              </div>
-              
-              {/* Navigation */}
-              <nav className="flex items-center space-x-6 text-sm">
-                <a href="#" className="font-medium text-foreground hover:text-primary transition-colors">
-                  대시보드
-                </a>
-                <a href="/j2ee-dashboard.html" className="text-muted-foreground hover:text-foreground transition-colors">
-                  J2EE 모니터링
-                </a>
-                <a href="/was-dashboard.html" className="text-muted-foreground hover:text-foreground transition-colors">
-                  WAS 모니터링
-                </a>
-                <a href="/exception-dashboard.html" className="text-muted-foreground hover:text-foreground transition-colors">
-                  예외 추적
-                </a>
-                <a href="/topology-dashboard.html" className="text-muted-foreground hover:text-foreground transition-colors">
-                  서비스 토폴로지
-                </a>
-                <a href="/alert-dashboard.html" className="text-muted-foreground hover:text-foreground transition-colors">
-                  알림 관리
-                </a>
-              </nav>
-
-              {/* Right side actions */}
-              <div className="ml-auto flex items-center space-x-4">
-                <select 
-                  value={timeRange} 
-                  onChange={(e) => setTimeRange(e.target.value)}
-                  className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground"
-                >
-                  <option value="15m">15분</option>
-                  <option value="1h">1시간</option>
-                  <option value="6h">6시간</option>
-                  <option value="24h">24시간</option>
-                  <option value="7d">7일</option>
-                </select>
-                
-                <button
-                  onClick={refreshData}
-                  className="btn-primary"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <span className="inline-block animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-                  ) : (
-                    '새로고침'
-                  )}
-                </button>
-                
-                <button
-                  onClick={() => setIsDark(!isDark)}
-                  className="btn-ghost"
-                >
-                  {isDark ? '🌞' : '🌙'}
-                </button>
-              </div>
-            </div>
-          </header>
-
-          {/* Page Header */}
-          <div className="border-b border-border">
-            <div className="container mx-auto flex h-16 items-center px-4">
-              <div>
-                <h1 className="text-2xl font-semibold text-foreground">통합 모니터링 대시보드</h1>
-                <p className="text-sm text-muted-foreground">실시간 시스템 성능 및 상태 모니터링 - shadcn/ui 적용</p>
-              </div>
-              <div className="ml-auto flex items-center space-x-2">
-                <span className="inline-flex items-center rounded-md bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
-                  <span className="mr-1.5 h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-                  시스템 정상
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <main className="container mx-auto py-6 px-4 space-y-6">
-            {/* Metric Cards with shadcn/ui styling */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <MetricCard
-                title="평균 응답시간"
-                value={`${metrics.responseTime}ms`}
-                description="최근 5분 평균"
-                status={metrics.responseTime < 100 ? 'success' : 'warning'}
-                icon="⚡"
-              />
-              <MetricCard
-                title="처리량"
-                value={`${(metrics.throughput / 1000).toFixed(1)}K`}
-                description="분당 요청 수"
-                status="success"
-                trend="+12.5%"
-                icon="📊"
-              />
-              <MetricCard
-                title="에러율"
-                value={`${metrics.errorRate}%`}
-                description="전체 요청 대비"
-                status={metrics.errorRate < 1 ? 'success' : 'error'}
-                icon="⚠️"
-              />
-              <MetricCard
-                title="활성 사용자"
-                value={metrics.activeUsers.toLocaleString()}
-                description="현재 접속 중"
-                status="info"
-                trend="+8.2%"
-                icon="👥"
-              />
-            </div>
-
-            {/* Charts Row */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <ChartCard title="응답시간 추이" type="line" />
-              <ChartCard title="처리량 분석" type="bar" />
-            </div>
-
-            {/* System Resources */}
-            <div className="modern-card p-6">
-              <h3 className="text-lg font-semibold mb-4 text-foreground">시스템 리소스 현황</h3>
-              <div className="grid gap-4 md:grid-cols-4">
-                <ResourceMeter label="CPU" value={metrics.cpuUsage} unit="%" />
-                <ResourceMeter label="Memory" value={metrics.memoryUsage} unit="%" />
-                <ResourceMeter label="Disk" value={metrics.diskUsage} unit="%" />
-                <ResourceMeter label="Network I/O" value={metrics.networkIO} unit="MB/s" />
-              </div>
-            </div>
-
-            {/* Recent Alerts */}
-            <div className="modern-card p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-foreground">최근 알림</h3>
-                <a href="/alert-dashboard.html" className="text-sm text-primary hover:underline">
-                  모두 보기 →
-                </a>
-              </div>
-              <div className="space-y-3">
-                <AlertItem 
-                  level="warning"
-                  message="WAS 서버 메모리 사용률 80% 초과"
-                  time="2분 전"
-                />
-                <AlertItem 
-                  level="info"
-                  message="배치 작업 'DailyReport' 완료"
-                  time="15분 전"
-                />
-                <AlertItem 
-                  level="error"
-                  message="데이터베이스 연결 타임아웃 발생"
-                  time="1시간 전"
-                />
-              </div>
-            </div>
-          </main>
-        </div>
-      );
-    };
-
-    // Modern Metric Card Component
-    const MetricCard = ({ title, value, description, status, trend, icon }) => {
-      const getStatusClass = () => {
-        switch (status) {
-          case 'success': return 'status-success';
-          case 'warning': return 'status-warning';
-          case 'error': return 'status-error';
-          default: return 'status-info';
-        }
-      };
-
-      return (
-        <div className="modern-card p-6 hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between space-y-0 pb-2">
-            <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
-            <span className="text-2xl">{icon}</span>
-          </div>
-          <div className="text-2xl font-bold text-foreground">{value}</div>
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
-          {trend && (
-            <div className={`text-xs font-medium mt-2 ${getStatusClass()}`}>
-              {trend}
-            </div>
-          )}
-          {/* Status indicator */}
-          <div className={`mt-2 h-1 w-full rounded-full bg-secondary`}>
-            <div className={`h-1 rounded-full w-3/4 ${status === 'success' ? 'bg-green-500' : status === 'warning' ? 'bg-yellow-500' : status === 'error' ? 'bg-red-500' : 'bg-blue-500'}`}></div>
-          </div>
-        </div>
-      );
-    };
-
-    // Chart Card Component
-    const ChartCard = ({ title, type }) => {
-      const canvasRef = useRef(null);
-      const chartRef = useRef(null);
-
-      useEffect(() => {
-        if (canvasRef.current) {
-          const ctx = canvasRef.current.getContext('2d');
-          
-          if (chartRef.current) {
-            chartRef.current.destroy();
-          }
-
-          const data = {
-            labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-            datasets: [{
-              label: title,
-              data: Array.from({ length: 6 }, () => Math.floor(Math.random() * 100)),
-              borderColor: '#3b82f6',
-              backgroundColor: type === 'bar' ? '#3b82f6' : 'rgba(59, 130, 246, 0.1)',
-              tension: 0.4,
-              fill: type === 'line'
-            }]
-          };
-
-          chartRef.current = new Chart(ctx, {
-            type: type,
-            data: data,
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { display: false }
-              },
-              scales: {
-                y: { beginAtZero: true }
-              }
+      // Resource Chart
+      const resCtx = document.getElementById('resourceChart').getContext('2d');
+      resourceChart = new Chart(resCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['CPU', 'Memory', 'Disk', 'Network'],
+          datasets: [{
+            data: [metrics.cpuUsage, metrics.memoryUsage, metrics.diskUsage, metrics.networkIO],
+            backgroundColor: [
+              'rgba(99, 102, 241, 0.8)',
+              'rgba(34, 197, 94, 0.8)',
+              'rgba(251, 191, 36, 0.8)',
+              'rgba(239, 68, 68, 0.8)'
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
             }
-          });
-        }
-
-        return () => {
-          if (chartRef.current) {
-            chartRef.current.destroy();
           }
-        };
-      }, [title, type]);
-
-      return (
-        <div className="modern-card p-6">
-          <h3 className="text-lg font-semibold mb-4 text-foreground">{title}</h3>
-          <div className="h-64">
-            <canvas ref={canvasRef}></canvas>
-          </div>
-        </div>
-      );
-    };
-
-    // Resource Meter Component
-    const ResourceMeter = ({ label, value, unit }) => {
-      const getColor = () => {
-        if (value < 60) return 'bg-green-500';
-        if (value < 80) return 'bg-yellow-500';
-        return 'bg-red-500';
-      };
-
-      return (
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-foreground">{label}</span>
-            <span className="text-sm font-bold text-foreground">{value}{unit}</span>
-          </div>
-          <div className="w-full bg-secondary rounded-full h-2">
-            <div 
-              className={`h-2 rounded-full transition-all ${getColor()}`}
-              style={{ width: `${Math.min(value, 100)}%` }}
-            />
-          </div>
-        </div>
-      );
-    };
-
-    // Alert Item Component
-    const AlertItem = ({ level, message, time }) => {
-      const getLevelStyles = () => {
-        switch (level) {
-          case 'error': return 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20';
-          case 'warning': return 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20';
-          case 'info': return 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20';
-          default: return 'bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20';
         }
-      };
+      });
+    }
 
-      const getLevelIcon = () => {
-        switch (level) {
-          case 'error': return '🔴';
-          case 'warning': return '🟡';
-          case 'info': return '🔵';
-          default: return '⚪';
-        }
-      };
+    function updateCharts() {
+      if (resourceChart) {
+        resourceChart.data.datasets[0].data = [
+          metrics.cpuUsage, 
+          metrics.memoryUsage, 
+          metrics.diskUsage, 
+          metrics.networkIO
+        ];
+        resourceChart.update();
+      }
+    }
 
-      return (
-        <div className={`flex items-center justify-between p-3 rounded-lg border ${getLevelStyles()}`}>
-          <div className="flex items-center space-x-3">
-            <span className="text-lg">{getLevelIcon()}</span>
-            <span className="text-sm font-medium">{message}</span>
-          </div>
-          <span className="text-xs opacity-75">{time}</span>
-        </div>
-      );
-    };
+    // Auto-update metrics every 30 seconds
+    setInterval(updateMetrics, 30000);
 
-    // Render the app
-    ReactDOM.render(<Dashboard />, document.getElementById('root'));
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      initCharts();
+      updateMetrics();
+    });
   </script>
-  <!-- TweakCN Theme System -->
-  <script src="/js/tweakcn-loader.js"></script>
 </body>
 </html>

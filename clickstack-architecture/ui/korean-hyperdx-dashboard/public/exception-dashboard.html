@@ -4,11 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIRIS APM | 예외 추적 대시보드</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="./css/tailwind.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
@@ -49,11 +46,11 @@
       --popover-foreground: 210 40% 98%;
       --primary: 210 40% 98%;
       --primary-foreground: 222.2 47.4% 11.2%;
-      --secondary: 217.2 32.6% 17.5%;
+      --secondary: 222.2 84% 4.9%;
       --secondary-foreground: 210 40% 98%;
-      --muted: 217.2 32.6% 17.5%;
-      --muted-foreground: 215 20.2% 65.1%;
-      --accent: 217.2 32.6% 17.5%;
+      --muted: 222.2 84% 4.9%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --accent: 222.2 84% 4.9%;
       --accent-foreground: 210 40% 98%;
       --destructive: 0 62.8% 30.6%;
       --destructive-foreground: 210 40% 98%;
@@ -62,740 +59,463 @@
       --ring: 212.7 26.8% 83.9%;
     }
 
-    /* shadcn/ui Utility Classes */
     .bg-background { background-color: hsl(var(--background)); }
     .text-foreground { color: hsl(var(--foreground)); }
     .bg-card { background-color: hsl(var(--card)); }
     .text-card-foreground { color: hsl(var(--card-foreground)); }
     .bg-primary { background-color: hsl(var(--primary)); }
-    .text-primary { color: hsl(var(--primary)); }
     .text-primary-foreground { color: hsl(var(--primary-foreground)); }
-    .bg-secondary { background-color: hsl(var(--secondary)); }
-    .text-secondary-foreground { color: hsl(var(--secondary-foreground)); }
-    .bg-muted { background-color: hsl(var(--muted)); }
+    .text-primary { color: hsl(var(--primary)); }
     .text-muted-foreground { color: hsl(var(--muted-foreground)); }
-    .bg-accent { background-color: hsl(var(--accent)); }
-    .text-accent-foreground { color: hsl(var(--accent-foreground)); }
+    .border-border { border-color: hsl(var(--border)); }
+    .text-destructive { color: hsl(var(--destructive)); }
     .bg-destructive { background-color: hsl(var(--destructive)); }
-    .text-destructive-foreground { color: hsl(var(--destructive-foreground)); }
-    .border { border: 1px solid hsl(var(--border)); }
-    .border-input { border: 1px solid hsl(var(--input)); }
     
-    /* Modern Card Styles */
-    .modern-card {
-      background: hsl(var(--card));
-      border: 1px solid hsl(var(--border));
-      border-radius: calc(var(--radius));
-      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    .chart-container {
+      position: relative;
+      height: 256px;
+      width: 100%;
     }
     
-    /* Button Styles */
-    .btn-primary {
-      background: hsl(var(--primary));
-      color: hsl(var(--primary-foreground));
-      border: none;
-      border-radius: calc(var(--radius));
-      padding: 0.5rem 1rem;
-      font-weight: 500;
-      transition: all 0.2s;
+    .exception-card {
+      transition: all 0.2s ease-in-out;
     }
     
-    .btn-primary:hover {
-      background: hsl(var(--primary) / 0.9);
+    .exception-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
     }
-    
-    .btn-ghost {
-      background: transparent;
-      border: 1px solid hsl(var(--border));
-      color: hsl(var(--foreground));
-      border-radius: calc(var(--radius));
-      padding: 0.5rem 1rem;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-    
-    .btn-ghost:hover {
-      background: hsl(var(--accent));
-      color: hsl(var(--accent-foreground));
-    }
-
-    /* Status Indicators */
-    .status-success { color: #10b981; }
-    .status-warning { color: #f59e0b; }
-    .status-error { color: #ef4444; }
-    .status-info { color: #3b82f6; }
   </style>
-  
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          colors: {
-            border: 'hsl(var(--border))',
-            input: 'hsl(var(--input))',
-            ring: 'hsl(var(--ring))',
-            background: 'hsl(var(--background))',
-            foreground: 'hsl(var(--foreground))',
-            primary: {
-              DEFAULT: 'hsl(var(--primary))',
-              foreground: 'hsl(var(--primary-foreground))',
-            },
-            secondary: {
-              DEFAULT: 'hsl(var(--secondary))',
-              foreground: 'hsl(var(--secondary-foreground))',
-            },
-            destructive: {
-              DEFAULT: 'hsl(var(--destructive))',
-              foreground: 'hsl(var(--destructive-foreground))',
-            },
-            muted: {
-              DEFAULT: 'hsl(var(--muted))',
-              foreground: 'hsl(var(--muted-foreground))',
-            },
-            accent: {
-              DEFAULT: 'hsl(var(--accent))',
-              foreground: 'hsl(var(--accent-foreground))',
-            },
-            popover: {
-              DEFAULT: 'hsl(var(--popover))',
-              foreground: 'hsl(var(--popover-foreground))',
-            },
-            card: {
-              DEFAULT: 'hsl(var(--card))',
-              foreground: 'hsl(var(--card-foreground))',
-            },
-          },
-          borderRadius: {
-            lg: 'var(--radius)',
-            md: 'calc(var(--radius) - 2px)',
-            sm: 'calc(var(--radius) - 4px)',
-          },
-        },
-      },
-    }
-  </script>
 </head>
 <body class="bg-background text-foreground">
-  <div id="root"></div>
-  
-  <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
-    
-    // Exception Dashboard Component
-    const ExceptionDashboard = () => {
-      const [isDark, setIsDark] = useState(false);
-      const [timeRange, setTimeRange] = useState('1h');
-      const [loading, setLoading] = useState(false);
-      const [selectedTab, setSelectedTab] = useState('overview');
-      const [selectedSeverity, setSelectedSeverity] = useState('all');
+  <!-- Header -->
+  <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
+    <div class="container mx-auto flex h-14 items-center px-4">
+      <div class="mr-4 flex items-center space-x-2">
+        <h1 class="font-bold text-xl text-foreground">AIRIS APM</h1>
+        <span class="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">예외 추적</span>
+      </div>
       
-      const [exceptionData, setExceptionData] = useState({
-        summary: {
-          totalExceptions: 147,
-          criticalErrors: 5,
-          warnings: 23,
-          infoErrors: 119,
-          affectedUsers: 89,
-          avgResolutionTime: '2.3h'
+      <!-- Navigation -->
+      <nav class="flex items-center space-x-6 text-sm">
+        <a href="/" class="text-foreground/60 hover:text-foreground/80 transition-colors">통합 대시보드</a>
+        <a href="/j2ee-dashboard.html" class="text-foreground/60 hover:text-foreground/80 transition-colors">J2EE 모니터링</a>
+        <a href="/was-dashboard.html" class="text-foreground/60 hover:text-foreground/80 transition-colors">WAS 모니터링</a>
+        <span class="font-medium text-foreground/80">예외 추적</span>
+        <a href="/topology-dashboard.html" class="text-foreground/60 hover:text-foreground/80 transition-colors">서비스 토폴로지</a>
+        <a href="/alert-dashboard.html" class="text-foreground/60 hover:text-foreground/80 transition-colors">알림 관리</a>
+        <a href="/ontology.html" class="text-foreground/60 hover:text-foreground/80 transition-colors">온톨로지</a>
+      </nav>
+
+      <!-- Right side actions -->
+      <div class="ml-auto flex items-center space-x-4">
+        <select id="timeRange" class="text-sm border border-border rounded-md px-3 py-1 bg-background">
+          <option value="1h">최근 1시간</option>
+          <option value="24h" selected>최근 24시간</option>
+          <option value="7d">최근 7일</option>
+          <option value="30d">최근 30일</option>
+        </select>
+        
+        <button id="refreshBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4">
+          새로고침
+        </button>
+        
+        <button id="themeToggle" class="inline-flex items-center justify-center rounded-md text-sm font-medium border border-border bg-background hover:bg-accent h-9 w-9">
+          🌙
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-6">
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-muted-foreground">총 예외</p>
+            <p id="totalExceptions" class="text-2xl font-bold text-destructive">247</p>
+            <p class="text-xs text-muted-foreground mt-1">최근 24시간</p>
+          </div>
+          <div class="h-8 w-8 bg-destructive/10 rounded-full flex items-center justify-center">
+            ⚠️
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-muted-foreground">Critical 예외</p>
+            <p id="criticalExceptions" class="text-2xl font-bold text-red-600">23</p>
+            <p class="text-xs text-muted-foreground mt-1">즉시 조치 필요</p>
+          </div>
+          <div class="h-8 w-8 bg-red-100 rounded-full flex items-center justify-center">
+            🚨
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-muted-foreground">영향받은 사용자</p>
+            <p id="affectedUsers" class="text-2xl font-bold text-orange-600">89</p>
+            <p class="text-xs text-muted-foreground mt-1">고유 사용자</p>
+          </div>
+          <div class="h-8 w-8 bg-orange-100 rounded-full flex items-center justify-center">
+            👥
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-muted-foreground">해결률</p>
+            <p id="resolutionRate" class="text-2xl font-bold text-green-600">87%</p>
+            <p class="text-xs text-muted-foreground mt-1">자동 복구 포함</p>
+          </div>
+          <div class="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+            ✅
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <!-- Exception Trend Chart -->
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <h3 class="text-lg font-semibold mb-4">예외 발생 추이</h3>
+        <div class="chart-container">
+          <canvas id="exceptionTrendChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Exception Types Chart -->
+      <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+        <h3 class="text-lg font-semibold mb-4">예외 유형별 분포</h3>
+        <div class="chart-container">
+          <canvas id="exceptionTypesChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Exceptions -->
+    <div class="bg-card border border-border rounded-lg p-6 shadow-sm">
+      <h3 class="text-lg font-semibold mb-4">최근 예외 목록</h3>
+      <div class="space-y-4" id="exceptionsList">
+        <!-- Exception items will be populated here -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Exception Details Modal -->
+  <div id="exceptionModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-card border border-border rounded-lg p-6 max-w-4xl w-full mx-4 max-h-screen overflow-y-auto">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-lg font-semibold">예외 상세 정보</h3>
+        <button id="closeModal" class="text-foreground/60 hover:text-foreground">✕</button>
+      </div>
+      <div id="modalContent">
+        <!-- Modal content will be populated here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize data
+    let exceptionData = {
+      total: 247,
+      critical: 23,
+      affected: 89,
+      resolved: 87
+    };
+
+    // Theme toggle functionality
+    const themeToggle = document.getElementById('themeToggle');
+    let isDark = false;
+
+    themeToggle.addEventListener('click', () => {
+      isDark = !isDark;
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        themeToggle.textContent = '☀️';
+      } else {
+        document.documentElement.classList.remove('dark');
+        themeToggle.textContent = '🌙';
+      }
+    });
+
+    // Refresh functionality
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      updateData();
+      updateCharts();
+      loadExceptionsList();
+    });
+
+    // Initialize charts
+    let trendChart, typesChart;
+
+    function initCharts() {
+      // Exception Trend Chart
+      const trendCtx = document.getElementById('exceptionTrendChart').getContext('2d');
+      trendChart = new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+          datasets: [{
+            label: 'Critical',
+            data: [5, 8, 12, 15, 18, 23],
+            borderColor: 'rgb(239, 68, 68)',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            tension: 0.4
+          }, {
+            label: 'Warning',
+            data: [15, 22, 28, 35, 42, 48],
+            borderColor: 'rgb(251, 191, 36)',
+            backgroundColor: 'rgba(251, 191, 36, 0.1)',
+            tension: 0.4
+          }, {
+            label: 'Info',
+            data: [45, 67, 89, 123, 156, 176],
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4
+          }]
         },
-        recentExceptions: [
-          {
-            id: 1,
-            timestamp: '2025-08-20 14:32:15',
-            severity: 'critical',
-            type: 'NullPointerException',
-            message: 'java.lang.NullPointerException at UserService.validateUser(UserService.java:45)',
-            occurrences: 12,
-            affectedUsers: 8,
-            stackTrace: `java.lang.NullPointerException\n\tat com.airis.service.UserService.validateUser(UserService.java:45)\n\tat com.airis.controller.AuthController.login(AuthController.java:89)\n\tat java.base/java.lang.reflect.Method.invoke(Method.java:566)`,
-            solution: '사용자 객체에 대한 null 검사를 추가하세요. Optional을 사용하거나 @NonNull 어노테이션을 적용하는 것을 권장합니다.'
-          },
-          {
-            id: 2,
-            timestamp: '2025-08-20 14:28:03',
-            severity: 'warning',
-            type: 'SQLException',
-            message: 'Connection timeout: Unable to connect to database',
-            occurrences: 8,
-            affectedUsers: 15,
-            stackTrace: `java.sql.SQLException: Connection timeout\n\tat com.airis.dao.UserDAO.findById(UserDAO.java:23)\n\tat com.airis.service.UserService.getUser(UserService.java:67)`,
-            solution: '커넥션 풀 설정을 검토하고 데이터베이스 서버 상태를 확인하세요. 커넥션 타임아웃 값을 조정할 수도 있습니다.'
-          },
-          {
-            id: 3,
-            timestamp: '2025-08-20 14:25:41',
-            severity: 'info',
-            type: 'ValidationException',
-            message: 'Invalid email format in user registration',
-            occurrences: 34,
-            affectedUsers: 34,
-            stackTrace: `com.airis.exception.ValidationException: Invalid email format\n\tat com.airis.validator.EmailValidator.validate(EmailValidator.java:15)\n\tat com.airis.service.RegistrationService.registerUser(RegistrationService.java:78)`,
-            solution: '이메일 형식 유효성 검사 로직을 개선하고 사용자에게 명확한 오류 메시지를 제공하세요.'
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
           }
-        ],
-        topExceptions: {
-          'NullPointerException': 45,
-          'SQLException': 23,
-          'ValidationException': 34,
-          'ClassNotFoundException': 12,
-          'IOException': 18,
-          'IllegalArgumentException': 15
         }
       });
 
-      useEffect(() => {
-        if (isDark) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
-      }, [isDark]);
-
-      useEffect(() => {
-        const interval = setInterval(() => {
-          setExceptionData(prev => ({
-            ...prev,
-            summary: {
-              ...prev.summary,
-              totalExceptions: prev.summary.totalExceptions + Math.floor(Math.random() * 5),
-              criticalErrors: Math.max(0, prev.summary.criticalErrors + Math.floor(Math.random() * 3) - 1),
-              warnings: prev.summary.warnings + Math.floor(Math.random() * 3),
-              affectedUsers: prev.summary.affectedUsers + Math.floor(Math.random() * 10)
+      // Exception Types Chart
+      const typesCtx = document.getElementById('exceptionTypesChart').getContext('2d');
+      typesChart = new Chart(typesCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['NullPointerException', 'SQLException', 'IOException', 'RuntimeException', 'Others'],
+          datasets: [{
+            data: [85, 45, 32, 28, 57],
+            backgroundColor: [
+              'rgba(239, 68, 68, 0.8)',
+              'rgba(251, 191, 36, 0.8)',
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(34, 197, 94, 0.8)',
+              'rgba(156, 163, 175, 0.8)'
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
             }
-          }));
-        }, 15000);
-
-        return () => clearInterval(interval);
-      }, []);
-
-      const refreshData = () => {
-        setLoading(true);
-        setTimeout(() => setLoading(false), 1000);
-      };
-
-      const getSeverityColor = (severity) => {
-        switch (severity) {
-          case 'critical': return 'text-red-600 dark:text-red-400 bg-red-500/10 border-red-500/20';
-          case 'warning': return 'text-yellow-600 dark:text-yellow-400 bg-yellow-500/10 border-yellow-500/20';
-          case 'info': return 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20';
-          default: return 'text-gray-600 dark:text-gray-400 bg-gray-500/10 border-gray-500/20';
+          }
         }
+      });
+    }
+
+    function updateData() {
+      exceptionData = {
+        total: Math.floor(200 + Math.random() * 100),
+        critical: Math.floor(15 + Math.random() * 20),
+        affected: Math.floor(70 + Math.random() * 40),
+        resolved: Math.floor(80 + Math.random() * 15)
       };
 
-      const getSeverityIcon = (severity) => {
-        switch (severity) {
-          case 'critical': return '🔴';
-          case 'warning': return '🟡';
-          case 'info': return '🔵';
-          default: return '⚪';
-        }
-      };
+      document.getElementById('totalExceptions').textContent = exceptionData.total;
+      document.getElementById('criticalExceptions').textContent = exceptionData.critical;
+      document.getElementById('affectedUsers').textContent = exceptionData.affected;
+      document.getElementById('resolutionRate').textContent = exceptionData.resolved + '%';
+    }
 
-      const filteredExceptions = selectedSeverity === 'all' 
-        ? exceptionData.recentExceptions 
-        : exceptionData.recentExceptions.filter(ex => ex.severity === selectedSeverity);
-
-      return (
-        <div className="min-h-screen bg-background text-foreground">
-          {/* Header */}
-          <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <div className="container flex h-14 items-center">
-              <div className="mr-4 flex items-center space-x-2">
-                <span className="font-bold text-xl">AIRIS APM</span>
-                <span className="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">
-                  예외추적
-                </span>
-              </div>
-              
-              {/* Navigation */}
-              <nav className="flex items-center space-x-6 text-sm">
-                <a href="/src/dashboards/index.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  대시보드
-                </a>
-                <a href="/src/dashboards/j2ee-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  J2EE 모니터링
-                </a>
-                <a href="/src/dashboards/was-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  WAS 모니터링
-                </a>
-                <a href="#" className="font-medium text-foreground/80 hover:text-foreground transition-colors">
-                  예외 추적
-                </a>
-                <a href="/src/dashboards/topology-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  서비스 토폴로지
-                </a>
-                <a href="/src/dashboards/alert-dashboard.html" className="text-foreground/60 hover:text-foreground/80 transition-colors">
-                  알림 관리
-                </a>
-              </nav>
-
-              {/* Right side actions */}
-              <div className="ml-auto flex items-center space-x-4">
-                <select 
-                  value={selectedSeverity} 
-                  onChange={(e) => setSelectedSeverity(e.target.value)}
-                  className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                >
-                  <option value="all">전체 심각도</option>
-                  <option value="critical">치명적 오류</option>
-                  <option value="warning">경고</option>
-                  <option value="info">정보</option>
-                </select>
-                
-                <select 
-                  value={timeRange} 
-                  onChange={(e) => setTimeRange(e.target.value)}
-                  className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                >
-                  <option value="15m">15분</option>
-                  <option value="1h">1시간</option>
-                  <option value="6h">6시간</option>
-                  <option value="24h">24시간</option>
-                </select>
-                
-                <button
-                  onClick={refreshData}
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-                  ) : (
-                    '새로고침'
-                  )}
-                </button>
-                
-                <button
-                  onClick={() => setIsDark(!isDark)}
-                  className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 w-9 border border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                >
-                  {isDark ? '🌞' : '🌙'}
-                </button>
-              </div>
-            </div>
-          </header>
-
-          {/* Page Header */}
-          <div className="border-b">
-            <div className="container flex h-16 items-center px-4">
-              <div>
-                <h1 className="text-2xl font-semibold flex items-center space-x-2">
-                  <span>⚠️</span>
-                  <span>예외 및 에러 추적</span>
-                </h1>
-                <p className="text-sm text-muted-foreground">실시간 오류 모니터링 및 상세 분석</p>
-              </div>
-              <div className="ml-auto flex items-center space-x-2">
-                <span className={`inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium ${
-                  exceptionData.summary.criticalErrors > 0 
-                    ? 'bg-red-500/10 text-red-600 dark:text-red-400' 
-                    : 'bg-green-500/10 text-green-600 dark:text-green-400'
-                }`}>
-                  <span className={`mr-1.5 h-2 w-2 rounded-full animate-pulse ${
-                    exceptionData.summary.criticalErrors > 0 ? 'bg-red-500' : 'bg-green-500'
-                  }`}></span>
-                  {exceptionData.summary.criticalErrors > 0 ? '치명적 오류 발생' : '예외 모니터링 정상'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Main Content */}
-          <main className="container py-6 space-y-6">
-            {/* Overview Cards */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <MetricCard
-                title="전체 예외 수"
-                value={exceptionData.summary.totalExceptions.toLocaleString()}
-                description="최근 24시간"
-                trend="info"
-                trendValue="+12"
-                icon="📈"
-              />
-              <MetricCard
-                title="치명적 오류"
-                value={exceptionData.summary.criticalErrors}
-                description="즉시 조치 필요"
-                trend={exceptionData.summary.criticalErrors > 0 ? 'error' : 'success'}
-                trendValue={exceptionData.summary.criticalErrors > 0 ? '위험' : '안전'}
-                icon="🔴"
-              />
-              <MetricCard
-                title="영향받은 사용자"
-                value={exceptionData.summary.affectedUsers.toLocaleString()}
-                description="고유 사용자 수"
-                trend="warning"
-                trendValue="+5.2%"
-                icon="👥"
-              />
-              <MetricCard
-                title="평균 해결시간"
-                value={exceptionData.summary.avgResolutionTime}
-                description="오류 대응 속도"
-                trend="success"
-                trendValue="-15%"
-                icon="⏱️"
-              />
-            </div>
-
-            {/* Exception Trends Chart */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <ChartCard title="예외 발생 추이" type="line" dataKey="exceptions" />
-              <ChartCard title="심각도별 분류" type="doughnut" dataKey="severity" />
-            </div>
-
-            {/* Tabs Navigation */}
-            <div className="rounded-lg border bg-card">
-              <div className="p-6">
-                <div className="flex space-x-1 rounded-lg bg-muted p-1 mb-6">
-                  {[
-                    { key: 'overview', label: '개요', icon: '📈' },
-                    { key: 'recent', label: '최근 예외', icon: '⏰' },
-                    { key: 'analysis', label: '상세 분석', icon: '🔍' },
-                    { key: 'impact', label: '영향 분석', icon: '🎯' }
-                  ].map((tab) => (
-                    <button
-                      key={tab.key}
-                      onClick={() => setSelectedTab(tab.key)}
-                      className={`flex-1 flex items-center justify-center space-x-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                        selectedTab === tab.key
-                          ? 'bg-background text-foreground shadow-sm'
-                          : 'text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      <span>{tab.icon}</span>
-                      <span>{tab.label}</span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Tab Content */}
-                {selectedTab === 'overview' && <OverviewPanel topExceptions={exceptionData.topExceptions} />}
-                {selectedTab === 'recent' && <RecentExceptionsPanel exceptions={filteredExceptions} getSeverityColor={getSeverityColor} getSeverityIcon={getSeverityIcon} />}
-                {selectedTab === 'analysis' && <AnalysisPanel />}
-                {selectedTab === 'impact' && <ImpactPanel />}
-              </div>
-            </div>
-          </main>
-        </div>
-      );
-    };
-
-    // Overview Panel Component
-    const OverviewPanel = ({ topExceptions }) => (
-      <div className="space-y-4">
-        <h4 className="text-lg font-semibold">가장 빈발한 예외 유형</h4>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-3">
-            {Object.entries(topExceptions).slice(0, 3).map(([exception, count], index) => (
-              <div key={exception} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <span className="text-2xl">{index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}</span>
-                  <span className="font-medium">{exception}</span>
-                </div>
-                <span className="text-lg font-bold text-primary">{count}</span>
-              </div>
-            ))}
-          </div>
-          <div className="border rounded-lg p-4">
-            <h5 className="font-medium mb-3">예외 패턴 분석</h5>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>전체 예외의 68%가 데이터 액세스 관련</span>
-              </div>
-              <div className="flex justify-between">
-                <span>가장 많이 발생하는 시간: 14:00-16:00</span>
-              </div>
-              <div className="flex justify-between">
-                <span>전주 대비 예외 수: 23% 감소</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-
-    // Recent Exceptions Panel Component
-    const RecentExceptionsPanel = ({ exceptions, getSeverityColor, getSeverityIcon }) => (
-      <div className="space-y-4">
-        <h4 className="text-lg font-semibold">최근 예외 목록</h4>
-        <div className="space-y-3">
-          {exceptions.map((exception) => (
-            <ExceptionCard 
-              key={exception.id} 
-              exception={exception} 
-              getSeverityColor={getSeverityColor}
-              getSeverityIcon={getSeverityIcon}
-            />
-          ))}
-        </div>
-      </div>
-    );
-
-    // Exception Card Component
-    const ExceptionCard = ({ exception, getSeverityColor, getSeverityIcon }) => {
-      const [isExpanded, setIsExpanded] = useState(false);
-
-      return (
-        <div className={`border rounded-lg p-4 ${getSeverityColor(exception.severity)}`}>
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center space-x-2 mb-2">
-                <span className="text-lg">{getSeverityIcon(exception.severity)}</span>
-                <span className="font-semibold">{exception.type}</span>
-                <span className="text-xs px-2 py-1 bg-background/50 rounded">
-                  {exception.occurrences}회 발생
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  영향 사용자: {exception.affectedUsers}명
-                </span>
-              </div>
-              <p className="text-sm mb-2">{exception.message}</p>
-              <p className="text-xs text-muted-foreground">{exception.timestamp}</p>
-            </div>
-            <button
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="text-xs px-3 py-1 bg-background hover:bg-background/80 rounded border"
-            >
-              {isExpanded ? '접기' : '상세'}
-            </button>
-          </div>
-          
-          {isExpanded && (
-            <div className="mt-4 pt-4 border-t border-current/20 space-y-3">
-              <div>
-                <h5 className="text-sm font-medium mb-2">스택 트레이스</h5>
-                <pre className="text-xs bg-background/50 p-3 rounded overflow-x-auto">
-                  {exception.stackTrace}
-                </pre>
-              </div>
-              <div>
-                <h5 className="text-sm font-medium mb-2">해결 방안</h5>
-                <p className="text-sm bg-green-500/10 text-green-700 dark:text-green-300 p-3 rounded">
-                  {exception.solution}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    };
-
-    // Analysis Panel Component
-    const AnalysisPanel = () => (
-      <div className="space-y-6">
-        <h4 className="text-lg font-semibold">예외 상세 분석</h4>
+    function updateCharts() {
+      if (trendChart && typesChart) {
+        // Update trend chart with new data
+        trendChart.data.datasets[0].data = [
+          Math.floor(Math.random() * 10),
+          Math.floor(Math.random() * 15),
+          Math.floor(Math.random() * 20),
+          Math.floor(Math.random() * 25),
+          Math.floor(Math.random() * 30),
+          exceptionData.critical
+        ];
+        trendChart.update();
         
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="border rounded-lg p-4">
-            <h5 className="font-medium mb-3">예외 분류별 통계</h5>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Runtime Exceptions</span>
-                <span className="font-medium">72%</span>
+        // Update types chart with new data
+        typesChart.data.datasets[0].data = [
+          Math.floor(50 + Math.random() * 50),
+          Math.floor(30 + Math.random() * 30),
+          Math.floor(20 + Math.random() * 25),
+          Math.floor(15 + Math.random() * 20),
+          Math.floor(40 + Math.random() * 30)
+        ];
+        typesChart.update();
+      }
+    }
+
+    function loadExceptionsList() {
+      const exceptionsList = document.getElementById('exceptionsList');
+      const exceptions = [
+        {
+          id: 'EX001',
+          type: 'NullPointerException',
+          message: 'Attempted to call method on null object reference',
+          service: 'UserService',
+          timestamp: '2025-08-25 14:32:15',
+          severity: 'Critical',
+          status: 'Open'
+        },
+        {
+          id: 'EX002', 
+          type: 'SQLException',
+          message: 'Connection timeout to database server',
+          service: 'OrderService',
+          timestamp: '2025-08-25 14:28:42',
+          severity: 'High',
+          status: 'Investigating'
+        },
+        {
+          id: 'EX003',
+          type: 'IOException',
+          message: 'Failed to read configuration file',
+          service: 'ConfigService',
+          timestamp: '2025-08-25 14:25:18',
+          severity: 'Medium',
+          status: 'Resolved'
+        }
+      ];
+
+      exceptionsList.innerHTML = '';
+      exceptions.forEach(exception => {
+        const severityColor = {
+          'Critical': 'text-red-600 bg-red-50',
+          'High': 'text-orange-600 bg-orange-50',
+          'Medium': 'text-yellow-600 bg-yellow-50',
+          'Low': 'text-blue-600 bg-blue-50'
+        }[exception.severity] || 'text-gray-600 bg-gray-50';
+
+        const statusColor = {
+          'Open': 'text-red-600 bg-red-50',
+          'Investigating': 'text-orange-600 bg-orange-50',
+          'Resolved': 'text-green-600 bg-green-50'
+        }[exception.status] || 'text-gray-600 bg-gray-50';
+
+        const item = document.createElement('div');
+        item.className = 'exception-card bg-card border border-border rounded-lg p-4 cursor-pointer hover:bg-accent/50';
+        item.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="flex items-center space-x-2 mb-2">
+                <span class="font-mono text-sm text-primary">${exception.id}</span>
+                <span class="px-2 py-1 text-xs rounded-full ${severityColor}">${exception.severity}</span>
+                <span class="px-2 py-1 text-xs rounded-full ${statusColor}">${exception.status}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">SQL Exceptions</span>
-                <span className="font-medium">18%</span>
+              <h4 class="font-semibold text-foreground mb-1">${exception.type}</h4>
+              <p class="text-sm text-muted-foreground mb-2">${exception.message}</p>
+              <div class="flex items-center space-x-4 text-xs text-muted-foreground">
+                <span>📍 ${exception.service}</span>
+                <span>🕒 ${exception.timestamp}</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">IO Exceptions</span>
-                <span className="font-medium">6%</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Custom Exceptions</span>
-                <span className="font-medium">4%</span>
-              </div>
+            </div>
+            <button class="text-muted-foreground hover:text-foreground">→</button>
+          </div>
+        `;
+        
+        item.addEventListener('click', () => showExceptionDetails(exception));
+        exceptionsList.appendChild(item);
+      });
+    }
+
+    function showExceptionDetails(exception) {
+      const modal = document.getElementById('exceptionModal');
+      const modalContent = document.getElementById('modalContent');
+      
+      modalContent.innerHTML = `
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Exception ID</label>
+              <p class="font-mono">${exception.id}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Type</label>
+              <p>${exception.type}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Severity</label>
+              <p>${exception.severity}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Status</label>
+              <p>${exception.status}</p>
             </div>
           </div>
           
-          <div className="border rounded-lg p-4">
-            <h5 className="font-medium mb-3">시간대별 발생 현황</h5>
-            <div className="space-y-2 text-sm">
-              <div>00:00-06:00: 12% (비지니스 시간, 낮은 발생률)</div>
-              <div>06:00-12:00: 28% (오전 업무 시간)</div>
-              <div>12:00-18:00: 45% (피크 시간대)</div>
-              <div>18:00-24:00: 15% (저녁 업무 시간)</div>
-            </div>
+          <div>
+            <label class="text-sm font-medium text-muted-foreground">Message</label>
+            <p class="bg-muted p-3 rounded-md">${exception.message}</p>
           </div>
-        </div>
-        
-        <div className="border rounded-lg p-4">
-          <h5 className="font-medium mb-3">예외 패턴 분석 결과</h5>
-          <div className="space-y-3">
-            <div className="bg-red-500/10 text-red-700 dark:text-red-300 p-3 rounded">
-              <strong>주의:</strong> UserService.java 파일에서 NullPointerException이 빈번히 발생하고 있습니다. 코드 검토가 필요합니다.
-            </div>
-            <div className="bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 p-3 rounded">
-              <strong>경고:</strong> 데이터베이스 커넥션 타임아웃이 증가하고 있습니다. 인프라 점검이 요구됩니다.
-            </div>
-            <div className="bg-blue-500/10 text-blue-700 dark:text-blue-300 p-3 rounded">
-              <strong>정보:</strong> 이메일 유효성 검사 예외는 사용자 경험에 미치는 영향이 제한적입니다.
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-
-    // Impact Panel Component
-    const ImpactPanel = () => (
-      <div className="space-y-6">
-        <h4 className="text-lg font-semibold">예외 영향 분석</h4>
-        
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="border rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-red-600 dark:text-red-400">89</div>
-            <div className="text-sm text-muted-foreground">영향받은 사용자</div>
-          </div>
-          <div className="border rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">€2,340</div>
-            <div className="text-sm text-muted-foreground">추정 손실 비용</div>
-          </div>
-          <div className="border rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">94.2%</div>
-            <div className="text-sm text-muted-foreground">서비스 가용성</div>
-          </div>
-        </div>
-        
-        <div className="border rounded-lg p-4">
-          <h5 className="font-medium mb-3">비즈니스 영향 평가</h5>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">사용자 만족도 영향</div>
-                <div className="text-sm text-muted-foreground">NullPointerException으로 인한 로그인 실패</div>
-              </div>
-              <span className="bg-red-500/10 text-red-600 dark:text-red-400 px-3 py-1 rounded text-sm font-medium">High</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">성능 저하</div>
-                <div className="text-sm text-muted-foreground">DB 커넥션 타임아웃으로 인한 대기시간 증가</div>
-              </div>
-              <span className="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 px-3 py-1 rounded text-sm font-medium">Medium</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium">데이터 무결성</div>
-                <div className="text-sm text-muted-foreground">예외 처리 중 데이터 손실 가능성</div>
-              </div>
-              <span className="bg-green-500/10 text-green-600 dark:text-green-400 px-3 py-1 rounded text-sm font-medium">Low</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-
-    // Reusable Components
-    const MetricCard = ({ title, value, description, trend, trendValue, icon }) => {
-      const getTrendColor = () => {
-        switch (trend) {
-          case 'success': return 'text-green-600 dark:text-green-400';
-          case 'warning': return 'text-yellow-600 dark:text-yellow-400';
-          case 'error': return 'text-red-600 dark:text-red-400';
-          default: return 'text-blue-600 dark:text-blue-400';
-        }
-      };
-
-      return (
-        <div className="rounded-lg border bg-card p-6">
-          <div className="flex items-center justify-between space-y-0 pb-2">
-            <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
-            <span className="text-2xl">{icon}</span>
-          </div>
-          <div className="text-2xl font-bold">{value}</div>
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
-          {trendValue && (
-            <div className={`text-xs font-medium mt-2 ${getTrendColor()}`}>
-              {trendValue}
-            </div>
-          )}
-        </div>
-      );
-    };
-
-    const ChartCard = ({ title, type, dataKey }) => {
-      const canvasRef = useRef(null);
-      const chartRef = useRef(null);
-
-      useEffect(() => {
-        if (canvasRef.current) {
-          const ctx = canvasRef.current.getContext('2d');
           
-          if (chartRef.current) {
-            chartRef.current.destroy();
-          }
-
-          let data;
-          if (type === 'doughnut') {
-            data = {
-              labels: ['치명적', '경고', '정보'],
-              datasets: [{
-                data: [15, 35, 50],
-                backgroundColor: [
-                  'hsl(0, 84%, 60%)',
-                  'hsl(45, 93%, 47%)',
-                  'hsl(211, 100%, 50%)'
-                ],
-                borderWidth: 2,
-                borderColor: 'hsl(var(--background))'
-              }]
-            };
-          } else {
-            data = {
-              labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
-              datasets: [{
-                label: title,
-                data: Array.from({ length: 6 }, () => Math.floor(Math.random() * 50 + 20)),
-                borderColor: 'hsl(var(--primary))',
-                backgroundColor: 'hsl(var(--primary) / 0.1)',
-                tension: 0.4,
-                fill: true
-              }]
-            };
-          }
-
-          chartRef.current = new Chart(ctx, {
-            type: type,
-            data: data,
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: { 
-                  display: type === 'doughnut',
-                  position: 'bottom'
-                }
-              },
-              scales: type === 'doughnut' ? {} : {
-                y: { beginAtZero: true }
-              }
-            }
-          });
-        }
-
-        return () => {
-          if (chartRef.current) {
-            chartRef.current.destroy();
-          }
-        };
-      }, [title, type, dataKey]);
-
-      return (
-        <div className="rounded-lg border bg-card p-6">
-          <h3 className="text-lg font-semibold mb-4">{title}</h3>
-          <div className="h-64">
-            <canvas ref={canvasRef}></canvas>
+          <div>
+            <label class="text-sm font-medium text-muted-foreground">Stack Trace</label>
+            <pre class="bg-muted p-3 rounded-md text-sm overflow-x-auto">
+at com.example.service.UserService.getUser(UserService.java:42)
+at com.example.controller.UserController.getUserProfile(UserController.java:28)
+at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+            </pre>
+          </div>
+          
+          <div>
+            <label class="text-sm font-medium text-muted-foreground">Recommended Actions</label>
+            <ul class="list-disc list-inside space-y-1 text-sm">
+              <li>Check for null values before method calls</li>
+              <li>Add proper null validation in UserService.getUser() method</li>
+              <li>Implement defensive programming practices</li>
+              <li>Add unit tests to cover edge cases</li>
+            </ul>
           </div>
         </div>
-      );
-    };
+      `;
+      
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
 
-    // Render the app
-    ReactDOM.render(<ExceptionDashboard />, document.getElementById('root'));
+    // Modal close functionality
+    document.getElementById('closeModal').addEventListener('click', () => {
+      const modal = document.getElementById('exceptionModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    });
+
+    // Auto-update every 30 seconds
+    setInterval(() => {
+      updateData();
+      updateCharts();
+      loadExceptionsList();
+    }, 30000);
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      initCharts();
+      updateData();
+      loadExceptionsList();
+    });
   </script>
-  <!-- TweakCN Theme System -->
-  <script src="/js/tweakcn-loader.js"></script>
 </body>
 </html>
