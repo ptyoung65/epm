@@ -20,6 +20,32 @@ app.use((req, res, next) => {
 // 기본 미들웨어
 app.use(express.json());
 
+// 루트 엔드포인트
+app.get('/', (req, res) => {
+  res.json({
+    service: 'AIRIS-MON API Gateway',
+    version: '2.0.0',
+    description: 'AI 위험 및 지능 시스템 모니터링 API',
+    status: '정상 작동 중',
+    korean_time: new Intl.DateTimeFormat('ko-KR', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    }).format(new Date()),
+    endpoints: {
+      'API 문서': '/api/docs',
+      '시스템 상태': '/api/v1/status',
+      '건강 상태': '/health'
+    },
+    ui_dashboard: 'http://localhost:3002',
+    message: '🚀 AIRIS-MON API Gateway가 정상 작동 중입니다!'
+  });
+});
+
 // 헬스 체크
 app.get('/health', (req, res) => {
   res.json({

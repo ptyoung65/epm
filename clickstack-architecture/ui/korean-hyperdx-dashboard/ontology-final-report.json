@@ -1,0 +1,81 @@
+{
+  "timestamp": "2025-08-25T02:23:34.753Z",
+  "testName": "온톨로지 뷰어 최종 검증",
+  "url": "http://localhost:3001/ontology.html",
+  "results": {
+    "pageLoad": {
+      "status": "PASS",
+      "details": {
+        "hasMainContainer": true,
+        "hasHeader": true,
+        "hasStatsPanel": true,
+        "hasTabNavigation": true,
+        "hasTabs": {
+          "graph": true,
+          "knowledge": true,
+          "structure": true
+        },
+        "statistics": {
+          "nodes": "16",
+          "relations": "17",
+          "categories": "5"
+        }
+      }
+    },
+    "graph": {
+      "status": "PASS",
+      "details": {
+        "tabActive": true,
+        "panelVisible": true,
+        "svgExists": true,
+        "elements": {
+          "nodes": 16,
+          "links": 17,
+          "labels": 16
+        },
+        "hasLegend": true
+      }
+    },
+    "knowledge": {
+      "status": "PASS",
+      "details": {
+        "tabActive": true,
+        "panelVisible": true,
+        "layoutExists": true,
+        "categoryCount": 5,
+        "hasActiveCategory": true,
+        "hasContent": true
+      }
+    },
+    "structure": {
+      "status": "PASS",
+      "details": {
+        "tabActive": true,
+        "panelVisible": true,
+        "containerExists": true,
+        "treeExists": true,
+        "nodeCount": 21,
+        "childrenCount": 5
+      }
+    },
+    "tabSwitching": {
+      "status": "PASS",
+      "details": {
+        "graphTabActive": true,
+        "graphPanelVisible": true,
+        "knowledgePanelHidden": true,
+        "structurePanelHidden": true
+      }
+    }
+  },
+  "screenshots": [
+    "final-test-graph.png",
+    "final-test-knowledge.png",
+    "final-test-structure.png"
+  ],
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "total": 5
+  }
+}

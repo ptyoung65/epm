@@ -1,0 +1,66 @@
+{
+  "timestamp": "2025-08-25T02:19:46.455Z",
+  "testResults": {
+    "initialLoad": {
+      "status": "PASS",
+      "title": "🧠 AIRIS APM - 온톨로지 시각화",
+      "statistics": {
+        "totalNodes": "16",
+        "totalRelations": "17",
+        "totalCategories": "5"
+      },
+      "timestamp": "2025-08-25T02:19:51.905Z"
+    },
+    "graphTab": {
+      "status": "FAIL",
+      "error": "elementHandle.hover: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - attempting hover action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible and stable\u001b[22m\n\u001b[2m      - element is not stable\u001b[22m\n\u001b[2m    - retrying hover action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible and stable\u001b[22m\n\u001b[2m      - element is not stable\u001b[22m\n\u001b[2m    - retrying hover action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    12 × waiting for element to be visible and stable\u001b[22m\n\u001b[2m       - element is not stable\u001b[22m\n\u001b[2m     - retrying hover action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\u001b[2m    23 × waiting for element to be visible and stable\u001b[22m\n\u001b[2m       - element is visible and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div class=\"graph-controls\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying hover action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+      "timestamp": "2025-08-25T02:20:28.115Z"
+    },
+    "knowledgeTab": {
+      "status": "PASS",
+      "categoryCount": 5,
+      "itemCount": 4,
+      "layoutConfirmed": true,
+      "interactivity": "confirmed",
+      "timestamp": "2025-08-25T02:20:32.369Z"
+    },
+    "structureTab": {
+      "status": "PASS",
+      "nodeCount": 21,
+      "childrenCount": 5,
+      "toggleCount": 5,
+      "interactivity": "confirmed",
+      "timestamp": "2025-08-25T02:20:35.417Z"
+    },
+    "consoleErrors": {
+      "status": "FAIL",
+      "error": "elementHandle.hover: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - attempting hover action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible and stable\u001b[22m\n\u001b[2m      - element is not stable\u001b[22m\n\u001b[2m    - retrying hover action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible and stable\u001b[22m\n\u001b[2m      - element is not stable\u001b[22m\n\u001b[2m    - retrying hover action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    17 × waiting for element to be visible and stable\u001b[22m\n\u001b[2m       - element is not stable\u001b[22m\n\u001b[2m     - retrying hover action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\u001b[2m    11 × waiting for element to be visible and stable\u001b[22m\n\u001b[2m       - element is visible and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div class=\"graph-container\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying hover action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+      "timestamp": "2025-08-25T02:21:12.161Z"
+    },
+    "responsiveDesign": {
+      "status": "PASS",
+      "desktopLayout": "row",
+      "mobileLayout": "column",
+      "viewportsTested": [
+        "1920x1080",
+        "375x667"
+      ],
+      "timestamp": "2025-08-25T02:21:16.204Z"
+    }
+  },
+  "screenshots": [
+    "01-initial-load.png",
+    "03-knowledge-base-tab.png",
+    "04-category-clicked.png",
+    "05-structure-tab.png"
+  ],
+  "errors": [
+    "그래프 탭: elementHandle.hover: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - attempting hover action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible and stable\u001b[22m\n\u001b[2m      - element is not stable\u001b[22m\n\u001b[2m    - retrying hover action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible and stable\u001b[22m\n\u001b[2m      - element is not stable\u001b[22m\n\u001b[2m    - retrying hover action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    12 × waiting for element to be visible and stable\u001b[22m\n\u001b[2m       - element is not stable\u001b[22m\n\u001b[2m     - retrying hover action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\u001b[2m    23 × waiting for element to be visible and stable\u001b[22m\n\u001b[2m       - element is visible and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div class=\"graph-controls\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying hover action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+    "콘솔 에러 확인: elementHandle.hover: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - attempting hover action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible and stable\u001b[22m\n\u001b[2m      - element is not stable\u001b[22m\n\u001b[2m    - retrying hover action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible and stable\u001b[22m\n\u001b[2m      - element is not stable\u001b[22m\n\u001b[2m    - retrying hover action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    17 × waiting for element to be visible and stable\u001b[22m\n\u001b[2m       - element is not stable\u001b[22m\n\u001b[2m     - retrying hover action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\u001b[2m    11 × waiting for element to be visible and stable\u001b[22m\n\u001b[2m       - element is visible and stable\u001b[22m\n\u001b[2m       - scrolling into view if needed\u001b[22m\n\u001b[2m       - done scrolling\u001b[22m\n\u001b[2m       - <div class=\"graph-container\">…</div> intercepts pointer events\u001b[22m\n\u001b[2m     - retrying hover action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n"
+  ],
+  "summary": {
+    "totalTests": 6,
+    "passedTests": 4,
+    "failedTests": 2
+  }
+}

@@ -1,0 +1,199 @@
+{
+  "timestamp": "2025-08-25T03:12:38.819Z",
+  "baseUrl": "http://localhost:3001",
+  "dashboards": {
+    "j2ee-dashboard": {
+      "title": "J2EE 모니터링 대시보드",
+      "url": "/j2ee-dashboard.html",
+      "status": "success",
+      "chartDataAnalysis": {
+        "chartInstances": [
+          {
+            "id": "servletChart",
+            "type": "line",
+            "datasets": [
+              {
+                "index": 0,
+                "label": "Servlet 응답시간 (ms)",
+                "backgroundColor": "hsl(var(--primary) / 0.1)",
+                "borderColor": "hsl(var(--primary))",
+                "hasBlackBackground": false,
+                "hasBlackBorder": false,
+                "issues": []
+              }
+            ],
+            "hasBlackElements": false
+          },
+          {
+            "id": "transactionChart",
+            "type": "bar",
+            "datasets": [
+              {
+                "index": 0,
+                "label": "트랜잭션 처리량",
+                "backgroundColor": "hsl(var(--primary))",
+                "borderColor": "hsl(var(--primary))",
+                "hasBlackBackground": false,
+                "hasBlackBorder": false,
+                "issues": []
+              }
+            ],
+            "hasBlackElements": false
+          }
+        ],
+        "blackDataElements": [],
+        "colorIssues": []
+      },
+      "screenshotPath": "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/tests/screenshots/j2ee-dashboard_data_colors.png",
+      "hasBlackDataElements": false,
+      "blackElementCount": 0
+    },
+    "was-dashboard": {
+      "title": "WAS 모니터링 대시보드",
+      "url": "/was-dashboard.html",
+      "status": "success",
+      "chartDataAnalysis": {
+        "chartInstances": [
+          {
+            "id": "",
+            "type": "line",
+            "datasets": [
+              {
+                "index": 0,
+                "label": "JVM 힙 메모리 사용률",
+                "backgroundColor": "hsl(var(--primary) / 0.1)",
+                "borderColor": "hsl(var(--primary))",
+                "hasBlackBackground": false,
+                "hasBlackBorder": false,
+                "issues": []
+              }
+            ],
+            "hasBlackElements": false
+          },
+          {
+            "id": "",
+            "type": "bar",
+            "datasets": [
+              {
+                "index": 0,
+                "label": "GC 성능 분석",
+                "backgroundColor": "hsl(var(--primary))",
+                "borderColor": "hsl(var(--primary))",
+                "hasBlackBackground": false,
+                "hasBlackBorder": false,
+                "issues": []
+              }
+            ],
+            "hasBlackElements": false
+          }
+        ],
+        "blackDataElements": [],
+        "colorIssues": []
+      },
+      "screenshotPath": "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/tests/screenshots/was-dashboard_data_colors.png",
+      "hasBlackDataElements": false,
+      "blackElementCount": 0
+    },
+    "exception-dashboard": {
+      "title": "예외 추적 대시보드",
+      "url": "/exception-dashboard.html",
+      "status": "success",
+      "chartDataAnalysis": {
+        "chartInstances": [
+          {
+            "id": "",
+            "type": "line",
+            "datasets": [
+              {
+                "index": 0,
+                "label": "예외 발생 추이",
+                "backgroundColor": "hsl(var(--primary) / 0.1)",
+                "borderColor": "hsl(var(--primary))",
+                "hasBlackBackground": false,
+                "hasBlackBorder": false,
+                "issues": []
+              }
+            ],
+            "hasBlackElements": false
+          },
+          {
+            "id": "",
+            "type": "doughnut",
+            "datasets": [
+              {
+                "index": 0,
+                "label": "Dataset 0",
+                "backgroundColor": [
+                  "hsl(0, 84%, 60%)",
+                  "hsl(45, 93%, 47%)",
+                  "hsl(211, 100%, 50%)"
+                ],
+                "borderColor": "hsl(var(--background))",
+                "hasBlackBackground": false,
+                "hasBlackBorder": false,
+                "issues": []
+              }
+            ],
+            "hasBlackElements": false
+          }
+        ],
+        "blackDataElements": [],
+        "colorIssues": []
+      },
+      "screenshotPath": "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/tests/screenshots/exception-dashboard_data_colors.png",
+      "hasBlackDataElements": false,
+      "blackElementCount": 0
+    },
+    "alert-dashboard": {
+      "title": "알림 관리 대시보드",
+      "url": "/alert-dashboard.html",
+      "status": "success",
+      "chartDataAnalysis": {
+        "chartInstances": [
+          {
+            "id": "",
+            "type": "line",
+            "datasets": [
+              {
+                "index": 0,
+                "label": "알림 발생 추이",
+                "backgroundColor": "hsl(var(--primary) / 0.1)",
+                "borderColor": "hsl(var(--primary))",
+                "hasBlackBackground": false,
+                "hasBlackBorder": false,
+                "issues": []
+              }
+            ],
+            "hasBlackElements": false
+          },
+          {
+            "id": "",
+            "type": "doughnut",
+            "datasets": [
+              {
+                "index": 0,
+                "label": "Dataset 0",
+                "backgroundColor": [
+                  "hsl(0, 84%, 60%)",
+                  "hsl(45, 93%, 47%)",
+                  "hsl(211, 100%, 50%)"
+                ],
+                "borderColor": "hsl(var(--background))",
+                "hasBlackBackground": false,
+                "hasBlackBorder": false,
+                "issues": []
+              }
+            ],
+            "hasBlackElements": false
+          }
+        ],
+        "blackDataElements": [],
+        "colorIssues": []
+      },
+      "screenshotPath": "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/tests/screenshots/alert-dashboard_data_colors.png",
+      "hasBlackDataElements": false,
+      "blackElementCount": 0
+    }
+  },
+  "criticalFindings": []
+}

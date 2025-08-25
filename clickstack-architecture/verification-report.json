@@ -1,0 +1,115 @@
+[
+  {
+    "dashboard": "WAS Dashboard",
+    "url": "http://localhost:3002/was-dashboard.html",
+    "success": true,
+    "errors": [],
+    "consoleMessages": [
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+      }
+    ],
+    "chartCount": 0,
+    "chartInfo": [],
+    "shadcnElements": 0,
+    "screenshotPath": "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/screenshots/was-dashboard-verification.png"
+  },
+  {
+    "dashboard": "Exception Dashboard",
+    "url": "http://localhost:3002/exception-dashboard.html",
+    "success": true,
+    "errors": [],
+    "consoleMessages": [
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+      }
+    ],
+    "chartCount": 0,
+    "chartInfo": [],
+    "shadcnElements": 0,
+    "screenshotPath": "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/screenshots/exception-dashboard-verification.png"
+  },
+  {
+    "dashboard": "Alert Dashboard",
+    "url": "http://localhost:3002/alert-dashboard.html",
+    "success": true,
+    "errors": [],
+    "consoleMessages": [
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+      }
+    ],
+    "chartCount": 0,
+    "chartInfo": [],
+    "shadcnElements": 0,
+    "screenshotPath": "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/screenshots/alert-dashboard-verification.png"
+  },
+  {
+    "dashboard": "J2EE Dashboard",
+    "url": "http://localhost:3002/j2ee-dashboard.html",
+    "success": true,
+    "errors": [],
+    "consoleMessages": [],
+    "chartCount": 2,
+    "chartInfo": [
+      {
+        "visible": true,
+        "width": 566,
+        "height": 256
+      },
+      {
+        "visible": true,
+        "width": 566,
+        "height": 256
+      }
+    ],
+    "shadcnElements": 14,
+    "screenshotPath": "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/screenshots/j2ee-dashboard-verification.png"
+  },
+  {
+    "dashboard": "Main Dashboard",
+    "url": "http://localhost:3002/",
+    "success": true,
+    "errors": [],
+    "consoleMessages": [
+      {
+        "type": "warning",
+        "text": "You are using the in-browser Babel transformer. Be sure to precompile your scripts for production - https://babeljs.io/docs/setup/"
+      }
+    ],
+    "chartCount": 2,
+    "chartInfo": [
+      {
+        "visible": true,
+        "width": 566,
+        "height": 256
+      },
+      {
+        "visible": true,
+        "width": 566,
+        "height": 256
+      }
+    ],
+    "shadcnElements": 4,
+    "screenshotPath": "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/screenshots/main-dashboard-verification.png"
+  },
+  {
+    "dashboard": "Topology Dashboard",
+    "url": "http://localhost:3002/topology-dashboard.html",
+    "success": true,
+    "errors": [],
+    "consoleMessages": [
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+      }
+    ],
+    "chartCount": 0,
+    "chartInfo": [],
+    "shadcnElements": 0,
+    "screenshotPath": "/home/ptyoung/work/AIRIS_APM/clickstack-architecture/screenshots/topology-dashboard-verification.png"
+  }
+]
