@@ -1,0 +1,206 @@
+# AIRIS EPM - Prometheus 모니터링 설정
+# 메트릭 수집, 알림 규칙, 서비스 디스커버리
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'airis-epm-production'
+    environment: 'production'
+
+# 규칙 파일 로드
+rule_files:
+  - "rules/*.yml"
+
+# 알림 관리자 설정
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# 메트릭 수집 대상 설정
+scrape_configs:
+  # Prometheus 자체 모니터링
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    scrape_interval: 30s
+    
+  # AIRIS EPM 애플리케이션
+  - job_name: 'airis-epm-app'
+    static_configs:
+      - targets: 
+          - 'airis-epm-app:3002'
+          - 'airis-epm-app:3300'
+          - 'airis-epm-app:3500'
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    params:
+      format: ['prometheus']
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '(.+):3002'
+        target_label: 'service'
+        replacement: 'dashboard'
+      - source_labels: [__address__]
+        regex: '(.+):3300'
+        target_label: 'service'
+        replacement: 'realtime-hub'
+      - source_labels: [__address__]
+        regex: '(.+):3500'
+        target_label: 'service'
+        replacement: 'ai-prediction'
+
+  # Nginx 메트릭
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:8080']
+    metrics_path: '/nginx_status'
+    scrape_interval: 30s
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'nginx_(.+)'
+        target_label: 'service'
+        replacement: 'nginx'
+
+  # Node Exporter (시스템 메트릭)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: 'instance'
+        replacement: 'airis-epm-node'
+
+  # cAdvisor (컨테이너 메트릭)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 15s
+    metrics_path: '/metrics'
+    relabel_configs:
+      - source_labels: [container_label_com_docker_compose_service]
+        target_label: 'service'
+      - source_labels: [container_label_com_docker_compose_project]
+        target_label: 'project'
+
+  # Redis 메트릭
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: 'service'
+        replacement: 'redis'
+
+  # PostgreSQL 메트릭
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: 'service'
+        replacement: 'postgres'
+
+  # MongoDB 메트릭
+  - job_name: 'mongodb'
+    static_configs:
+      - targets: ['mongodb-exporter:9216']
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: 'service'
+        replacement: 'mongodb'
+
+  # ClickHouse 메트릭
+  - job_name: 'clickhouse'
+    static_configs:
+      - targets: ['clickhouse:8123']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: 'service'
+        replacement: 'clickhouse'
+
+  # Blackbox Exporter (외부 엔드포인트 모니터링)
+  - job_name: 'blackbox-http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://airis-epm.com
+          - https://airis-epm.com/health
+          - https://staging.airis-epm.com
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # SSL 인증서 모니터링
+  - job_name: 'blackbox-ssl'
+    metrics_path: /probe
+    params:
+      module: [ssl_expiry]
+    static_configs:
+      - targets:
+          - airis-epm.com:443
+          - staging.airis-epm.com:443
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # DNS 모니터링
+  - job_name: 'blackbox-dns'
+    metrics_path: /probe
+    params:
+      module: [dns_query]
+    static_configs:
+      - targets:
+          - airis-epm.com
+          - staging.airis-epm.com
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+
+  # 사용자 정의 메트릭 수집 (Push Gateway)
+  - job_name: 'pushgateway'
+    static_configs:
+      - targets: ['pushgateway:9091']
+    scrape_interval: 15s
+    honor_labels: true
+
+# 원격 저장소 설정 (장기 보관)
+remote_write:
+  - url: "http://thanos-receive:19291/api/v1/receive"
+    queue_config:
+      max_samples_per_send: 1000
+      capacity: 10000
+      max_shards: 200
+    metadata_config:
+      send: true
+      send_interval: 30s
+
+# 저장소 설정
+storage:
+  tsdb:
+    retention.time: 15d
+    retention.size: 10GB
+    wal-compression: true

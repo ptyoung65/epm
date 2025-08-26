@@ -148,6 +148,8 @@
     }
   },
   "directories": {
-    "doc": "docs"
+    "doc": "docs",
+    "example": "examples",
+    "test": "tests"
   }
 }

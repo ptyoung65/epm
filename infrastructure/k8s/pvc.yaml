@@ -1,0 +1,91 @@
+# AIRIS EPM Persistent Volume Claims
+# Storage for database and application data
+
+# ClickHouse PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: airis-epm-clickhouse-pvc
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    component: clickhouse
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: fast-ssd
+
+---
+# PostgreSQL PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: airis-epm-postgres-pvc
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    component: postgres
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: fast-ssd
+
+---
+# Redis PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: airis-epm-redis-pvc
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    component: redis
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: fast-ssd
+
+---
+# MongoDB PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: airis-epm-mongodb-pvc
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    component: mongodb
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: fast-ssd
+
+---
+# Application Logs PVC (shared across pods)
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: airis-epm-logs-pvc
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    component: logs
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard

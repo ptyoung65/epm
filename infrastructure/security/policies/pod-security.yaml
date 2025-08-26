@@ -1,0 +1,211 @@
+# AIRIS EPM Pod Security Policies and Standards
+# Comprehensive pod-level security controls
+
+# Pod Security Policy for AIRIS EPM
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: airis-epm-psp
+  labels:
+    app: airis-epm
+  annotations:
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'runtime/default'
+    seccomp.security.alpha.kubernetes.io/defaultProfileName: 'runtime/default'
+    apparmor.security.beta.kubernetes.io/allowedProfileNames: 'runtime/default'
+    apparmor.security.beta.kubernetes.io/defaultProfileName: 'runtime/default'
+spec:
+  # Prevent privileged containers
+  privileged: false
+  # Prevent containers from running as root
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  # Prevent privilege escalation
+  allowPrivilegeEscalation: false
+  # Drop all capabilities by default
+  defaultAllowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  # Allow only specific capabilities if needed
+  allowedCapabilities: []
+  # File system restrictions
+  fsGroup:
+    rule: 'RunAsAny'
+  seLinux:
+    rule: 'RunAsAny'
+  # Volume restrictions
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'persistentVolumeClaim'
+    - 'secret'
+    - 'downwardAPI'
+    - 'projected'
+  # Prevent host network access
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  # Prevent host port access
+  hostPorts:
+  - min: 0
+    max: 0
+
+---
+# ClusterRole for Pod Security Policy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: airis-epm-psp-role
+rules:
+- apiGroups: ['policy']
+  resources: ['podsecuritypolicies']
+  verbs: ['use']
+  resourceNames:
+  - airis-epm-psp
+
+---
+# ClusterRoleBinding for Pod Security Policy
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: airis-epm-psp-binding
+subjects:
+- kind: ServiceAccount
+  name: airis-epm-app
+  namespace: airis-epm
+- kind: ServiceAccount
+  name: airis-epm-db-operator
+  namespace: airis-epm
+- kind: ServiceAccount
+  name: airis-epm-monitoring
+  namespace: airis-epm
+roleRef:
+  kind: ClusterRole
+  name: airis-epm-psp-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Pod Security Standards (PSS) - Kubernetes 1.25+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: airis-epm
+  labels:
+    # Enforce restricted pod security standard
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+    # Kubernetes version compatibility
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn-version: latest
+
+---
+# Security Context Constraints (if using OpenShift)
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: airis-epm-scc
+  labels:
+    app: airis-epm
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegedContainer: false
+allowedCapabilities: []
+defaultAddCapabilities: []
+fsGroup:
+  type: RunAsAny
+readOnlyRootFilesystem: false
+requiredDropCapabilities:
+- ALL
+runAsUser:
+  type: MustRunAsNonRoot
+seLinuxContext:
+  type: MustRunAs
+volumes:
+- configMap
+- downwardAPI
+- emptyDir
+- persistentVolumeClaim
+- projected
+- secret
+
+---
+# OPA Gatekeeper Constraint Template (Advanced Policy)
+apiVersion: templates.gatekeeper.sh/v1beta1
+kind: ConstraintTemplate
+metadata:
+  name: airisepmsecurity
+spec:
+  crd:
+    spec:
+      names:
+        kind: AIRISEPMSecurity
+      validation:
+        properties:
+          requiredLabels:
+            type: array
+            items:
+              type: string
+          allowedRegistries:
+            type: array
+            items:
+              type: string
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package airisepmsecurity
+
+        violation[{"msg": msg}] {
+          # Ensure required security labels are present
+          required := input.parameters.requiredLabels
+          provided := input.review.object.metadata.labels
+          missing := required[_]
+          not provided[missing]
+          msg := sprintf("Missing required security label: %v", [missing])
+        }
+
+        violation[{"msg": msg}] {
+          # Ensure images come from approved registries
+          container := input.review.object.spec.containers[_]
+          not starts_with(container.image, input.parameters.allowedRegistries[_])
+          msg := sprintf("Container image %v not from approved registry", [container.image])
+        }
+
+        violation[{"msg": msg}] {
+          # Ensure no privileged containers
+          container := input.review.object.spec.containers[_]
+          container.securityContext.privileged == true
+          msg := "Privileged containers are not allowed"
+        }
+
+        violation[{"msg": msg}] {
+          # Ensure containers don't run as root
+          container := input.review.object.spec.containers[_]
+          container.securityContext.runAsUser == 0
+          msg := "Containers must not run as root user"
+        }
+
+---
+# OPA Gatekeeper Constraint
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: AIRISEPMSecurity
+metadata:
+  name: airis-epm-security-constraints
+spec:
+  match:
+    kinds:
+      - apiGroups: ["apps"]
+        kinds: ["Deployment", "DaemonSet", "StatefulSet"]
+    namespaces: ["airis-epm"]
+  parameters:
+    requiredLabels:
+      - "app"
+      - "component"
+      - "version"
+    allowedRegistries:
+      - "ghcr.io/airis/"
+      - "docker.io/library/"
+      - "quay.io/airis/"

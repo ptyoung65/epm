@@ -1,0 +1,94 @@
+# AIRIS EPM Configuration Map
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airis-epm-config
+  namespace: airis-epm
+data:
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  PORT: "3000"
+  
+  # Database Configuration
+  CLICKHOUSE_URL: "http://airis-epm-clickhouse:8123"
+  REDIS_URL: "redis://airis-epm-redis:6379"
+  MONGODB_URL: "mongodb://airis-epm-mongodb:27017/airis_epm"
+  
+  # AIRIS APM Integration
+  AIRIS_APM_URL: "http://airis-apm-ui:3002"
+  
+  # External Services
+  KAFKA_BROKERS: "airis-epm-kafka:9092"
+  
+  # Application Configuration
+  MAX_CONNECTIONS: "100"
+  CONNECTION_TIMEOUT: "30000"
+  REQUEST_TIMEOUT: "10000"
+  
+---
+# Application Configuration
+apiVersion: v1
+kind: ConfigMap  
+metadata:
+  name: airis-epm-app-config
+  namespace: airis-epm
+data:
+  app.json: |
+    {
+      "name": "AIRIS EPM",
+      "version": "1.0.0",
+      "description": "Enterprise Performance Management Platform",
+      "features": {
+        "businessMetrics": true,
+        "aiAnalytics": true,
+        "predictiveAnalysis": true,
+        "enterpriseDashboard": true
+      },
+      "integrations": {
+        "airisAPM": {
+          "enabled": true,
+          "url": "http://airis-apm-ui:3002"
+        },
+        "kubernetes": {
+          "enabled": true,
+          "namespace": "airis-epm"
+        }
+      }
+    }
+    
+---
+# Logging Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airis-epm-logging-config
+  namespace: airis-epm
+data:
+  winston.json: |
+    {
+      "level": "info",
+      "format": {
+        "timestamp": true,
+        "json": true,
+        "colorize": false
+      },
+      "transports": [
+        {
+          "type": "console",
+          "level": "info"
+        },
+        {
+          "type": "file",
+          "filename": "/app/logs/app.log",
+          "maxsize": "50MB",
+          "maxFiles": 5
+        },
+        {
+          "type": "file",
+          "filename": "/app/logs/error.log",
+          "level": "error",
+          "maxsize": "50MB", 
+          "maxFiles": 5
+        }
+      ]
+    }

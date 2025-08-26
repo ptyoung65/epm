@@ -1,0 +1,536 @@
+# AIRIS EPM ClickHouse Cluster Configuration
+# High-performance analytics database for time-series data
+
+# ClickHouse ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-config
+  namespace: airis-epm
+  labels:
+    app: clickhouse
+    component: database
+data:
+  config.xml: |
+    <?xml version="1.0"?>
+    <yandex>
+        <!-- Cluster configuration -->
+        <remote_servers>
+            <airis_epm_cluster>
+                <shard>
+                    <replica>
+                        <host>clickhouse-0.clickhouse-headless.airis-epm.svc.cluster.local</host>
+                        <port>9000</port>
+                        <user>default</user>
+                        <password_from_env>CLICKHOUSE_PASSWORD</password_from_env>
+                    </replica>
+                    <replica>
+                        <host>clickhouse-1.clickhouse-headless.airis-epm.svc.cluster.local</host>
+                        <port>9000</port>
+                        <user>default</user>
+                        <password_from_env>CLICKHOUSE_PASSWORD</password_from_env>
+                    </replica>
+                </shard>
+                <shard>
+                    <replica>
+                        <host>clickhouse-2.clickhouse-headless.airis-epm.svc.cluster.local</host>
+                        <port>9000</port>
+                        <user>default</user>
+                        <password_from_env>CLICKHOUSE_PASSWORD</password_from_env>
+                    </replica>
+                    <replica>
+                        <host>clickhouse-3.clickhouse-headless.airis-epm.svc.cluster.local</host>
+                        <port>9000</port>
+                        <user>default</user>
+                        <password_from_env>CLICKHOUSE_PASSWORD</password_from_env>
+                    </replica>
+                </shard>
+            </airis_epm_cluster>
+        </remote_servers>
+
+        <!-- ZooKeeper configuration for replication -->
+        <zookeeper>
+            <node>
+                <host>zookeeper-0.zookeeper-headless.airis-epm.svc.cluster.local</host>
+                <port>2181</port>
+            </node>
+            <node>
+                <host>zookeeper-1.zookeeper-headless.airis-epm.svc.cluster.local</host>
+                <port>2181</port>
+            </node>
+            <node>
+                <host>zookeeper-2.zookeeper-headless.airis-epm.svc.cluster.local</host>
+                <port>2181</port>
+            </node>
+        </zookeeper>
+
+        <!-- Macros for replica identification -->
+        <macros>
+            <cluster>airis_epm_cluster</cluster>
+        </macros>
+
+        <!-- Logging configuration -->
+        <logger>
+            <level>information</level>
+            <log>/var/log/clickhouse-server/clickhouse-server.log</log>
+            <errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>
+            <size>1000M</size>
+            <count>10</count>
+        </logger>
+
+        <!-- Performance settings -->
+        <max_connections>512</max_connections>
+        <max_concurrent_queries>100</max_concurrent_queries>
+        <uncompressed_cache_size>8589934592</uncompressed_cache_size>
+        <mark_cache_size>5368709120</mark_cache_size>
+        <max_memory_usage>10000000000</max_memory_usage>
+
+        <!-- Data retention settings -->
+        <merge_tree>
+            <max_suspicious_broken_parts>5</max_suspicious_broken_parts>
+            <max_bytes_to_merge_at_min_space_in_pool>1048576</max_bytes_to_merge_at_min_space_in_pool>
+            <max_bytes_to_merge_at_max_space_in_pool>161061273600</max_bytes_to_merge_at_max_space_in_pool>
+            <merge_max_block_size>8192</merge_max_block_size>
+        </merge_tree>
+
+        <!-- HTTP interface -->
+        <http_port>8123</http_port>
+        <tcp_port>9000</tcp_port>
+        <interserver_http_port>9009</interserver_http_port>
+
+        <!-- TLS configuration -->
+        <tcp_port_secure>9440</tcp_port_secure>
+        <https_port>8443</https_port>
+        <openSSL>
+            <server>
+                <certificateFile>/etc/clickhouse-server/certs/server.crt</certificateFile>
+                <privateKeyFile>/etc/clickhouse-server/certs/server.key</privateKeyFile>
+                <dhParamsFile>/etc/clickhouse-server/certs/dhparam.pem</dhParamsFile>
+                <verificationMode>none</verificationMode>
+                <loadDefaultCAFile>true</loadDefaultCAFile>
+                <cacheSessions>true</cacheSessions>
+                <disableProtocols>sslv2,sslv3</disableProtocols>
+                <preferServerCiphers>true</preferServerCiphers>
+            </server>
+        </openSSL>
+
+        <!-- User profiles -->
+        <profiles>
+            <default>
+                <max_memory_usage>10000000000</max_memory_usage>
+                <use_uncompressed_cache>1</use_uncompressed_cache>
+                <load_balancing>random</load_balancing>
+                <max_execution_time>300</max_execution_time>
+                <max_rows_to_read>1000000000</max_rows_to_read>
+                <max_bytes_to_read>100000000000</max_bytes_to_read>
+            </default>
+            <airis_epm_profile>
+                <max_memory_usage>20000000000</max_memory_usage>
+                <max_execution_time>600</max_execution_time>
+                <max_rows_to_read>2000000000</max_rows_to_read>
+                <max_bytes_to_read>200000000000</max_bytes_to_read>
+                <readonly>0</readonly>
+            </airis_epm_profile>
+        </profiles>
+
+        <!-- Users configuration -->
+        <users>
+            <default>
+                <password_from_env>CLICKHOUSE_PASSWORD</password_from_env>
+                <networks>
+                    <ip>::/0</ip>
+                </networks>
+                <profile>default</profile>
+                <quota>default</quota>
+            </default>
+            <airis_epm_user>
+                <password_from_env>CLICKHOUSE_AIRIS_PASSWORD</password_from_env>
+                <networks>
+                    <ip>10.0.0.0/8</ip>
+                    <ip>172.16.0.0/12</ip>
+                    <ip>192.168.0.0/16</ip>
+                </networks>
+                <profile>airis_epm_profile</profile>
+                <quota>airis_epm_quota</quota>
+                <databases>
+                    <airis_epm>
+                        <query>1</query>
+                        <insert>1</insert>
+                        <create_table>1</create_table>
+                        <drop_table>1</drop_table>
+                    </airis_epm>
+                </databases>
+            </airis_epm_user>
+        </users>
+
+        <!-- Quotas -->
+        <quotas>
+            <default>
+                <interval>
+                    <duration>3600</duration>
+                    <queries>0</queries>
+                    <errors>0</errors>
+                    <result_rows>0</result_rows>
+                    <read_rows>0</read_rows>
+                    <execution_time>0</execution_time>
+                </interval>
+            </default>
+            <airis_epm_quota>
+                <interval>
+                    <duration>3600</duration>
+                    <queries>10000</queries>
+                    <errors>100</errors>
+                    <result_rows>100000000</result_rows>
+                    <read_rows>1000000000</read_rows>
+                    <execution_time>3600</execution_time>
+                </interval>
+            </airis_epm_quota>
+        </quotas>
+    </yandex>
+
+  users.xml: |
+    <?xml version="1.0"?>
+    <yandex>
+        <users>
+            <airis_readonly>
+                <password_from_env>CLICKHOUSE_READONLY_PASSWORD</password_from_env>
+                <networks>
+                    <ip>10.0.0.0/8</ip>
+                    <ip>172.16.0.0/12</ip>
+                    <ip>192.168.0.0/16</ip>
+                </networks>
+                <profile>readonly</profile>
+                <quota>default</quota>
+                <databases>
+                    <airis_epm>
+                        <query>1</query>
+                    </airis_epm>
+                </databases>
+            </airis_readonly>
+        </users>
+        
+        <profiles>
+            <readonly>
+                <readonly>1</readonly>
+                <max_memory_usage>5000000000</max_memory_usage>
+                <max_execution_time>120</max_execution_time>
+                <max_rows_to_read>50000000</max_rows_to_read>
+                <max_bytes_to_read>10000000000</max_bytes_to_read>
+            </readonly>
+        </profiles>
+    </yandex>
+
+---
+# ClickHouse StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse
+  namespace: airis-epm
+  labels:
+    app: clickhouse
+    component: database
+spec:
+  serviceName: clickhouse-headless
+  replicas: 4
+  selector:
+    matchLabels:
+      app: clickhouse
+      component: database
+  template:
+    metadata:
+      labels:
+        app: clickhouse
+        component: database
+    spec:
+      serviceAccountName: airis-epm-db-operator
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+      initContainers:
+      - name: volume-permissions
+        image: busybox:1.35
+        command: ['sh', '-c', 'chown -R 101:101 /var/lib/clickhouse /var/log/clickhouse-server']
+        volumeMounts:
+        - name: clickhouse-data
+          mountPath: /var/lib/clickhouse
+        - name: clickhouse-logs
+          mountPath: /var/log/clickhouse-server
+        securityContext:
+          runAsUser: 0
+      containers:
+      - name: clickhouse
+        image: clickhouse/clickhouse-server:23.8-alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8123
+          name: http
+        - containerPort: 9000
+          name: tcp
+        - containerPort: 9009
+          name: interserver
+        - containerPort: 8443
+          name: https
+        - containerPort: 9440
+          name: tcp-secure
+        env:
+        - name: CLICKHOUSE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: clickhouse-credentials
+              key: password
+        - name: CLICKHOUSE_AIRIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: clickhouse-credentials
+              key: airis-password
+        - name: CLICKHOUSE_READONLY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: clickhouse-credentials
+              key: readonly-password
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: CLICKHOUSE_REPLICA
+          value: "$(POD_NAME)"
+        - name: CLICKHOUSE_SHARD
+          value: "$(POD_NAME)"
+        volumeMounts:
+        - name: clickhouse-data
+          mountPath: /var/lib/clickhouse
+        - name: clickhouse-logs
+          mountPath: /var/log/clickhouse-server
+        - name: clickhouse-config
+          mountPath: /etc/clickhouse-server/config.xml
+          subPath: config.xml
+        - name: clickhouse-config
+          mountPath: /etc/clickhouse-server/users.d/users.xml
+          subPath: users.xml
+        - name: clickhouse-certs
+          mountPath: /etc/clickhouse-server/certs
+          readOnly: true
+        livenessProbe:
+          httpGet:
+            path: /ping
+            port: 8123
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ping
+            port: 8123
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          successThreshold: 1
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "1000m"
+          limits:
+            memory: "8Gi"
+            cpu: "2000m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: clickhouse-config
+        configMap:
+          name: clickhouse-config
+      - name: clickhouse-certs
+        secret:
+          secretName: clickhouse-tls-secret
+      - name: clickhouse-logs
+        emptyDir: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: clickhouse-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: fast-ssd
+      resources:
+        requests:
+          storage: 100Gi
+
+---
+# ClickHouse Headless Service for StatefulSet
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-headless
+  namespace: airis-epm
+  labels:
+    app: clickhouse
+    component: database
+spec:
+  clusterIP: None
+  selector:
+    app: clickhouse
+    component: database
+  ports:
+  - name: http
+    port: 8123
+    targetPort: 8123
+  - name: tcp
+    port: 9000
+    targetPort: 9000
+  - name: interserver
+    port: 9009
+    targetPort: 9009
+
+---
+# ClickHouse Load Balancer Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-lb
+  namespace: airis-epm
+  labels:
+    app: clickhouse
+    component: database
+spec:
+  type: ClusterIP
+  selector:
+    app: clickhouse
+    component: database
+  ports:
+  - name: http
+    port: 8123
+    targetPort: 8123
+  - name: tcp
+    port: 9000
+    targetPort: 9000
+
+---
+# ZooKeeper for ClickHouse replication
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: zookeeper
+  namespace: airis-epm
+  labels:
+    app: zookeeper
+    component: coordination
+spec:
+  serviceName: zookeeper-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: zookeeper
+      component: coordination
+  template:
+    metadata:
+      labels:
+        app: zookeeper
+        component: coordination
+    spec:
+      serviceAccountName: airis-epm-db-operator
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+      - name: zookeeper
+        image: zookeeper:3.8
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 2181
+          name: client
+        - containerPort: 2888
+          name: server
+        - containerPort: 3888
+          name: leader-election
+        env:
+        - name: ZOO_MY_ID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: ZOO_SERVERS
+          value: "server.1=zookeeper-0.zookeeper-headless.airis-epm.svc.cluster.local:2888:3888;2181 server.2=zookeeper-1.zookeeper-headless.airis-epm.svc.cluster.local:2888:3888;2181 server.3=zookeeper-2.zookeeper-headless.airis-epm.svc.cluster.local:2888:3888;2181"
+        - name: ZOO_4LW_COMMANDS_WHITELIST
+          value: "mntr,conf,ruok"
+        - name: ZOO_CFG_EXTRA
+          value: "metricsProvider.className=org.apache.zookeeper.metrics.prometheus.PrometheusMetricsProvider metricsProvider.httpPort=7000"
+        volumeMounts:
+        - name: zookeeper-data
+          mountPath: /data
+        - name: zookeeper-datalog
+          mountPath: /datalog
+        livenessProbe:
+          exec:
+            command: ['/bin/bash', '-c', 'echo "ruok" | nc localhost 2181 | grep imok']
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            command: ['/bin/bash', '-c', 'echo "ruok" | nc localhost 2181 | grep imok']
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+  volumeClaimTemplates:
+  - metadata:
+      name: zookeeper-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: fast-ssd
+      resources:
+        requests:
+          storage: 10Gi
+  - metadata:
+      name: zookeeper-datalog
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: fast-ssd
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+# ZooKeeper Headless Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper-headless
+  namespace: airis-epm
+  labels:
+    app: zookeeper
+    component: coordination
+spec:
+  clusterIP: None
+  selector:
+    app: zookeeper
+    component: coordination
+  ports:
+  - name: client
+    port: 2181
+    targetPort: 2181
+  - name: server
+    port: 2888
+    targetPort: 2888
+  - name: leader-election
+    port: 3888
+    targetPort: 3888

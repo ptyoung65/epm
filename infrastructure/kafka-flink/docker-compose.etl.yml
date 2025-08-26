@@ -1,0 +1,339 @@
+# Kafka & Flink ETL Pipeline Configuration for AIRIS EPM
+version: '3.8'
+
+services:
+  # Zookeeper for Kafka coordination
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: airis-epm-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_LOG4J_LOGGERS: "org.apache.zookeeper=ERROR,org.apache.kafka=ERROR"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    networks:
+      - airis-etl-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kafka Broker 1
+  kafka1:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: airis-epm-kafka1
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "19092:19092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka1:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_COMPRESSION_TYPE: lz4
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_DELETE_TOPIC_ENABLE: true
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=ERROR,state.change.logger=ERROR"
+    volumes:
+      - kafka1_data:/var/lib/kafka/data
+    networks:
+      - airis-etl-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kafka Broker 2
+  kafka2:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: airis-epm-kafka2
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9093:9093"
+      - "19093:19093"
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka2:29092,EXTERNAL://localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_COMPRESSION_TYPE: lz4
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_DELETE_TOPIC_ENABLE: true
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=ERROR,state.change.logger=ERROR"
+    volumes:
+      - kafka2_data:/var/lib/kafka/data
+    networks:
+      - airis-etl-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9093"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kafka Broker 3
+  kafka3:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: airis-epm-kafka3
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9094:9094"
+      - "19094:19094"
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka3:29092,EXTERNAL://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 2
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_COMPRESSION_TYPE: lz4
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_DELETE_TOPIC_ENABLE: true
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=ERROR,state.change.logger=ERROR"
+    volumes:
+      - kafka3_data:/var/lib/kafka/data
+    networks:
+      - airis-etl-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9094"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kafka UI for monitoring
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: airis-epm-kafka-ui
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: airis-epm-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:29092,kafka2:29092,kafka3:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      KAFKA_CLUSTERS_0_READONLY: false
+      DYNAMIC_CONFIG_ENABLED: true
+    networks:
+      - airis-etl-network
+    restart: unless-stopped
+
+  # Schema Registry for Avro schemas
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.5.0
+    container_name: airis-epm-schema-registry
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka1:29092,kafka2:29092,kafka3:29092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+      SCHEMA_REGISTRY_SCHEMA_REGISTRY_INTER_INSTANCE_PROTOCOL: http
+      SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL: ERROR
+    networks:
+      - airis-etl-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/subjects"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Flink JobManager
+  flink-jobmanager:
+    image: flink:1.18-scala_2.12-java11
+    container_name: airis-epm-flink-jobmanager
+    ports:
+      - "8082:8081"  # Flink UI
+      - "6123:6123"  # RPC port
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+      - FLINK_PROPERTIES=
+        jobmanager.rpc.address=flink-jobmanager
+        jobmanager.rpc.port=6123
+        jobmanager.memory.process.size=2048m
+        taskmanager.numberOfTaskSlots=4
+        parallelism.default=2
+        state.backend=rocksdb
+        state.checkpoints.dir=file:///tmp/flink-checkpoints
+        state.savepoints.dir=file:///tmp/flink-savepoints
+        execution.checkpointing.interval=60000
+        execution.checkpointing.mode=EXACTLY_ONCE
+        restart-strategy=fixed-delay
+        restart-strategy.fixed-delay.attempts=3
+        restart-strategy.fixed-delay.delay=10s
+    volumes:
+      - flink_data:/tmp/flink-checkpoints
+      - flink_savepoints:/tmp/flink-savepoints
+      - ./flink-jobs:/opt/flink/jobs
+    networks:
+      - airis-etl-network
+    restart: unless-stopped
+    command: jobmanager
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/overview"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Flink TaskManager 1
+  flink-taskmanager-1:
+    image: flink:1.18-scala_2.12-java11
+    container_name: airis-epm-flink-taskmanager-1
+    depends_on:
+      flink-jobmanager:
+        condition: service_healthy
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+      - FLINK_PROPERTIES=
+        jobmanager.rpc.address=flink-jobmanager
+        jobmanager.rpc.port=6123
+        taskmanager.numberOfTaskSlots=4
+        taskmanager.memory.process.size=2048m
+        taskmanager.memory.managed.size=512m
+        parallelism.default=2
+    volumes:
+      - flink_tm1_data:/tmp
+    networks:
+      - airis-etl-network
+    restart: unless-stopped
+    command: taskmanager
+
+  # Flink TaskManager 2
+  flink-taskmanager-2:
+    image: flink:1.18-scala_2.12-java11
+    container_name: airis-epm-flink-taskmanager-2
+    depends_on:
+      flink-jobmanager:
+        condition: service_healthy
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+      - FLINK_PROPERTIES=
+        jobmanager.rpc.address=flink-jobmanager
+        jobmanager.rpc.port=6123
+        taskmanager.numberOfTaskSlots=4
+        taskmanager.memory.process.size=2048m
+        taskmanager.memory.managed.size=512m
+        parallelism.default=2
+    volumes:
+      - flink_tm2_data:/tmp
+    networks:
+      - airis-etl-network
+    restart: unless-stopped
+    command: taskmanager
+
+  # Kafka Connect for data ingestion
+  kafka-connect:
+    image: confluentinc/cp-kafka-connect:7.5.0
+    container_name: airis-epm-kafka-connect
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+      - schema-registry
+    ports:
+      - "8083:8083"
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: kafka1:29092,kafka2:29092,kafka3:29092
+      CONNECT_REST_PORT: 8083
+      CONNECT_GROUP_ID: airis-epm-connect
+      CONNECT_CONFIG_STORAGE_TOPIC: _connect-configs
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 2
+      CONNECT_OFFSET_STORAGE_TOPIC: _connect-offsets
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 2
+      CONNECT_STATUS_STORAGE_TOPIC: _connect-status
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 2
+      CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      CONNECT_INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_INTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      CONNECT_LOG4J_ROOT_LOGLEVEL: ERROR
+      CONNECT_PLUGIN_PATH: /usr/share/java,/usr/share/confluent-hub-components
+    volumes:
+      - ./connectors:/usr/share/confluent-hub-components
+    networks:
+      - airis-etl-network
+    restart: unless-stopped
+    command:
+      - bash
+      - -c
+      - |
+        confluent-hub install --no-prompt debezium/debezium-connector-postgresql:2.2.1
+        confluent-hub install --no-prompt confluentinc/kafka-connect-elasticsearch:14.0.0
+        confluent-hub install --no-prompt confluentinc/kafka-connect-jdbc:10.7.0
+        /etc/confluent/docker/run
+
+networks:
+  airis-etl-network:
+    driver: bridge
+    name: airis-etl-network
+
+volumes:
+  zookeeper_data:
+    name: airis-epm-zookeeper-data
+  zookeeper_logs:
+    name: airis-epm-zookeeper-logs
+  kafka1_data:
+    name: airis-epm-kafka1-data
+  kafka2_data:
+    name: airis-epm-kafka2-data
+  kafka3_data:
+    name: airis-epm-kafka3-data
+  flink_data:
+    name: airis-epm-flink-data
+  flink_savepoints:
+    name: airis-epm-flink-savepoints
+  flink_tm1_data:
+    name: airis-epm-flink-tm1-data
+  flink_tm2_data:
+    name: airis-epm-flink-tm2-data

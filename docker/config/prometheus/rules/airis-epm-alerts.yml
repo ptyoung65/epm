@@ -1,0 +1,280 @@
+# AIRIS EPM - Prometheus 알림 규칙
+# 시스템 상태 모니터링 및 자동 알림
+
+groups:
+  # 애플리케이션 상태 알림
+  - name: airis-epm-application
+    rules:
+      # 서비스 다운 알림
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: "{{ $labels.service }} 서비스가 다운되었습니다"
+          description: "{{ $labels.service }} ({{ $labels.instance }})가 {{ $value }}분간 응답하지 않습니다."
+          runbook_url: "https://wiki.airis-epm.com/runbooks/service-down"
+
+      # 높은 응답 시간
+      - alert: HighResponseTime
+        expr: http_request_duration_seconds{quantile="0.95"} > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "{{ $labels.service }} 응답 시간이 느립니다"
+          description: "{{ $labels.service }}의 95% 응답시간이 {{ $value }}초로 2초를 초과했습니다."
+
+      # 높은 에러율
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 3m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "{{ $labels.service }} 높은 에러율 감지"
+          description: "{{ $labels.service }}의 에러율이 {{ $value | humanizePercentage }}로 5%를 초과했습니다."
+
+  # 인프라스트럭처 알림
+  - name: airis-epm-infrastructure
+    rules:
+      # 높은 CPU 사용률
+      - alert: HighCpuUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "{{ $labels.instance }} CPU 사용률이 높습니다"
+          description: "{{ $labels.instance }}의 CPU 사용률이 {{ $value }}%로 10분간 85%를 초과했습니다."
+
+      # 높은 메모리 사용률
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100 > 90
+        for: 5m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "{{ $labels.instance }} 메모리 사용률이 위험합니다"
+          description: "{{ $labels.instance }}의 메모리 사용률이 {{ $value }}%로 90%를 초과했습니다."
+
+      # 디스크 공간 부족
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 10
+        for: 2m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "{{ $labels.instance }} 디스크 공간이 부족합니다"
+          description: "{{ $labels.instance }}의 {{ $labels.mountpoint }} 디스크 여유공간이 {{ $value }}%로 10% 미만입니다."
+
+      # 높은 디스크 I/O 대기
+      - alert: HighDiskIOWait
+        expr: irate(node_cpu_seconds_total{mode="iowait"}[5m]) * 100 > 30
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "{{ $labels.instance }} 디스크 I/O 대기 시간이 높습니다"
+          description: "{{ $labels.instance }}의 I/O 대기 시간이 {{ $value }}%로 30%를 초과했습니다."
+
+  # 데이터베이스 알림
+  - name: airis-epm-databases
+    rules:
+      # PostgreSQL 연결 수 높음
+      - alert: PostgreSQLHighConnections
+        expr: pg_stat_database_numbackends > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "PostgreSQL 연결 수가 높습니다"
+          description: "PostgreSQL의 연결 수가 {{ $value }}개로 80개를 초과했습니다."
+
+      # PostgreSQL 트랜잭션 블록됨
+      - alert: PostgreSQLDeadlocks
+        expr: increase(pg_stat_database_deadlocks[1h]) > 5
+        for: 0s
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "PostgreSQL 데드락이 감지되었습니다"
+          description: "지난 1시간 동안 {{ $value }}개의 데드락이 발생했습니다."
+
+      # Redis 메모리 사용률 높음
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_config_maxmemory_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "Redis 메모리 사용률이 높습니다"
+          description: "Redis 메모리 사용률이 {{ $value }}%로 85%를 초과했습니다."
+
+      # MongoDB 복제 지연
+      - alert: MongoDBReplicationLag
+        expr: mongodb_replset_member_replication_lag > 10
+        for: 2m
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "MongoDB 복제 지연이 발생했습니다"
+          description: "MongoDB 복제 지연이 {{ $value }}초입니다."
+
+  # WebSocket 및 실시간 기능 알림
+  - name: airis-epm-realtime
+    rules:
+      # WebSocket 연결 수 급증
+      - alert: WebSocketConnectionSpike
+        expr: increase(websocket_connections_total[5m]) > 1000
+        for: 2m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "WebSocket 연결 수가 급증했습니다"
+          description: "지난 5분간 WebSocket 연결이 {{ $value }}개 증가했습니다."
+
+      # WebSocket 연결 실패율 높음
+      - alert: WebSocketHighFailureRate
+        expr: rate(websocket_connection_failures_total[5m]) / rate(websocket_connection_attempts_total[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "WebSocket 연결 실패율이 높습니다"
+          description: "WebSocket 연결 실패율이 {{ $value | humanizePercentage }}로 10%를 초과했습니다."
+
+      # 실시간 데이터 처리 지연
+      - alert: RealtimeDataProcessingDelay
+        expr: realtime_data_processing_delay_seconds > 5
+        for: 3m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "실시간 데이터 처리가 지연되고 있습니다"
+          description: "실시간 데이터 처리 지연이 {{ $value }}초입니다."
+
+  # AI 예측 시스템 알림
+  - name: airis-epm-ai-prediction
+    rules:
+      # AI 모델 예측 실패율 높음
+      - alert: AIModelHighFailureRate
+        expr: rate(ai_prediction_failures_total[10m]) / rate(ai_prediction_requests_total[10m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          team: ai-ops
+        annotations:
+          summary: "{{ $labels.model }} AI 모델 실패율이 높습니다"
+          description: "{{ $labels.model }} 모델의 예측 실패율이 {{ $value | humanizePercentage }}로 10%를 초과했습니다."
+
+      # AI 예측 응답 시간 느림
+      - alert: AIPredictionSlowResponse
+        expr: ai_prediction_duration_seconds{quantile="0.95"} > 30
+        for: 5m
+        labels:
+          severity: warning
+          team: ai-ops
+        annotations:
+          summary: "{{ $labels.model }} AI 예측 응답이 느립니다"
+          description: "{{ $labels.model }} 모델의 95% 응답시간이 {{ $value }}초로 30초를 초과했습니다."
+
+      # 모델 정확도 하락
+      - alert: AIModelAccuracyDrop
+        expr: ai_model_accuracy < 0.8
+        for: 10m
+        labels:
+          severity: critical
+          team: ai-ops
+        annotations:
+          summary: "{{ $labels.model }} AI 모델 정확도가 하락했습니다"
+          description: "{{ $labels.model }} 모델의 정확도가 {{ $value }}로 80% 미만입니다."
+
+  # 비즈니스 메트릭 알림
+  - name: airis-epm-business
+    rules:
+      # 일일 활성 사용자 급감
+      - alert: DailyActiveUsersDropped
+        expr: daily_active_users < daily_active_users offset 1d * 0.7
+        for: 1h
+        labels:
+          severity: warning
+          team: business
+        annotations:
+          summary: "일일 활성 사용자가 급감했습니다"
+          description: "일일 활성 사용자가 전일 대비 30% 이상 감소했습니다. 현재: {{ $value }}"
+
+      # API 사용량 급증
+      - alert: APIUsageSpike
+        expr: rate(http_requests_total[5m]) > rate(http_requests_total[5m] offset 1h) * 3
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: "API 사용량이 급증했습니다"
+          description: "API 요청률이 1시간 전 대비 3배 이상 증가했습니다. 현재 RPS: {{ $value }}"
+
+  # 보안 관련 알림
+  - name: airis-epm-security
+    rules:
+      # 비정상적인 로그인 시도
+      - alert: SuspiciousLoginAttempts
+        expr: rate(login_attempts_failed_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "비정상적인 로그인 시도가 감지되었습니다"
+          description: "실패한 로그인 시도가 분당 {{ $value }}회로 10회를 초과했습니다."
+
+      # 높은 404 에러율 (스캔 시도 가능성)
+      - alert: High404ErrorRate
+        expr: rate(http_requests_total{status="404"}[5m]) > 50
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "404 에러율이 높습니다"
+          description: "404 에러가 분당 {{ $value }}회로 50회를 초과했습니다. 스캔 공격 가능성이 있습니다."
+
+  # SSL 인증서 관리
+  - name: airis-epm-ssl
+    rules:
+      # SSL 인증서 만료 임박
+      - alert: SSLCertificateExpiringSoon
+        expr: ssl_certificate_expiry_days < 30
+        for: 1h
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "SSL 인증서가 곧 만료됩니다"
+          description: "{{ $labels.instance }}의 SSL 인증서가 {{ $value }}일 후 만료됩니다."
+
+      - alert: SSLCertificateExpiringSoon
+        expr: ssl_certificate_expiry_days < 7
+        for: 1h
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "SSL 인증서 만료가 임박했습니다"
+          description: "{{ $labels.instance }}의 SSL 인증서가 {{ $value }}일 후 만료됩니다. 즉시 갱신이 필요합니다."

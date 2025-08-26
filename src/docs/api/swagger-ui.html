@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS EPM API 문서</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui.css" />
+    <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5.10.5/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5.10.5/favicon-16x16.png" sizes="16x16" />
+    <style>
+        /* Custom styling for Korean localization */
+        .swagger-ui .topbar {
+            background-color: #1f2937;
+        }
+        
+        .swagger-ui .topbar .download-url-wrapper {
+            display: none;
+        }
+        
+        .custom-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            margin-bottom: 0;
+            text-align: center;
+        }
+        
+        .custom-header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .custom-header p {
+            margin: 10px 0 0 0;
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .api-info-section {
+            background: #f8fafc;
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 0;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .info-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-card h3 {
+            margin: 0 0 10px 0;
+            color: #1f2937;
+            font-size: 1.2em;
+        }
+        
+        .info-card p {
+            margin: 0;
+            color: #64748b;
+            line-height: 1.5;
+        }
+        
+        .auth-info {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .auth-info strong {
+            color: #d97706;
+        }
+        
+        .quick-links {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .quick-links a {
+            display: inline-block;
+            margin: 0 10px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .quick-links a:hover {
+            background: #5a67d8;
+        }
+        
+        /* Swagger UI customizations */
+        .swagger-ui .info {
+            margin: 20px 0;
+        }
+        
+        .swagger-ui .scheme-container {
+            background: #f7fafc;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        
+        .swagger-ui .btn.authorize {
+            background-color: #48bb78;
+            border-color: #48bb78;
+        }
+        
+        .swagger-ui .btn.authorize:hover {
+            background-color: #38a169;
+            border-color: #38a169;
+        }
+        
+        .swagger-ui .opblock.opblock-get .opblock-summary {
+            border-color: #48bb78;
+        }
+        
+        .swagger-ui .opblock.opblock-post .opblock-summary {
+            border-color: #ed8936;
+        }
+        
+        .swagger-ui .opblock.opblock-put .opblock-summary {
+            border-color: #4299e1;
+        }
+        
+        .swagger-ui .opblock.opblock-delete .opblock-summary {
+            border-color: #f56565;
+        }
+        
+        /* Korean font optimization */
+        .swagger-ui {
+            font-family: "Malgun Gothic", "맑은 고딕", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        /* Status indicators */
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-healthy { background-color: #48bb78; }
+        .status-warning { background-color: #ed8936; }
+        .status-error { background-color: #f56565; }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .custom-header h1 {
+                font-size: 2em;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .quick-links a {
+                display: block;
+                margin: 5px 0;
+                width: 200px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Custom Header -->
+    <div class="custom-header">
+        <h1>AIRIS EPM API</h1>
+        <p>Enterprise Performance Management API 문서</p>
+    </div>
+    
+    <!-- API Information Section -->
+    <div class="api-info-section">
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>📊 실시간 모니터링</h3>
+                <p>시스템 성능 지표를 실시간으로 수집하고 분석하여 최적의 성능을 유지합니다.</p>
+            </div>
+            <div class="info-card">
+                <h3>🔍 데이터 품질 관리</h3>
+                <p>데이터 유효성 검사, 이상 탐지, 정제 기능을 통해 높은 데이터 품질을 보장합니다.</p>
+            </div>
+            <div class="info-card">
+                <h3>⚡ 성능 최적화</h3>
+                <p>다층 캐싱, 쿼리 최적화, 연결 풀링을 통해 시스템 성능을 최대화합니다.</p>
+            </div>
+            <div class="info-card">
+                <h3>🚨 지능형 알림</h3>
+                <p>AI 기반 이상 탐지와 다중 채널 알림을 통해 선제적 문제 해결을 지원합니다.</p>
+            </div>
+        </div>
+        
+        <div class="auth-info">
+            <strong>🔐 인증 정보:</strong> 
+            모든 API 요청에는 Bearer 토큰이 필요합니다. Authorization 헤더에 토큰을 포함해주세요.
+            <br>
+            <code>Authorization: Bearer YOUR_API_TOKEN</code>
+        </div>
+        
+        <div class="quick-links">
+            <a href="#/Performance">성능 API</a>
+            <a href="#/Data%20Quality">데이터 품질 API</a>
+            <a href="#/Analytics">분석 API</a>
+            <a href="#/Alerts">알림 API</a>
+            <a href="/graphql" target="_blank">GraphQL Playground</a>
+            <a href="/postman" target="_blank">Postman 컬렉션</a>
+        </div>
+    </div>
+
+    <!-- Swagger UI Container -->
+    <div id="swagger-ui"></div>
+
+    <!-- System Status -->
+    <div style="position: fixed; top: 10px; right: 10px; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 1000;">
+        <div style="display: flex; align-items: center; font-size: 14px; margin-bottom: 5px;">
+            <span class="status-indicator status-healthy"></span>
+            <span>API 상태: </span>
+            <span id="api-status">확인 중...</span>
+        </div>
+        <div style="display: flex; align-items: center; font-size: 14px;">
+            <span class="status-indicator" id="version-indicator"></span>
+            <span>버전: v1.0.0</span>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui-bundle.js" crossorigin></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.10.5/swagger-ui-standalone-preset.js" crossorigin></script>
+    
+    <script>
+        // API 상태 확인
+        async function checkApiStatus() {
+            try {
+                const response = await fetch('/api/v1/health');
+                const data = await response.json();
+                
+                const statusElement = document.getElementById('api-status');
+                const versionIndicator = document.getElementById('version-indicator');
+                
+                if (data.status === 'healthy') {
+                    statusElement.textContent = '정상';
+                    statusElement.style.color = '#48bb78';
+                    versionIndicator.className = 'status-indicator status-healthy';
+                } else {
+                    statusElement.textContent = '비정상';
+                    statusElement.style.color = '#f56565';
+                    versionIndicator.className = 'status-indicator status-error';
+                }
+            } catch (error) {
+                const statusElement = document.getElementById('api-status');
+                const versionIndicator = document.getElementById('version-indicator');
+                statusElement.textContent = '오류';
+                statusElement.style.color = '#f56565';
+                versionIndicator.className = 'status-indicator status-error';
+            }
+        }
+        
+        // 페이지 로드 시 상태 확인
+        checkApiStatus();
+        
+        // 30초마다 상태 확인
+        setInterval(checkApiStatus, 30000);
+
+        // Swagger UI 초기화
+        window.onload = function() {
+            const ui = SwaggerUIBundle({
+                url: './openapi.yaml',
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                
+                // Custom configurations
+                displayRequestDuration: true,
+                docExpansion: 'list',
+                filter: true,
+                showExtensions: true,
+                showCommonExtensions: true,
+                
+                // Korean localization
+                requestInterceptor: function(request) {
+                    // Add default headers
+                    request.headers['Accept-Language'] = 'ko-KR,ko;q=0.9,en;q=0.8';
+                    return request;
+                },
+                
+                responseInterceptor: function(response) {
+                    // Log API calls for debugging
+                    console.log('API Response:', response.status, response.url);
+                    return response;
+                },
+                
+                // Custom request/response display
+                onComplete: function() {
+                    console.log('Swagger UI loaded successfully');
+                    
+                    // Add custom styles
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        .swagger-ui .info .title {
+                            font-size: 36px;
+                            color: #1f2937;
+                        }
+                        
+                        .swagger-ui .info .description {
+                            font-size: 16px;
+                            line-height: 1.6;
+                        }
+                        
+                        .swagger-ui .info .description p {
+                            margin: 10px 0;
+                        }
+                        
+                        .swagger-ui .scheme-container .schemes {
+                            display: flex;
+                            align-items: center;
+                        }
+                        
+                        .swagger-ui .scheme-container .schemes > label {
+                            margin-right: 10px;
+                            font-weight: 600;
+                            color: #374151;
+                        }
+                    `;
+                    document.head.appendChild(style);
+                },
+                
+                // Try it out feature
+                tryItOutEnabled: true,
+                
+                // Security definitions
+                initOAuth: {
+                    appName: "AIRIS EPM API",
+                    clientId: "airis-epm-client",
+                    realm: "AIRIS EPM",
+                    additionalQueryStringParams: {}
+                }
+            });
+            
+            window.ui = ui;
+        };
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + K to focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                const searchInput = document.querySelector('.swagger-ui .filter-container input');
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            }
+            
+            // Escape to close modals
+            if (e.key === 'Escape') {
+                const modals = document.querySelectorAll('.swagger-ui .modal-ux');
+                modals.forEach(modal => {
+                    if (modal.style.display !== 'none') {
+                        modal.style.display = 'none';
+                    }
+                });
+            }
+        });
+        
+        // Add tooltips for better UX
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                // Add tooltips to common elements
+                const authorizeBtn = document.querySelector('.swagger-ui .btn.authorize');
+                if (authorizeBtn) {
+                    authorizeBtn.title = 'API 인증을 위한 토큰을 설정합니다';
+                }
+                
+                const servers = document.querySelectorAll('.swagger-ui .servers select');
+                servers.forEach(select => {
+                    select.title = '사용할 서버 환경을 선택합니다';
+                });
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

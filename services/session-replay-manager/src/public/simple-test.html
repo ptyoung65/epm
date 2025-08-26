@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>간단한 테스트</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>간단한 기능 테스트</h1>
+    
+    <div>
+        <button id="testBtn">클릭 테스트</button>
+        <button id="socketBtn">Socket.IO 연결 테스트</button>
+    </div>
+    
+    <div id="result" style="margin-top: 20px; padding: 10px; background: #f0f0f0;"></div>
+    
+    <script>
+        console.log('스크립트 시작');
+        
+        // 결과 표시 함수
+        function showResult(message) {
+            document.getElementById('result').innerHTML += '<p>' + message + '</p>';
+            console.log(message);
+        }
+        
+        // 페이지 로드 완료
+        window.onload = function() {
+            console.log('페이지 로드 완료');
+            showResult('페이지 로드 완료 - ' + new Date().toLocaleString());
+            
+            // 클릭 테스트 버튼
+            document.getElementById('testBtn').onclick = function() {
+                showResult('버튼 클릭됨! - ' + new Date().toLocaleString());
+            };
+            
+            // Socket.IO 연결 테스트
+            document.getElementById('socketBtn').onclick = function() {
+                showResult('Socket.IO 연결 시도...');
+                
+                try {
+                    const socket = io('http://localhost:3004');
+                    
+                    socket.on('connect', function() {
+                        showResult('Socket.IO 연결 성공! ID: ' + socket.id);
+                    });
+                    
+                    socket.on('disconnect', function() {
+                        showResult('Socket.IO 연결 해제');
+                    });
+                    
+                    socket.on('connect_error', function(error) {
+                        showResult('Socket.IO 연결 오류: ' + error.message);
+                    });
+                } catch(error) {
+                    showResult('Socket.IO 오류: ' + error.message);
+                }
+            };
+            
+            showResult('이벤트 리스너 등록 완료');
+        };
+        
+        console.log('스크립트 끝');
+    </script>
+</body>
+</html>

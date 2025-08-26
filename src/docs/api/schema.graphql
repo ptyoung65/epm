@@ -1,0 +1,614 @@
+# AIRIS EPM GraphQL Schema
+# Enterprise Performance Management GraphQL API
+
+"""
+Represents a timestamp in ISO 8601 format
+"""
+scalar DateTime
+
+"""
+Represents a JSON object
+"""
+scalar JSON
+
+# Root Types
+type Query {
+  # Performance Monitoring
+  """Get performance metrics with optional filtering"""
+  metrics(
+    timeRange: TimeRange = HOUR_1
+    metricType: MetricType
+    aggregation: AggregationType = AVG
+    limit: Int = 100
+  ): MetricsResponse!
+  
+  """Get cache statistics"""
+  cacheStats: CacheStats!
+  
+  """Get cached data by type and key"""
+  cachedData(type: String!, key: String!): CacheDataResponse
+  
+  # Data Quality
+  """Get anomaly detection results"""
+  anomalies(
+    timeRange: TimeRange = DAY_1
+    severity: SeverityLevel
+    limit: Int = 100
+  ): AnomaliesResponse!
+  
+  """Get data validation results"""
+  validationResults(
+    schema: String!
+    limit: Int = 100
+  ): ValidationResultsResponse!
+  
+  # Analytics
+  """Get dashboard data"""
+  dashboard(dashboardId: String!, timeRange: TimeRange = DAY_1): DashboardData!
+  
+  """Get analytics reports"""
+  reports(
+    reportType: ReportType!
+    format: ReportFormat = JSON
+    timeRange: TimeRange = DAY_1
+  ): ReportsResponse!
+  
+  # Alerts
+  """Get alerts with filtering"""
+  alerts(
+    status: AlertStatus
+    severity: SeverityLevel
+    limit: Int = 100
+  ): AlertsResponse!
+  
+  """Get specific alert details"""
+  alert(id: ID!): AlertDetails
+  
+  """Get alert rules"""
+  alertRules(enabled: Boolean): [AlertRule!]!
+  
+  # System
+  """Get system health status"""
+  health: HealthStatus!
+  
+  """Get API information"""
+  apiInfo: ApiInfo!
+}
+
+type Mutation {
+  # Performance Monitoring
+  """Submit performance metrics"""
+  submitMetrics(input: MetricsInput!): MutationResponse!
+  
+  """Store data in cache"""
+  cacheData(type: String!, key: String!, data: JSON!, ttl: Int): MutationResponse!
+  
+  """Invalidate cache data"""
+  invalidateCache(type: String!, key: String!): MutationResponse!
+  
+  # Data Quality
+  """Validate data quality"""
+  validateData(input: DataValidationInput!): ValidationResponse!
+  
+  """Submit data for anomaly detection"""
+  detectAnomalies(input: AnomalyDetectionInput!): AnomalyDetectionResponse!
+  
+  """Clean and transform data"""
+  cleanseData(input: DataCleansingInput!): DataCleansingResponse!
+  
+  # Analytics
+  """Generate custom report"""
+  generateReport(input: ReportInput!): AsyncResponse!
+  
+  # Alerts
+  """Create alert rule"""
+  createAlertRule(input: AlertRuleInput!): AlertRuleResponse!
+  
+  """Update alert rule"""
+  updateAlertRule(id: ID!, input: AlertRuleInput!): AlertRuleResponse!
+  
+  """Delete alert rule"""
+  deleteAlertRule(id: ID!): MutationResponse!
+  
+  """Update alert status"""
+  updateAlertStatus(id: ID!, status: AlertStatus!, comment: String): AlertDetails!
+  
+  """Acknowledge alert"""
+  acknowledgeAlert(id: ID!, comment: String): AlertDetails!
+  
+  """Resolve alert"""
+  resolveAlert(id: ID!, comment: String): AlertDetails!
+}
+
+type Subscription {
+  """Subscribe to real-time metrics"""
+  metricsUpdates(metricTypes: [MetricType!]): Metric!
+  
+  """Subscribe to cache statistics updates"""
+  cacheStatsUpdates: CacheStats!
+  
+  """Subscribe to new anomalies"""
+  anomalyDetected(severity: SeverityLevel): Anomaly!
+  
+  """Subscribe to new alerts"""
+  alertTriggered(severity: SeverityLevel): Alert!
+  
+  """Subscribe to alert status changes"""
+  alertStatusChanged(alertId: ID): Alert!
+  
+  """Subscribe to dashboard updates"""
+  dashboardUpdates(dashboardId: String!): DashboardData!
+  
+  """Subscribe to system health changes"""
+  healthStatusChanged: HealthStatus!
+}
+
+# Enums
+enum TimeRange {
+  MINUTE_5
+  MINUTE_15
+  MINUTE_30
+  HOUR_1
+  HOUR_6
+  DAY_1
+  DAY_7
+  DAY_30
+}
+
+enum MetricType {
+  CPU
+  MEMORY
+  DISK
+  NETWORK
+  RESPONSE_TIME
+  THROUGHPUT
+  ERROR_RATE
+  CACHE_HIT_RATE
+  DATABASE_CONNECTIONS
+  QUEUE_SIZE
+}
+
+enum AggregationType {
+  AVG
+  MIN
+  MAX
+  SUM
+  COUNT
+  PERCENTILE_50
+  PERCENTILE_90
+  PERCENTILE_95
+  PERCENTILE_99
+}
+
+enum SeverityLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+enum ReportType {
+  PERFORMANCE
+  QUALITY
+  TRENDS
+  SUMMARY
+  CUSTOM
+}
+
+enum ReportFormat {
+  JSON
+  PDF
+  CSV
+  XLSX
+}
+
+enum CacheStrategy {
+  LRU
+  LFU
+  FIFO
+  TTL
+}
+
+enum AnomalyDetectionAlgorithm {
+  STATISTICAL
+  ML
+  HYBRID
+}
+
+enum DataCleansingRule {
+  REMOVE_NULLS
+  DEDUPLICATE
+  NORMALIZE
+  ENRICH
+  VALIDATE_FORMAT
+}
+
+enum HealthStatusLevel {
+  HEALTHY
+  DEGRADED
+  UNHEALTHY
+}
+
+# Input Types
+input MetricsInput {
+  metrics: [MetricInput!]!
+}
+
+input MetricInput {
+  timestamp: DateTime!
+  metricType: MetricType!
+  value: Float!
+  tags: JSON
+}
+
+input DataValidationInput {
+  data: JSON!
+  schema: String!
+  strictMode: Boolean = false
+}
+
+input AnomalyDetectionInput {
+  data: [JSON!]!
+  algorithms: [AnomalyDetectionAlgorithm!] = [STATISTICAL]
+  sensitivity: Float = 0.5
+}
+
+input DataCleansingInput {
+  data: [JSON!]!
+  rules: [DataCleansingRule!]!
+  options: JSON
+}
+
+input ReportInput {
+  reportType: ReportType!
+  filters: JSON
+  timeRange: TimeRange!
+  format: ReportFormat = JSON
+  customQuery: String
+}
+
+input AlertRuleInput {
+  name: String!
+  description: String
+  condition: String!
+  severity: SeverityLevel!
+  enabled: Boolean = true
+  notificationChannels: [String!]
+  evaluationInterval: Int = 60
+  forDuration: Int = 300
+}
+
+# Response Types
+type MetricsResponse {
+  success: Boolean!
+  metrics: [Metric!]!
+  metadata: MetricsMetadata!
+}
+
+type Metric {
+  timestamp: DateTime!
+  metricType: MetricType!
+  value: Float!
+  tags: JSON
+}
+
+type MetricsMetadata {
+  totalCount: Int!
+  timeRange: TimeRange!
+  aggregation: AggregationType!
+  queryDuration: Float!
+}
+
+type CacheStats {
+  hitRate: Float!
+  missRate: Float!
+  totalRequests: Int!
+  cacheSize: Int!
+  evictions: Int!
+  memoryUsage: Int!
+  l1Stats: CacheLayerStats!
+  l2Stats: CacheLayerStats!
+}
+
+type CacheLayerStats {
+  hits: Int!
+  misses: Int!
+  size: Int!
+  memoryUsage: Int!
+}
+
+type CacheDataResponse {
+  success: Boolean!
+  data: JSON
+  cached: Boolean!
+  ttl: Int
+  cacheLayer: String!
+}
+
+type AnomaliesResponse {
+  success: Boolean!
+  anomalies: [Anomaly!]!
+  totalCount: Int!
+  processingTime: Float!
+}
+
+type Anomaly {
+  id: ID!
+  timestamp: DateTime!
+  type: String!
+  severity: SeverityLevel!
+  description: String!
+  affectedMetrics: [String!]!
+  confidenceScore: Float!
+  algorithm: AnomalyDetectionAlgorithm!
+  metadata: JSON
+}
+
+type ValidationResultsResponse {
+  success: Boolean!
+  results: [ValidationResult!]!
+  totalCount: Int!
+}
+
+type ValidationResult {
+  id: ID!
+  timestamp: DateTime!
+  schema: String!
+  valid: Boolean!
+  errors: [ValidationError!]!
+  qualityScore: Float!
+}
+
+type ValidationError {
+  field: String!
+  message: String!
+  severity: SeverityLevel!
+  value: JSON
+}
+
+type ValidationResponse {
+  success: Boolean!
+  valid: Boolean!
+  errors: [ValidationError!]!
+  qualityScore: Float!
+  processingTime: Float!
+}
+
+type AnomalyDetectionResponse {
+  success: Boolean!
+  anomalies: [Anomaly!]!
+  processingTime: Float!
+  algorithm: AnomalyDetectionAlgorithm!
+}
+
+type DataCleansingResponse {
+  success: Boolean!
+  cleanedData: [JSON!]!
+  statistics: CleansingStats!
+  processingTime: Float!
+}
+
+type CleansingStats {
+  originalCount: Int!
+  cleanedCount: Int!
+  removedCount: Int!
+  modifiedCount: Int!
+  rulesApplied: [DataCleansingRule!]!
+}
+
+type DashboardData {
+  success: Boolean!
+  dashboardId: String!
+  title: String!
+  widgets: [Widget!]!
+  lastUpdated: DateTime!
+  refreshInterval: Int!
+}
+
+type Widget {
+  id: ID!
+  type: WidgetType!
+  title: String!
+  position: WidgetPosition!
+  data: JSON!
+  config: JSON!
+}
+
+enum WidgetType {
+  CHART
+  TABLE
+  METRIC
+  ALERT
+  GAUGE
+  HEATMAP
+}
+
+type WidgetPosition {
+  x: Int!
+  y: Int!
+  width: Int!
+  height: Int!
+}
+
+type ReportsResponse {
+  success: Boolean!
+  reports: [Report!]!
+  totalCount: Int!
+}
+
+type Report {
+  id: ID!
+  reportType: ReportType!
+  format: ReportFormat!
+  title: String!
+  generatedAt: DateTime!
+  url: String
+  data: JSON
+  status: ReportStatus!
+}
+
+enum ReportStatus {
+  GENERATING
+  COMPLETED
+  FAILED
+}
+
+type AlertsResponse {
+  success: Boolean!
+  alerts: [Alert!]!
+  totalCount: Int!
+  summary: AlertsSummary!
+}
+
+type AlertsSummary {
+  active: Int!
+  acknowledged: Int!
+  resolved: Int!
+  bySeverity: SeverityBreakdown!
+}
+
+type SeverityBreakdown {
+  low: Int!
+  medium: Int!
+  high: Int!
+  critical: Int!
+}
+
+type Alert {
+  id: ID!
+  title: String!
+  description: String!
+  severity: SeverityLevel!
+  status: AlertStatus!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  ruleId: ID!
+  rule: AlertRule
+  affectedServices: [String!]!
+  tags: JSON
+}
+
+type AlertDetails {
+  id: ID!
+  title: String!
+  description: String!
+  severity: SeverityLevel!
+  status: AlertStatus!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  ruleId: ID!
+  rule: AlertRule!
+  history: [AlertEvent!]!
+  relatedMetrics: [Metric!]!
+  affectedServices: [String!]!
+  tags: JSON
+}
+
+type AlertEvent {
+  timestamp: DateTime!
+  eventType: AlertEventType!
+  message: String!
+  user: String
+  metadata: JSON
+}
+
+enum AlertEventType {
+  CREATED
+  TRIGGERED
+  ACKNOWLEDGED
+  RESOLVED
+  ESCALATED
+  SNOOZED
+}
+
+type AlertRule {
+  id: ID!
+  name: String!
+  description: String
+  condition: String!
+  severity: SeverityLevel!
+  enabled: Boolean!
+  notificationChannels: [String!]!
+  evaluationInterval: Int!
+  forDuration: Int!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  triggeredCount: Int!
+  lastTriggered: DateTime
+}
+
+type AlertRuleResponse {
+  success: Boolean!
+  rule: AlertRule!
+}
+
+type HealthStatus {
+  status: HealthStatusLevel!
+  timestamp: DateTime!
+  version: String!
+  uptime: Float!
+  dependencies: [DependencyHealth!]!
+  metrics: HealthMetrics!
+}
+
+type DependencyHealth {
+  service: String!
+  status: HealthStatusLevel!
+  latency: Float
+  lastCheck: DateTime!
+  version: String
+}
+
+type HealthMetrics {
+  cpuUsage: Float!
+  memoryUsage: Float!
+  diskUsage: Float!
+  networkLatency: Float!
+  activeConnections: Int!
+}
+
+type ApiInfo {
+  version: String!
+  name: String!
+  description: String!
+  documentation: String!
+  supportEmail: String!
+  rateLimits: RateLimits!
+}
+
+type RateLimits {
+  requestsPerHour: Int!
+  requestsPerMinute: Int!
+  burstLimit: Int!
+}
+
+type MutationResponse {
+  success: Boolean!
+  message: String!
+}
+
+type AsyncResponse {
+  success: Boolean!
+  jobId: ID!
+  status: AsyncJobStatus!
+  estimatedCompletion: DateTime
+}
+
+enum AsyncJobStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+# Custom Directives
+directive @auth(requires: [String!]) on FIELD_DEFINITION
+directive @rateLimit(limit: Int!, window: Int!) on FIELD_DEFINITION
+directive @cache(ttl: Int!, key: String) on FIELD_DEFINITION
+directive @validate(schema: String!) on INPUT_FIELD_DEFINITION

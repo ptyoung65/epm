@@ -1,0 +1,512 @@
+# AIRIS EPM PostgreSQL High Availability Configuration
+# Primary-replica setup with automatic failover using Patroni
+
+# PostgreSQL ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresql-config
+  namespace: airis-epm
+  labels:
+    app: postgresql
+    component: database
+data:
+  postgresql.conf: |
+    # Connection settings
+    listen_addresses = '*'
+    port = 5432
+    max_connections = 200
+    superuser_reserved_connections = 3
+
+    # Memory settings
+    shared_buffers = 2GB
+    effective_cache_size = 6GB
+    work_mem = 10MB
+    maintenance_work_mem = 256MB
+    dynamic_shared_memory_type = posix
+
+    # WAL settings for replication
+    wal_level = replica
+    max_wal_senders = 10
+    max_replication_slots = 10
+    wal_keep_segments = 32
+    wal_keep_size = 2GB
+    hot_standby = on
+    hot_standby_feedback = on
+
+    # Archive settings
+    archive_mode = on
+    archive_command = 'pgbackrest --stanza=main archive-push %p'
+    archive_timeout = 60s
+
+    # Checkpoint settings
+    checkpoint_completion_target = 0.9
+    checkpoint_timeout = 15min
+    max_wal_size = 4GB
+    min_wal_size = 1GB
+
+    # Logging settings
+    log_destination = 'stderr'
+    logging_collector = on
+    log_directory = '/var/log/postgresql'
+    log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log'
+    log_file_mode = 0644
+    log_truncate_on_rotation = on
+    log_rotation_age = 1d
+    log_rotation_size = 100MB
+    log_min_duration_statement = 1000
+    log_checkpoints = on
+    log_connections = on
+    log_disconnections = on
+    log_lock_waits = on
+    log_statement = 'ddl'
+
+    # Performance settings
+    random_page_cost = 1.1
+    effective_io_concurrency = 200
+    max_worker_processes = 8
+    max_parallel_workers_per_gather = 4
+    max_parallel_workers = 8
+
+    # AIRIS EPM specific settings
+    shared_preload_libraries = 'pg_stat_statements'
+    track_activity_query_size = 2048
+    track_io_timing = on
+    track_functions = all
+
+  pg_hba.conf: |
+    # TYPE  DATABASE        USER            ADDRESS                 METHOD
+    local   all             postgres                                peer
+    local   all             all                                     peer
+    host    all             all             127.0.0.1/32            md5
+    host    all             all             ::1/128                 md5
+    host    all             all             10.0.0.0/8              md5
+    host    all             all             172.16.0.0/12           md5
+    host    all             all             192.168.0.0/16          md5
+    host    replication     replicator      10.0.0.0/8              md5
+    host    replication     replicator      172.16.0.0/12           md5
+    host    replication     replicator      192.168.0.0/16          md5
+
+  patroni.yml: |
+    scope: airis-epm-postgres
+    name: ${POD_NAME}
+    namespace: /airis-epm/
+
+    restapi:
+      listen: 0.0.0.0:8008
+      connect_address: ${POD_IP}:8008
+
+    etcd:
+      hosts: 
+        - etcd-0.etcd-headless.airis-epm.svc.cluster.local:2379
+        - etcd-1.etcd-headless.airis-epm.svc.cluster.local:2379
+        - etcd-2.etcd-headless.airis-epm.svc.cluster.local:2379
+
+    bootstrap:
+      dcs:
+        ttl: 30
+        loop_wait: 10
+        retry_timeout: 30
+        maximum_lag_on_failover: 1048576
+        postgresql:
+          use_pg_rewind: true
+          use_slots: true
+          parameters:
+            max_connections: 200
+            shared_buffers: 2GB
+            effective_cache_size: 6GB
+            wal_level: replica
+            hot_standby: "on"
+            wal_keep_segments: 32
+            max_wal_senders: 10
+            max_replication_slots: 10
+            wal_log_hints: "on"
+            archive_mode: "on"
+            archive_timeout: 60s
+            archive_command: "pgbackrest --stanza=main archive-push %p"
+
+      initdb:
+        - encoding: UTF8
+        - data-checksums
+
+      pg_hba:
+        - host replication replicator 0.0.0.0/0 md5
+        - host all all 0.0.0.0/0 md5
+
+      users:
+        admin:
+          password: ${POSTGRES_ADMIN_PASSWORD}
+          options:
+            - createrole
+            - createdb
+
+    postgresql:
+      listen: 0.0.0.0:5432
+      connect_address: ${POD_IP}:5432
+      data_dir: /var/lib/postgresql/data
+      config_dir: /etc/postgresql
+      bin_dir: /usr/lib/postgresql/15/bin
+      pgpass: /tmp/pgpass
+      authentication:
+        replication:
+          username: replicator
+          password: ${POSTGRES_REPLICATOR_PASSWORD}
+        superuser:
+          username: postgres
+          password: ${POSTGRES_PASSWORD}
+        rewind:
+          username: replicator
+          password: ${POSTGRES_REPLICATOR_PASSWORD}
+      parameters:
+        unix_socket_directories: '/var/run/postgresql'
+
+    tags:
+      nofailover: false
+      noloadbalance: false
+      clonefrom: false
+      nosync: false
+
+---
+# PostgreSQL StatefulSet with Patroni
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgresql
+  namespace: airis-epm
+  labels:
+    app: postgresql
+    component: database
+spec:
+  serviceName: postgresql-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: postgresql
+      component: database
+  template:
+    metadata:
+      labels:
+        app: postgresql
+        component: database
+    spec:
+      serviceAccountName: airis-epm-db-operator
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+      initContainers:
+      - name: volume-permissions
+        image: busybox:1.35
+        command: ['sh', '-c', 'chown -R 999:999 /var/lib/postgresql /var/log/postgresql']
+        volumeMounts:
+        - name: postgresql-data
+          mountPath: /var/lib/postgresql
+        - name: postgresql-logs
+          mountPath: /var/log/postgresql
+        securityContext:
+          runAsUser: 0
+      containers:
+      - name: postgresql
+        image: postgres:15-alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5432
+          name: postgresql
+        - containerPort: 8008
+          name: patroni-api
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-credentials
+              key: postgres-password
+        - name: POSTGRES_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-credentials
+              key: admin-password
+        - name: POSTGRES_REPLICATOR_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-credentials
+              key: replicator-password
+        - name: PATRONI_POSTGRESQL_DATA_DIR
+          value: /var/lib/postgresql/data
+        - name: PATRONI_POSTGRESQL_PGPASS
+          value: /tmp/pgpass
+        - name: PATRONI_NAME
+          value: $(POD_NAME)
+        - name: PATRONI_SCOPE
+          value: airis-epm-postgres
+        volumeMounts:
+        - name: postgresql-data
+          mountPath: /var/lib/postgresql
+        - name: postgresql-logs
+          mountPath: /var/log/postgresql
+        - name: postgresql-config
+          mountPath: /etc/postgresql
+        - name: patroni-config
+          mountPath: /etc/patroni
+        command:
+        - /bin/bash
+        - -c
+        - |
+          # Install Patroni
+          pip install patroni[etcd]
+          
+          # Start Patroni
+          patroni /etc/patroni/patroni.yml
+        livenessProbe:
+          httpGet:
+            path: /liveness
+            port: 8008
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /readiness
+            port: 8008
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          successThreshold: 1
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "1000m"
+          limits:
+            memory: "8Gi"
+            cpu: "2000m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: postgresql-config
+        configMap:
+          name: postgresql-config
+      - name: patroni-config
+        configMap:
+          name: postgresql-config
+          items:
+          - key: patroni.yml
+            path: patroni.yml
+      - name: postgresql-logs
+        emptyDir: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: postgresql-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: fast-ssd
+      resources:
+        requests:
+          storage: 100Gi
+
+---
+# PostgreSQL Headless Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-headless
+  namespace: airis-epm
+  labels:
+    app: postgresql
+    component: database
+spec:
+  clusterIP: None
+  selector:
+    app: postgresql
+    component: database
+  ports:
+  - name: postgresql
+    port: 5432
+    targetPort: 5432
+  - name: patroni-api
+    port: 8008
+    targetPort: 8008
+
+---
+# PostgreSQL Primary Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-primary
+  namespace: airis-epm
+  labels:
+    app: postgresql
+    component: database
+    service-type: primary
+spec:
+  type: ClusterIP
+  selector:
+    app: postgresql
+    component: database
+    role: master
+  ports:
+  - name: postgresql
+    port: 5432
+    targetPort: 5432
+
+---
+# PostgreSQL Replica Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-replica
+  namespace: airis-epm
+  labels:
+    app: postgresql
+    component: database
+    service-type: replica
+spec:
+  type: ClusterIP
+  selector:
+    app: postgresql
+    component: database
+    role: replica
+  ports:
+  - name: postgresql
+    port: 5432
+    targetPort: 5432
+
+---
+# etcd for Patroni coordination
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: etcd
+  namespace: airis-epm
+  labels:
+    app: etcd
+    component: coordination
+spec:
+  serviceName: etcd-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: etcd
+      component: coordination
+  template:
+    metadata:
+      labels:
+        app: etcd
+        component: coordination
+    spec:
+      serviceAccountName: airis-epm-db-operator
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        runAsGroup: 1001
+        fsGroup: 1001
+      containers:
+      - name: etcd
+        image: quay.io/coreos/etcd:v3.5.9
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 2379
+          name: client
+        - containerPort: 2380
+          name: peer
+        env:
+        - name: ETCD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: ETCD_DATA_DIR
+          value: /var/lib/etcd
+        - name: ETCD_LISTEN_CLIENT_URLS
+          value: http://0.0.0.0:2379
+        - name: ETCD_ADVERTISE_CLIENT_URLS
+          value: http://$(ETCD_NAME).etcd-headless.airis-epm.svc.cluster.local:2379
+        - name: ETCD_LISTEN_PEER_URLS
+          value: http://0.0.0.0:2380
+        - name: ETCD_INITIAL_ADVERTISE_PEER_URLS
+          value: http://$(ETCD_NAME).etcd-headless.airis-epm.svc.cluster.local:2380
+        - name: ETCD_INITIAL_CLUSTER
+          value: etcd-0=http://etcd-0.etcd-headless.airis-epm.svc.cluster.local:2380,etcd-1=http://etcd-1.etcd-headless.airis-epm.svc.cluster.local:2380,etcd-2=http://etcd-2.etcd-headless.airis-epm.svc.cluster.local:2380
+        - name: ETCD_INITIAL_CLUSTER_STATE
+          value: new
+        - name: ETCD_INITIAL_CLUSTER_TOKEN
+          value: airis-epm-etcd-cluster
+        volumeMounts:
+        - name: etcd-data
+          mountPath: /var/lib/etcd
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 2379
+            scheme: HTTP
+          initialDelaySeconds: 15
+          periodSeconds: 15
+          timeoutSeconds: 15
+          failureThreshold: 8
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 2379
+            scheme: HTTP
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+  volumeClaimTemplates:
+  - metadata:
+      name: etcd-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: fast-ssd
+      resources:
+        requests:
+          storage: 10Gi
+
+---
+# etcd Headless Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: etcd-headless
+  namespace: airis-epm
+  labels:
+    app: etcd
+    component: coordination
+spec:
+  clusterIP: None
+  selector:
+    app: etcd
+    component: coordination
+  ports:
+  - name: client
+    port: 2379
+    targetPort: 2379
+  - name: peer
+    port: 2380
+    targetPort: 2380

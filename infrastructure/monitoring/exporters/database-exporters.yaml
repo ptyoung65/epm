@@ -1,0 +1,569 @@
+# AIRIS EPM Database Exporters
+# Prometheus exporters for database metrics collection
+
+# PostgreSQL Exporter
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-exporter
+  namespace: airis-epm
+  labels:
+    app: postgres-exporter
+    component: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-exporter
+      component: monitoring
+  template:
+    metadata:
+      labels:
+        app: postgres-exporter
+        component: monitoring
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9187"
+    spec:
+      serviceAccountName: airis-epm-monitoring
+      containers:
+      - name: postgres-exporter
+        image: prometheuscommunity/postgres-exporter:v0.13.2
+        ports:
+        - containerPort: 9187
+          name: metrics
+        env:
+        - name: DATA_SOURCE_NAME
+          valueFrom:
+            secretKeyRef:
+              name: postgres-exporter-secret
+              key: data-source-name
+        - name: PG_EXPORTER_EXTEND_QUERY_PATH
+          value: "/etc/postgres-exporter/queries.yml"
+        volumeMounts:
+        - name: queries
+          mountPath: /etc/postgres-exporter
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9187
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9187
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: queries
+        configMap:
+          name: postgres-exporter-queries
+
+---
+# PostgreSQL Exporter Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-exporter
+  namespace: airis-epm
+  labels:
+    app: postgres-exporter
+    component: monitoring
+spec:
+  type: ClusterIP
+  selector:
+    app: postgres-exporter
+    component: monitoring
+  ports:
+  - name: metrics
+    port: 9187
+    targetPort: 9187
+
+---
+# PostgreSQL Exporter Queries ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-exporter-queries
+  namespace: airis-epm
+  labels:
+    app: postgres-exporter
+data:
+  queries.yml: |
+    airis_epm_connections:
+      query: "SELECT datname, numbackends, xact_commit, xact_rollback, blks_read, blks_hit, tup_returned, tup_fetched, tup_inserted, tup_updated, tup_deleted FROM pg_stat_database WHERE datname = 'airis_epm'"
+      master: true
+      metrics:
+        - datname:
+            usage: "LABEL"
+            description: "Database name"
+        - numbackends:
+            usage: "GAUGE"
+            description: "Number of backends currently connected to this database"
+        - xact_commit:
+            usage: "COUNTER"
+            description: "Number of transactions in this database that have been committed"
+        - xact_rollback:
+            usage: "COUNTER"
+            description: "Number of transactions in this database that have been rolled back"
+        - blks_read:
+            usage: "COUNTER"
+            description: "Number of disk blocks read in this database"
+        - blks_hit:
+            usage: "COUNTER"
+            description: "Number of times disk blocks were found already in the buffer cache"
+        - tup_returned:
+            usage: "COUNTER"
+            description: "Number of rows returned by queries in this database"
+        - tup_fetched:
+            usage: "COUNTER"
+            description: "Number of rows fetched by queries in this database"
+        - tup_inserted:
+            usage: "COUNTER"
+            description: "Number of rows inserted by queries in this database"
+        - tup_updated:
+            usage: "COUNTER"
+            description: "Number of rows updated by queries in this database"
+        - tup_deleted:
+            usage: "COUNTER"
+            description: "Number of rows deleted by queries in this database"
+
+    airis_epm_table_stats:
+      query: "SELECT schemaname, tablename, seq_scan, seq_tup_read, idx_scan, idx_tup_fetch, n_tup_ins, n_tup_upd, n_tup_del, n_live_tup, n_dead_tup FROM pg_stat_user_tables WHERE schemaname = 'public'"
+      master: true
+      metrics:
+        - schemaname:
+            usage: "LABEL"
+            description: "Schema name"
+        - tablename:
+            usage: "LABEL"
+            description: "Table name"
+        - seq_scan:
+            usage: "COUNTER"
+            description: "Number of sequential scans initiated on this table"
+        - seq_tup_read:
+            usage: "COUNTER"
+            description: "Number of live rows fetched by sequential scans"
+        - idx_scan:
+            usage: "COUNTER"
+            description: "Number of index scans initiated on this table"
+        - idx_tup_fetch:
+            usage: "COUNTER"
+            description: "Number of live rows fetched by index scans"
+        - n_tup_ins:
+            usage: "COUNTER"
+            description: "Number of rows inserted"
+        - n_tup_upd:
+            usage: "COUNTER"
+            description: "Number of rows updated"
+        - n_tup_del:
+            usage: "COUNTER"
+            description: "Number of rows deleted"
+        - n_live_tup:
+            usage: "GAUGE"
+            description: "Estimated number of live rows"
+        - n_dead_tup:
+            usage: "GAUGE"
+            description: "Estimated number of dead rows"
+
+---
+# Redis Exporter
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-exporter
+  namespace: airis-epm
+  labels:
+    app: redis-exporter
+    component: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis-exporter
+      component: monitoring
+  template:
+    metadata:
+      labels:
+        app: redis-exporter
+        component: monitoring
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9121"
+    spec:
+      serviceAccountName: airis-epm-monitoring
+      containers:
+      - name: redis-exporter
+        image: oliver006/redis_exporter:v1.54.0
+        ports:
+        - containerPort: 9121
+          name: metrics
+        env:
+        - name: REDIS_ADDR
+          value: "redis://redis-lb.airis-epm.svc.cluster.local:6379"
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-credentials
+              key: password
+        - name: REDIS_EXPORTER_INCL_SYSTEM_METRICS
+          value: "true"
+        - name: REDIS_EXPORTER_CHECK_KEYS
+          value: "airis:*,sessions:*,cache:*"
+        - name: REDIS_EXPORTER_CHECK_SINGLE_KEYS
+          value: "airis:stats:requests,airis:stats:errors"
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9121
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9121
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - ALL
+
+---
+# Redis Exporter Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-exporter
+  namespace: airis-epm
+  labels:
+    app: redis-exporter
+    component: monitoring
+spec:
+  type: ClusterIP
+  selector:
+    app: redis-exporter
+    component: monitoring
+  ports:
+  - name: metrics
+    port: 9121
+    targetPort: 9121
+
+---
+# MongoDB Exporter
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongodb-exporter
+  namespace: airis-epm
+  labels:
+    app: mongodb-exporter
+    component: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb-exporter
+      component: monitoring
+  template:
+    metadata:
+      labels:
+        app: mongodb-exporter
+        component: monitoring
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9216"
+    spec:
+      serviceAccountName: airis-epm-monitoring
+      containers:
+      - name: mongodb-exporter
+        image: percona/mongodb_exporter:0.40
+        ports:
+        - containerPort: 9216
+          name: metrics
+        env:
+        - name: MONGODB_URI
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-exporter-secret
+              key: mongodb-uri
+        - name: MONGODB_EXPORTER_WEB_LISTEN_ADDRESS
+          value: ":9216"
+        - name: MONGODB_EXPORTER_COLLECT_ALL
+          value: "true"
+        - name: MONGODB_EXPORTER_LOG_LEVEL
+          value: "info"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9216
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9216
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - ALL
+
+---
+# MongoDB Exporter Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-exporter
+  namespace: airis-epm
+  labels:
+    app: mongodb-exporter
+    component: monitoring
+spec:
+  type: ClusterIP
+  selector:
+    app: mongodb-exporter
+    component: monitoring
+  ports:
+  - name: metrics
+    port: 9216
+    targetPort: 9216
+
+---
+# Blackbox Exporter for synthetic monitoring
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blackbox-exporter
+  namespace: airis-epm
+  labels:
+    app: blackbox-exporter
+    component: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: blackbox-exporter
+      component: monitoring
+  template:
+    metadata:
+      labels:
+        app: blackbox-exporter
+        component: monitoring
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9115"
+    spec:
+      serviceAccountName: airis-epm-monitoring
+      containers:
+      - name: blackbox-exporter
+        image: prom/blackbox-exporter:v0.24.0
+        ports:
+        - containerPort: 9115
+          name: metrics
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        args:
+          - '--config.file=/config/blackbox.yml'
+          - '--web.listen-address=:9115'
+          - '--log.level=info'
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: 9115
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: 9115
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: config
+        configMap:
+          name: blackbox-exporter-config
+
+---
+# Blackbox Exporter Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: blackbox-exporter
+  namespace: airis-epm
+  labels:
+    app: blackbox-exporter
+    component: monitoring
+spec:
+  type: ClusterIP
+  selector:
+    app: blackbox-exporter
+    component: monitoring
+  ports:
+  - name: metrics
+    port: 9115
+    targetPort: 9115
+
+---
+# Blackbox Exporter Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blackbox-exporter-config
+  namespace: airis-epm
+  labels:
+    app: blackbox-exporter
+data:
+  blackbox.yml: |
+    modules:
+      http_2xx:
+        prober: http
+        timeout: 5s
+        http:
+          valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+          valid_status_codes: [200, 201, 202, 204, 206, 300, 301, 302, 304, 307, 308]
+          method: GET
+          headers:
+            Host: airis.company.com
+            Accept-Language: en-US
+          no_follow_redirects: false
+          fail_if_ssl: false
+          fail_if_not_ssl: false
+          tls_config:
+            insecure_skip_verify: false
+
+      http_post_2xx:
+        prober: http
+        timeout: 5s
+        http:
+          method: POST
+          headers:
+            Content-Type: application/json
+          body: '{"health": "check"}'
+
+      tcp_connect:
+        prober: tcp
+        timeout: 5s
+        tcp:
+          query_response:
+            - expect: "^+OK"
+          tls: false
+
+      pop3s_banner:
+        prober: tcp
+        tcp:
+          query_response:
+            - expect: "^+OK"
+          tls: true
+          tls_config:
+            insecure_skip_verify: false
+
+      grpc:
+        prober: grpc
+        timeout: 5s
+        grpc:
+          tls: true
+          tls_config:
+            insecure_skip_verify: false
+
+      grpc_plain:
+        prober: grpc
+        timeout: 5s
+        grpc:
+          tls: false
+          service: "grpc.health.v1.Health"
+
+      ssh_banner:
+        prober: tcp
+        timeout: 5s
+        tcp:
+          query_response:
+            - expect: "^SSH-2.0-"
+          tls: false
+
+      irc_banner:
+        prober: tcp
+        timeout: 5s
+        tcp:
+          query_response:
+            - send: "NICK prober"
+            - send: "USER prober prober prober :prober"
+            - expect: "PING :([^ ]+)"
+              send: "PONG :${1}"
+            - expect: "^:[^ ]+ 001"
+
+---
+# Exporter Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: postgres-exporter-secret
+  namespace: airis-epm
+  labels:
+    app: postgres-exporter
+type: Opaque
+stringData:
+  data-source-name: "postgresql://admin:airis-epm-admin-strong-2025@postgresql-primary.airis-epm.svc.cluster.local:5432/airis_epm?sslmode=require"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mongodb-exporter-secret
+  namespace: airis-epm
+  labels:
+    app: mongodb-exporter
+type: Opaque
+stringData:
+  mongodb-uri: "mongodb://airis_epm_user:airis-epm-mongo-user-2025@mongodb-primary.airis-epm.svc.cluster.local:27017/airis_epm?replicaSet=airis-epm-rs&authSource=airis_epm"

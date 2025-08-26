@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS EPM 세션 리플레이 관리자 대시보드</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    
+    <!-- OpenReplay SDK -->
+    <script src="https://static.openreplay.com/latest/openreplay.js"></script>
+    
+    <style>
+        /* 커스텀 스타일 */
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        
+        .status-healthy { background-color: #10b981; }
+        .status-warning { background-color: #f59e0b; }
+        .status-critical { background-color: #ef4444; }
+        
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        .session-card {
+            transition: all 0.3s ease;
+        }
+        
+        .session-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .alert-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+        
+        .alert-critical { background-color: #fee2e2; color: #dc2626; }
+        .alert-warning { background-color: #fef3c7; color: #d97706; }
+        .alert-info { background-color: #dbeafe; color: #2563eb; }
+    </style>
+</head>
+
+<body class="bg-gray-50 font-sans">
+    <!-- 네비게이션 바 -->
+    <nav class="gradient-bg shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold text-white">🎬 AIRIS EPM 세션 리플레이 관리자</h1>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- 시스템 상태 표시기 -->
+                    <div id="systemStatus" class="flex items-center text-white">
+                        <span class="status-indicator status-healthy pulse-animation"></span>
+                        <span class="text-sm">시스템 정상</span>
+                    </div>
+                    
+                    <!-- 알림 버튼 -->
+                    <button id="alertsButton" class="relative p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5z M10 9a3 3 0 100-6 3 3 0 000 6z M10 9a3 3 0 016 3v5c0 1.66-1.34 3-3 3H7a3 3 0 01-3-3v-5a3 3 0 013-3v0z"/>
+                        </svg>
+                        <span id="alertsBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                    </button>
+                    
+                    <!-- 사용자 메뉴 -->
+                    <div class="flex items-center text-white">
+                        <span class="text-sm mr-2">관리자</span>
+                        <button class="p-1 rounded-full hover:bg-white hover:bg-opacity-20">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 메인 컨테이너 -->
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        
+        <!-- 대시보드 개요 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- 총 세션 수 -->
+            <div class="bg-white overflow-hidden shadow rounded-lg card-shadow">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 011 1v2a1 1 0 01-1 1h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V8H3a1 1 0 01-1-1V5a1 1 0 011-1h4z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">총 세션</dt>
+                                <dd class="text-lg font-medium text-gray-900" id="totalSessions">-</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 활성 세션 수 -->
+            <div class="bg-white overflow-hidden shadow rounded-lg card-shadow">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">활성 세션</dt>
+                                <dd class="text-lg font-medium text-gray-900" id="activeSessions">-</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 에러 세션 수 -->
+            <div class="bg-white overflow-hidden shadow rounded-lg card-shadow">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.664-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">에러 세션</dt>
+                                <dd class="text-lg font-medium text-gray-900" id="errorSessions">-</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 평균 세션 시간 -->
+            <div class="bg-white overflow-hidden shadow rounded-lg card-shadow">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">평균 세션 시간</dt>
+                                <dd class="text-lg font-medium text-gray-900" id="avgSessionDuration">-</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 차트 및 상세 정보 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- 세션 트렌드 차트 -->
+            <div class="bg-white shadow rounded-lg card-shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">세션 트렌드</h3>
+                    <p class="mt-1 text-sm text-gray-500">최근 24시간 세션 활동</p>
+                </div>
+                <div class="p-6">
+                    <canvas id="sessionTrendChart" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- 에러 분포 차트 -->
+            <div class="bg-white shadow rounded-lg card-shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">에러 분포</h3>
+                    <p class="mt-1 text-sm text-gray-500">에러 유형별 발생 현황</p>
+                </div>
+                <div class="p-6">
+                    <canvas id="errorDistributionChart" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 시스템 상태 및 알림 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- 시스템 상태 -->
+            <div class="bg-white shadow rounded-lg card-shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">시스템 상태</h3>
+                </div>
+                <div class="p-6">
+                    <div id="systemComponents" class="space-y-4">
+                        <!-- 동적으로 생성됨 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 최근 알림 -->
+            <div class="lg:col-span-2 bg-white shadow rounded-lg card-shadow">
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">최근 알림</h3>
+                        <p class="mt-1 text-sm text-gray-500">시스템 알림 및 경고</p>
+                    </div>
+                    <button id="clearAllAlerts" class="text-sm text-blue-600 hover:text-blue-800">모두 지우기</button>
+                </div>
+                <div class="p-6">
+                    <div id="alertsList" class="space-y-3 max-h-80 overflow-y-auto">
+                        <!-- 동적으로 생성됨 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 최근 세션 목록 -->
+        <div class="bg-white shadow rounded-lg card-shadow">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">최근 세션</h3>
+                    <p class="mt-1 text-sm text-gray-500">실시간 세션 모니터링</p>
+                </div>
+                <div class="flex space-x-2">
+                    <button id="refreshSessions" class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700 transition-colors">
+                        새로고침
+                    </button>
+                    <button id="exportSessions" class="bg-gray-600 text-white px-4 py-2 rounded-md text-sm hover:bg-gray-700 transition-colors">
+                        내보내기
+                    </button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">세션 ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">사용자</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">시작 시간</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">지속 시간</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">이벤트</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">에러</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">액션</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessionsTableBody" class="bg-white divide-y divide-gray-200">
+                        <!-- 동적으로 생성됨 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 세션 상세 모달 -->
+    <div id="sessionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full sm:p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">세션 상세 정보</h3>
+                    <button id="closeSessionModal" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div id="sessionDetails" class="space-y-4">
+                    <!-- 동적으로 생성됨 -->
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button id="playRecording" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors">
+                        🎬 리플레이 재생
+                    </button>
+                    <button id="downloadSession" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                        📥 다운로드
+                    </button>
+                    <button id="closeSessionModal2" class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors">
+                        닫기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="dashboard.js"></script>
+</body>
+</html>

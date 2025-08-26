@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>데모 페이지 3 - AIRIS 다중 페이지 세션 추적</title>
+    <!-- rrweb 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js"></script>
+    <!-- AIRIS 세션 추적기 -->
+    <script src="/airis-session-tracker.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #38a169;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        .btn {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0.5rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: #3182ce;
+            transform: translateY(-1px);
+        }
+        
+        .btn-success { background: #48bb78; }
+        .btn-danger { background: #e53e3e; }
+        
+        .form-section {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .form-group {
+            margin: 1rem 0;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .status-box {
+            background: #f0fff4;
+            border: 2px solid #9ae6b4;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .task-item {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .task-item:hover {
+            border-color: #4299e1;
+        }
+        
+        .task-item.completed {
+            background: #f0fff4;
+            border-color: #48bb78;
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 데모 페이지 3</h1>
+            <p>폼 작성 및 할 일 관리 테스트 페이지</p>
+        </div>
+        
+        <div class="content">
+            <div class="status-box">
+                <h3>📊 세션 추적 상태</h3>
+                <div id="sessionStatus">로딩 중...</div>
+                <div>
+                    <strong>진행률:</strong>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <span id="progressText">0%</span>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>📝 사용자 정보 폼</h3>
+                <form id="userForm">
+                    <div class="form-group">
+                        <label>이름:</label>
+                        <input type="text" id="userName" name="name" placeholder="이름을 입력하세요">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>이메일:</label>
+                        <input type="email" id="userEmail" name="email" placeholder="email@example.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>전화번호:</label>
+                        <input type="tel" id="userPhone" name="phone" placeholder="010-1234-5678">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>관심 분야:</label>
+                        <select id="userInterest" name="interest" multiple>
+                            <option value="web">웹 개발</option>
+                            <option value="mobile">모바일 개발</option>
+                            <option value="ai">인공지능</option>
+                            <option value="data">데이터 분석</option>
+                            <option value="design">UI/UX 디자인</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>추가 메시지:</label>
+                        <textarea id="userMessage" name="message" rows="4" placeholder="자유롭게 메시지를 작성해주세요..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">💾 정보 저장</button>
+                    <button id="randomDataBtn" type="button" class="btn">🎲 랜덤 데이터</button>
+                    <button id="clearFormBtn" type="button" class="btn btn-danger">🗑️ 폼 초기화</button>
+                </form>
+            </div>
+
+            <div class="form-section">
+                <h3>✅ 할 일 목록</h3>
+                <div class="form-group">
+                    <input type="text" id="newTaskInput" placeholder="새로운 할 일을 입력하세요...">
+                    <button id="addTaskBtn" class="btn">➕ 할 일 추가</button>
+                </div>
+                <div id="taskList">
+                    <!-- 할 일 목록이 여기에 표시됩니다 -->
+                </div>
+            </div>
+
+            <div class="status-box">
+                <h3>🔗 세션 완료</h3>
+                <p>다중 페이지 세션 추적을 완료하고 결과를 확인해보세요:</p>
+                <button id="completeSessionBtn" class="btn btn-danger">🏁 세션 완료</button>
+                <a href="/session-player.html" class="btn">🎬 세션 재생</a>
+                <a href="/demo-page-1.html" class="btn">🏠 처음으로</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tasks = ['첫 번째 할 일', '두 번째 할 일', '세 번째 할 일'];
+        let completedTasks = [];
+        let formProgress = 0;
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('📋 데모 페이지 3 로드됨');
+            updateStatus();
+            renderTasks();
+            setupFormListeners();
+            setupButtonListeners();
+        });
+        
+        // 버튼 이벤트 리스너 설정
+        function setupButtonListeners() {
+            const addTaskBtn = document.getElementById('addTaskBtn');
+            const randomDataBtn = document.getElementById('randomDataBtn');
+            const clearFormBtn = document.getElementById('clearFormBtn');
+            const completeSessionBtn = document.getElementById('completeSessionBtn');
+            
+            if (addTaskBtn) {
+                addTaskBtn.addEventListener('click', addTask);
+            }
+            
+            if (randomDataBtn) {
+                randomDataBtn.addEventListener('click', fillRandomData);
+            }
+            
+            if (clearFormBtn) {
+                clearFormBtn.addEventListener('click', clearForm);
+            }
+            
+            if (completeSessionBtn) {
+                completeSessionBtn.addEventListener('click', completeSession);
+            }
+        }
+
+        // 폼 이벤트 리스너 설정
+        function setupFormListeners() {
+            const form = document.getElementById('userForm');
+            const inputs = form.querySelectorAll('input, select, textarea');
+            
+            inputs.forEach(input => {
+                input.addEventListener('input', updateFormProgress);
+                input.addEventListener('change', updateFormProgress);
+            });
+            
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveUserInfo();
+            });
+
+            // 엔터 키로 할 일 추가
+            document.getElementById('newTaskInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addTask();
+                }
+            });
+        }
+
+        // 폼 진행률 업데이트
+        function updateFormProgress() {
+            const form = document.getElementById('userForm');
+            const inputs = form.querySelectorAll('input[required], select, textarea');
+            let filledInputs = 0;
+
+            inputs.forEach(input => {
+                if (input.value.trim() !== '') {
+                    filledInputs++;
+                }
+            });
+
+            formProgress = Math.round((filledInputs / inputs.length) * 100);
+            
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            progressFill.style.width = formProgress + '%';
+            progressText.textContent = formProgress + '%';
+            
+            console.log('📊 폼 진행률:', formProgress + '%');
+        }
+
+        // 사용자 정보 저장
+        function saveUserInfo() {
+            const formData = new FormData(document.getElementById('userForm'));
+            const userData = {};
+            
+            for (let [key, value] of formData.entries()) {
+                userData[key] = value;
+            }
+            
+            console.log('💾 사용자 정보 저장:', userData);
+            alert('✅ 사용자 정보가 저장되었습니다!');
+            
+            // 시각적 피드백
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = '✅ 저장됨!';
+            submitBtn.disabled = true;
+            
+            setTimeout(() => {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }, 2000);
+        }
+
+        // 랜덤 데이터 입력
+        function fillRandomData() {
+            const names = ['김철수', '이영희', '박민수', '최지영', '정태민'];
+            const domains = ['gmail.com', 'naver.com', 'daum.net', 'kakao.com'];
+            const messages = [
+                'AIRIS APM 시스템에 관심이 있습니다.',
+                '세션 리플레이 기능이 인상적이네요.',
+                '다중 페이지 추적 기능을 테스트해보고 있습니다.',
+                '실시간 모니터링 솔루션을 찾고 있습니다.'
+            ];
+
+            const randomName = names[Math.floor(Math.random() * names.length)];
+            const randomEmail = randomName.toLowerCase() + Math.floor(Math.random() * 1000) + '@' + domains[Math.floor(Math.random() * domains.length)];
+            const randomPhone = '010-' + Math.floor(Math.random() * 9000 + 1000) + '-' + Math.floor(Math.random() * 9000 + 1000);
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+
+            document.getElementById('userName').value = randomName;
+            document.getElementById('userEmail').value = randomEmail;
+            document.getElementById('userPhone').value = randomPhone;
+            document.getElementById('userMessage').value = randomMessage;
+
+            // 관심 분야 랜덤 선택
+            const interests = document.getElementById('userInterest').options;
+            Array.from(interests).forEach(option => {
+                option.selected = Math.random() > 0.7;
+            });
+
+            updateFormProgress();
+            console.log('🎲 랜덤 데이터 입력 완료');
+        }
+
+        // 폼 초기화
+        function clearForm() {
+            document.getElementById('userForm').reset();
+            updateFormProgress();
+            console.log('🗑️ 폼 초기화됨');
+        }
+
+        // 할 일 추가
+        function addTask() {
+            const input = document.getElementById('newTaskInput');
+            const taskText = input.value.trim();
+            
+            if (taskText) {
+                tasks.push(taskText);
+                input.value = '';
+                renderTasks();
+                console.log('➕ 할 일 추가:', taskText);
+            }
+        }
+
+        // 할 일 목록 렌더링
+        function renderTasks() {
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+            
+            tasks.forEach((task, index) => {
+                const isCompleted = completedTasks.includes(index);
+                const taskElement = document.createElement('div');
+                taskElement.className = `task-item ${isCompleted ? 'completed' : ''}`;
+                taskElement.innerHTML = `
+                    <span>${task}</span>
+                    <button class="btn task-toggle-btn" data-task-index="${index}" style="float: right; padding: 0.25rem 0.5rem;">
+                        ${isCompleted ? '↩️' : '✅'}
+                    </button>
+                `;
+                
+                // 버튼에 이벤트 리스너 추가
+                const toggleBtn = taskElement.querySelector('.task-toggle-btn');
+                toggleBtn.addEventListener('click', () => toggleTask(index));
+                
+                taskList.appendChild(taskElement);
+            });
+        }
+
+        // 할 일 완료/미완료 토글
+        function toggleTask(index) {
+            if (completedTasks.includes(index)) {
+                completedTasks = completedTasks.filter(i => i !== index);
+                console.log('↩️ 할 일 미완료:', tasks[index]);
+            } else {
+                completedTasks.push(index);
+                console.log('✅ 할 일 완료:', tasks[index]);
+            }
+            renderTasks();
+        }
+
+        // 세션 완료
+        function completeSession() {
+            if (window.airisTracker) {
+                const status = window.airisTracker.getStatus();
+                if (status.isRecording) {
+                    window.airisTracker.stop();
+                    alert(`🏁 세션이 완료되었습니다!\n\n세션 ID: ${status.sessionId}\n총 이벤트: ${status.eventCount}개\n\n세션 플레이어에서 기록된 내용을 확인하세요.`);
+                } else {
+                    alert('⚠️ 현재 기록 중인 세션이 없습니다.');
+                }
+            }
+            updateStatus();
+        }
+
+        // 상태 업데이트
+        function updateStatus() {
+            const statusDiv = document.getElementById('sessionStatus');
+            
+            if (window.airisTracker) {
+                const status = window.airisTracker.getStatus();
+                statusDiv.innerHTML = `
+                    <strong>세션 ID:</strong> ${status.sessionId}<br>
+                    <strong>기록 상태:</strong> ${status.isRecording ? '🔴 기록 중' : '⏸️ 중지됨'}<br>
+                    <strong>이벤트 수:</strong> ${status.eventCount}<br>
+                    <strong>폼 진행률:</strong> ${formProgress}%<br>
+                    <strong>완료된 할 일:</strong> ${completedTasks.length}/${tasks.length}<br>
+                    <strong>현재 페이지:</strong> 데모 페이지 3 (폼 & 할 일)
+                `;
+            } else {
+                statusDiv.innerHTML = '❌ AIRIS 추적기가 로드되지 않았습니다.';
+            }
+        }
+
+        // 주기적으로 상태 업데이트
+        setInterval(updateStatus, 4000);
+    </script>
+</body>
+</html>

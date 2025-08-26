@@ -1,0 +1,1061 @@
+openapi: 3.0.3
+info:
+  title: AIRIS EPM API
+  description: |
+    AIRIS Enterprise Performance Management (EPM) API provides comprehensive monitoring, 
+    analytics, and performance optimization capabilities for enterprise systems.
+    
+    ## Features
+    - Real-time performance monitoring
+    - Data quality validation
+    - Advanced analytics and reporting
+    - Caching and optimization
+    - Alert and notification system
+    
+    ## Authentication
+    API uses Bearer token authentication. Include your API key in the Authorization header.
+    
+    ## Rate Limiting
+    API requests are limited to 1000 requests per hour per API key.
+    
+  version: "1.0.0"
+  contact:
+    name: AIRIS EPM Support
+    url: https://airis-epm.com/support
+    email: support@airis-epm.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development server
+  - url: https://api.airis-epm.com/v1
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Performance Monitoring APIs
+  /performance/metrics:
+    get:
+      tags:
+        - Performance
+      summary: Get performance metrics
+      description: Retrieve real-time and historical performance metrics
+      parameters:
+        - name: timeRange
+          in: query
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d, 30d]
+            default: 1h
+          description: Time range for metrics
+        - name: metricType
+          in: query
+          schema:
+            type: string
+            enum: [cpu, memory, disk, network, response_time, throughput]
+          description: Type of metric to retrieve
+        - name: aggregation
+          in: query
+          schema:
+            type: string
+            enum: [avg, min, max, sum, count]
+            default: avg
+          description: Aggregation method
+      responses:
+        '200':
+          description: Performance metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    
+    post:
+      tags:
+        - Performance
+      summary: Submit performance metrics
+      description: Submit new performance metrics data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MetricsSubmission'
+      responses:
+        '201':
+          description: Metrics submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /performance/cache/stats:
+    get:
+      tags:
+        - Performance
+      summary: Get cache statistics
+      description: Retrieve cache performance statistics and metrics
+      responses:
+        '200':
+          description: Cache statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheStats'
+
+  /performance/cache/{type}/{key}:
+    get:
+      tags:
+        - Performance
+      summary: Get cached data
+      description: Retrieve data from cache
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Cache type identifier
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Cache key
+      responses:
+        '200':
+          description: Cached data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CacheDataResponse'
+        '404':
+          description: Cache data not found
+    
+    post:
+      tags:
+        - Performance
+      summary: Store data in cache
+      description: Store data in cache with specified key
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Cache type identifier
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Cache key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CacheDataRequest'
+      responses:
+        '201':
+          description: Data cached successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+    delete:
+      tags:
+        - Performance
+      summary: Invalidate cache
+      description: Remove data from cache
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Cache type identifier
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Cache key
+      responses:
+        '200':
+          description: Cache invalidated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # Data Quality APIs
+  /data-quality/validation:
+    post:
+      tags:
+        - Data Quality
+      summary: Validate data quality
+      description: Validate data against quality rules and schemas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataValidationRequest'
+      responses:
+        '200':
+          description: Data validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /data-quality/anomalies:
+    get:
+      tags:
+        - Data Quality
+      summary: Get anomaly detection results
+      description: Retrieve detected anomalies in the data
+      parameters:
+        - name: timeRange
+          in: query
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d, 30d]
+            default: 24h
+          description: Time range for anomaly detection
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+          description: Minimum severity level
+      responses:
+        '200':
+          description: Anomalies retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnomaliesResponse'
+
+    post:
+      tags:
+        - Data Quality
+      summary: Submit data for anomaly detection
+      description: Submit data to be analyzed for anomalies
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnomalyDetectionRequest'
+      responses:
+        '200':
+          description: Anomaly detection completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnomalyDetectionResponse'
+
+  /data-quality/cleansing:
+    post:
+      tags:
+        - Data Quality
+      summary: Clean and transform data
+      description: Apply data cleansing and transformation rules
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataCleansingRequest'
+      responses:
+        '200':
+          description: Data cleansing completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataCleansingResponse'
+
+  # Analytics APIs
+  /analytics/dashboard:
+    get:
+      tags:
+        - Analytics
+      summary: Get dashboard data
+      description: Retrieve dashboard analytics data
+      parameters:
+        - name: dashboardId
+          in: query
+          schema:
+            type: string
+          description: Dashboard identifier
+        - name: timeRange
+          in: query
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d, 30d]
+            default: 24h
+          description: Time range for analytics
+      responses:
+        '200':
+          description: Dashboard data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardData'
+
+  /analytics/reports:
+    get:
+      tags:
+        - Analytics
+      summary: Get analytics reports
+      description: Retrieve generated analytics reports
+      parameters:
+        - name: reportType
+          in: query
+          schema:
+            type: string
+            enum: [performance, quality, trends, summary]
+          description: Type of report
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, pdf, csv, xlsx]
+            default: json
+          description: Report format
+      responses:
+        '200':
+          description: Report generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportResponse'
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            text/csv:
+              schema:
+                type: string
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+    post:
+      tags:
+        - Analytics
+      summary: Generate custom report
+      description: Generate a custom analytics report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportRequest'
+      responses:
+        '202':
+          description: Report generation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncResponse'
+
+  # Alerts and Notifications
+  /alerts:
+    get:
+      tags:
+        - Alerts
+      summary: Get alerts
+      description: Retrieve system alerts
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, resolved, acknowledged]
+          description: Alert status filter
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+          description: Alert severity filter
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+          description: Maximum number of alerts to return
+      responses:
+        '200':
+          description: Alerts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertsResponse'
+
+    post:
+      tags:
+        - Alerts
+      summary: Create alert rule
+      description: Create a new alert rule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertRuleRequest'
+      responses:
+        '201':
+          description: Alert rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertRuleResponse'
+
+  /alerts/{alertId}:
+    get:
+      tags:
+        - Alerts
+      summary: Get specific alert
+      description: Retrieve details of a specific alert
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Alert identifier
+      responses:
+        '200':
+          description: Alert retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertDetails'
+        '404':
+          description: Alert not found
+
+    patch:
+      tags:
+        - Alerts
+      summary: Update alert status
+      description: Update the status of an alert
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Alert identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AlertStatusUpdate'
+      responses:
+        '200':
+          description: Alert status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertDetails'
+
+  # Health Check
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health check
+      description: Check API health status
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    MetricsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Metric'
+        metadata:
+          $ref: '#/components/schemas/MetricsMetadata'
+
+    Metric:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        metric_type:
+          type: string
+        value:
+          type: number
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+
+    MetricsMetadata:
+      type: object
+      properties:
+        total_count:
+          type: integer
+        time_range:
+          type: string
+        aggregation:
+          type: string
+
+    MetricsSubmission:
+      type: object
+      required:
+        - metrics
+      properties:
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricInput'
+
+    MetricInput:
+      type: object
+      required:
+        - timestamp
+        - metric_type
+        - value
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        metric_type:
+          type: string
+        value:
+          type: number
+        tags:
+          type: object
+          additionalProperties:
+            type: string
+
+    CacheStats:
+      type: object
+      properties:
+        success:
+          type: boolean
+        stats:
+          type: object
+          properties:
+            hit_rate:
+              type: number
+            miss_rate:
+              type: number
+            total_requests:
+              type: integer
+            cache_size:
+              type: integer
+            evictions:
+              type: integer
+
+    CacheDataResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+        cached:
+          type: boolean
+        ttl:
+          type: integer
+
+    CacheDataRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+        ttl:
+          type: integer
+        strategy:
+          type: string
+          enum: [lru, lfu, fifo]
+
+    DataValidationRequest:
+      type: object
+      required:
+        - data
+        - schema
+      properties:
+        data:
+          type: object
+        schema:
+          type: string
+        strict_mode:
+          type: boolean
+          default: false
+
+    ValidationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+        quality_score:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    ValidationError:
+      type: object
+      properties:
+        field:
+          type: string
+        message:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+
+    AnomaliesResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        anomalies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Anomaly'
+        total_count:
+          type: integer
+
+    Anomaly:
+      type: object
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        type:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        description:
+          type: string
+        affected_metrics:
+          type: array
+          items:
+            type: string
+        confidence_score:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    AnomalyDetectionRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+        algorithms:
+          type: array
+          items:
+            type: string
+            enum: [statistical, ml, hybrid]
+        sensitivity:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.5
+
+    AnomalyDetectionResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        anomalies:
+          type: array
+          items:
+            $ref: '#/components/schemas/Anomaly'
+        processing_time:
+          type: number
+
+    DataCleansingRequest:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+        rules:
+          type: array
+          items:
+            type: string
+            enum: [remove_nulls, deduplicate, normalize, enrich]
+        options:
+          type: object
+
+    DataCleansingResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        cleaned_data:
+          type: array
+          items:
+            type: object
+        statistics:
+          $ref: '#/components/schemas/CleansingStats'
+
+    CleansingStats:
+      type: object
+      properties:
+        original_count:
+          type: integer
+        cleaned_count:
+          type: integer
+        removed_count:
+          type: integer
+        modified_count:
+          type: integer
+
+    DashboardData:
+      type: object
+      properties:
+        success:
+          type: boolean
+        dashboard_id:
+          type: string
+        data:
+          type: object
+        widgets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Widget'
+        last_updated:
+          type: string
+          format: date-time
+
+    Widget:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [chart, table, metric, alert]
+        title:
+          type: string
+        data:
+          type: object
+        config:
+          type: object
+
+    ReportResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        report_id:
+          type: string
+        format:
+          type: string
+        data:
+          type: object
+        generated_at:
+          type: string
+          format: date-time
+        url:
+          type: string
+          format: uri
+
+    ReportRequest:
+      type: object
+      required:
+        - report_type
+      properties:
+        report_type:
+          type: string
+        filters:
+          type: object
+        time_range:
+          type: string
+        format:
+          type: string
+          enum: [json, pdf, csv, xlsx]
+          default: json
+
+    AlertsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        alerts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Alert'
+        total_count:
+          type: integer
+
+    Alert:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [active, resolved, acknowledged]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        rule_id:
+          type: string
+
+    AlertDetails:
+      allOf:
+        - $ref: '#/components/schemas/Alert'
+        - type: object
+          properties:
+            history:
+              type: array
+              items:
+                $ref: '#/components/schemas/AlertEvent'
+            related_metrics:
+              type: array
+              items:
+                type: string
+
+    AlertEvent:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        event_type:
+          type: string
+          enum: [created, triggered, acknowledged, resolved]
+        message:
+          type: string
+        user:
+          type: string
+
+    AlertRuleRequest:
+      type: object
+      required:
+        - name
+        - condition
+        - severity
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        condition:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        enabled:
+          type: boolean
+          default: true
+        notification_channels:
+          type: array
+          items:
+            type: string
+
+    AlertRuleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        rule:
+          $ref: '#/components/schemas/AlertRule'
+
+    AlertRule:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        condition:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        enabled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AlertStatusUpdate:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [acknowledged, resolved]
+        comment:
+          type: string
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        uptime:
+          type: number
+        dependencies:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [healthy, degraded, unhealthy]
+              latency:
+                type: number
+              last_check:
+                type: string
+                format: date-time
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+
+    AsyncResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        job_id:
+          type: string
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+        estimated_completion:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+        error_code:
+          type: string
+        details:
+          type: object
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+tags:
+  - name: Performance
+    description: Performance monitoring and optimization APIs
+  - name: Data Quality
+    description: Data validation, cleansing, and anomaly detection APIs
+  - name: Analytics
+    description: Analytics and reporting APIs
+  - name: Alerts
+    description: Alert management and notification APIs
+  - name: System
+    description: System health and configuration APIs

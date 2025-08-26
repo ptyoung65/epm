@@ -1,0 +1,744 @@
+{
+  "info": {
+    "name": "AIRIS EPM API Collection",
+    "description": "AIRIS Enterprise Performance Management API - 완전한 API 테스트 컬렉션\n\n## 🚀 빠른 시작\n1. API 키를 환경 변수 `{{apiKey}}`에 설정하세요\n2. 베이스 URL을 `{{baseUrl}}`에 설정하세요 (기본값: http://localhost:3000/api/v1)\n3. 각 폴더별로 API를 테스트해보세요\n\n## 📋 컬렉션 구성\n- 성능 모니터링 API\n- 데이터 품질 관리 API\n- 분석 및 리포팅 API\n- 알림 관리 API\n- 시스템 관리 API\n\n## 🔑 인증\n모든 요청에는 Bearer 토큰 인증이 필요합니다.",
+    "version": "1.0.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api/v1",
+      "type": "string",
+      "description": "AIRIS EPM API 베이스 URL"
+    },
+    {
+      "key": "apiKey",
+      "value": "your-api-key-here",
+      "type": "string",
+      "description": "API 인증 키"
+    },
+    {
+      "key": "graphqlUrl",
+      "value": "http://localhost:3000/graphql",
+      "type": "string",
+      "description": "GraphQL 엔드포인트"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{apiKey}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "🏥 시스템 상태 확인",
+      "description": "시스템 헬스 체크 및 기본 정보 확인",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "시스템 상태 및 의존성 확인"
+          },
+          "response": [
+            {
+              "name": "Healthy Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/health",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": \"healthy\",\n  \"timestamp\": \"2024-01-15T10:30:00Z\",\n  \"version\": \"1.0.0\",\n  \"uptime\": 86400,\n  \"dependencies\": {\n    \"database\": {\n      \"status\": \"healthy\",\n      \"latency\": 5,\n      \"last_check\": \"2024-01-15T10:30:00Z\"\n    },\n    \"cache\": {\n      \"status\": \"healthy\",\n      \"latency\": 1,\n      \"last_check\": \"2024-01-15T10:30:00Z\"\n    }\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "📊 성능 모니터링 API",
+      "description": "성능 메트릭 수집, 조회 및 캐시 관리",
+      "item": [
+        {
+          "name": "성능 메트릭 조회",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/performance/metrics?timeRange=1h&metricType=cpu&aggregation=avg",
+              "host": ["{{baseUrl}}"],
+              "path": ["performance", "metrics"],
+              "query": [
+                {
+                  "key": "timeRange",
+                  "value": "1h",
+                  "description": "시간 범위 (1h, 6h, 24h, 7d, 30d)"
+                },
+                {
+                  "key": "metricType",
+                  "value": "cpu",
+                  "description": "메트릭 유형 (cpu, memory, disk, network, response_time, throughput)"
+                },
+                {
+                  "key": "aggregation",
+                  "value": "avg",
+                  "description": "집계 방법 (avg, min, max, sum, count)"
+                }
+              ]
+            },
+            "description": "지정된 시간 범위의 성능 메트릭 조회"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/performance/metrics?timeRange=1h&metricType=cpu",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["performance", "metrics"],
+                  "query": [
+                    {
+                      "key": "timeRange",
+                      "value": "1h"
+                    },
+                    {
+                      "key": "metricType",
+                      "value": "cpu"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"data\": [\n    {\n      \"timestamp\": \"2024-01-15T10:30:00Z\",\n      \"metric_type\": \"cpu\",\n      \"value\": 75.5,\n      \"tags\": {\n        \"host\": \"web-server-01\",\n        \"region\": \"ap-northeast-2\"\n      }\n    }\n  ],\n  \"metadata\": {\n    \"total_count\": 120,\n    \"time_range\": \"1h\",\n    \"aggregation\": \"avg\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "성능 메트릭 제출",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metrics\": [\n    {\n      \"timestamp\": \"{{$isoTimestamp}}\",\n      \"metric_type\": \"cpu_usage\",\n      \"value\": 75.5,\n      \"tags\": {\n        \"host\": \"web-server-01\",\n        \"region\": \"ap-northeast-2\",\n        \"environment\": \"production\"\n      }\n    },\n    {\n      \"timestamp\": \"{{$isoTimestamp}}\",\n      \"metric_type\": \"memory_usage\",\n      \"value\": 68.2,\n      \"tags\": {\n        \"host\": \"web-server-01\",\n        \"region\": \"ap-northeast-2\",\n        \"environment\": \"production\"\n      }\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/performance/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["performance", "metrics"]
+            },
+            "description": "새로운 성능 메트릭 데이터 제출"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"metrics\": [\n    {\n      \"timestamp\": \"2024-01-15T10:30:00Z\",\n      \"metric_type\": \"cpu_usage\",\n      \"value\": 75.5,\n      \"tags\": {\n        \"host\": \"web-server-01\"\n      }\n    }\n  ]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/performance/metrics",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["performance", "metrics"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Metrics submitted successfully\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "캐시 통계 조회",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/performance/cache/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["performance", "cache", "stats"]
+            },
+            "description": "캐시 성능 통계 조회"
+          }
+        },
+        {
+          "name": "캐시 데이터 조회",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/performance/cache/user-session/user-123",
+              "host": ["{{baseUrl}}"],
+              "path": ["performance", "cache", "user-session", "user-123"]
+            },
+            "description": "특정 키의 캐시된 데이터 조회"
+          }
+        },
+        {
+          "name": "캐시 데이터 저장",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"userId\": 123,\n    \"sessionId\": \"sess_abc123\",\n    \"loginTime\": \"{{$isoTimestamp}}\",\n    \"preferences\": {\n      \"theme\": \"dark\",\n      \"language\": \"ko\"\n    }\n  },\n  \"ttl\": 3600,\n  \"strategy\": \"lru\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/performance/cache/user-session/user-123",
+              "host": ["{{baseUrl}}"],
+              "path": ["performance", "cache", "user-session", "user-123"]
+            },
+            "description": "캐시에 데이터 저장"
+          }
+        },
+        {
+          "name": "캐시 무효화",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/performance/cache/user-session/user-123",
+              "host": ["{{baseUrl}}"],
+              "path": ["performance", "cache", "user-session", "user-123"]
+            },
+            "description": "캐시에서 데이터 제거"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔍 데이터 품질 관리 API",
+      "description": "데이터 검증, 이상 탐지, 정제 기능",
+      "item": [
+        {
+          "name": "데이터 품질 검증",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": {\n    \"temperature\": 25.5,\n    \"humidity\": 65.2,\n    \"pressure\": 1013.25,\n    \"timestamp\": \"{{$isoTimestamp}}\",\n    \"sensorId\": \"TEMP_001\"\n  },\n  \"schema\": \"sensor-readings\",\n  \"strict_mode\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/data-quality/validation",
+              "host": ["{{baseUrl}}"],
+              "path": ["data-quality", "validation"]
+            },
+            "description": "데이터 품질 규칙에 따른 검증 수행"
+          },
+          "response": [
+            {
+              "name": "Validation Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"data\": {\n    \"temperature\": 25.5,\n    \"humidity\": 65.2\n  },\n  \"schema\": \"sensor-readings\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/data-quality/validation",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["data-quality", "validation"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"valid\": true,\n  \"errors\": [],\n  \"quality_score\": 0.95\n}"
+            }
+          ]
+        },
+        {
+          "name": "이상 탐지 실행",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": [\n    { \"timestamp\": \"2024-01-15T10:00:00Z\", \"value\": 23.1 },\n    { \"timestamp\": \"2024-01-15T10:05:00Z\", \"value\": 23.8 },\n    { \"timestamp\": \"2024-01-15T10:10:00Z\", \"value\": 24.2 },\n    { \"timestamp\": \"2024-01-15T10:15:00Z\", \"value\": 89.5 },\n    { \"timestamp\": \"2024-01-15T10:20:00Z\", \"value\": 23.9 }\n  ],\n  \"algorithms\": [\"statistical\", \"ml\"],\n  \"sensitivity\": 0.7\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/data-quality/anomalies",
+              "host": ["{{baseUrl}}"],
+              "path": ["data-quality", "anomalies"]
+            },
+            "description": "시계열 데이터에서 이상값 탐지"
+          }
+        },
+        {
+          "name": "이상 조회",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/data-quality/anomalies?timeRange=24h&severity=high",
+              "host": ["{{baseUrl}}"],
+              "path": ["data-quality", "anomalies"],
+              "query": [
+                {
+                  "key": "timeRange",
+                  "value": "24h",
+                  "description": "조회 시간 범위"
+                },
+                {
+                  "key": "severity",
+                  "value": "high",
+                  "description": "최소 심각도 수준"
+                }
+              ]
+            },
+            "description": "기존에 탐지된 이상 데이터 조회"
+          }
+        },
+        {
+          "name": "데이터 정제",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"data\": [\n    { \"id\": 1, \"name\": \"John Doe\", \"email\": \"john@example.com\", \"age\": 30 },\n    { \"id\": 2, \"name\": null, \"email\": \"jane@example.com\", \"age\": 25 },\n    { \"id\": 1, \"name\": \"John Doe\", \"email\": \"john@example.com\", \"age\": 30 },\n    { \"id\": 3, \"name\": \"Bob Smith\", \"email\": \"invalid-email\", \"age\": -5 }\n  ],\n  \"rules\": [\"remove_nulls\", \"deduplicate\", \"validate_format\", \"normalize\"],\n  \"options\": {\n    \"emailValidation\": true,\n    \"ageRange\": { \"min\": 0, \"max\": 120 }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/data-quality/cleansing",
+              "host": ["{{baseUrl}}"],
+              "path": ["data-quality", "cleansing"]
+            },
+            "description": "데이터 정제 규칙 적용"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📈 분석 및 리포팅 API",
+      "description": "대시보드 데이터 및 커스텀 리포트 생성",
+      "item": [
+        {
+          "name": "대시보드 데이터 조회",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/dashboard?dashboardId=main-dashboard&timeRange=24h",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "dashboard"],
+              "query": [
+                {
+                  "key": "dashboardId",
+                  "value": "main-dashboard",
+                  "description": "대시보드 식별자"
+                },
+                {
+                  "key": "timeRange",
+                  "value": "24h",
+                  "description": "데이터 시간 범위"
+                }
+              ]
+            },
+            "description": "특정 대시보드의 데이터 조회"
+          }
+        },
+        {
+          "name": "리포트 조회",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/analytics/reports?reportType=performance&format=json",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "reports"],
+              "query": [
+                {
+                  "key": "reportType",
+                  "value": "performance",
+                  "description": "리포트 유형"
+                },
+                {
+                  "key": "format",
+                  "value": "json",
+                  "description": "리포트 형식"
+                }
+              ]
+            },
+            "description": "생성된 리포트 조회"
+          }
+        },
+        {
+          "name": "커스텀 리포트 생성",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"report_type\": \"custom\",\n  \"filters\": {\n    \"metric_types\": [\"cpu\", \"memory\"],\n    \"hosts\": [\"web-server-01\", \"web-server-02\"],\n    \"regions\": [\"ap-northeast-2\"]\n  },\n  \"time_range\": \"7d\",\n  \"format\": \"json\",\n  \"include_charts\": true,\n  \"email_recipients\": [\"admin@example.com\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/analytics/reports",
+              "host": ["{{baseUrl}}"],
+              "path": ["analytics", "reports"]
+            },
+            "description": "사용자 정의 리포트 생성 요청"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚨 알림 관리 API",
+      "description": "알림 조회, 생성, 상태 관리",
+      "item": [
+        {
+          "name": "알림 목록 조회",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts?status=active&severity=high&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "active",
+                  "description": "알림 상태 필터"
+                },
+                {
+                  "key": "severity",
+                  "value": "high",
+                  "description": "심각도 필터"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "최대 반환 개수"
+                }
+              ]
+            },
+            "description": "필터링된 알림 목록 조회"
+          }
+        },
+        {
+          "name": "특정 알림 조회",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/alerts/{{alertId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts", "{{alertId}}"],
+              "variable": [
+                {
+                  "key": "alertId",
+                  "value": "alert-12345",
+                  "description": "알림 ID"
+                }
+              ]
+            },
+            "description": "알림 상세 정보 조회"
+          }
+        },
+        {
+          "name": "알림 규칙 생성",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"High CPU Usage Alert\",\n  \"description\": \"CPU 사용률이 80% 이상일 때 발생하는 알림\",\n  \"condition\": \"cpu_usage > 80\",\n  \"severity\": \"high\",\n  \"enabled\": true,\n  \"notification_channels\": [\"email\", \"slack\"],\n  \"evaluation_interval\": 60,\n  \"for_duration\": 300\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/alerts",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts"]
+            },
+            "description": "새로운 알림 규칙 생성"
+          }
+        },
+        {
+          "name": "알림 상태 업데이트",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"acknowledged\",\n  \"comment\": \"알림 확인 완료. 시스템 점검 중입니다.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/alerts/{{alertId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts", "{{alertId}}"],
+              "variable": [
+                {
+                  "key": "alertId",
+                  "value": "alert-12345",
+                  "description": "알림 ID"
+                }
+              ]
+            },
+            "description": "알림 상태 변경 (acknowledged/resolved)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔮 GraphQL API",
+      "description": "GraphQL 쿼리, 뮤테이션, 구독",
+      "item": [
+        {
+          "name": "시스템 상태 조회 (GraphQL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query GetSystemHealth {\\n  health {\\n    status\\n    timestamp\\n    version\\n    uptime\\n    dependencies {\\n      service\\n      status\\n      latency\\n      lastCheck\\n    }\\n    metrics {\\n      cpuUsage\\n      memoryUsage\\n      diskUsage\\n      networkLatency\\n      activeConnections\\n    }\\n  }\\n}\"\n}"
+            },
+            "url": {
+              "raw": "{{graphqlUrl}}",
+              "host": ["{{graphqlUrl}}"]
+            },
+            "description": "GraphQL을 통한 시스템 상태 조회"
+          }
+        },
+        {
+          "name": "성능 메트릭 조회 (GraphQL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query GetMetrics($timeRange: TimeRange!, $metricType: MetricType, $limit: Int) {\\n  metrics(timeRange: $timeRange, metricType: $metricType, limit: $limit) {\\n    success\\n    metrics {\\n      timestamp\\n      metricType\\n      value\\n      tags\\n    }\\n    metadata {\\n      totalCount\\n      timeRange\\n      aggregation\\n      queryDuration\\n    }\\n  }\\n}\",\n  \"variables\": {\n    \"timeRange\": \"HOUR_1\",\n    \"metricType\": \"CPU\",\n    \"limit\": 20\n  }\n}"
+            },
+            "url": {
+              "raw": "{{graphqlUrl}}",
+              "host": ["{{graphqlUrl}}"]
+            },
+            "description": "GraphQL 변수를 사용한 메트릭 조회"
+          }
+        },
+        {
+          "name": "알림 규칙 생성 (GraphQL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation CreateAlertRule($input: AlertRuleInput!) {\\n  createAlertRule(input: $input) {\\n    success\\n    rule {\\n      id\\n      name\\n      description\\n      condition\\n      severity\\n      enabled\\n      createdAt\\n      notificationChannels\\n    }\\n  }\\n}\",\n  \"variables\": {\n    \"input\": {\n      \"name\": \"Memory Usage Alert\",\n      \"description\": \"메모리 사용률 임계치 알림\",\n      \"condition\": \"memory_usage > 90\",\n      \"severity\": \"CRITICAL\",\n      \"enabled\": true,\n      \"notificationChannels\": [\"email\", \"slack\"],\n      \"evaluationInterval\": 60,\n      \"forDuration\": 300\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{graphqlUrl}}",
+              "host": ["{{graphqlUrl}}"]
+            },
+            "description": "GraphQL 뮤테이션을 통한 알림 규칙 생성"
+          }
+        },
+        {
+          "name": "대시보드 데이터 조회 (GraphQL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query GetDashboardData($dashboardId: String!, $timeRange: TimeRange!) {\\n  dashboard(dashboardId: $dashboardId, timeRange: $timeRange) {\\n    success\\n    dashboardId\\n    title\\n    widgets {\\n      id\\n      type\\n      title\\n      position {\\n        x\\n        y\\n        width\\n        height\\n      }\\n      data\\n      config\\n    }\\n    lastUpdated\\n    refreshInterval\\n  }\\n  \\n  alerts(status: ACTIVE, limit: 5) {\\n    success\\n    alerts {\\n      id\\n      title\\n      severity\\n      status\\n      createdAt\\n      affectedServices\\n    }\\n    summary {\\n      active\\n      bySeverity {\\n        critical\\n        high\\n        medium\\n        low\\n      }\\n    }\\n  }\\n}\",\n  \"variables\": {\n    \"dashboardId\": \"main-dashboard\",\n    \"timeRange\": \"DAY_1\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{graphqlUrl}}",
+              "host": ["{{graphqlUrl}}"]
+            },
+            "description": "복합 GraphQL 쿼리 - 대시보드 + 알림 데이터"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// 글로벌 변수 설정",
+          "if (!pm.globals.has('requestId')) {",
+          "    pm.globals.set('requestId', pm.variables.replaceIn('{{$randomUUID}}'));",
+          "}",
+          "",
+          "// API 키 확인",
+          "const apiKey = pm.environment.get('apiKey') || pm.collectionVariables.get('apiKey');",
+          "if (!apiKey || apiKey === 'your-api-key-here') {",
+          "    console.warn('⚠️ API 키가 설정되지 않았습니다. 환경 변수나 컬렉션 변수에서 apiKey를 설정해주세요.');",
+          "}",
+          "",
+          "// 요청 시작 시간 기록",
+          "pm.globals.set('requestStartTime', Date.now());"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// 응답 시간 계산",
+          "const startTime = pm.globals.get('requestStartTime');",
+          "const responseTime = Date.now() - startTime;",
+          "pm.test(`응답 시간이 5초 이내입니다 (${responseTime}ms)`, function () {",
+          "    pm.expect(responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "// 기본 상태 코드 확인",
+          "pm.test('HTTP 상태 코드 확인', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 202, 204]);",
+          "});",
+          "",
+          "// JSON 응답 형식 확인",
+          "if (pm.response.headers.get('Content-Type')?.includes('application/json')) {",
+          "    pm.test('JSON 형식 응답 확인', function () {",
+          "        pm.expect(() => pm.response.json()).to.not.throw();",
+          "    });",
+          "    ",
+          "    // success 필드 확인 (있는 경우)",
+          "    const jsonData = pm.response.json();",
+          "    if ('success' in jsonData) {",
+          "        pm.test('API 성공 응답 확인', function () {",
+          "            pm.expect(jsonData.success).to.be.true;",
+          "        });",
+          "    }",
+          "}",
+          "",
+          "// 보안 헤더 확인",
+          "pm.test('보안 헤더 존재 확인', function () {",
+          "    const headers = pm.response.headers;",
+          "    pm.expect(headers.has('X-Content-Type-Options') || headers.has('X-Frame-Options')).to.be.true;",
+          "});",
+          "",
+          "// 응답 결과 로깅",
+          "console.log(`📊 ${pm.info.requestName}: ${pm.response.code} (${responseTime}ms)`);"
+        ]
+      }
+    }
+  ]
+}

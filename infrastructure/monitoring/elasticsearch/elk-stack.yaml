@@ -1,0 +1,897 @@
+# AIRIS EPM ELK Stack Configuration
+# Elasticsearch, Logstash, and Kibana for centralized logging
+
+# Elasticsearch Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: elasticsearch-config
+  namespace: airis-epm
+  labels:
+    app: elasticsearch
+    component: logging
+data:
+  elasticsearch.yml: |
+    cluster.name: airis-epm-logs
+    node.name: ${POD_NAME}
+    node.roles: [master, data, ingest]
+    
+    # Network configuration
+    network.host: 0.0.0.0
+    http.port: 9200
+    transport.port: 9300
+    
+    # Discovery configuration
+    discovery.seed_hosts: 
+      - elasticsearch-0.elasticsearch-headless.airis-epm.svc.cluster.local
+      - elasticsearch-1.elasticsearch-headless.airis-epm.svc.cluster.local
+      - elasticsearch-2.elasticsearch-headless.airis-epm.svc.cluster.local
+    cluster.initial_master_nodes:
+      - elasticsearch-0
+      - elasticsearch-1
+      - elasticsearch-2
+    
+    # Memory settings
+    bootstrap.memory_lock: true
+    
+    # Index settings
+    index.number_of_shards: 1
+    index.number_of_replicas: 1
+    index.refresh_interval: 5s
+    
+    # Security settings
+    xpack.security.enabled: true
+    xpack.security.transport.ssl.enabled: true
+    xpack.security.transport.ssl.verification_mode: certificate
+    xpack.security.transport.ssl.keystore.path: /usr/share/elasticsearch/config/certs/elasticsearch.p12
+    xpack.security.transport.ssl.truststore.path: /usr/share/elasticsearch/config/certs/elasticsearch.p12
+    xpack.security.http.ssl.enabled: true
+    xpack.security.http.ssl.keystore.path: /usr/share/elasticsearch/config/certs/elasticsearch.p12
+    
+    # Monitoring settings
+    xpack.monitoring.collection.enabled: true
+    
+    # Index lifecycle management
+    xpack.ilm.enabled: true
+    
+    # Logging configuration
+    logger.level: INFO
+    
+    # Performance tuning
+    thread_pool:
+      write:
+        size: 4
+        queue_size: 1000
+      search:
+        size: 13
+        queue_size: 1000
+
+  jvm.options: |
+    -Xms2g
+    -Xmx2g
+    -XX:+UseG1GC
+    -XX:G1HeapRegionSize=16m
+    -XX:+UseGCOverheadLimit
+    -XX:+UseTLAB
+    -XX:+ResizeTLAB
+    -XX:+UseNUMA
+    -XX:+AggressiveOpts
+    -Djava.awt.headless=true
+    -Dfile.encoding=UTF-8
+    -Djna.nosys=true
+    -Dio.netty.noUnsafe=true
+    -Dio.netty.noKeySetOptimization=true
+    -Dio.netty.recycler.maxCapacityPerThread=0
+    -Dlog4j.shutdownHookEnabled=false
+    -Dlog4j2.disable.jmx=true
+
+---
+# Elasticsearch StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elasticsearch
+  namespace: airis-epm
+  labels:
+    app: elasticsearch
+    component: logging
+spec:
+  serviceName: elasticsearch-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: elasticsearch
+      component: logging
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+        component: logging
+    spec:
+      serviceAccountName: airis-epm-monitoring
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      initContainers:
+      - name: elasticsearch-init
+        image: busybox:1.35
+        command:
+        - sh
+        - -c
+        - |
+          # Set vm.max_map_count
+          echo 'vm.max_map_count=262144' > /tmp/sysctl.conf
+          sysctl -p /tmp/sysctl.conf
+          
+          # Create data and logs directories
+          mkdir -p /usr/share/elasticsearch/data /usr/share/elasticsearch/logs
+          chown -R 1000:1000 /usr/share/elasticsearch/data /usr/share/elasticsearch/logs
+        volumeMounts:
+        - name: elasticsearch-data
+          mountPath: /usr/share/elasticsearch/data
+        - name: elasticsearch-logs
+          mountPath: /usr/share/elasticsearch/logs
+        securityContext:
+          privileged: true
+          runAsUser: 0
+      containers:
+      - name: elasticsearch
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
+        ports:
+        - containerPort: 9200
+          name: http
+        - containerPort: 9300
+          name: transport
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: ES_JAVA_OPTS
+          value: "-Xms2g -Xmx2g"
+        - name: ELASTIC_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: elasticsearch-credentials
+              key: password
+        volumeMounts:
+        - name: elasticsearch-data
+          mountPath: /usr/share/elasticsearch/data
+        - name: elasticsearch-logs
+          mountPath: /usr/share/elasticsearch/logs
+        - name: elasticsearch-config
+          mountPath: /usr/share/elasticsearch/config/elasticsearch.yml
+          subPath: elasticsearch.yml
+        - name: elasticsearch-config
+          mountPath: /usr/share/elasticsearch/config/jvm.options
+          subPath: jvm.options
+        - name: elasticsearch-certs
+          mountPath: /usr/share/elasticsearch/config/certs
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "1000m"
+          limits:
+            memory: "6Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /_cluster/health
+            port: 9200
+            scheme: HTTPS
+            httpHeaders:
+            - name: Authorization
+              value: "Basic ZWxhc3RpYzphaXJpcy1lcG0tZWxhc3RpYy0yMDI1"
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /_cluster/health?wait_for_status=yellow
+            port: 9200
+            scheme: HTTPS
+            httpHeaders:
+            - name: Authorization
+              value: "Basic ZWxhc3RpYzphaXJpcy1lcG0tZWxhc3RpYy0yMDI1"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: elasticsearch-config
+        configMap:
+          name: elasticsearch-config
+      - name: elasticsearch-certs
+        secret:
+          secretName: elasticsearch-certs
+      - name: elasticsearch-logs
+        emptyDir: {}
+  volumeClaimTemplates:
+  - metadata:
+      name: elasticsearch-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: fast-ssd
+      resources:
+        requests:
+          storage: 50Gi
+
+---
+# Elasticsearch Headless Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch-headless
+  namespace: airis-epm
+  labels:
+    app: elasticsearch
+    component: logging
+spec:
+  clusterIP: None
+  selector:
+    app: elasticsearch
+    component: logging
+  ports:
+  - name: http
+    port: 9200
+    targetPort: 9200
+  - name: transport
+    port: 9300
+    targetPort: 9300
+
+---
+# Elasticsearch Load Balancer Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  namespace: airis-epm
+  labels:
+    app: elasticsearch
+    component: logging
+spec:
+  type: ClusterIP
+  selector:
+    app: elasticsearch
+    component: logging
+  ports:
+  - name: http
+    port: 9200
+    targetPort: 9200
+
+---
+# Logstash Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-config
+  namespace: airis-epm
+  labels:
+    app: logstash
+    component: logging
+data:
+  logstash.yml: |
+    http.host: "0.0.0.0"
+    path.config: /usr/share/logstash/pipeline
+    path.data: /usr/share/logstash/data
+    pipeline.workers: 4
+    pipeline.batch.size: 1000
+    pipeline.batch.delay: 50
+    queue.type: persisted
+    queue.page_capacity: 64mb
+    queue.max_events: 0
+    queue.checkpoint.writes: 1024
+    xpack.monitoring.enabled: true
+    xpack.monitoring.elasticsearch.hosts: ["https://elasticsearch.airis-epm.svc.cluster.local:9200"]
+    xpack.monitoring.elasticsearch.username: "logstash_system"
+    xpack.monitoring.elasticsearch.password: "${LOGSTASH_PASSWORD}"
+    xpack.monitoring.elasticsearch.ssl.verification_mode: none
+
+  pipeline.yml: |
+    - pipeline.id: main
+      path.config: "/usr/share/logstash/pipeline/logstash.conf"
+      pipeline.workers: 4
+      pipeline.batch.size: 1000
+
+  logstash.conf: |
+    input {
+      beats {
+        port => 5044
+        ssl => true
+        ssl_certificate_authorities => ["/usr/share/logstash/config/certs/ca.crt"]
+        ssl_certificate => "/usr/share/logstash/config/certs/logstash.crt"
+        ssl_key => "/usr/share/logstash/config/certs/logstash.key"
+        ssl_verify_mode => "force_peer"
+      }
+      
+      http {
+        port => 8080
+        host => "0.0.0.0"
+        codec => json
+        additional_codecs => {
+          "application/json" => "json"
+        }
+      }
+      
+      tcp {
+        port => 9600
+        codec => json_lines
+      }
+    }
+
+    filter {
+      # Parse Kubernetes logs
+      if [kubernetes] {
+        mutate {
+          add_field => { "log_source" => "kubernetes" }
+        }
+        
+        if [kubernetes][container][name] == "airis-epm-app" {
+          mutate {
+            add_tag => ["airis-epm", "application"]
+          }
+          
+          # Parse application logs
+          if [message] =~ /^\{.*\}$/ {
+            json {
+              source => "message"
+            }
+          }
+        }
+        
+        if [kubernetes][container][name] =~ /clickhouse/ {
+          mutate {
+            add_tag => ["airis-epm", "database", "clickhouse"]
+          }
+        }
+        
+        if [kubernetes][container][name] =~ /postgres/ {
+          mutate {
+            add_tag => ["airis-epm", "database", "postgresql"]
+          }
+        }
+        
+        if [kubernetes][container][name] =~ /redis/ {
+          mutate {
+            add_tag => ["airis-epm", "database", "redis"]
+          }
+        }
+        
+        if [kubernetes][container][name] =~ /mongo/ {
+          mutate {
+            add_tag => ["airis-epm", "database", "mongodb"]
+          }
+        }
+      }
+      
+      # Parse HTTP access logs
+      if "access-log" in [tags] {
+        grok {
+          match => { 
+            "message" => '%{IPORHOST:clientip} %{USER:ident} %{USER:auth} \[%{HTTPDATE:timestamp}\] "%{WORD:verb} %{DATA:request} HTTP/%{NUMBER:httpversion}" %{NUMBER:response:int} (?:-|%{NUMBER:bytes:int}) %{QS:referrer} %{QS:agent}'
+          }
+        }
+        
+        date {
+          match => [ "timestamp", "dd/MMM/yyyy:HH:mm:ss Z" ]
+        }
+        
+        mutate {
+          convert => { "response" => "integer" }
+          convert => { "bytes" => "integer" }
+        }
+      }
+      
+      # Add common fields
+      mutate {
+        add_field => { 
+          "[@metadata][index_prefix]" => "airis-epm-logs"
+          "environment" => "production"
+          "cluster" => "airis-epm"
+        }
+      }
+      
+      # Geoip for client IPs
+      if [clientip] {
+        geoip {
+          source => "clientip"
+          target => "geoip"
+        }
+      }
+      
+      # Clean up fields
+      mutate {
+        remove_field => [ "host", "agent", "ecs" ]
+      }
+    }
+
+    output {
+      elasticsearch {
+        hosts => ["https://elasticsearch.airis-epm.svc.cluster.local:9200"]
+        user => "elastic"
+        password => "${ELASTIC_PASSWORD}"
+        ssl => true
+        ssl_certificate_verification => false
+        index => "%{[@metadata][index_prefix]}-%{+YYYY.MM.dd}"
+        template_name => "airis-epm-logs"
+        template_pattern => "airis-epm-logs-*"
+        template => "/usr/share/logstash/templates/airis-epm-template.json"
+        template_overwrite => true
+        manage_template => true
+      }
+      
+      # Debug output (remove in production)
+      stdout {
+        codec => rubydebug
+      }
+    }
+
+  airis-epm-template.json: |
+    {
+      "index_patterns": ["airis-epm-logs-*"],
+      "settings": {
+        "index": {
+          "number_of_shards": 1,
+          "number_of_replicas": 1,
+          "refresh_interval": "5s",
+          "mapping": {
+            "total_fields": {
+              "limit": 2000
+            }
+          }
+        }
+      },
+      "mappings": {
+        "properties": {
+          "@timestamp": {
+            "type": "date"
+          },
+          "level": {
+            "type": "keyword"
+          },
+          "message": {
+            "type": "text",
+            "analyzer": "standard"
+          },
+          "kubernetes": {
+            "properties": {
+              "container": {
+                "properties": {
+                  "name": {
+                    "type": "keyword"
+                  }
+                }
+              },
+              "pod": {
+                "properties": {
+                  "name": {
+                    "type": "keyword"
+                  }
+                }
+              },
+              "namespace": {
+                "type": "keyword"
+              }
+            }
+          },
+          "response": {
+            "type": "integer"
+          },
+          "bytes": {
+            "type": "long"
+          },
+          "clientip": {
+            "type": "ip"
+          },
+          "geoip": {
+            "properties": {
+              "location": {
+                "type": "geo_point"
+              }
+            }
+          }
+        }
+      }
+    }
+
+---
+# Logstash Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: logstash
+  namespace: airis-epm
+  labels:
+    app: logstash
+    component: logging
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: logstash
+      component: logging
+  template:
+    metadata:
+      labels:
+        app: logstash
+        component: logging
+    spec:
+      serviceAccountName: airis-epm-monitoring
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: logstash
+        image: docker.elastic.co/logstash/logstash:8.10.0
+        ports:
+        - containerPort: 5044
+          name: beats
+        - containerPort: 8080
+          name: http
+        - containerPort: 9600
+          name: tcp
+        - containerPort: 9600
+          name: api
+        env:
+        - name: LS_JAVA_OPTS
+          value: "-Xms2g -Xmx2g"
+        - name: ELASTIC_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: elasticsearch-credentials
+              key: password
+        - name: LOGSTASH_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: elasticsearch-credentials
+              key: logstash-password
+        volumeMounts:
+        - name: logstash-config
+          mountPath: /usr/share/logstash/config
+        - name: logstash-pipeline
+          mountPath: /usr/share/logstash/pipeline
+        - name: logstash-templates
+          mountPath: /usr/share/logstash/templates
+        - name: logstash-certs
+          mountPath: /usr/share/logstash/config/certs
+        - name: logstash-data
+          mountPath: /usr/share/logstash/data
+        resources:
+          requests:
+            memory: "3Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 9600
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 9600
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: logstash-config
+        configMap:
+          name: logstash-config
+          items:
+          - key: logstash.yml
+            path: logstash.yml
+          - key: pipeline.yml
+            path: pipeline.yml
+      - name: logstash-pipeline
+        configMap:
+          name: logstash-config
+          items:
+          - key: logstash.conf
+            path: logstash.conf
+      - name: logstash-templates
+        configMap:
+          name: logstash-config
+          items:
+          - key: airis-epm-template.json
+            path: airis-epm-template.json
+      - name: logstash-certs
+        secret:
+          secretName: logstash-certs
+      - name: logstash-data
+        emptyDir: {}
+
+---
+# Logstash Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: logstash
+  namespace: airis-epm
+  labels:
+    app: logstash
+    component: logging
+spec:
+  type: ClusterIP
+  selector:
+    app: logstash
+    component: logging
+  ports:
+  - name: beats
+    port: 5044
+    targetPort: 5044
+  - name: http
+    port: 8080
+    targetPort: 8080
+  - name: tcp
+    port: 9600
+    targetPort: 9600
+  - name: api
+    port: 9600
+    targetPort: 9600
+
+---
+# Kibana Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kibana-config
+  namespace: airis-epm
+  labels:
+    app: kibana
+    component: logging
+data:
+  kibana.yml: |
+    server.name: airis-epm-kibana
+    server.host: 0.0.0.0
+    server.port: 5601
+    server.publicBaseUrl: "https://kibana.airis.company.com"
+    server.ssl.enabled: true
+    server.ssl.certificate: /usr/share/kibana/config/certs/kibana.crt
+    server.ssl.key: /usr/share/kibana/config/certs/kibana.key
+    
+    elasticsearch.hosts: ["https://elasticsearch.airis-epm.svc.cluster.local:9200"]
+    elasticsearch.username: "kibana_system"
+    elasticsearch.password: "${KIBANA_PASSWORD}"
+    elasticsearch.ssl.certificateAuthorities: ["/usr/share/kibana/config/certs/ca.crt"]
+    elasticsearch.ssl.verificationMode: certificate
+    
+    xpack.security.enabled: true
+    xpack.encryptedSavedObjects.encryptionKey: "${ENCRYPTION_KEY}"
+    xpack.reporting.encryptionKey: "${ENCRYPTION_KEY}"
+    xpack.security.encryptionKey: "${ENCRYPTION_KEY}"
+    
+    # Monitoring
+    xpack.monitoring.ui.container.elasticsearch.enabled: true
+    
+    # Default index pattern
+    kibana.defaultAppId: "discover"
+    kibana.index: ".kibana-airis-epm"
+    
+    # Logging
+    logging.appenders.file:
+      type: file
+      fileName: /var/log/kibana/kibana.log
+      layout:
+        type: json
+        
+    logging.root:
+      level: info
+      appenders: [default, file]
+
+---
+# Kibana Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: airis-epm
+  labels:
+    app: kibana
+    component: logging
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+      component: logging
+  template:
+    metadata:
+      labels:
+        app: kibana
+        component: logging
+    spec:
+      serviceAccountName: airis-epm-monitoring
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: kibana
+        image: docker.elastic.co/kibana/kibana:8.10.0
+        ports:
+        - containerPort: 5601
+          name: kibana
+        env:
+        - name: NODE_OPTIONS
+          value: "--max-old-space-size=2048"
+        - name: KIBANA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: elasticsearch-credentials
+              key: kibana-password
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: kibana-secrets
+              key: encryption-key
+        volumeMounts:
+        - name: kibana-config
+          mountPath: /usr/share/kibana/config
+        - name: kibana-certs
+          mountPath: /usr/share/kibana/config/certs
+        - name: kibana-logs
+          mountPath: /var/log/kibana
+        - name: kibana-data
+          mountPath: /usr/share/kibana/data
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+          limits:
+            memory: "3Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /api/status
+            port: 5601
+            scheme: HTTPS
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          timeoutSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/status
+            port: 5601
+            scheme: HTTPS
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 5
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: kibana-config
+        configMap:
+          name: kibana-config
+      - name: kibana-certs
+        secret:
+          secretName: kibana-certs
+      - name: kibana-logs
+        emptyDir: {}
+      - name: kibana-data
+        persistentVolumeClaim:
+          claimName: kibana-data
+
+---
+# Kibana Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana
+  namespace: airis-epm
+  labels:
+    app: kibana
+    component: logging
+spec:
+  type: ClusterIP
+  selector:
+    app: kibana
+    component: logging
+  ports:
+  - name: kibana
+    port: 5601
+    targetPort: 5601
+
+---
+# Kibana Data PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: kibana-data
+  namespace: airis-epm
+  labels:
+    app: kibana
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: fast-ssd
+
+---
+# ELK Stack Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: elasticsearch-credentials
+  namespace: airis-epm
+  labels:
+    app: elasticsearch
+type: Opaque
+stringData:
+  password: "airis-epm-elastic-2025"
+  kibana-password: "airis-epm-kibana-2025"
+  logstash-password: "airis-epm-logstash-2025"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kibana-secrets
+  namespace: airis-epm
+  labels:
+    app: kibana
+type: Opaque
+stringData:
+  encryption-key: "airis-epm-kibana-encryption-key-2025-secure-random-32-chars"
+
+---
+# Placeholder for TLS certificates (to be generated)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: elasticsearch-certs
+  namespace: airis-epm
+  labels:
+    app: elasticsearch
+type: kubernetes.io/tls
+data:
+  elasticsearch.p12: ""  # To be filled with actual certificate
+  ca.crt: ""  # To be filled with CA certificate
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: logstash-certs
+  namespace: airis-epm
+  labels:
+    app: logstash
+type: kubernetes.io/tls
+data:
+  logstash.crt: ""  # To be filled with actual certificate
+  logstash.key: ""  # To be filled with actual key
+  ca.crt: ""  # To be filled with CA certificate
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kibana-certs
+  namespace: airis-epm
+  labels:
+    app: kibana
+type: kubernetes.io/tls
+data:
+  kibana.crt: ""  # To be filled with actual certificate
+  kibana.key: ""  # To be filled with actual key
+  ca.crt: ""  # To be filled with CA certificate

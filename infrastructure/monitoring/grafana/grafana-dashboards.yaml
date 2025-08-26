@@ -1,0 +1,618 @@
+# AIRIS EPM Grafana Dashboard Configuration
+# Advanced visualization and analytics platform
+
+# Grafana Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-config
+  namespace: airis-epm
+  labels:
+    app: grafana
+    component: monitoring
+data:
+  grafana.ini: |
+    [server]
+    protocol = http
+    http_port = 3000
+    domain = grafana.airis.company.com
+    root_url = http://grafana.airis.company.com
+    serve_from_sub_path = false
+    
+    [database]
+    type = postgres
+    host = postgresql-primary.airis-epm.svc.cluster.local:5432
+    name = grafana
+    user = grafana
+    password = $__file{/etc/secrets/db-password}
+    ssl_mode = require
+    max_open_conn = 300
+    max_idle_conn = 5
+    conn_max_lifetime = 14400
+    
+    [session]
+    provider = postgres
+    provider_config = user=grafana password=$__file{/etc/secrets/db-password} host=postgresql-primary.airis-epm.svc.cluster.local port=5432 dbname=grafana sslmode=require
+    
+    [security]
+    admin_user = admin
+    admin_password = $__file{/etc/secrets/admin-password}
+    secret_key = $__file{/etc/secrets/secret-key}
+    disable_gravatar = true
+    cookie_secure = true
+    cookie_samesite = strict
+    content_type_protection = true
+    
+    [users]
+    allow_sign_up = false
+    allow_org_create = false
+    auto_assign_org = true
+    auto_assign_org_role = Viewer
+    default_theme = dark
+    
+    [auth]
+    disable_login_form = false
+    disable_signout_menu = false
+    
+    [auth.ldap]
+    enabled = false
+    
+    [smtp]
+    enabled = true
+    host = smtp.airis.company.com:587
+    user = alerts@airis.company.com
+    password = $__file{/etc/secrets/smtp-password}
+    from_address = grafana@airis.company.com
+    from_name = AIRIS EPM Grafana
+    
+    [alerting]
+    enabled = true
+    execute_alerts = true
+    
+    [metrics]
+    enabled = true
+    
+    [log]
+    mode = console
+    level = info
+    
+    [paths]
+    data = /var/lib/grafana
+    logs = /var/log/grafana
+    plugins = /var/lib/grafana/plugins
+    provisioning = /etc/grafana/provisioning
+    
+    [analytics]
+    reporting_enabled = false
+    check_for_updates = false
+    
+    [snapshots]
+    external_enabled = false
+
+  datasources.yml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus.airis-epm.svc.cluster.local:9090
+        isDefault: true
+        editable: false
+        jsonData:
+          httpMethod: POST
+          manageAlerts: true
+          prometheusType: Prometheus
+          prometheusVersion: 2.47.0
+          cacheLevel: 'High'
+          disableMetricsLookup: false
+          customQueryParameters: ''
+          
+      - name: ClickHouse
+        type: vertamedia-clickhouse-datasource
+        access: proxy
+        url: http://clickhouse-lb.airis-epm.svc.cluster.local:8123
+        database: airis_epm
+        user: airis_epm_user
+        secureJsonData:
+          password: $CLICKHOUSE_PASSWORD
+        jsonData:
+          timeout: 10
+          defaultDatabase: airis_epm
+          
+      - name: PostgreSQL
+        type: postgres
+        access: proxy
+        url: postgresql-primary.airis-epm.svc.cluster.local:5432
+        database: airis_epm
+        user: grafana
+        secureJsonData:
+          password: $POSTGRES_PASSWORD
+        jsonData:
+          sslmode: require
+          maxOpenConns: 100
+          maxIdleConns: 100
+          maxIdleConnsAuto: true
+          connMaxLifetime: 14400
+          postgresVersion: 1500
+          timescaledb: false
+          
+      - name: Elasticsearch
+        type: elasticsearch
+        access: proxy
+        url: http://elasticsearch.airis-epm.svc.cluster.local:9200
+        database: logstash-*
+        jsonData:
+          interval: Daily
+          timeField: '@timestamp'
+          esVersion: 8
+          includeFrozen: false
+          logMessageField: message
+          logLevelField: level
+
+  dashboards.yml: |
+    apiVersion: 1
+    providers:
+      - name: 'AIRIS EPM Dashboards'
+        type: file
+        options:
+          path: /var/lib/grafana/dashboards
+        updateIntervalSeconds: 30
+        allowUiUpdates: true
+        foldersFromFilesStructure: true
+
+---
+# Grafana Dashboards ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: airis-epm
+  labels:
+    app: grafana
+    component: dashboards
+data:
+  airis-epm-overview.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "AIRIS EPM - System Overview",
+        "tags": ["airis-epm", "overview"],
+        "timezone": "Asia/Seoul",
+        "panels": [
+          {
+            "id": 1,
+            "title": "System Health Status",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "up{job=\"airis-epm-app\"}",
+                "refId": "A",
+                "legendFormat": "Application"
+              },
+              {
+                "expr": "up{job=\"clickhouse\"}",
+                "refId": "B", 
+                "legendFormat": "ClickHouse"
+              },
+              {
+                "expr": "up{job=\"postgresql\"}",
+                "refId": "C",
+                "legendFormat": "PostgreSQL"
+              },
+              {
+                "expr": "up{job=\"redis\"}",
+                "refId": "D",
+                "legendFormat": "Redis"
+              }
+            ],
+            "fieldConfig": {
+              "defaults": {
+                "color": {"mode": "thresholds"},
+                "thresholds": {
+                  "steps": [
+                    {"color": "red", "value": 0},
+                    {"color": "green", "value": 1}
+                  ]
+                }
+              }
+            },
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+          },
+          {
+            "id": 2,
+            "title": "Request Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total{job=\"airis-epm-app\"}[5m])",
+                "refId": "A",
+                "legendFormat": "{{method}} {{status}}"
+              }
+            ],
+            "yAxes": [
+              {"label": "Requests/sec", "min": 0},
+              {"show": false}
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+          },
+          {
+            "id": 3,
+            "title": "Response Time P99",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job=\"airis-epm-app\"}[5m]))",
+                "refId": "A",
+                "legendFormat": "P99 Response Time"
+              }
+            ],
+            "yAxes": [
+              {"label": "Seconds", "min": 0},
+              {"show": false}
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+          },
+          {
+            "id": 4,
+            "title": "Error Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total{job=\"airis-epm-app\",status=~\"5..\"}[5m]) / rate(http_requests_total{job=\"airis-epm-app\"}[5m])",
+                "refId": "A",
+                "legendFormat": "Error Rate"
+              }
+            ],
+            "yAxes": [
+              {"label": "Percentage", "min": 0, "max": 1},
+              {"show": false}
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+          }
+        ],
+        "time": {"from": "now-1h", "to": "now"},
+        "refresh": "30s"
+      }
+    }
+
+  database-performance.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "AIRIS EPM - Database Performance",
+        "tags": ["airis-epm", "database"],
+        "timezone": "Asia/Seoul",
+        "panels": [
+          {
+            "id": 1,
+            "title": "ClickHouse Query Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(clickhouse_query_log_queries_total[5m])",
+                "refId": "A",
+                "legendFormat": "Queries/sec"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0}
+          },
+          {
+            "id": 2,
+            "title": "PostgreSQL Connections",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "pg_stat_database_numbackends{datname=\"airis_epm\"}",
+                "refId": "A",
+                "legendFormat": "Active Connections"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0}
+          },
+          {
+            "id": 3,
+            "title": "Redis Connected Clients",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "redis_connected_clients",
+                "refId": "A",
+                "legendFormat": "Connected Clients"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0}
+          },
+          {
+            "id": 4,
+            "title": "MongoDB Connections",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "mongodb_connections{state=\"current\"}",
+                "refId": "A",
+                "legendFormat": "Current Connections"
+              }
+            ],
+            "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0}
+          }
+        ],
+        "time": {"from": "now-1h", "to": "now"},
+        "refresh": "30s"
+      }
+    }
+
+  infrastructure-metrics.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "AIRIS EPM - Infrastructure Metrics", 
+        "tags": ["airis-epm", "infrastructure"],
+        "timezone": "Asia/Seoul",
+        "panels": [
+          {
+            "id": 1,
+            "title": "CPU Usage by Pod",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(container_cpu_usage_seconds_total{namespace=\"airis-epm\",container!=\"POD\",container!=\"\"}[5m])",
+                "refId": "A",
+                "legendFormat": "{{pod}} - {{container}}"
+              }
+            ],
+            "yAxes": [
+              {"label": "CPU Cores", "min": 0},
+              {"show": false}
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+          },
+          {
+            "id": 2,
+            "title": "Memory Usage by Pod",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "container_memory_working_set_bytes{namespace=\"airis-epm\",container!=\"POD\",container!=\"\"} / 1024 / 1024",
+                "refId": "A",
+                "legendFormat": "{{pod}} - {{container}}"
+              }
+            ],
+            "yAxes": [
+              {"label": "Memory (MB)", "min": 0},
+              {"show": false}
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+          },
+          {
+            "id": 3,
+            "title": "Network I/O",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(container_network_receive_bytes_total{namespace=\"airis-epm\"}[5m])",
+                "refId": "A",
+                "legendFormat": "{{pod}} - RX"
+              },
+              {
+                "expr": "rate(container_network_transmit_bytes_total{namespace=\"airis-epm\"}[5m])",
+                "refId": "B",
+                "legendFormat": "{{pod}} - TX"
+              }
+            ],
+            "yAxes": [
+              {"label": "Bytes/sec", "min": 0},
+              {"show": false}
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+          },
+          {
+            "id": 4,
+            "title": "Disk I/O",
+            "type": "graph", 
+            "targets": [
+              {
+                "expr": "rate(container_fs_reads_bytes_total{namespace=\"airis-epm\"}[5m])",
+                "refId": "A",
+                "legendFormat": "{{pod}} - Read"
+              },
+              {
+                "expr": "rate(container_fs_writes_bytes_total{namespace=\"airis-epm\"}[5m])",
+                "refId": "B", 
+                "legendFormat": "{{pod}} - Write"
+              }
+            ],
+            "yAxes": [
+              {"label": "Bytes/sec", "min": 0},
+              {"show": false}
+            ],
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+          }
+        ],
+        "time": {"from": "now-1h", "to": "now"},
+        "refresh": "30s"
+      }
+    }
+
+---
+# Grafana Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: airis-epm
+  labels:
+    app: grafana
+    component: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+      component: monitoring
+  template:
+    metadata:
+      labels:
+        app: grafana
+        component: monitoring
+    spec:
+      serviceAccountName: grafana
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 472
+        fsGroup: 472
+      initContainers:
+      - name: grafana-init
+        image: busybox:1.35
+        command:
+        - sh
+        - -c
+        - |
+          mkdir -p /var/lib/grafana/dashboards
+          cp -r /tmp/dashboards/* /var/lib/grafana/dashboards/
+          chown -R 472:472 /var/lib/grafana
+        volumeMounts:
+        - name: grafana-storage
+          mountPath: /var/lib/grafana
+        - name: grafana-dashboards
+          mountPath: /tmp/dashboards
+        securityContext:
+          runAsUser: 0
+      containers:
+      - name: grafana
+        image: grafana/grafana:10.1.0
+        ports:
+        - containerPort: 3000
+          name: grafana
+        env:
+        - name: GF_SECURITY_ADMIN_PASSWORD__FILE
+          value: /etc/secrets/admin-password
+        - name: GF_DATABASE_PASSWORD__FILE
+          value: /etc/secrets/db-password
+        - name: CLICKHOUSE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: clickhouse-credentials
+              key: airis-password
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgresql-credentials
+              key: admin-password
+        volumeMounts:
+        - name: grafana-storage
+          mountPath: /var/lib/grafana
+        - name: grafana-config
+          mountPath: /etc/grafana
+        - name: grafana-secrets
+          mountPath: /etc/secrets
+        - name: grafana-provisioning
+          mountPath: /etc/grafana/provisioning
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: grafana-storage
+        persistentVolumeClaim:
+          claimName: grafana-storage
+      - name: grafana-config
+        configMap:
+          name: grafana-config
+      - name: grafana-dashboards
+        configMap:
+          name: grafana-dashboards
+      - name: grafana-provisioning
+        configMap:
+          name: grafana-config
+          items:
+          - key: datasources.yml
+            path: datasources/datasources.yml
+          - key: dashboards.yml
+            path: dashboards/dashboards.yml
+      - name: grafana-secrets
+        secret:
+          secretName: grafana-secrets
+
+---
+# Grafana Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: airis-epm
+  labels:
+    app: grafana
+    component: monitoring
+spec:
+  type: ClusterIP
+  ports:
+  - name: grafana
+    port: 3000
+    targetPort: 3000
+  selector:
+    app: grafana
+    component: monitoring
+
+---
+# Grafana ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grafana
+  namespace: airis-epm
+  labels:
+    app: grafana
+
+---
+# Grafana Storage PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-storage
+  namespace: airis-epm
+  labels:
+    app: grafana
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: fast-ssd
+
+---
+# Grafana Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-secrets
+  namespace: airis-epm
+  labels:
+    app: grafana
+type: Opaque
+stringData:
+  admin-password: "airis-epm-grafana-admin-2025"
+  db-password: "airis-epm-grafana-db-2025"
+  secret-key: "airis-epm-grafana-secret-key-2025-secure-session-management"
+  smtp-password: "airis-epm-smtp-password-2025"

@@ -1,0 +1,541 @@
+# AIRIS EPM Environment Manager
+# Cross-environment configuration management and deployment automation
+
+# Environment Manager Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: airis-epm-environments
+  labels:
+    name: airis-epm-environments
+    purpose: environment-management
+
+---
+# Environment Manager ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: environment-manager-config
+  namespace: airis-epm-environments
+  labels:
+    app: environment-manager
+data:
+  # Environment Configuration
+  environments.yaml: |
+    environments:
+      development:
+        namespace: airis-epm-dev
+        domain: dev.airis.company.com
+        replicas:
+          min: 1
+          max: 3
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        databases:
+          clickhouse: clickhouse-dev
+          postgresql: postgresql-dev
+          redis: redis-dev
+          mongodb: mongodb-dev
+        features:
+          debug: true
+          mock_data: true
+          hot_reload: true
+          ssl_required: false
+          rate_limiting: relaxed
+        monitoring:
+          metrics_interval: 15s
+          log_level: debug
+          tracing_sample_rate: 1.0
+          
+      staging:
+        namespace: airis-epm-staging
+        domain: staging.airis.company.com
+        replicas:
+          min: 3
+          max: 10
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2000m
+            memory: 2Gi
+        databases:
+          clickhouse: clickhouse-staging
+          postgresql: postgresql-staging
+          redis: redis-staging
+          mongodb: mongodb-staging
+        features:
+          debug: false
+          mock_data: false
+          hot_reload: false
+          ssl_required: true
+          rate_limiting: moderate
+        monitoring:
+          metrics_interval: 15s
+          log_level: info
+          tracing_sample_rate: 0.1
+          
+      production:
+        namespace: airis-epm
+        domain: airis.company.com
+        replicas:
+          min: 10
+          max: 50
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 2Gi
+          limits:
+            cpu: 4000m
+            memory: 4Gi
+        databases:
+          clickhouse: clickhouse-lb
+          postgresql: postgresql-primary
+          redis: redis-lb
+          mongodb: mongodb-primary
+        features:
+          debug: false
+          mock_data: false
+          hot_reload: false
+          ssl_required: true
+          rate_limiting: strict
+        monitoring:
+          metrics_interval: 15s
+          log_level: warn
+          tracing_sample_rate: 0.01
+  
+  # Deployment Strategy Configuration
+  deployment-strategies.yaml: |
+    strategies:
+      blue-green:
+        environments: [staging, production]
+        traffic_split:
+          initial: 0
+          increment: 25
+          max: 100
+        rollback_threshold: 5  # Error rate %
+        validation_time: 300   # 5 minutes
+        
+      canary:
+        environments: [production]
+        traffic_split:
+          initial: 5
+          increment: 10
+          max: 100
+        rollback_threshold: 2  # Error rate %
+        validation_time: 600   # 10 minutes
+        
+      rolling:
+        environments: [development]
+        max_unavailable: 25%
+        max_surge: 25%
+        rollback_threshold: 10  # Error rate %
+  
+  # Environment Promotion Rules
+  promotion-rules.yaml: |
+    promotion_pipeline:
+      - from: development
+        to: staging
+        requirements:
+          - tests_passed: true
+          - code_coverage: ">= 80%"
+          - security_scan: passed
+          - performance_test: passed
+        approvals:
+          - role: developer
+          - role: qa
+            
+      - from: staging  
+        to: production
+        requirements:
+          - tests_passed: true
+          - integration_tests: passed
+          - load_tests: passed
+          - security_scan: passed
+          - compliance_check: passed
+        approvals:
+          - role: qa
+          - role: devops
+          - role: security
+          - role: manager
+        business_hours_only: true
+        maintenance_window: true
+
+---
+# Environment Manager Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: environment-manager
+  namespace: airis-epm-environments
+  labels:
+    app: environment-manager
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: environment-manager
+  template:
+    metadata:
+      labels:
+        app: environment-manager
+    spec:
+      serviceAccountName: environment-manager
+      containers:
+      - name: environment-manager
+        image: localhost:5000/environment-manager:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: metrics
+        env:
+        - name: KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: CONFIG_PATH
+          value: "/etc/config"
+        volumeMounts:
+        - name: config
+          mountPath: /etc/config
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+      volumes:
+      - name: config
+        configMap:
+          name: environment-manager-config
+
+---
+# Environment Manager Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: environment-manager
+  namespace: airis-epm-environments
+  labels:
+    app: environment-manager
+spec:
+  selector:
+    app: environment-manager
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+
+---
+# Environment Synchronization Job
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: environment-sync
+  namespace: airis-epm-environments
+  labels:
+    app: environment-sync
+spec:
+  schedule: "0 */6 * * *"  # Every 6 hours
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: environment-manager
+          containers:
+          - name: sync
+            image: localhost:5000/environment-manager:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Starting environment synchronization..."
+              
+              # Sync configurations across environments
+              kubectl get configmaps -n airis-epm-dev -o yaml > /tmp/dev-configs.yaml
+              kubectl get secrets -n airis-epm-dev -o yaml > /tmp/dev-secrets.yaml
+              
+              # Update staging with compatible configurations
+              echo "Syncing to staging environment..."
+              # Add your sync logic here
+              
+              # Generate environment status report
+              echo "Generating status report..."
+              kubectl get deployments --all-namespaces -l app=airis-epm -o wide
+              
+              echo "Environment synchronization completed."
+            env:
+            - name: SYNC_MODE
+              value: "full"
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi
+          restartPolicy: OnFailure
+
+---
+# Configuration Validation Webhook
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionWebhook
+metadata:
+  name: environment-config-validator
+webhooks:
+- name: config.airis-epm.com
+  clientConfig:
+    service:
+      name: environment-manager
+      namespace: airis-epm-environments
+      path: "/validate"
+  rules:
+  - operations: ["CREATE", "UPDATE"]
+    apiGroups: [""]
+    apiVersions: ["v1"]
+    resources: ["configmaps", "secrets"]
+  namespaceSelector:
+    matchLabels:
+      name: airis-epm-dev
+  - operations: ["CREATE", "UPDATE"]
+    apiGroups: [""]
+    apiVersions: ["v1"]  
+    resources: ["configmaps", "secrets"]
+  namespaceSelector:
+    matchLabels:
+      name: airis-epm-staging
+  - operations: ["CREATE", "UPDATE"]
+    apiGroups: [""]
+    apiVersions: ["v1"]
+    resources: ["configmaps", "secrets"]
+  namespaceSelector:
+    matchLabels:
+      name: airis-epm
+  admissionReviewVersions: ["v1", "v1beta1"]
+  sideEffects: None
+  failurePolicy: Ignore
+
+---
+# Environment Manager ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: environment-manager
+  namespace: airis-epm-environments
+  labels:
+    app: environment-manager
+
+---
+# Environment Manager ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: environment-manager
+rules:
+# Resources for environment management
+- apiGroups: [""]
+  resources: ["namespaces", "configmaps", "secrets", "services", "pods"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["networking.k8s.io"]
+  resources: ["ingresses", "networkpolicies"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["autoscaling"]
+  resources: ["horizontalpodautoscalers"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["policy"]
+  resources: ["poddisruptionbudgets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+# Monitoring resources
+- apiGroups: ["monitoring.coreos.com"]
+  resources: ["servicemonitors", "prometheusrules"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+# Custom resources
+- apiGroups: ["argoproj.io"]
+  resources: ["applications", "appprojects"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+# Events for auditing
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create"]
+
+---
+# Environment Manager ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: environment-manager
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: environment-manager
+subjects:
+- kind: ServiceAccount
+  name: environment-manager
+  namespace: airis-epm-environments
+
+---
+# Environment Health Check Job
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: environment-health-check
+  namespace: airis-epm-environments
+  labels:
+    app: environment-health-check
+spec:
+  schedule: "*/15 * * * *"  # Every 15 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: environment-manager
+          containers:
+          - name: health-check
+            image: curlimages/curl:7.85.0
+            command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Starting environment health checks..."
+              
+              # Development environment health check
+              if curl -f -s http://dev.airis.company.com/health > /dev/null; then
+                echo "✅ Development environment is healthy"
+                kubectl annotate namespace airis-epm-dev health-status="healthy" health-checked="$(date -Iseconds)" --overwrite=true
+              else
+                echo "❌ Development environment is unhealthy"
+                kubectl annotate namespace airis-epm-dev health-status="unhealthy" health-checked="$(date -Iseconds)" --overwrite=true
+              fi
+              
+              # Staging environment health check
+              if curl -f -s https://staging.airis.company.com/health > /dev/null; then
+                echo "✅ Staging environment is healthy"
+                kubectl annotate namespace airis-epm-staging health-status="healthy" health-checked="$(date -Iseconds)" --overwrite=true
+              else
+                echo "❌ Staging environment is unhealthy"
+                kubectl annotate namespace airis-epm-staging health-status="unhealthy" health-checked="$(date -Iseconds)" --overwrite=true
+              fi
+              
+              # Production environment health check
+              if curl -f -s https://airis.company.com/health > /dev/null; then
+                echo "✅ Production environment is healthy"
+                kubectl annotate namespace airis-epm health-status="healthy" health-checked="$(date -Iseconds)" --overwrite=true
+              else
+                echo "❌ Production environment is unhealthy"
+                kubectl annotate namespace airis-epm health-status="unhealthy" health-checked="$(date -Iseconds)" --overwrite=true
+              fi
+              
+              echo "Environment health checks completed."
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi
+          restartPolicy: OnFailure
+
+---
+# ArgoCD Application for GitOps
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: airis-epm-environments
+  namespace: argocd
+  labels:
+    app: airis-epm
+    component: environments
+spec:
+  project: airis-epm
+  source:
+    repoURL: https://github.com/company/airis-epm-config
+    targetRevision: HEAD
+    path: environments
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: airis-epm-environments
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+    - CreateNamespace=true
+    - PrunePropagationPolicy=foreground
+    - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+---
+# Prometheus Rules for Environment Monitoring
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: environment-monitoring
+  namespace: airis-epm-environments
+  labels:
+    app: environment-manager
+    monitoring: enabled
+spec:
+  groups:
+  - name: environment.rules
+    rules:
+    - alert: EnvironmentDown
+      expr: up{job=~"airis-epm.*"} == 0
+      for: 5m
+      labels:
+        severity: critical
+        component: environment
+      annotations:
+        summary: "Environment {{ $labels.environment }} is down"
+        description: "Environment {{ $labels.environment }} has been down for more than 5 minutes."
+        
+    - alert: EnvironmentHighErrorRate
+      expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+      for: 10m
+      labels:
+        severity: warning
+        component: environment
+      annotations:
+        summary: "High error rate in {{ $labels.environment }} environment"
+        description: "Error rate is {{ $value | humanizePercentage }} for the last 10 minutes in {{ $labels.environment }}."
+        
+    - alert: EnvironmentConfigurationDrift
+      expr: increase(environment_config_changes_total[1h]) > 10
+      for: 0m
+      labels:
+        severity: warning
+        component: configuration
+      annotations:
+        summary: "High configuration change rate in {{ $labels.environment }}"
+        description: "{{ $value }} configuration changes detected in the last hour in {{ $labels.environment }}."

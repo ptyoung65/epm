@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>디버그 테스트</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { margin: 10px; padding: 10px 20px; font-size: 16px; cursor: pointer; }
+        .btn-success { background: #28a745; color: white; border: none; }
+        .btn-warning { background: #ffc107; color: black; border: none; }
+        .btn-danger { background: #dc3545; color: white; border: none; }
+        #log { margin-top: 20px; padding: 10px; background: #f8f9fa; border: 1px solid #dee2e6; height: 300px; overflow-y: auto; }
+        .status { margin: 10px 0; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>세션 리플레이 디버그 테스트</h1>
+    
+    <div class="status">
+        상태: <span id="status">준비됨</span>
+    </div>
+    
+    <div class="status">
+        세션 ID: <span id="sessionId">생성중...</span>
+    </div>
+    
+    <div>
+        <button id="startBtn" class="btn-success">🔴 기록 시작</button>
+        <button id="pauseBtn" class="btn-warning">⏸️ 기록 일시정지</button>
+        <button id="stopBtn" class="btn-danger">⏹️ 기록 중지</button>
+        <button id="testBtn">📊 테스트 버튼</button>
+    </div>
+    
+    <div id="log"></div>
+    
+    <script>
+        // 전역 변수
+        let sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        let isRecording = false;
+        let startTime = null;
+        
+        // 로그 함수
+        function addLog(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${timestamp}] ${message}`);
+        }
+        
+        // 기록 시작
+        function startRecording() {
+            console.log('startRecording() 호출됨');
+            addLog('🔴 기록 시작 함수 호출됨');
+            
+            if (isRecording) {
+                addLog('⚠️ 이미 기록 중입니다');
+                return;
+            }
+            
+            isRecording = true;
+            startTime = new Date();
+            document.getElementById('status').textContent = '기록 중';
+            
+            addLog('✅ 기록이 시작되었습니다');
+        }
+        
+        // 기록 일시정지
+        function pauseRecording() {
+            console.log('pauseRecording() 호출됨');
+            addLog('⏸️ 일시정지 함수 호출됨');
+            
+            if (!isRecording) {
+                addLog('⚠️ 기록이 진행 중이 아닙니다');
+                return;
+            }
+            
+            isRecording = false;
+            document.getElementById('status').textContent = '일시정지됨';
+            addLog('✅ 기록이 일시정지되었습니다');
+        }
+        
+        // 기록 중지
+        function stopRecording() {
+            console.log('stopRecording() 호출됨');
+            addLog('⏹️ 중지 함수 호출됨');
+            
+            isRecording = false;
+            const duration = startTime ? Math.floor((new Date() - startTime) / 1000) : 0;
+            document.getElementById('status').textContent = '중지됨';
+            addLog(`✅ 기록이 중지되었습니다 (${duration}초)`);
+        }
+        
+        // 테스트 함수
+        function testFunction() {
+            console.log('testFunction() 호출됨');
+            addLog('📊 테스트 버튼이 클릭되었습니다!');
+            addLog('현재 상태: ' + (isRecording ? '기록 중' : '중지됨'));
+        }
+        
+        // 페이지 로드 완료 후 초기화
+        window.onload = function() {
+            console.log('=== 페이지 로드 완료 ===');
+            addLog('🚀 페이지가 로드되었습니다');
+            
+            // 세션 ID 설정
+            document.getElementById('sessionId').textContent = sessionId;
+            addLog('세션 ID: ' + sessionId);
+            
+            // 이벤트 리스너 설정 (onclick 대신 addEventListener 사용)
+            document.getElementById('startBtn').addEventListener('click', startRecording);
+            document.getElementById('pauseBtn').addEventListener('click', pauseRecording);
+            document.getElementById('stopBtn').addEventListener('click', stopRecording);
+            document.getElementById('testBtn').addEventListener('click', testFunction);
+            
+            // 함수 존재 여부 확인
+            addLog('startRecording 함수: ' + (typeof startRecording === 'function' ? '존재' : '없음'));
+            addLog('pauseRecording 함수: ' + (typeof pauseRecording === 'function' ? '존재' : '없음'));
+            addLog('stopRecording 함수: ' + (typeof stopRecording === 'function' ? '존재' : '없음'));
+            
+            addLog('✅ 초기화 완료');
+            console.log('=== 초기화 완료 ===');
+        };
+        
+        // 전역에 함수 노출 (콘솔에서 직접 호출 가능)
+        window.startRecording = startRecording;
+        window.pauseRecording = pauseRecording;
+        window.stopRecording = stopRecording;
+        window.testFunction = testFunction;
+    </script>
+</body>
+</html>

@@ -1,0 +1,280 @@
+# AIRIS EPM Security Compliance and Scanning
+# Automated security compliance and vulnerability management
+
+# Trivy Vulnerability Scanner
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trivy-scanner
+  namespace: airis-epm
+  labels:
+    app: trivy
+    component: security-scanner
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trivy
+      component: security-scanner
+  template:
+    metadata:
+      labels:
+        app: trivy
+        component: security-scanner
+    spec:
+      serviceAccountName: airis-epm-security-scanner
+      containers:
+      - name: trivy
+        image: aquasec/trivy:0.45.0
+        command: ["trivy"]
+        args: ["server", "--listen", "0.0.0.0:4954"]
+        ports:
+        - containerPort: 4954
+          name: trivy-server
+        env:
+        - name: TRIVY_CACHE_DIR
+          value: "/tmp/trivy"
+        - name: TRIVY_DEBUG
+          value: "false"
+        volumeMounts:
+        - name: cache
+          mountPath: /tmp/trivy
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: cache
+        emptyDir: {}
+
+---
+# Trivy Scanner Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: trivy-scanner
+  namespace: airis-epm
+  labels:
+    app: trivy
+spec:
+  ports:
+  - port: 4954
+    targetPort: 4954
+    protocol: TCP
+    name: trivy-server
+  selector:
+    app: trivy
+    component: security-scanner
+
+---
+# Security Compliance CronJob
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: security-compliance-scan
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    component: compliance
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: airis-epm-security-scanner
+          restartPolicy: OnFailure
+          containers:
+          - name: compliance-scanner
+            image: aquasec/trivy:0.45.0
+            command: ["/bin/sh"]
+            args:
+            - -c
+            - |
+              # Scan all images in namespace
+              kubectl get pods -n airis-epm -o jsonpath="{..image}" | tr -s '[[:space:]]' '\n' | sort | uniq | while read image; do
+                echo "Scanning image: $image"
+                trivy image --format json --output "/reports/$(echo $image | tr '/' '_' | tr ':' '_').json" "$image"
+              done
+              
+              # Scan filesystem
+              trivy fs --format json --output "/reports/filesystem_scan.json" /var/lib/docker
+              
+              # Generate compliance report
+              python3 /scripts/generate-compliance-report.py
+            env:
+            - name: KUBECONFIG
+              value: "/var/run/secrets/kubernetes.io/serviceaccount"
+            volumeMounts:
+            - name: reports
+              mountPath: /reports
+            - name: scripts
+              mountPath: /scripts
+            resources:
+              requests:
+                memory: "1Gi"
+                cpu: "500m"
+              limits:
+                memory: "2Gi"
+                cpu: "1000m"
+          volumes:
+          - name: reports
+            persistentVolumeClaim:
+              claimName: security-reports-pvc
+          - name: scripts
+            configMap:
+              name: compliance-scripts
+
+---
+# Security Reports PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: security-reports-pvc
+  namespace: airis-epm
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# Compliance Scripts ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: compliance-scripts
+  namespace: airis-epm
+data:
+  generate-compliance-report.py: |
+    #!/usr/bin/env python3
+    import json
+    import os
+    from datetime import datetime
+    
+    def generate_compliance_report():
+        reports_dir = '/reports'
+        compliance_report = {
+            'scan_date': datetime.now().isoformat(),
+            'compliance_status': 'COMPLIANT',
+            'total_vulnerabilities': 0,
+            'critical_count': 0,
+            'high_count': 0,
+            'medium_count': 0,
+            'low_count': 0,
+            'scanned_images': [],
+            'recommendations': []
+        }
+        
+        # Process Trivy scan results
+        for filename in os.listdir(reports_dir):
+            if filename.endswith('.json') and filename != 'compliance_report.json':
+                with open(os.path.join(reports_dir, filename), 'r') as f:
+                    scan_result = json.load(f)
+                    
+                if 'Results' in scan_result:
+                    for result in scan_result['Results']:
+                        if 'Vulnerabilities' in result:
+                            for vuln in result['Vulnerabilities']:
+                                compliance_report['total_vulnerabilities'] += 1
+                                severity = vuln.get('Severity', 'UNKNOWN').upper()
+                                
+                                if severity == 'CRITICAL':
+                                    compliance_report['critical_count'] += 1
+                                elif severity == 'HIGH':
+                                    compliance_report['high_count'] += 1
+                                elif severity == 'MEDIUM':
+                                    compliance_report['medium_count'] += 1
+                                elif severity == 'LOW':
+                                    compliance_report['low_count'] += 1
+        
+        # Determine compliance status
+        if compliance_report['critical_count'] > 0:
+            compliance_report['compliance_status'] = 'NON_COMPLIANT'
+            compliance_report['recommendations'].append('Critical vulnerabilities must be remediated immediately')
+        elif compliance_report['high_count'] > 10:
+            compliance_report['compliance_status'] = 'WARNING'
+            compliance_report['recommendations'].append('High severity vulnerabilities should be addressed within 7 days')
+        
+        # Add general recommendations
+        if compliance_report['total_vulnerabilities'] > 0:
+            compliance_report['recommendations'].extend([
+                'Keep base images updated to latest versions',
+                'Implement automated vulnerability scanning in CI/CD pipeline',
+                'Regular security patches should be applied',
+                'Consider using distroless or minimal base images'
+            ])
+        
+        # Save compliance report
+        with open(os.path.join(reports_dir, 'compliance_report.json'), 'w') as f:
+            json.dump(compliance_report, f, indent=2)
+        
+        print(f"Compliance Report Generated:")
+        print(f"Status: {compliance_report['compliance_status']}")
+        print(f"Total Vulnerabilities: {compliance_report['total_vulnerabilities']}")
+        print(f"Critical: {compliance_report['critical_count']}, High: {compliance_report['high_count']}")
+        
+    if __name__ == "__main__":
+        generate_compliance_report()
+
+---
+# RBAC Scanner CronJob
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: rbac-audit-scan
+  namespace: airis-epm
+spec:
+  schedule: "0 6 * * 0"  # Weekly on Sunday at 6 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: airis-epm-security-scanner
+          restartPolicy: OnFailure
+          containers:
+          - name: rbac-auditor
+            image: quay.io/airis/kubectl:latest
+            command: ["/bin/sh"]
+            args:
+            - -c
+            - |
+              # RBAC Audit Script
+              echo "Starting RBAC Audit..."
+              
+              # Check for overly permissive roles
+              kubectl get clusterroles -o json | jq '.items[] | select(.rules[]?.verbs[]? == "*") | .metadata.name' > /reports/overpermissive_roles.txt
+              
+              # Check for unused service accounts
+              kubectl get serviceaccounts -A -o json | jq '.items[] | select(.secrets == null or (.secrets | length) == 0)' > /reports/unused_service_accounts.json
+              
+              # Generate RBAC report
+              cat > /reports/rbac_audit_report.json << EOF
+              {
+                "audit_date": "$(date -Iseconds)",
+                "namespace": "airis-epm",
+                "findings": {
+                  "overpermissive_roles": $(cat /reports/overpermissive_roles.txt | wc -l),
+                  "unused_service_accounts": $(cat /reports/unused_service_accounts.json | jq length)
+                },
+                "recommendations": [
+                  "Review and reduce permissions for overly permissive roles",
+                  "Remove unused service accounts to reduce attack surface",
+                  "Implement principle of least privilege",
+                  "Regular RBAC audits should be conducted"
+                ]
+              }
+              EOF
+              
+              echo "RBAC Audit completed. Report saved to /reports/rbac_audit_report.json"
+            volumeMounts:
+            - name: reports
+              mountPath: /reports
+          volumes:
+          - name: reports
+            persistentVolumeClaim:
+              claimName: security-reports-pvc

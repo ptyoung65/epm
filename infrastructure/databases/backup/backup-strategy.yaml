@@ -1,0 +1,630 @@
+# AIRIS EPM Database Backup and Recovery Strategy
+# Comprehensive backup solution for all database systems
+
+# Backup Storage PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: database-backups-pvc
+  namespace: airis-epm
+  labels:
+    app: backup-system
+    component: storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 500Gi
+  storageClassName: fast-ssd
+
+---
+# Backup Scripts ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-scripts
+  namespace: airis-epm
+  labels:
+    app: backup-system
+    component: scripts
+data:
+  backup-clickhouse.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    
+    BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
+    BACKUP_DIR="/backups/clickhouse/${BACKUP_DATE}"
+    mkdir -p "${BACKUP_DIR}"
+    
+    echo "Starting ClickHouse backup: ${BACKUP_DATE}"
+    
+    # Create database backup using clickhouse-backup tool
+    clickhouse-backup create "${BACKUP_DATE}"
+    clickhouse-backup upload "${BACKUP_DATE}"
+    
+    # Export schema
+    clickhouse-client --host clickhouse-lb.airis-epm.svc.cluster.local \
+      --password "${CLICKHOUSE_PASSWORD}" \
+      --query "SHOW CREATE DATABASE airis_epm" > "${BACKUP_DIR}/schema.sql"
+    
+    # Backup each table data
+    for table in $(clickhouse-client --host clickhouse-lb.airis-epm.svc.cluster.local \
+      --password "${CLICKHOUSE_PASSWORD}" \
+      --query "SHOW TABLES FROM airis_epm"); do
+      
+      echo "Backing up table: ${table}"
+      clickhouse-client --host clickhouse-lb.airis-epm.svc.cluster.local \
+        --password "${CLICKHOUSE_PASSWORD}" \
+        --query "SELECT * FROM airis_epm.${table} FORMAT TabSeparated" \
+        | gzip > "${BACKUP_DIR}/${table}.tsv.gz"
+    done
+    
+    # Create backup manifest
+    cat > "${BACKUP_DIR}/manifest.json" << EOF
+    {
+      "backup_date": "${BACKUP_DATE}",
+      "database": "clickhouse",
+      "cluster": "airis_epm_cluster",
+      "tables": $(clickhouse-client --host clickhouse-lb.airis-epm.svc.cluster.local \
+        --password "${CLICKHOUSE_PASSWORD}" \
+        --query "SHOW TABLES FROM airis_epm FORMAT JSONEachRow" | jq -s),
+      "backup_size": "$(du -sh ${BACKUP_DIR} | cut -f1)",
+      "status": "completed"
+    }
+    EOF
+    
+    # Clean up old backups (keep last 7 days)
+    find /backups/clickhouse -type d -mtime +7 -exec rm -rf {} \;
+    
+    echo "ClickHouse backup completed: ${BACKUP_DATE}"
+
+  backup-postgresql.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    
+    BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
+    BACKUP_DIR="/backups/postgresql/${BACKUP_DATE}"
+    mkdir -p "${BACKUP_DIR}"
+    
+    echo "Starting PostgreSQL backup: ${BACKUP_DATE}"
+    
+    # Get primary PostgreSQL instance
+    PRIMARY_HOST=$(kubectl get endpoints postgresql-primary -n airis-epm -o jsonpath='{.subsets[0].addresses[0].ip}')
+    
+    # Full database dump
+    PGPASSWORD="${POSTGRES_PASSWORD}" pg_dump \
+      -h "${PRIMARY_HOST}" \
+      -U postgres \
+      -d airis_epm \
+      --create \
+      --clean \
+      --if-exists \
+      --verbose \
+      --format=custom \
+      --compress=9 \
+      --file="${BACKUP_DIR}/airis_epm_full.backup"
+    
+    # Schema-only dump for quick restore
+    PGPASSWORD="${POSTGRES_PASSWORD}" pg_dump \
+      -h "${PRIMARY_HOST}" \
+      -U postgres \
+      -d airis_epm \
+      --schema-only \
+      --create \
+      --clean \
+      --if-exists \
+      --file="${BACKUP_DIR}/schema.sql"
+    
+    # Globals dump (users, roles, tablespaces)
+    PGPASSWORD="${POSTGRES_PASSWORD}" pg_dumpall \
+      -h "${PRIMARY_HOST}" \
+      -U postgres \
+      --globals-only \
+      --file="${BACKUP_DIR}/globals.sql"
+    
+    # WAL archiving status
+    PGPASSWORD="${POSTGRES_PASSWORD}" psql \
+      -h "${PRIMARY_HOST}" \
+      -U postgres \
+      -d airis_epm \
+      -c "SELECT pg_current_wal_lsn(), pg_current_wal_insert_lsn();" \
+      -t > "${BACKUP_DIR}/wal_position.txt"
+    
+    # Create backup manifest
+    cat > "${BACKUP_DIR}/manifest.json" << EOF
+    {
+      "backup_date": "${BACKUP_DATE}",
+      "database": "postgresql",
+      "primary_host": "${PRIMARY_HOST}",
+      "backup_type": "full",
+      "wal_position": "$(cat ${BACKUP_DIR}/wal_position.txt | xargs)",
+      "backup_size": "$(du -sh ${BACKUP_DIR} | cut -f1)",
+      "status": "completed"
+    }
+    EOF
+    
+    # Clean up old backups (keep last 14 days)
+    find /backups/postgresql -type d -mtime +14 -exec rm -rf {} \;
+    
+    echo "PostgreSQL backup completed: ${BACKUP_DATE}"
+
+  backup-redis.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    
+    BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
+    BACKUP_DIR="/backups/redis/${BACKUP_DATE}"
+    mkdir -p "${BACKUP_DIR}"
+    
+    echo "Starting Redis backup: ${BACKUP_DATE}"
+    
+    # Backup each Redis instance in cluster
+    for i in {0..5}; do
+      REDIS_HOST="redis-${i}.redis-headless.airis-epm.svc.cluster.local"
+      
+      echo "Backing up Redis instance: redis-${i}"
+      
+      # Force save current data
+      redis-cli -h "${REDIS_HOST}" -a "${REDIS_PASSWORD}" --no-auth-warning BGSAVE
+      
+      # Wait for background save to complete
+      while [ $(redis-cli -h "${REDIS_HOST}" -a "${REDIS_PASSWORD}" --no-auth-warning LASTSAVE) -eq $(redis-cli -h "${REDIS_HOST}" -a "${REDIS_PASSWORD}" --no-auth-warning LASTSAVE) ]; do
+        sleep 1
+      done
+      
+      # Copy RDB file from pod
+      kubectl cp "airis-epm/redis-${i}:/data/dump.rdb" "${BACKUP_DIR}/redis-${i}_dump.rdb"
+      
+      # Get Redis configuration
+      redis-cli -h "${REDIS_HOST}" -a "${REDIS_PASSWORD}" --no-auth-warning CONFIG GET '*' > "${BACKUP_DIR}/redis-${i}_config.txt"
+      
+      # Get cluster info
+      redis-cli -h "${REDIS_HOST}" -a "${REDIS_PASSWORD}" --no-auth-warning CLUSTER NODES > "${BACKUP_DIR}/cluster_nodes.txt"
+    done
+    
+    # Create backup manifest
+    cat > "${BACKUP_DIR}/manifest.json" << EOF
+    {
+      "backup_date": "${BACKUP_DATE}",
+      "database": "redis",
+      "cluster_nodes": 6,
+      "backup_type": "cluster",
+      "backup_size": "$(du -sh ${BACKUP_DIR} | cut -f1)",
+      "status": "completed"
+    }
+    EOF
+    
+    # Clean up old backups (keep last 7 days)
+    find /backups/redis -type d -mtime +7 -exec rm -rf {} \;
+    
+    echo "Redis backup completed: ${BACKUP_DATE}"
+
+  backup-mongodb.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    
+    BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
+    BACKUP_DIR="/backups/mongodb/${BACKUP_DATE}"
+    mkdir -p "${BACKUP_DIR}"
+    
+    echo "Starting MongoDB backup: ${BACKUP_DATE}"
+    
+    # Get primary MongoDB instance
+    PRIMARY_HOST="mongodb-primary.airis-epm.svc.cluster.local"
+    
+    # Full database dump
+    mongodump \
+      --host "${PRIMARY_HOST}:27017" \
+      --username admin \
+      --password "${MONGODB_ROOT_PASSWORD}" \
+      --authenticationDatabase admin \
+      --db airis_epm \
+      --out "${BACKUP_DIR}/dump" \
+      --gzip \
+      --oplog
+    
+    # Export collections to JSON for easy inspection
+    for collection in $(mongo --host "${PRIMARY_HOST}:27017" \
+      --username admin \
+      --password "${MONGODB_ROOT_PASSWORD}" \
+      --authenticationDatabase admin \
+      --quiet \
+      --eval "db.getSiblingDB('airis_epm').getCollectionNames().join('\n')"); do
+      
+      echo "Exporting collection: ${collection}"
+      mongoexport \
+        --host "${PRIMARY_HOST}:27017" \
+        --username admin \
+        --password "${MONGODB_ROOT_PASSWORD}" \
+        --authenticationDatabase admin \
+        --db airis_epm \
+        --collection "${collection}" \
+        --out "${BACKUP_DIR}/${collection}.json" \
+        --jsonArray
+    done
+    
+    # Export replica set configuration
+    mongo --host "${PRIMARY_HOST}:27017" \
+      --username admin \
+      --password "${MONGODB_ROOT_PASSWORD}" \
+      --authenticationDatabase admin \
+      --quiet \
+      --eval "printjson(rs.conf())" > "${BACKUP_DIR}/replica_set_config.json"
+    
+    # Create backup manifest
+    COLLECTIONS=$(mongo --host "${PRIMARY_HOST}:27017" \
+      --username admin \
+      --password "${MONGODB_ROOT_PASSWORD}" \
+      --authenticationDatabase admin \
+      --quiet \
+      --eval "print(JSON.stringify(db.getSiblingDB('airis_epm').getCollectionNames()))")
+    
+    cat > "${BACKUP_DIR}/manifest.json" << EOF
+    {
+      "backup_date": "${BACKUP_DATE}",
+      "database": "mongodb",
+      "replica_set": "airis-epm-rs",
+      "primary_host": "${PRIMARY_HOST}",
+      "collections": ${COLLECTIONS},
+      "backup_size": "$(du -sh ${BACKUP_DIR} | cut -f1)",
+      "status": "completed"
+    }
+    EOF
+    
+    # Clean up old backups (keep last 14 days)
+    find /backups/mongodb -type d -mtime +14 -exec rm -rf {} \;
+    
+    echo "MongoDB backup completed: ${BACKUP_DATE}"
+
+  restore-clickhouse.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    
+    BACKUP_DATE=$1
+    BACKUP_DIR="/backups/clickhouse/${BACKUP_DATE}"
+    
+    if [ ! -d "${BACKUP_DIR}" ]; then
+      echo "Backup directory not found: ${BACKUP_DIR}"
+      exit 1
+    fi
+    
+    echo "Starting ClickHouse restore from: ${BACKUP_DATE}"
+    
+    # Restore using clickhouse-backup
+    clickhouse-backup restore "${BACKUP_DATE}"
+    
+    echo "ClickHouse restore completed from: ${BACKUP_DATE}"
+
+  restore-postgresql.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    
+    BACKUP_DATE=$1
+    BACKUP_DIR="/backups/postgresql/${BACKUP_DATE}"
+    
+    if [ ! -d "${BACKUP_DIR}" ]; then
+      echo "Backup directory not found: ${BACKUP_DIR}"
+      exit 1
+    fi
+    
+    echo "Starting PostgreSQL restore from: ${BACKUP_DATE}"
+    
+    # Get primary PostgreSQL instance
+    PRIMARY_HOST=$(kubectl get endpoints postgresql-primary -n airis-epm -o jsonpath='{.subsets[0].addresses[0].ip}')
+    
+    # Restore globals (users, roles)
+    PGPASSWORD="${POSTGRES_PASSWORD}" psql \
+      -h "${PRIMARY_HOST}" \
+      -U postgres \
+      -d postgres \
+      -f "${BACKUP_DIR}/globals.sql"
+    
+    # Restore database
+    PGPASSWORD="${POSTGRES_PASSWORD}" pg_restore \
+      -h "${PRIMARY_HOST}" \
+      -U postgres \
+      -d postgres \
+      --create \
+      --clean \
+      --if-exists \
+      --verbose \
+      "${BACKUP_DIR}/airis_epm_full.backup"
+    
+    echo "PostgreSQL restore completed from: ${BACKUP_DATE}"
+
+  backup-health-check.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    
+    HEALTH_REPORT="/backups/health_report_$(date +%Y%m%d_%H%M%S).json"
+    
+    echo "Performing backup health check..."
+    
+    # Check backup storage usage
+    STORAGE_USAGE=$(df -h /backups | awk 'NR==2 {print $5}' | sed 's/%//')
+    
+    # Check recent backups for each database
+    CLICKHOUSE_LATEST=$(find /backups/clickhouse -maxdepth 1 -type d -name "2*" | sort | tail -1 | xargs basename)
+    POSTGRES_LATEST=$(find /backups/postgresql -maxdepth 1 -type d -name "2*" | sort | tail -1 | xargs basename)
+    REDIS_LATEST=$(find /backups/redis -maxdepth 1 -type d -name "2*" | sort | tail -1 | xargs basename)
+    MONGODB_LATEST=$(find /backups/mongodb -maxdepth 1 -type d -name "2*" | sort | tail -1 | xargs basename)
+    
+    # Calculate backup ages in hours
+    NOW=$(date +%s)
+    CH_AGE=$(( (NOW - $(date -d "${CLICKHOUSE_LATEST:0:8} ${CLICKHOUSE_LATEST:9:2}:${CLICKHOUSE_LATEST:11:2}:${CLICKHOUSE_LATEST:13:2}" +%s)) / 3600 ))
+    PG_AGE=$(( (NOW - $(date -d "${POSTGRES_LATEST:0:8} ${POSTGRES_LATEST:9:2}:${POSTGRES_LATEST:11:2}:${POSTGRES_LATEST:13:2}" +%s)) / 3600 ))
+    REDIS_AGE=$(( (NOW - $(date -d "${REDIS_LATEST:0:8} ${REDIS_LATEST:9:2}:${REDIS_LATEST:11:2}:${REDIS_LATEST:13:2}" +%s)) / 3600 ))
+    MONGO_AGE=$(( (NOW - $(date -d "${MONGODB_LATEST:0:8} ${MONGODB_LATEST:9:2}:${MONGODB_LATEST:11:2}:${MONGODB_LATEST:13:2}" +%s)) / 3600 ))
+    
+    # Generate health report
+    cat > "${HEALTH_REPORT}" << EOF
+    {
+      "check_date": "$(date -Iseconds)",
+      "storage": {
+        "usage_percent": ${STORAGE_USAGE},
+        "status": "$([ ${STORAGE_USAGE} -lt 80 ] && echo "healthy" || echo "warning")"
+      },
+      "backups": {
+        "clickhouse": {
+          "latest": "${CLICKHOUSE_LATEST}",
+          "age_hours": ${CH_AGE},
+          "status": "$([ ${CH_AGE} -lt 25 ] && echo "healthy" || echo "stale")"
+        },
+        "postgresql": {
+          "latest": "${POSTGRES_LATEST}",
+          "age_hours": ${PG_AGE},
+          "status": "$([ ${PG_AGE} -lt 25 ] && echo "healthy" || echo "stale")"
+        },
+        "redis": {
+          "latest": "${REDIS_LATEST}",
+          "age_hours": ${REDIS_AGE},
+          "status": "$([ ${REDIS_AGE} -lt 25 ] && echo "healthy" || echo "stale")"
+        },
+        "mongodb": {
+          "latest": "${MONGODB_LATEST}",
+          "age_hours": ${MONGO_AGE},
+          "status": "$([ ${MONGO_AGE} -lt 25 ] && echo "healthy" || echo "stale")"
+        }
+      }
+    }
+    EOF
+    
+    echo "Backup health check completed: ${HEALTH_REPORT}"
+    cat "${HEALTH_REPORT}"
+
+---
+# Database Backup CronJobs
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: clickhouse-backup
+  namespace: airis-epm
+  labels:
+    app: backup-system
+    component: clickhouse
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: airis-epm-db-operator
+          restartPolicy: OnFailure
+          containers:
+          - name: clickhouse-backup
+            image: altinity/clickhouse-backup:2.4.12
+            env:
+            - name: CLICKHOUSE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clickhouse-credentials
+                  key: password
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backups
+            - name: backup-scripts
+              mountPath: /scripts
+            command: ["/bin/bash", "/scripts/backup-clickhouse.sh"]
+            resources:
+              requests:
+                memory: "1Gi"
+                cpu: "500m"
+              limits:
+                memory: "2Gi"
+                cpu: "1000m"
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: database-backups-pvc
+          - name: backup-scripts
+            configMap:
+              name: backup-scripts
+              defaultMode: 0755
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: postgresql-backup
+  namespace: airis-epm
+  labels:
+    app: backup-system
+    component: postgresql
+spec:
+  schedule: "0 3 * * *"  # Daily at 3 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: airis-epm-db-operator
+          restartPolicy: OnFailure
+          containers:
+          - name: postgresql-backup
+            image: postgres:15-alpine
+            env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-credentials
+                  key: postgres-password
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backups
+            - name: backup-scripts
+              mountPath: /scripts
+            command: ["/bin/bash", "/scripts/backup-postgresql.sh"]
+            resources:
+              requests:
+                memory: "1Gi"
+                cpu: "500m"
+              limits:
+                memory: "2Gi"
+                cpu: "1000m"
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: database-backups-pvc
+          - name: backup-scripts
+            configMap:
+              name: backup-scripts
+              defaultMode: 0755
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: redis-backup
+  namespace: airis-epm
+  labels:
+    app: backup-system
+    component: redis
+spec:
+  schedule: "0 4 * * *"  # Daily at 4 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: airis-epm-db-operator
+          restartPolicy: OnFailure
+          containers:
+          - name: redis-backup
+            image: redis:7.2-alpine
+            env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-credentials
+                  key: password
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backups
+            - name: backup-scripts
+              mountPath: /scripts
+            command: ["/bin/bash", "/scripts/backup-redis.sh"]
+            resources:
+              requests:
+                memory: "512Mi"
+                cpu: "250m"
+              limits:
+                memory: "1Gi"
+                cpu: "500m"
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: database-backups-pvc
+          - name: backup-scripts
+            configMap:
+              name: backup-scripts
+              defaultMode: 0755
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mongodb-backup
+  namespace: airis-epm
+  labels:
+    app: backup-system
+    component: mongodb
+spec:
+  schedule: "0 5 * * *"  # Daily at 5 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: airis-epm-db-operator
+          restartPolicy: OnFailure
+          containers:
+          - name: mongodb-backup
+            image: mongo:7.0
+            env:
+            - name: MONGODB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-credentials
+                  key: root-password
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backups
+            - name: backup-scripts
+              mountPath: /scripts
+            command: ["/bin/bash", "/scripts/backup-mongodb.sh"]
+            resources:
+              requests:
+                memory: "1Gi"
+                cpu: "500m"
+              limits:
+                memory: "2Gi"
+                cpu: "1000m"
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: database-backups-pvc
+          - name: backup-scripts
+            configMap:
+              name: backup-scripts
+              defaultMode: 0755
+
+---
+# Backup Health Check CronJob
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-health-check
+  namespace: airis-epm
+  labels:
+    app: backup-system
+    component: health-check
+spec:
+  schedule: "0 6 * * *"  # Daily at 6 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: airis-epm-monitoring
+          restartPolicy: OnFailure
+          containers:
+          - name: backup-health-check
+            image: busybox:1.35
+            volumeMounts:
+            - name: backup-storage
+              mountPath: /backups
+            - name: backup-scripts
+              mountPath: /scripts
+            command: ["/bin/bash", "/scripts/backup-health-check.sh"]
+            resources:
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+              limits:
+                memory: "256Mi"
+                cpu: "200m"
+          volumes:
+          - name: backup-storage
+            persistentVolumeClaim:
+              claimName: database-backups-pvc
+          - name: backup-scripts
+            configMap:
+              name: backup-scripts
+              defaultMode: 0755

@@ -1,0 +1,506 @@
+# AIRIS EPM Prometheus Monitoring Stack
+# Comprehensive metrics collection and monitoring system
+
+# Prometheus Server Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: airis-epm
+  labels:
+    app: prometheus
+    component: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: 'airis-epm'
+        environment: 'production'
+
+    rule_files:
+      - "/etc/prometheus/rules/*.yml"
+
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+              - alertmanager:9093
+
+    scrape_configs:
+      # Prometheus self-monitoring
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+
+      # Kubernetes API server
+      - job_name: 'kubernetes-apiservers'
+        kubernetes_sd_configs:
+          - role: endpoints
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_namespace, __meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: default;kubernetes;https
+
+      # Kubernetes nodes
+      - job_name: 'kubernetes-nodes'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics
+
+      # Kubernetes pods
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name
+
+      # AIRIS EPM Application
+      - job_name: 'airis-epm-app'
+        static_configs:
+          - targets: ['airis-epm-app:3000']
+        metrics_path: '/metrics'
+        scrape_interval: 10s
+
+      # ClickHouse
+      - job_name: 'clickhouse'
+        static_configs:
+          - targets: 
+            - 'clickhouse-0.clickhouse-headless.airis-epm.svc.cluster.local:8123'
+            - 'clickhouse-1.clickhouse-headless.airis-epm.svc.cluster.local:8123'
+            - 'clickhouse-2.clickhouse-headless.airis-epm.svc.cluster.local:8123'
+            - 'clickhouse-3.clickhouse-headless.airis-epm.svc.cluster.local:8123'
+        metrics_path: '/metrics'
+        scrape_interval: 30s
+
+      # PostgreSQL
+      - job_name: 'postgresql'
+        static_configs:
+          - targets: 
+            - 'postgres-exporter:9187'
+        scrape_interval: 30s
+
+      # Redis
+      - job_name: 'redis'
+        static_configs:
+          - targets: 
+            - 'redis-exporter:9121'
+        scrape_interval: 30s
+
+      # MongoDB
+      - job_name: 'mongodb'
+        static_configs:
+          - targets: 
+            - 'mongodb-exporter:9216'
+        scrape_interval: 30s
+
+      # Node Exporter
+      - job_name: 'node-exporter'
+        kubernetes_sd_configs:
+          - role: endpoints
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_endpoints_name]
+            action: keep
+            regex: node-exporter
+          - source_labels: [__meta_kubernetes_endpoint_address_target_name]
+            action: replace
+            target_label: instance
+          - source_labels: [__meta_kubernetes_endpoint_address_target_name]
+            action: replace
+            target_label: __tmp_node_name
+          - source_labels: [__tmp_node_name]
+            action: replace
+            target_label: nodename
+
+      # cAdvisor for container metrics
+      - job_name: 'cadvisor'
+        kubernetes_sd_configs:
+          - role: node
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            regex: (.+)
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/${1}/proxy/metrics/cadvisor
+
+      # Blackbox exporter for synthetic monitoring
+      - job_name: 'blackbox'
+        metrics_path: /probe
+        params:
+          module: [http_2xx]
+        static_configs:
+          - targets:
+            - http://airis-epm-app:3000/health
+            - http://clickhouse-lb:8123/ping
+            - http://postgresql-primary:5432
+            - http://redis-lb:6379
+            - http://mongodb-primary:27017
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: blackbox-exporter:9115
+
+  recording-rules.yml: |
+    groups:
+      - name: airis-epm.rules
+        interval: 30s
+        rules:
+          # Application metrics
+          - record: airis_epm:request_rate
+            expr: rate(http_requests_total{job="airis-epm-app"}[5m])
+
+          - record: airis_epm:request_duration_99p
+            expr: histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job="airis-epm-app"}[5m]))
+
+          - record: airis_epm:error_rate
+            expr: rate(http_requests_total{job="airis-epm-app",status=~"5.."}[5m]) / rate(http_requests_total{job="airis-epm-app"}[5m])
+
+          # Database metrics
+          - record: airis_epm:clickhouse_query_rate
+            expr: rate(clickhouse_query_log_queries_total[5m])
+
+          - record: airis_epm:postgresql_connections
+            expr: pg_stat_database_numbackends{datname="airis_epm"}
+
+          - record: airis_epm:redis_connected_clients
+            expr: redis_connected_clients
+
+          - record: airis_epm:mongodb_connections
+            expr: mongodb_connections{state="current"}
+
+          # Infrastructure metrics
+          - record: airis_epm:cpu_usage_by_pod
+            expr: rate(container_cpu_usage_seconds_total{namespace="airis-epm",container!="POD",container!=""}[5m])
+
+          - record: airis_epm:memory_usage_by_pod
+            expr: container_memory_working_set_bytes{namespace="airis-epm",container!="POD",container!=""} / 1024 / 1024
+
+          - record: airis_epm:disk_usage_by_pod
+            expr: container_fs_usage_bytes{namespace="airis-epm",container!="POD",container!=""} / 1024 / 1024 / 1024
+
+  alert-rules.yml: |
+    groups:
+      - name: airis-epm.alerts
+        rules:
+          # Application alerts
+          - alert: AIRISEPMHighErrorRate
+            expr: airis_epm:error_rate > 0.05
+            for: 5m
+            labels:
+              severity: warning
+              service: airis-epm
+            annotations:
+              summary: "AIRIS EPM high error rate"
+              description: "Error rate is {{ $value | humanizePercentage }} for the last 5 minutes"
+
+          - alert: AIRISEPMHighLatency
+            expr: airis_epm:request_duration_99p > 2
+            for: 10m
+            labels:
+              severity: warning
+              service: airis-epm
+            annotations:
+              summary: "AIRIS EPM high latency"
+              description: "99th percentile latency is {{ $value }}s"
+
+          - alert: AIRISEPMServiceDown
+            expr: up{job="airis-epm-app"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              service: airis-epm
+            annotations:
+              summary: "AIRIS EPM service is down"
+              description: "AIRIS EPM application is not responding"
+
+          # Database alerts
+          - alert: ClickHouseDown
+            expr: up{job="clickhouse"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              service: clickhouse
+            annotations:
+              summary: "ClickHouse is down"
+              description: "ClickHouse instance {{ $labels.instance }} is down"
+
+          - alert: PostgreSQLDown
+            expr: up{job="postgresql"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              service: postgresql
+            annotations:
+              summary: "PostgreSQL is down"
+              description: "PostgreSQL instance is down"
+
+          - alert: RedisDown
+            expr: up{job="redis"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              service: redis
+            annotations:
+              summary: "Redis is down"
+              description: "Redis instance is down"
+
+          - alert: MongoDBDown
+            expr: up{job="mongodb"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              service: mongodb
+            annotations:
+              summary: "MongoDB is down"
+              description: "MongoDB instance is down"
+
+          # Infrastructure alerts
+          - alert: HighCPUUsage
+            expr: airis_epm:cpu_usage_by_pod > 0.8
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High CPU usage detected"
+              description: "Pod {{ $labels.pod }} CPU usage is {{ $value | humanizePercentage }}"
+
+          - alert: HighMemoryUsage
+            expr: airis_epm:memory_usage_by_pod > 1024
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High memory usage detected"
+              description: "Pod {{ $labels.pod }} memory usage is {{ $value }}MB"
+
+          - alert: LowDiskSpace
+            expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Low disk space"
+              description: "Disk space on {{ $labels.instance }} is below 10%"
+
+---
+# Prometheus Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: airis-epm
+  labels:
+    app: prometheus
+    component: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+      component: monitoring
+  template:
+    metadata:
+      labels:
+        app: prometheus
+        component: monitoring
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+    spec:
+      serviceAccountName: prometheus
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      containers:
+      - name: prometheus
+        image: prom/prometheus:v2.47.0
+        args:
+          - '--config.file=/etc/prometheus/prometheus.yml'
+          - '--storage.tsdb.path=/prometheus/'
+          - '--web.console.libraries=/etc/prometheus/console_libraries'
+          - '--web.console.templates=/etc/prometheus/consoles'
+          - '--storage.tsdb.retention.time=30d'
+          - '--storage.tsdb.retention.size=50GB'
+          - '--web.enable-lifecycle'
+          - '--web.enable-admin-api'
+          - '--web.external-url=http://prometheus.airis.company.com'
+        ports:
+        - containerPort: 9090
+          name: prometheus
+        volumeMounts:
+        - name: config
+          mountPath: /etc/prometheus
+        - name: storage
+          mountPath: /prometheus
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9090
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: config
+        configMap:
+          name: prometheus-config
+      - name: storage
+        persistentVolumeClaim:
+          claimName: prometheus-storage
+
+---
+# Prometheus Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: airis-epm
+  labels:
+    app: prometheus
+    component: monitoring
+spec:
+  type: ClusterIP
+  ports:
+  - name: prometheus
+    port: 9090
+    targetPort: 9090
+  selector:
+    app: prometheus
+    component: monitoring
+
+---
+# Prometheus ServiceAccount
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: airis-epm
+  labels:
+    app: prometheus
+
+---
+# Prometheus ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+  labels:
+    app: prometheus
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/metrics
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources:
+  - configmaps
+  verbs: ["get"]
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  verbs: ["get", "list", "watch"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+
+---
+# Prometheus ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+  labels:
+    app: prometheus
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: airis-epm
+roleRef:
+  kind: ClusterRole
+  name: prometheus
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Prometheus Storage PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prometheus-storage
+  namespace: airis-epm
+  labels:
+    app: prometheus
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: fast-ssd

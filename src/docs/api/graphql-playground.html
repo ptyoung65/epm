@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS EPM GraphQL Playground</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/graphql-playground-react@1.7.28/build/static/css/index.css" />
+    <link rel="shortcut icon" href="https://cdn.jsdelivr.net/npm/graphql-playground-react@1.7.28/build/favicon.png" />
+    <script src="https://cdn.jsdelivr.net/npm/graphql-playground-react@1.7.28/build/static/js/middleware.js"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Malgun Gothic", "맑은 고딕", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        
+        .loading-subtitle {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        /* Custom header overlay */
+        .custom-header-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(31, 41, 55, 0.95);
+            color: white;
+            padding: 10px 20px;
+            z-index: 10000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            border-bottom: 1px solid #374151;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #48bb78;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        
+        .quick-query-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.3s;
+        }
+        
+        .quick-query-btn:hover {
+            background: #5a67d8;
+        }
+        
+        /* Playground container adjustment */
+        .playground-container {
+            margin-top: 50px;
+            height: calc(100vh - 50px);
+        }
+        
+        /* Custom GraphQL Playground styling */
+        .graphiql-container {
+            height: 100% !important;
+        }
+        
+        /* Hide default headers if present */
+        .playground .title-area,
+        .playground .toolbar {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading" class="loading-container">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">AIRIS EPM GraphQL Playground 로딩 중...</div>
+        <div class="loading-subtitle">Enterprise Performance Management GraphQL API</div>
+    </div>
+    
+    <div class="custom-header-overlay">
+        <div class="header-left">
+            <div>
+                <span class="status-dot"></span>
+                <strong>AIRIS EPM GraphQL API</strong>
+            </div>
+            <div style="color: #9ca3af;">v1.0.0</div>
+        </div>
+        <div class="header-right">
+            <button class="quick-query-btn" onclick="loadExampleQuery('metrics')">성능 메트릭</button>
+            <button class="quick-query-btn" onclick="loadExampleQuery('health')">시스템 상태</button>
+            <button class="quick-query-btn" onclick="loadExampleQuery('alerts')">알림 조회</button>
+            <a href="./swagger-ui.html" style="color: #60a5fa; text-decoration: none;">REST API 문서</a>
+        </div>
+    </div>
+    
+    <div id="root" class="playground-container"></div>
+
+    <script>
+        // GraphQL endpoint 설정
+        const GRAPHQL_ENDPOINT = '/graphql';
+        
+        // 예제 쿼리들
+        const EXAMPLE_QUERIES = {
+            metrics: `# 성능 메트릭 조회 예제
+query GetPerformanceMetrics($timeRange: TimeRange, $metricType: MetricType) {
+  metrics(timeRange: $timeRange, metricType: $metricType, limit: 10) {
+    success
+    metrics {
+      timestamp
+      metricType
+      value
+      tags
+    }
+    metadata {
+      totalCount
+      timeRange
+      aggregation
+      queryDuration
+    }
+  }
+}
+
+# Variables
+# {
+#   "timeRange": "HOUR_1",
+#   "metricType": "CPU"
+# }`,
+            
+            health: `# 시스템 상태 조회 예제
+query GetSystemHealth {
+  health {
+    status
+    timestamp
+    version
+    uptime
+    dependencies {
+      service
+      status
+      latency
+      lastCheck
+    }
+    metrics {
+      cpuUsage
+      memoryUsage
+      diskUsage
+      networkLatency
+      activeConnections
+    }
+  }
+}`,
+            
+            alerts: `# 알림 조회 예제
+query GetAlerts($status: AlertStatus, $severity: SeverityLevel) {
+  alerts(status: $status, severity: $severity, limit: 20) {
+    success
+    alerts {
+      id
+      title
+      description
+      severity
+      status
+      createdAt
+      updatedAt
+      affectedServices
+      rule {
+        id
+        name
+        condition
+      }
+    }
+    summary {
+      active
+      acknowledged
+      resolved
+      bySeverity {
+        low
+        medium
+        high
+        critical
+      }
+    }
+  }
+}
+
+# Variables
+# {
+#   "status": "ACTIVE",
+#   "severity": "HIGH"
+# }`,
+            
+            dashboard: `# 대시보드 데이터 조회 예제
+query GetDashboardData($dashboardId: String!, $timeRange: TimeRange) {
+  dashboard(dashboardId: $dashboardId, timeRange: $timeRange) {
+    success
+    dashboardId
+    title
+    widgets {
+      id
+      type
+      title
+      position {
+        x
+        y
+        width
+        height
+      }
+      data
+      config
+    }
+    lastUpdated
+    refreshInterval
+  }
+}
+
+# Variables
+# {
+#   "dashboardId": "main-dashboard",
+#   "timeRange": "DAY_1"
+# }`,
+            
+            mutations: `# 데이터 변경 예제 (뮤테이션)
+
+# 1. 성능 메트릭 제출
+mutation SubmitMetrics($input: MetricsInput!) {
+  submitMetrics(input: $input) {
+    success
+    message
+  }
+}
+
+# 2. 알림 규칙 생성
+mutation CreateAlertRule($input: AlertRuleInput!) {
+  createAlertRule(input: $input) {
+    success
+    rule {
+      id
+      name
+      description
+      condition
+      severity
+      enabled
+    }
+  }
+}
+
+# 3. 알림 상태 업데이트
+mutation UpdateAlertStatus($id: ID!, $status: AlertStatus!, $comment: String) {
+  updateAlertStatus(id: $id, status: $status, comment: $comment) {
+    id
+    status
+    updatedAt
+    history {
+      timestamp
+      eventType
+      message
+      user
+    }
+  }
+}`,
+            
+            subscriptions: `# 실시간 구독 예제
+
+# 1. 실시간 메트릭 구독
+subscription MetricsUpdates($metricTypes: [MetricType!]) {
+  metricsUpdates(metricTypes: $metricTypes) {
+    timestamp
+    metricType
+    value
+    tags
+  }
+}
+
+# 2. 새 알림 구독
+subscription AlertTriggered($severity: SeverityLevel) {
+  alertTriggered(severity: $severity) {
+    id
+    title
+    description
+    severity
+    status
+    createdAt
+    affectedServices
+  }
+}
+
+# 3. 대시보드 업데이트 구독
+subscription DashboardUpdates($dashboardId: String!) {
+  dashboardUpdates(dashboardId: $dashboardId) {
+    dashboardId
+    widgets {
+      id
+      type
+      data
+    }
+    lastUpdated
+  }
+}`
+        };
+        
+        // 예제 쿼리 로드 함수
+        function loadExampleQuery(type) {
+            if (window.playgroundInstance && EXAMPLE_QUERIES[type]) {
+                window.playgroundInstance.setQuery(EXAMPLE_QUERIES[type]);
+            }
+        }
+        
+        // GraphQL Playground 초기화
+        function initPlayground() {
+            try {
+                GraphQLPlayground.init(document.getElementById('root'), {
+                    endpoint: GRAPHQL_ENDPOINT,
+                    
+                    // 설정 옵션
+                    settings: {
+                        'editor.theme': 'dark',
+                        'editor.reuseHeaders': true,
+                        'tracing.hideTracingResponse': false,
+                        'queryPlan.hideQueryPlanResponse': false,
+                        'editor.fontSize': 14,
+                        'editor.fontFamily': '"Fira Code", "Consolas", "Inconsolata", "Droid Sans Mono", "Monaco", monospace',
+                        'request.credentials': 'include',
+                    },
+                    
+                    // 탭 설정
+                    tabs: [
+                        {
+                            name: '시작하기',
+                            query: `# AIRIS EPM GraphQL API에 오신 것을 환영합니다!
+# 이 API는 Enterprise Performance Management 시스템의 모든 기능을 제공합니다.
+
+# 📊 기본 쿼리 예제 - 시스템 정보 조회
+query GetApiInfo {
+  apiInfo {
+    version
+    name
+    description
+    documentation
+    rateLimits {
+      requestsPerHour
+      requestsPerMinute
+      burstLimit
+    }
+  }
+}
+
+# 🔍 시스템 상태 확인
+query HealthCheck {
+  health {
+    status
+    version
+    uptime
+    dependencies {
+      service
+      status
+      latency
+    }
+  }
+}
+
+# 💡 팁:
+# - 우측 상단의 빠른 쿼리 버튼을 사용해보세요
+# - Ctrl+Space로 자동완성을 활용하세요
+# - 스키마 탭에서 전체 API 구조를 확인하세요`,
+                            variables: '{}',
+                            headers: JSON.stringify({
+                                'Authorization': 'Bearer YOUR_API_TOKEN',
+                                'Content-Type': 'application/json'
+                            }, null, 2)
+                        }
+                    ],
+                    
+                    // 헤더 설정
+                    headers: {
+                        'Authorization': 'Bearer YOUR_API_TOKEN'
+                    },
+                    
+                    // 스키마 설정
+                    schemaPath: './schema.graphql',
+                    
+                    // 한국어 지원
+                    workspaceName: 'AIRIS EPM API',
+                    
+                    // 개발자 도구
+                    env: {
+                        NODE_ENV: 'development'
+                    },
+                    
+                    // 커스텀 로고
+                    title: 'AIRIS EPM GraphQL API',
+                    
+                    // 성능 옵션
+                    introspection: true,
+                    playground: true
+                });
+                
+                // 로딩 화면 숨기기
+                setTimeout(() => {
+                    document.getElementById('loading').style.display = 'none';
+                }, 1500);
+                
+            } catch (error) {
+                console.error('GraphQL Playground 초기화 실패:', error);
+                
+                // 에러 메시지 표시
+                document.getElementById('loading').innerHTML = `
+                    <div style="color: #f56565;">
+                        <h2>❌ GraphQL Playground 로딩 실패</h2>
+                        <p>GraphQL 엔드포인트에 연결할 수 없습니다.</p>
+                        <p>서버가 실행 중인지 확인해주세요.</p>
+                        <button onclick="location.reload()" style="
+                            background: white;
+                            color: #667eea;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 5px;
+                            cursor: pointer;
+                            margin-top: 20px;
+                        ">다시 시도</button>
+                    </div>
+                `;
+            }
+        }
+        
+        // 페이지 로드 시 초기화
+        window.addEventListener('load', function() {
+            // GraphQL Playground 스크립트가 로드될 때까지 기다림
+            if (typeof GraphQLPlayground !== 'undefined') {
+                initPlayground();
+            } else {
+                // 스크립트 동적 로드
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/graphql-playground-react@1.7.28/build/static/js/middleware.js';
+                script.onload = initPlayground;
+                script.onerror = function() {
+                    document.getElementById('loading').innerHTML = `
+                        <div style="color: #f56565;">
+                            <h2>❌ 스크립트 로딩 실패</h2>
+                            <p>GraphQL Playground 스크립트를 로드할 수 없습니다.</p>
+                            <p>네트워크 연결을 확인해주세요.</p>
+                        </div>
+                    `;
+                };
+                document.head.appendChild(script);
+            }
+        });
+        
+        // 키보드 단축키
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + Enter: 쿼리 실행
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                // GraphQL Playground의 실행 버튼 클릭 시뮬레이션
+                const executeButton = document.querySelector('.execute-button, [aria-label="Execute Query"]');
+                if (executeButton) {
+                    executeButton.click();
+                }
+            }
+            
+            // F1: 도움말
+            if (e.key === 'F1') {
+                e.preventDefault();
+                alert(`
+AIRIS EPM GraphQL Playground 도움말:
+
+🚀 빠른 시작:
+- 좌측 패널에서 쿼리를 작성하세요
+- 우측 상단 버튼들로 예제 쿼리를 로드하세요
+- Schema 탭에서 전체 API 구조를 확인하세요
+
+⌨️ 키보드 단축키:
+- Ctrl/Cmd + Enter: 쿼리 실행
+- Ctrl/Cmd + /: 주석 토글
+- Ctrl + Space: 자동완성
+- F1: 이 도움말 보기
+
+🔑 인증:
+- Headers 탭에서 Authorization 헤더를 설정하세요
+- Bearer 토큰 형식을 사용하세요
+
+📚 더 많은 정보:
+- REST API 문서: ./swagger-ui.html
+- 개발자 가이드: /developer-portal
+                `);
+            }
+        });
+        
+        // 윈도우 리사이즈 핸들링
+        window.addEventListener('resize', function() {
+            // Playground 레이아웃 재조정
+            if (window.playgroundInstance && window.playgroundInstance.resize) {
+                window.playgroundInstance.resize();
+            }
+        });
+    </script>
+</body>
+</html>

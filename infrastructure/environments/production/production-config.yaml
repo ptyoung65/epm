@@ -1,0 +1,735 @@
+# AIRIS EPM Production Environment Configuration
+# Enterprise-grade production configuration with maximum security and performance
+
+# Production Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: airis-epm
+  labels:
+    environment: production
+    tier: production
+    monitoring: enabled
+    security-policy: strict
+
+---
+# Production ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airis-epm-config
+  namespace: airis-epm
+  labels:
+    environment: production
+    config-type: application
+data:
+  # Application Configuration
+  NODE_ENV: "production"
+  LOG_LEVEL: "warn"
+  DEBUG: "false"
+  ENVIRONMENT: "production"
+  
+  # Database URLs (Production - HA Setup)
+  CLICKHOUSE_URL: "http://clickhouse-lb.airis-epm.svc.cluster.local:8123"
+  CLICKHOUSE_DATABASE: "airis_epm"
+  CLICKHOUSE_CLUSTER: "airis_epm_cluster"
+  
+  POSTGRESQL_URL: "postgresql://airis_epm_user:production-password@postgresql-primary.airis-epm.svc.cluster.local:5432/airis_epm"
+  POSTGRESQL_REPLICA_URL: "postgresql://airis_epm_readonly:readonly-password@postgresql-replica.airis-epm.svc.cluster.local:5432/airis_epm"
+  
+  REDIS_URL: "redis://redis-lb.airis-epm.svc.cluster.local:6379"
+  REDIS_DATABASE: "0"
+  REDIS_CLUSTER: "true"
+  
+  MONGODB_URL: "mongodb://airis_epm_user:production-password@mongodb-primary.airis-epm.svc.cluster.local:27017/airis_epm?replicaSet=rs0"
+  
+  # API Configuration
+  API_BASE_URL: "https://api.airis.company.com"
+  API_TIMEOUT: "30000"
+  API_RATE_LIMIT: "1000"
+  API_BURST_LIMIT: "2000"
+  
+  # Authentication (Production)
+  JWT_EXPIRES_IN: "2h"
+  REFRESH_TOKEN_EXPIRES_IN: "7d"
+  AUTH_PROVIDER: "enterprise-sso"
+  MULTI_FACTOR_AUTH: "true"
+  
+  # Security Settings
+  FORCE_HTTPS: "true"
+  HSTS_ENABLED: "true"
+  CSRF_PROTECTION: "true"
+  CORS_STRICT_MODE: "true"
+  CONTENT_SECURITY_POLICY: "strict"
+  
+  # Monitoring & Observability
+  METRICS_ENABLED: "true"
+  TRACING_ENABLED: "true"
+  JAEGER_ENDPOINT: "http://jaeger.airis-epm.svc.cluster.local:14268"
+  PROMETHEUS_ENDPOINT: "http://prometheus.airis-epm.svc.cluster.local:9090"
+  
+  # Feature Flags (Production)
+  ENABLE_DEBUG_ROUTES: "false"
+  ENABLE_MOCK_DATA: "false"
+  ENABLE_HOT_RELOAD: "false"
+  DISABLE_AUTH: "false"
+  ENABLE_CORS: "false"
+  ENABLE_AUDIT_LOGS: "true"
+  
+  # Performance Settings (High Performance)
+  MAX_CONCURRENT_REQUESTS: "2000"
+  CACHE_TTL: "3600"
+  BATCH_SIZE: "1000"
+  CONNECTION_POOL_SIZE: "20"
+  
+  # Build Settings (Optimized)
+  WEBPACK_DEV_SERVER: "false"
+  SOURCE_MAPS: "false"
+  MINIFY: "true"
+  COMPRESSION: "true"
+  
+  # SSL/TLS Settings
+  SSL_CERT_PATH: "/etc/ssl/certs/tls.crt"
+  SSL_KEY_PATH: "/etc/ssl/private/tls.key"
+  SSL_CA_PATH: "/etc/ssl/certs/ca.crt"
+  TLS_VERSION: "1.2,1.3"
+  
+  # Backup and Recovery
+  BACKUP_ENABLED: "true"
+  BACKUP_SCHEDULE: "0 2 * * *"
+  BACKUP_RETENTION_DAYS: "90"
+  
+  # Compliance
+  GDPR_COMPLIANCE: "true"
+  SOX_COMPLIANCE: "true"
+  AUDIT_RETENTION_DAYS: "2555"  # 7 years
+  DATA_ENCRYPTION: "true"
+
+---
+# Production Secrets (Vault Integration)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: airis-epm-secrets
+  namespace: airis-epm
+  labels:
+    environment: production
+  annotations:
+    vault.hashicorp.com/agent-inject: "true"
+    vault.hashicorp.com/role: "airis-epm-production"
+type: Opaque
+stringData:
+  # Database Credentials (From Vault)
+  clickhouse-user: "airis_epm_prod"
+  clickhouse-password: "vault:secret/data/airis-epm/clickhouse#password"
+  
+  postgresql-user: "airis_epm_prod"
+  postgresql-password: "vault:secret/data/airis-epm/postgresql#password"
+  postgresql-readonly-password: "vault:secret/data/airis-epm/postgresql#readonly-password"
+  
+  redis-password: "vault:secret/data/airis-epm/redis#password"
+  
+  mongodb-user: "airis_epm_prod"
+  mongodb-password: "vault:secret/data/airis-epm/mongodb#password"
+  
+  # JWT Secrets (Rotating)
+  jwt-secret: "vault:secret/data/airis-epm/auth#jwt-secret"
+  jwt-refresh-secret: "vault:secret/data/airis-epm/auth#jwt-refresh-secret"
+  
+  # API Keys (Production)
+  openai-api-key: "vault:secret/data/airis-epm/external#openai-key"
+  anthropic-api-key: "vault:secret/data/airis-epm/external#anthropic-key"
+  
+  # External Services
+  smtp-username: "noreply@airis.company.com"
+  smtp-password: "vault:secret/data/airis-epm/smtp#password"
+  
+  # SSO Credentials
+  sso-client-id: "vault:secret/data/airis-epm/sso#client-id"
+  sso-client-secret: "vault:secret/data/airis-epm/sso#client-secret"
+  
+  # Encryption Keys
+  data-encryption-key: "vault:secret/data/airis-epm/encryption#data-key"
+  backup-encryption-key: "vault:secret/data/airis-epm/encryption#backup-key"
+  
+  # SSL Certificates (Cert-Manager)
+  tls-cert: "vault:secret/data/airis-epm/ssl#certificate"
+  tls-key: "vault:secret/data/airis-epm/ssl#private-key"
+  ca-cert: "vault:secret/data/airis-epm/ssl#ca-certificate"
+
+---
+# Production Resource Quotas (High Capacity)
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: production-resource-quota
+  namespace: airis-epm
+spec:
+  hard:
+    # Compute Resources (Enterprise Scale)
+    requests.cpu: "50"
+    requests.memory: 128Gi
+    limits.cpu: "100"
+    limits.memory: 256Gi
+    
+    # GPU Resources (for AI/ML workloads)
+    requests.nvidia.com/gpu: "4"
+    limits.nvidia.com/gpu: "8"
+    
+    # Storage (High Performance)
+    requests.storage: 2Ti
+    persistentvolumeclaims: "50"
+    
+    # Objects
+    pods: "200"
+    services: "50"
+    configmaps: "50"
+    secrets: "50"
+    
+    # Load Balancers
+    services.loadbalancers: "10"
+
+---
+# Production Network Policy (Maximum Security)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: production-network-policy
+  namespace: airis-epm
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow ONLY from ingress controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+  # Allow monitoring from specific namespace
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+      podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 8080
+  # Allow backup operations
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: backup
+    ports:
+    - protocol: TCP
+      port: 8081
+  egress:
+  # DNS only
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # HTTPS for external APIs only
+  - to:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          app: vault
+    ports:
+    - protocol: TCP
+      port: 8200
+  # Database communication within namespace
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: airis-epm
+    ports:
+    - protocol: TCP
+      port: 5432
+    - protocol: TCP
+      port: 6379
+    - protocol: TCP
+      port: 27017
+    - protocol: TCP
+      port: 8123
+  # External HTTPS only
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+
+---
+# Production Security Context Constraints
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: airis-epm-scc
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegedContainer: false
+allowedCapabilities: []
+defaultAddCapabilities: []
+requiredDropCapabilities:
+- ALL
+allowedFlexVolumes: []
+fsGroup:
+  type: MustRunAs
+  ranges:
+  - min: 1000
+    max: 1000
+runAsUser:
+  type: MustRunAsNonRoot
+seLinuxContext:
+  type: MustRunAs
+supplementalGroups:
+  type: MustRunAs
+  ranges:
+  - min: 1000
+    max: 1000
+users:
+- system:serviceaccount:airis-epm:airis-epm-production
+volumes:
+- configMap
+- downwardAPI
+- emptyDir
+- persistentVolumeClaim
+- projected
+- secret
+
+---
+# Production Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: airis-epm-production-pdb
+  namespace: airis-epm
+spec:
+  minAvailable: 5
+  selector:
+    matchLabels:
+      app: airis-epm
+      environment: production
+
+---
+# Production HPA (Enterprise Scale)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: production-hpa
+  namespace: airis-epm
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: airis-epm-app-production
+  minReplicas: 10
+  maxReplicas: 50
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 60
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_per_second
+      target:
+        type: AverageValue
+        averageValue: "1000"
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 600
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 25
+        periodSeconds: 30
+      - type: Pods
+        value: 5
+        periodSeconds: 30
+
+---
+# Production Deployment (High Availability)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airis-epm-app-production
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    environment: production
+    tier: application
+    version: v1.0.0
+spec:
+  replicas: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 10%
+      maxSurge: 25%
+  selector:
+    matchLabels:
+      app: airis-epm
+      environment: production
+  template:
+    metadata:
+      labels:
+        app: airis-epm
+        environment: production
+        monitoring: enabled
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "airis-epm-production"
+    spec:
+      serviceAccountName: airis-epm-production
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        fsGroupChangePolicy: "OnRootMismatch"
+      priorityClassName: airis-epm-critical
+      containers:
+      - name: airis-epm
+        image: localhost:5000/airis-epm:v1.0.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        - containerPort: 8080
+          name: metrics
+          protocol: TCP
+        - containerPort: 8443
+          name: https
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        envFrom:
+        - configMapRef:
+            name: airis-epm-config
+        - secretRef:
+            name: airis-epm-secrets
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 2Gi
+            ephemeral-storage: 1Gi
+          limits:
+            cpu: 4000m
+            memory: 4Gi
+            ephemeral-storage: 2Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        startupProbe:
+          httpGet:
+            path: /startup
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 30
+          successThreshold: 1
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: app-logs
+          mountPath: /app/logs
+        - name: temp-storage
+          mountPath: /tmp
+        - name: ssl-certs
+          mountPath: /etc/ssl/certs
+          readOnly: true
+        - name: ssl-private
+          mountPath: /etc/ssl/private
+          readOnly: true
+        - name: vault-secrets
+          mountPath: /vault/secrets
+          readOnly: true
+      - name: log-exporter
+        image: fluentbit/fluent-bit:2.2
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        volumeMounts:
+        - name: app-logs
+          mountPath: /app/logs
+          readOnly: true
+        - name: fluentbit-config
+          mountPath: /fluent-bit/etc
+      volumes:
+      - name: app-logs
+        emptyDir: {}
+      - name: temp-storage
+        emptyDir:
+          sizeLimit: 4Gi
+      - name: ssl-certs
+        secret:
+          secretName: airis-epm-secrets
+          items:
+          - key: tls-cert
+            path: tls.crt
+          - key: ca-cert
+            path: ca.crt
+      - name: ssl-private
+        secret:
+          secretName: airis-epm-secrets
+          items:
+          - key: tls-key
+            path: tls.key
+          defaultMode: 0400
+      - name: vault-secrets
+        emptyDir:
+          medium: Memory
+      - name: fluentbit-config
+        configMap:
+          name: fluentbit-config
+      nodeSelector:
+        environment: production
+        node-type: compute
+      tolerations:
+      - key: "production-only"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - airis-epm
+            topologyKey: kubernetes.io/hostname
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node.kubernetes.io/instance-type
+                operator: In
+                values:
+                - m5.2xlarge
+                - m5.4xlarge
+                - c5.2xlarge
+                - c5.4xlarge
+
+---
+# Production Priority Class
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: airis-epm-critical
+value: 1000
+globalDefault: false
+description: "Critical priority class for AIRIS EPM production workloads"
+
+---
+# Production Service (with Session Affinity)
+apiVersion: v1
+kind: Service
+metadata:
+  name: airis-epm-service
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    environment: production
+    monitoring: enabled
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "arn:aws:acm:region:account:certificate/cert-id"
+spec:
+  type: LoadBalancer
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 3600
+  selector:
+    app: airis-epm
+    environment: production
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: 8443
+    protocol: TCP
+  - name: metrics
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+
+---
+# Production Ingress (with Advanced Features)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: airis-epm-ingress
+  namespace: airis-epm
+  labels:
+    environment: production
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/rate-limit: "500"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/enable-modsecurity: "true"
+    nginx.ingress.kubernetes.io/modsecurity-transaction-id: "$request_id"
+    nginx.ingress.kubernetes.io/modsecurity-snippet: |
+      SecRuleEngine On
+      SecRequestBodyAccess On
+      SecAuditLog /tmp/modsec_audit.log
+    cert-manager.io/cluster-issuer: "letsencrypt-production"
+    nginx.ingress.kubernetes.io/server-snippet: |
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+      add_header X-Frame-Options "DENY" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+      add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'none';" always;
+spec:
+  rules:
+  - host: airis.company.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: airis-epm-service
+            port:
+              number: 80
+  - host: api.airis.company.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: airis-epm-service
+            port:
+              number: 80
+  tls:
+  - hosts:
+    - airis.company.com
+    - api.airis.company.com
+    secretName: production-tls-secret
+
+---
+# ServiceAccount for Production
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: airis-epm-production
+  namespace: airis-epm
+  labels:
+    environment: production
+  annotations:
+    vault.hashicorp.com/role: "airis-epm-production"
+
+---
+# Production RBAC
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: airis-epm-production-role
+  namespace: airis-epm
+rules:
+- apiGroups: [""]
+  resources: ["configmaps"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["create"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: airis-epm-production-binding
+  namespace: airis-epm
+subjects:
+- kind: ServiceAccount
+  name: airis-epm-production
+  namespace: airis-epm
+roleRef:
+  kind: Role
+  name: airis-epm-production-role
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,22 @@
+{
+  "name": "airis-epm-apm-adapter",
+  "version": "1.0.0",
+  "description": "Integration adapter between React EPM Dashboard and AIRIS APM System",
+  "main": "api-adapter.js",
+  "scripts": {
+    "start": "node api-adapter.js",
+    "dev": "nodemon api-adapter.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.6.2",
+    "http-proxy-middleware": "^2.0.6"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": ["airis", "epm", "apm", "integration", "adapter"],
+  "author": "AIRIS EPM Team",
+  "license": "MIT"
+}

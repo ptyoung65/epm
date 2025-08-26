@@ -1,0 +1,56 @@
+# AIRIS EPM Namespace Configuration
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: airis-epm
+  labels:
+    app: airis-epm
+    version: v1.0.0
+    managed-by: airis-team
+  annotations:
+    description: "AIRIS Enterprise Performance Management Platform"
+    contact: "airis-team@company.com"
+---
+# Resource Quotas for namespace
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: airis-epm-quota
+  namespace: airis-epm
+spec:
+  hard:
+    requests.cpu: "4"
+    requests.memory: 8Gi
+    limits.cpu: "8" 
+    limits.memory: 16Gi
+    persistentvolumeclaims: "10"
+    services: "20"
+    secrets: "10"
+    configmaps: "10"
+---
+# Network Policy for security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: airis-epm-network-policy
+  namespace: airis-epm
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: airis-epm
+  - from: []
+    ports:
+    - protocol: TCP
+      port: 3000
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 443
+  egress:
+  - to: []

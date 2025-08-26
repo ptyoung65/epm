@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사용자 관리 및 인증 시스템 - AIRIS EPM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 221.2 83.2% 53.3%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 221.2 83.2% 53.3%;
+            --radius: 0.5rem;
+        }
+        
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 217.2 91.2% 59.8%;
+            --primary-foreground: 222.2 84% 4.9%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 224.3 76.3% 94.1%;
+        }
+
+        body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+
+        .card {
+            background-color: hsl(var(--card));
+            color: hsl(var(--card-foreground));
+            border: 1px solid hsl(var(--border));
+        }
+
+        .btn-primary {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+
+        .btn-secondary {
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+        }
+
+        .text-muted {
+            color: hsl(var(--muted-foreground));
+        }
+
+        .status-active { @apply bg-green-100 text-green-800 border-green-200; }
+        .status-inactive { @apply bg-gray-100 text-gray-800 border-gray-200; }
+        .status-suspended { @apply bg-red-100 text-red-800 border-red-200; }
+        .status-pending { @apply bg-yellow-100 text-yellow-800 border-yellow-200; }
+
+        .role-admin { @apply bg-purple-100 text-purple-800 border-purple-200; }
+        .role-manager { @apply bg-blue-100 text-blue-800 border-blue-200; }
+        .role-analyst { @apply bg-green-100 text-green-800 border-green-200; }
+        .role-user { @apply bg-gray-100 text-gray-800 border-gray-200; }
+
+        .chart-container {
+            height: 300px;
+        }
+
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="card border-b mb-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold">AIRIS EPM - 사용자 관리 및 인증</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleDarkMode()" class="btn-secondary px-3 py-1 rounded text-sm">
+                        🌓 테마 변경
+                    </button>
+                    <div class="text-sm text-muted">
+                        관리자: admin@airis.com
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Tabs -->
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                <button onclick="showTab('dashboard')" id="tab-dashboard" 
+                        class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm active">
+                    📊 대시보드
+                </button>
+                <button onclick="showTab('users')" id="tab-users" 
+                        class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    👥 사용자 관리
+                </button>
+                <button onclick="showTab('roles')" id="tab-roles" 
+                        class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    🔐 역할 및 권한
+                </button>
+                <button onclick="showTab('sso')" id="tab-sso" 
+                        class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    🔑 SSO 설정
+                </button>
+                <button onclick="showTab('audit')" id="tab-audit" 
+                        class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    📋 보안 감사
+                </button>
+                <button onclick="showTab('tenants')" id="tab-tenants" 
+                        class="tab-button border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    🏢 테넌트 관리
+                </button>
+            </nav>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard-content" class="tab-content">
+            <!-- Key Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="card rounded-lg p-6">
+                    <div class="flex items-center">
+                        <div class="text-2xl font-bold text-blue-600" id="total-users">1,247</div>
+                        <div class="ml-2 text-green-500 text-sm">+12%</div>
+                    </div>
+                    <div class="text-muted text-sm">총 사용자</div>
+                </div>
+                
+                <div class="card rounded-lg p-6">
+                    <div class="flex items-center">
+                        <div class="text-2xl font-bold text-green-600" id="active-sessions">89</div>
+                        <div class="ml-2 text-blue-500 text-sm">실시간</div>
+                    </div>
+                    <div class="text-muted text-sm">활성 세션</div>
+                </div>
+                
+                <div class="card rounded-lg p-6">
+                    <div class="flex items-center">
+                        <div class="text-2xl font-bold text-purple-600" id="failed-logins">23</div>
+                        <div class="ml-2 text-red-500 text-sm">-8%</div>
+                    </div>
+                    <div class="text-muted text-sm">로그인 실패 (24h)</div>
+                </div>
+                
+                <div class="card rounded-lg p-6">
+                    <div class="flex items-center">
+                        <div class="text-2xl font-bold text-orange-600" id="security-alerts">7</div>
+                        <div class="ml-2 text-yellow-500 text-sm">주의</div>
+                    </div>
+                    <div class="text-muted text-sm">보안 알림</div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="card rounded-lg p-6">
+                    <h3 class="text-lg font-medium mb-4">로그인 성공률</h3>
+                    <div class="chart-container">
+                        <canvas id="loginChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="card rounded-lg p-6">
+                    <h3 class="text-lg font-medium mb-4">역할별 사용자 분포</h3>
+                    <div class="chart-container">
+                        <canvas id="roleChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card rounded-lg p-6">
+                <h3 class="text-lg font-medium mb-4">최근 활동</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between py-2 border-b">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                            <div>
+                                <div class="font-medium">사용자 로그인</div>
+                                <div class="text-sm text-muted">john.doe@company.com</div>
+                            </div>
+                        </div>
+                        <div class="text-sm text-muted">2분 전</div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between py-2 border-b">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                            <div>
+                                <div class="font-medium">역할 변경</div>
+                                <div class="text-sm text-muted">jane.smith@company.com → Manager</div>
+                            </div>
+                        </div>
+                        <div class="text-sm text-muted">15분 전</div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between py-2 border-b">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-red-500 rounded-full mr-3"></div>
+                            <div>
+                                <div class="font-medium">로그인 실패</div>
+                                <div class="text-sm text-muted">unknown@suspicious.com (5회 시도)</div>
+                            </div>
+                        </div>
+                        <div class="text-sm text-muted">32분 전</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div id="users-content" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">사용자 관리</h2>
+                <button class="btn-primary px-4 py-2 rounded" onclick="showAddUserModal()">
+                    + 새 사용자 추가
+                </button>
+            </div>
+
+            <!-- User Filters -->
+            <div class="card rounded-lg p-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">검색</label>
+                        <input type="text" placeholder="이름 또는 이메일" class="w-full px-3 py-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">역할</label>
+                        <select class="w-full px-3 py-2 border rounded">
+                            <option value="">전체</option>
+                            <option value="admin">관리자</option>
+                            <option value="manager">매니저</option>
+                            <option value="user">사용자</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">상태</label>
+                        <select class="w-full px-3 py-2 border rounded">
+                            <option value="">전체</option>
+                            <option value="active">활성</option>
+                            <option value="inactive">비활성</option>
+                            <option value="suspended">정지</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">테넌트</label>
+                        <select class="w-full px-3 py-2 border rounded">
+                            <option value="">전체</option>
+                            <option value="default">기본</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="card rounded-lg overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">사용자</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">역할</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">상태</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">마지막 로그인</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">테넌트</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">작업</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                                        👤
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium">admin@airis.com</div>
+                                        <div class="text-sm text-muted">시스템 관리자</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="role-admin px-2 py-1 text-xs font-medium rounded border">관리자</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="status-active px-2 py-1 text-xs font-medium rounded border">활성</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">2024-12-26 14:30</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">기본</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                                <button class="text-blue-600 hover:underline">편집</button>
+                                <button class="text-red-600 hover:underline">삭제</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
+                                        👤
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium">user@airis.com</div>
+                                        <div class="text-sm text-muted">일반 사용자</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="role-user px-2 py-1 text-xs font-medium rounded border">사용자</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="status-active px-2 py-1 text-xs font-medium rounded border">활성</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">2024-12-26 09:15</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">기본</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                                <button class="text-blue-600 hover:underline">편집</button>
+                                <button class="text-red-600 hover:underline">삭제</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Roles Tab -->
+        <div id="roles-content" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">역할 및 권한 관리</h2>
+                <button class="btn-primary px-4 py-2 rounded" onclick="showAddRoleModal()">
+                    + 새 역할 추가
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Roles List -->
+                <div class="card rounded-lg p-6">
+                    <h3 class="text-lg font-medium mb-4">시스템 역할</h3>
+                    <div class="space-y-4">
+                        <div class="border rounded-lg p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="font-medium">관리자 (Admin)</div>
+                                <span class="text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded">시스템</span>
+                            </div>
+                            <div class="text-sm text-muted mb-2">시스템 전체 관리 권한</div>
+                            <div class="text-xs text-muted">사용자 수: 3명 | 권한 수: 28개</div>
+                        </div>
+
+                        <div class="border rounded-lg p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="font-medium">매니저 (Manager)</div>
+                                <span class="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">시스템</span>
+                            </div>
+                            <div class="text-sm text-muted mb-2">부서/팀 관리 권한</div>
+                            <div class="text-xs text-muted">사용자 수: 12명 | 권한 수: 18개</div>
+                        </div>
+
+                        <div class="border rounded-lg p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="font-medium">분석가 (Analyst)</div>
+                                <span class="text-sm bg-green-100 text-green-800 px-2 py-1 rounded">시스템</span>
+                            </div>
+                            <div class="text-sm text-muted mb-2">데이터 분석 및 보고서 생성</div>
+                            <div class="text-xs text-muted">사용자 수: 25명 | 권한 수: 12개</div>
+                        </div>
+
+                        <div class="border rounded-lg p-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <div class="font-medium">사용자 (User)</div>
+                                <span class="text-sm bg-gray-100 text-gray-800 px-2 py-1 rounded">시스템</span>
+                            </div>
+                            <div class="text-sm text-muted mb-2">기본 사용자 권한</div>
+                            <div class="text-xs text-muted">사용자 수: 1,207명 | 권한 수: 6개</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Permission Matrix -->
+                <div class="card rounded-lg p-6">
+                    <h3 class="text-lg font-medium mb-4">권한 매트릭스</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr>
+                                    <th class="text-left py-2">권한</th>
+                                    <th class="text-center py-2 px-2">관리자</th>
+                                    <th class="text-center py-2 px-2">매니저</th>
+                                    <th class="text-center py-2 px-2">분석가</th>
+                                    <th class="text-center py-2 px-2">사용자</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                <tr>
+                                    <td class="py-2">시스템 관리</td>
+                                    <td class="text-center py-2">✅</td>
+                                    <td class="text-center py-2">❌</td>
+                                    <td class="text-center py-2">❌</td>
+                                    <td class="text-center py-2">❌</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2">사용자 관리</td>
+                                    <td class="text-center py-2">✅</td>
+                                    <td class="text-center py-2">✅</td>
+                                    <td class="text-center py-2">❌</td>
+                                    <td class="text-center py-2">❌</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2">데이터 분석</td>
+                                    <td class="text-center py-2">✅</td>
+                                    <td class="text-center py-2">✅</td>
+                                    <td class="text-center py-2">✅</td>
+                                    <td class="text-center py-2">❌</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2">데이터 조회</td>
+                                    <td class="text-center py-2">✅</td>
+                                    <td class="text-center py-2">✅</td>
+                                    <td class="text-center py-2">✅</td>
+                                    <td class="text-center py-2">✅</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2">보고서 생성</td>
+                                    <td class="text-center py-2">✅</td>
+                                    <td class="text-center py-2">✅</td>
+                                    <td class="text-center py-2">✅</td>
+                                    <td class="text-center py-2">❌</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SSO Tab -->
+        <div id="sso-content" class="tab-content hidden">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold mb-2">SSO 설정</h2>
+                <p class="text-muted">Single Sign-On 제공자를 관리하고 설정합니다.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- SSO Providers -->
+                <div class="space-y-6">
+                    <!-- Azure AD -->
+                    <div class="card rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold">
+                                    Az
+                                </div>
+                                <div class="ml-3">
+                                    <div class="font-medium">Azure Active Directory</div>
+                                    <div class="text-sm text-muted">SAML 2.0</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-green-100 text-green-800 px-2 py-1 text-xs rounded">활성</span>
+                                <button class="text-blue-600 hover:underline text-sm">설정</button>
+                            </div>
+                        </div>
+                        <div class="text-sm space-y-1">
+                            <div><strong>사용자:</strong> 234명</div>
+                            <div><strong>마지막 로그인:</strong> 5분 전</div>
+                            <div><strong>Entity ID:</strong> urn:airis-epm</div>
+                        </div>
+                    </div>
+
+                    <!-- Google -->
+                    <div class="card rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center text-white font-bold">
+                                    G
+                                </div>
+                                <div class="ml-3">
+                                    <div class="font-medium">Google</div>
+                                    <div class="text-sm text-muted">OpenID Connect</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-green-100 text-green-800 px-2 py-1 text-xs rounded">활성</span>
+                                <button class="text-blue-600 hover:underline text-sm">설정</button>
+                            </div>
+                        </div>
+                        <div class="text-sm space-y-1">
+                            <div><strong>사용자:</strong> 89명</div>
+                            <div><strong>마지막 로그인:</strong> 12분 전</div>
+                            <div><strong>Client ID:</strong> airis-epm.googleusercontent.com</div>
+                        </div>
+                    </div>
+
+                    <!-- Company AD -->
+                    <div class="card rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center text-white font-bold">
+                                    AD
+                                </div>
+                                <div class="ml-3">
+                                    <div class="font-medium">Company Active Directory</div>
+                                    <div class="text-sm text-muted">LDAP</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="bg-gray-100 text-gray-800 px-2 py-1 text-xs rounded">비활성</span>
+                                <button class="text-blue-600 hover:underline text-sm">설정</button>
+                            </div>
+                        </div>
+                        <div class="text-sm space-y-1">
+                            <div><strong>사용자:</strong> 0명</div>
+                            <div><strong>상태:</strong> 설정 필요</div>
+                            <div><strong>서버:</strong> ldap://company.local</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SSO Statistics -->
+                <div class="space-y-6">
+                    <!-- Login Methods Chart -->
+                    <div class="card rounded-lg p-6">
+                        <h3 class="text-lg font-medium mb-4">로그인 방법별 통계</h3>
+                        <div class="chart-container">
+                            <canvas id="ssoChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- SSO Configuration -->
+                    <div class="card rounded-lg p-6">
+                        <h3 class="text-lg font-medium mb-4">SSO 전역 설정</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-medium">자동 계정 생성</div>
+                                    <div class="text-sm text-muted">SSO 로그인 시 계정 자동 생성</div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" value="" class="sr-only peer" checked>
+                                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-medium">기본 역할 할당</div>
+                                    <div class="text-sm text-muted">신규 SSO 사용자의 기본 역할</div>
+                                </div>
+                                <select class="px-3 py-2 border rounded text-sm">
+                                    <option>사용자</option>
+                                    <option>분석가</option>
+                                    <option>매니저</option>
+                                </select>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-medium">도메인 검증</div>
+                                    <div class="text-sm text-muted">허용된 도메인만 SSO 로그인</div>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" value="" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Tab -->
+        <div id="audit-content" class="tab-content hidden">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold mb-2">보안 감사 로그</h2>
+                <p class="text-muted">시스템의 모든 보안 관련 활동을 모니터링합니다.</p>
+            </div>
+
+            <!-- Audit Filters -->
+            <div class="card rounded-lg p-4 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">시작 날짜</label>
+                        <input type="date" class="w-full px-3 py-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">종료 날짜</label>
+                        <input type="date" class="w-full px-3 py-2 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">이벤트 타입</label>
+                        <select class="w-full px-3 py-2 border rounded">
+                            <option value="">전체</option>
+                            <option value="login">로그인</option>
+                            <option value="permission">권한</option>
+                            <option value="data">데이터 접근</option>
+                            <option value="security">보안 위협</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">심각도</label>
+                        <select class="w-full px-3 py-2 border rounded">
+                            <option value="">전체</option>
+                            <option value="low">낮음</option>
+                            <option value="medium">보통</option>
+                            <option value="high">높음</option>
+                            <option value="critical">심각</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">사용자</label>
+                        <input type="text" placeholder="사용자 ID" class="w-full px-3 py-2 border rounded">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audit Logs -->
+            <div class="card rounded-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">시간</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">이벤트</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">사용자</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">IP 주소</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">심각도</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">결과</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">2024-12-26 14:32:15</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">로그인 성공</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">john.doe@company.com</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">192.168.1.100</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800">낮음</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-green-600">✓ 성공</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">2024-12-26 14:28:43</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">권한 변경</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">admin@airis.com</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">192.168.1.10</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800">보통</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-green-600">✓ 성공</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">2024-12-26 14:15:22</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">로그인 실패 (5회)</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">unknown@suspicious.com</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">45.123.45.67</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 py-1 text-xs font-medium rounded bg-red-100 text-red-800">높음</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="text-red-600">✗ 실패</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tenants Tab -->
+        <div id="tenants-content" class="tab-content hidden">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">테넌트 관리</h2>
+                    <p class="text-muted">멀티테넌트 환경을 관리합니다.</p>
+                </div>
+                <button class="btn-primary px-4 py-2 rounded" onclick="showAddTenantModal()">
+                    + 새 테넌트 추가
+                </button>
+            </div>
+
+            <!-- Tenant Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Default Tenant -->
+                <div class="card rounded-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="font-medium">AIRIS EPM (기본)</h3>
+                            <p class="text-sm text-muted">default.airis.com</p>
+                        </div>
+                        <span class="bg-green-100 text-green-800 px-2 py-1 text-xs rounded">활성</span>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-sm">
+                            <span>사용자:</span>
+                            <span>1,247 / 1,000</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-red-500 h-2 rounded-full" style="width: 100%"></div>
+                        </div>
+                        
+                        <div class="flex justify-between text-sm">
+                            <span>스토리지:</span>
+                            <span>45GB / 100GB</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full" style="width: 45%"></div>
+                        </div>
+                        
+                        <div class="flex justify-between text-sm">
+                            <span>API 호출:</span>
+                            <span>8,542 / 100,000</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 8%"></div>
+                        </div>
+                        
+                        <div class="pt-2 flex space-x-2">
+                            <button class="text-blue-600 hover:underline text-sm">설정</button>
+                            <button class="text-gray-600 hover:underline text-sm">통계</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Example Tenant -->
+                <div class="card rounded-lg p-6 opacity-75">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="font-medium">Demo Company</h3>
+                            <p class="text-sm text-muted">demo.airis.com</p>
+                        </div>
+                        <span class="bg-yellow-100 text-yellow-800 px-2 py-1 text-xs rounded">트라이얼</span>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between text-sm">
+                            <span>사용자:</span>
+                            <span>15 / 50</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 30%"></div>
+                        </div>
+                        
+                        <div class="flex justify-between text-sm">
+                            <span>스토리지:</span>
+                            <span>2.3GB / 10GB</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 23%"></div>
+                        </div>
+                        
+                        <div class="flex justify-between text-sm">
+                            <span>API 호출:</span>
+                            <span>234 / 10,000</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 2%"></div>
+                        </div>
+                        
+                        <div class="pt-2 flex space-x-2">
+                            <button class="text-blue-600 hover:underline text-sm">설정</button>
+                            <button class="text-gray-600 hover:underline text-sm">통계</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab Management
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active', 'border-blue-500', 'text-blue-600');
+                button.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + '-content').classList.remove('hidden');
+            
+            // Add active class to selected tab
+            const activeTab = document.getElementById('tab-' + tabName);
+            activeTab.classList.add('active', 'border-blue-500', 'text-blue-600');
+            activeTab.classList.remove('border-transparent', 'text-gray-500');
+            
+            // Load data for the tab
+            loadTabData(tabName);
+        }
+
+        function loadTabData(tabName) {
+            switch(tabName) {
+                case 'dashboard':
+                    loadDashboardCharts();
+                    break;
+                case 'sso':
+                    loadSSOChart();
+                    break;
+            }
+        }
+
+        function loadDashboardCharts() {
+            // Login Success Rate Chart
+            const loginCtx = document.getElementById('loginChart').getContext('2d');
+            new Chart(loginCtx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                    datasets: [{
+                        label: '로그인 성공',
+                        data: [12, 8, 45, 67, 89, 34],
+                        borderColor: 'rgb(34, 197, 94)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: '로그인 실패',
+                        data: [2, 1, 3, 8, 5, 2],
+                        borderColor: 'rgb(239, 68, 68)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Role Distribution Chart
+            const roleCtx = document.getElementById('roleChart').getContext('2d');
+            new Chart(roleCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['사용자', '분석가', '매니저', '관리자'],
+                    datasets: [{
+                        data: [1207, 25, 12, 3],
+                        backgroundColor: [
+                            'rgb(156, 163, 175)',
+                            'rgb(34, 197, 94)',
+                            'rgb(59, 130, 246)',
+                            'rgb(147, 51, 234)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+        }
+
+        function loadSSOChart() {
+            const ssoCtx = document.getElementById('ssoChart').getContext('2d');
+            new Chart(ssoCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Azure AD', 'Google', '일반 로그인'],
+                    datasets: [{
+                        data: [234, 89, 924],
+                        backgroundColor: [
+                            'rgb(59, 130, 246)',
+                            'rgb(239, 68, 68)',
+                            'rgb(156, 163, 175)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+        }
+
+        // Dark Mode Toggle
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('darkMode', isDark);
+        }
+
+        // Modal Functions
+        function showAddUserModal() {
+            alert('사용자 추가 모달 (구현 예정)');
+        }
+
+        function showAddRoleModal() {
+            alert('역할 추가 모달 (구현 예정)');
+        }
+
+        function showAddTenantModal() {
+            alert('테넌트 추가 모달 (구현 예정)');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load saved dark mode preference
+            const isDark = localStorage.getItem('darkMode') === 'true';
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            }
+            
+            // Load default tab
+            showTab('dashboard');
+        });
+
+        // Auto-refresh data every 30 seconds
+        setInterval(() => {
+            const activeTab = document.querySelector('.tab-button.active').id.replace('tab-', '');
+            loadTabData(activeTab);
+        }, 30000);
+    </script>
+</body>
+</html>

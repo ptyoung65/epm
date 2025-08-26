@@ -13,13 +13,18 @@
   "dependencies": {
     "express": "^4.19.0",
     "rrweb": "^2.0.0-alpha.13",
+    "rrweb-player": "^1.0.0-alpha.13",
+    "playwright": "^1.40.0",
     "cors": "^2.8.5",
     "helmet": "^7.1.0",
     "compression": "^1.7.4",
     "winston": "^3.11.0",
     "@clickhouse/client": "^0.2.5",
     "ioredis": "^5.3.2",
-    "kafkajs": "^2.2.4"
+    "kafkajs": "^2.2.4",
+    "multer": "^1.4.5-lts.1",
+    "uuid": "^9.0.1",
+    "fs-extra": "^11.1.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.3",

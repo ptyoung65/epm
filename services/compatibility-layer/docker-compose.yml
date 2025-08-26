@@ -1,0 +1,231 @@
+version: '3.8'
+
+services:
+  # AIRIS Compatibility Layer Service
+  compatibility-layer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: airis-epm/compatibility-layer:latest
+    container_name: airis-compatibility-layer
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    environment:
+      - NODE_ENV=production
+      - PORT=3100
+      # AIRIS APM Legacy API
+      - AIRIS_APM_API_URL=http://airis-apm-api:3000
+      - AIRIS_APM_VERSION=2.1.0
+      # AIRIS EPM New API
+      - AIRIS_EPM_API_URL=http://airis-epm-api-gateway:4000
+      - AIRIS_EPM_GRAPHQL_URL=http://airis-epm-api-gateway:4000/graphql
+      # Database connections
+      - CLICKHOUSE_URL=http://clickhouse:8123
+      - CLICKHOUSE_DATABASE=airis_epm
+      - POSTGRESQL_URL=postgresql://airis_epm_user:password@postgres:5432/airis_epm
+      - REDIS_URL=redis://redis:6379
+      # Authentication
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - JWT_EXPIRES_IN=2h
+      # Rate limiting
+      - RATE_LIMIT_WINDOW_MS=900000  # 15 minutes
+      - RATE_LIMIT_MAX_REQUESTS=2000
+      # Server settings
+      - MAX_PAYLOAD_SIZE=50mb
+      - REQUEST_TIMEOUT=30000
+      # Migration settings
+      - MIGRATION_MODE=transparent
+      - MIGRATION_BATCH_SIZE=1000
+      - MIGRATION_RETRY_ATTEMPTS=3
+      # Compatibility settings
+      - STRICT_VERSION_CHECK=false
+      - DEPRECATED_WARNING_THRESHOLD=30
+      - EOL_WARNING_THRESHOLD=90
+      # Monitoring
+      - JAEGER_ENDPOINT=http://jaeger:14268
+      - PROMETHEUS_ENDPOINT=http://prometheus:9090
+      # Logging
+      - LOG_LEVEL=info
+      - LOG_FORMAT=json
+      # Feature flags
+      - ENABLE_DATA_VALIDATION=true
+      - ENABLE_RESPONSE_CACHING=true
+      - ENABLE_REQUEST_LOGGING=true
+      - ENABLE_METRICS_COLLECTION=true
+    volumes:
+      - ./logs:/app/logs
+      - ./config:/app/config:ro
+    networks:
+      - airis-network
+    depends_on:
+      - redis
+      - postgres
+      - clickhouse
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    labels:
+      - "service=airis-compatibility-layer"
+      - "version=1.0.0"
+      - "environment=production"
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: airis-compatibility-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - airis-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: airis-compatibility-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=airis_epm
+      - POSTGRES_USER=airis_epm_user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    networks:
+      - airis-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airis_epm_user -d airis_epm"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # ClickHouse Database
+  clickhouse:
+    image: clickhouse/clickhouse-server:23-alpine
+    container_name: airis-compatibility-clickhouse
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      - CLICKHOUSE_DB=airis_epm
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ./clickhouse-config:/etc/clickhouse-server/config.d
+    networks:
+      - airis-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8123/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+
+  # Monitoring - Prometheus (Optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: airis-compatibility-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - airis-network
+    depends_on:
+      - compatibility-layer
+    profiles:
+      - monitoring
+
+  # Monitoring - Grafana (Optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: airis-compatibility-grafana
+    restart: unless-stopped
+    ports:
+      - "3200:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - airis-network
+    depends_on:
+      - prometheus
+    profiles:
+      - monitoring
+
+networks:
+  airis-network:
+    driver: bridge
+    name: airis-epm-network
+
+volumes:
+  redis-data:
+    name: airis-compatibility-redis-data
+  postgres-data:
+    name: airis-compatibility-postgres-data
+  clickhouse-data:
+    name: airis-compatibility-clickhouse-data
+  prometheus-data:
+    name: airis-compatibility-prometheus-data
+  grafana-data:
+    name: airis-compatibility-grafana-data

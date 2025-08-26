@@ -1,0 +1,229 @@
+# AIRIS EPM Federation Schema
+# Root schema that combines all microservice subgraphs
+
+# Common scalar types
+scalar DateTime
+scalar JSON
+scalar Upload
+
+# Common enums
+enum SortDirection {
+  ASC
+  DESC
+}
+
+enum CacheControlScope {
+  PUBLIC
+  PRIVATE
+}
+
+# Common interfaces
+interface Node {
+  id: ID!
+}
+
+interface Timestamped {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+# Common input types
+input PaginationInput {
+  first: Int
+  after: String
+  last: Int
+  before: String
+}
+
+input SortInput {
+  field: String!
+  direction: SortDirection = ASC
+}
+
+input DateRangeInput {
+  from: DateTime!
+  to: DateTime!
+}
+
+input FilterInput {
+  field: String!
+  operator: FilterOperator!
+  value: String!
+}
+
+enum FilterOperator {
+  EQUALS
+  NOT_EQUALS
+  CONTAINS
+  NOT_CONTAINS
+  STARTS_WITH
+  ENDS_WITH
+  GREATER_THAN
+  GREATER_THAN_OR_EQUAL
+  LESS_THAN
+  LESS_THAN_OR_EQUAL
+  IN
+  NOT_IN
+  IS_NULL
+  IS_NOT_NULL
+}
+
+# Common output types
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type Edge {
+  cursor: String!
+  node: Node!
+}
+
+type Connection {
+  edges: [Edge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+# Error types
+type ValidationError {
+  field: String!
+  message: String!
+}
+
+type BusinessError {
+  code: String!
+  message: String!
+  details: JSON
+}
+
+# Common response types
+union Result = ValidationError | BusinessError
+
+# Cache control directive
+directive @cacheControl(
+  maxAge: Int
+  scope: CacheControlScope
+) on FIELD_DEFINITION | OBJECT | INTERFACE
+
+# Rate limiting directive
+directive @rateLimit(
+  max: Int!
+  window: String!
+  message: String
+) on FIELD_DEFINITION
+
+# Authentication directive
+directive @auth(
+  requires: UserRole = USER
+) on FIELD_DEFINITION | OBJECT
+
+# User roles for authorization
+enum UserRole {
+  ADMIN
+  MANAGER
+  ANALYST
+  VIEWER
+  USER
+}
+
+# Root Query type (extended by subgraphs)
+type Query {
+  # Health check
+  health: HealthStatus!
+  
+  # System information
+  version: String!
+  
+  # Current user context
+  me: User @auth
+}
+
+# Root Mutation type (extended by subgraphs)
+type Mutation {
+  # Placeholder - actual mutations defined in subgraphs
+  _placeholder: Boolean
+}
+
+# Root Subscription type (extended by subgraphs)
+type Subscription {
+  # Real-time system status
+  systemStatus: SystemStatus! @auth
+  
+  # Placeholder for subgraph subscriptions
+  _placeholder: Boolean
+}
+
+# Health check types
+type HealthStatus {
+  status: HealthStatusEnum!
+  timestamp: DateTime!
+  version: String!
+  uptime: Int!
+  services: [ServiceHealth!]!
+}
+
+enum HealthStatusEnum {
+  HEALTHY
+  DEGRADED
+  UNHEALTHY
+}
+
+type ServiceHealth {
+  name: String!
+  status: HealthStatusEnum!
+  responseTime: Int
+  lastCheck: DateTime!
+  message: String
+}
+
+# System status for subscriptions
+type SystemStatus {
+  timestamp: DateTime!
+  activeUsers: Int!
+  requestsPerSecond: Float!
+  averageResponseTime: Float!
+  errorRate: Float!
+  systemLoad: Float!
+}
+
+# Base User type (extended by user service subgraph)
+type User implements Node & Timestamped {
+  id: ID!
+  email: String!
+  firstName: String!
+  lastName: String!
+  role: UserRole!
+  tenantId: String
+  isActive: Boolean!
+  lastLoginAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+# Tenant type for multi-tenancy
+type Tenant implements Node & Timestamped {
+  id: ID!
+  name: String!
+  domain: String
+  settings: JSON
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+# Audit log for tracking changes
+type AuditLog implements Node & Timestamped {
+  id: ID!
+  userId: ID!
+  action: String!
+  resource: String!
+  resourceId: String
+  metadata: JSON
+  ipAddress: String
+  userAgent: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}

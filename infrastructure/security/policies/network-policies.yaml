@@ -1,0 +1,349 @@
+# AIRIS EPM Network Security Policies
+# Comprehensive network segmentation and traffic control
+
+# Default deny all ingress traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    type: security-policy
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+
+---
+# Default deny all egress traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-egress
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    type: security-policy
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+
+---
+# Allow ingress to AIRIS EPM application
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-ingress
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    component: application
+spec:
+  podSelector:
+    matchLabels:
+      app: airis-epm
+      component: application
+  policyTypes:
+  - Ingress
+  ingress:
+  # Allow traffic from ingress controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 3000
+  # Allow traffic from same namespace (internal services)
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: airis-epm
+    ports:
+    - protocol: TCP
+      port: 3000
+  # Allow health checks from kubernetes system
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: TCP
+      port: 3000
+
+---
+# Allow egress from AIRIS EPM application
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-egress
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    component: application
+spec:
+  podSelector:
+    matchLabels:
+      app: airis-epm
+      component: application
+  policyTypes:
+  - Egress
+  egress:
+  # Allow connection to databases within namespace
+  - to:
+    - podSelector:
+        matchLabels:
+          app: airis-epm
+          component: clickhouse
+    ports:
+    - protocol: TCP
+      port: 8123
+    - protocol: TCP
+      port: 9000
+  - to:
+    - podSelector:
+        matchLabels:
+          app: airis-epm
+          component: postgres
+    ports:
+    - protocol: TCP
+      port: 5432
+  - to:
+    - podSelector:
+        matchLabels:
+          app: airis-epm
+          component: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+  - to:
+    - podSelector:
+        matchLabels:
+          app: airis-epm
+          component: mongodb
+    ports:
+    - protocol: TCP
+      port: 27017
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+  # Allow HTTPS outbound (for external APIs)
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+  # Allow connection to AIRIS APM system
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 3002
+
+---
+# Database network policies
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-database-access
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    type: database-policy
+spec:
+  podSelector:
+    matchLabels:
+      component: clickhouse
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow connections from application pods
+  - from:
+    - podSelector:
+        matchLabels:
+          app: airis-epm
+          component: application
+    ports:
+    - protocol: TCP
+      port: 8123
+    - protocol: TCP
+      port: 9000
+  # Allow connections from monitoring
+  - from:
+    - podSelector:
+        matchLabels:
+          app: airis-epm
+          component: monitoring
+    ports:
+    - protocol: TCP
+      port: 8123
+  egress:
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# PostgreSQL network policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-postgres-access
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    component: postgres
+spec:
+  podSelector:
+    matchLabels:
+      app: airis-epm
+      component: postgres
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: airis-epm
+          component: application
+    ports:
+    - protocol: TCP
+      port: 5432
+  - from:
+    - podSelector:
+        matchLabels:
+          app: airis-epm
+          component: monitoring
+    ports:
+    - protocol: TCP
+      port: 5432
+  egress:
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# Redis network policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-redis-access
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    component: redis
+spec:
+  podSelector:
+    matchLabels:
+      app: airis-epm
+      component: redis
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: airis-epm
+          component: application
+    ports:
+    - protocol: TCP
+      port: 6379
+  egress:
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# MongoDB network policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-mongodb-access
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    component: mongodb
+spec:
+  podSelector:
+    matchLabels:
+      app: airis-epm
+      component: mongodb
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: airis-epm
+          component: application
+    ports:
+    - protocol: TCP
+      port: 27017
+  egress:
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# Monitoring network policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-monitoring-access
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    component: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: airis-epm
+      component: monitoring
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow Prometheus scraping
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 8080
+  - from:
+    - podSelector:
+        matchLabels:
+          app: prometheus
+  egress:
+  # Allow monitoring to connect to all services for metrics collection
+  - to:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 3000
+    - protocol: TCP
+      port: 8123
+    - protocol: TCP
+      port: 5432
+    - protocol: TCP
+      port: 6379
+    - protocol: TCP
+      port: 27017
+  # Allow DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53

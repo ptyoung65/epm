@@ -1,0 +1,308 @@
+# OpenReplay Self-Host 구성
+version: '3.8'
+
+services:
+  # OpenReplay Core Services
+  frontend:
+    image: openreplay/frontend:latest
+    container_name: openreplay-frontend
+    ports:
+      - "3030:3000"
+    environment:
+      - API_ELB=http://chalice:8080
+      - ASSIST_KEY=${ASSIST_KEY}
+      - CAPTCHA_SITE_KEY=${CAPTCHA_SITE_KEY}
+    depends_on:
+      - chalice
+    networks:
+      - openreplay
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  chalice:
+    image: openreplay/chalice:latest
+    container_name: openreplay-chalice
+    ports:
+      - "8080:8080"
+    environment:
+      - pg_host=postgresql
+      - pg_port=5432
+      - pg_dbname=openreplay
+      - pg_user=openreplay
+      - pg_password=${POSTGRES_PASSWORD}
+      - redis_host=redis
+      - redis_port=6379
+      - S3_HOST=minio
+      - S3_KEY=${MINIO_ACCESS_KEY}
+      - S3_SECRET=${MINIO_SECRET_KEY}
+      - ASSIST_KEY=${ASSIST_KEY}
+    depends_on:
+      - postgresql
+      - redis
+      - minio
+    networks:
+      - openreplay
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  alerts:
+    image: openreplay/alerts:latest
+    container_name: openreplay-alerts
+    environment:
+      - pg_host=postgresql
+      - pg_port=5432
+      - pg_dbname=openreplay
+      - pg_user=openreplay
+      - pg_password=${POSTGRES_PASSWORD}
+      - redis_host=redis
+      - redis_port=6379
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - SLACK_WEBHOOK=${SLACK_WEBHOOK}
+    depends_on:
+      - postgresql
+      - redis
+    networks:
+      - openreplay
+    restart: unless-stopped
+
+  http:
+    image: openreplay/http:latest
+    container_name: openreplay-http
+    ports:
+      - "9000:9000"
+    environment:
+      - S3_HOST=minio
+      - S3_KEY=${MINIO_ACCESS_KEY}
+      - S3_SECRET=${MINIO_SECRET_KEY}
+      - postgres_host=postgresql
+      - postgres_port=5432
+      - postgres_db=openreplay
+      - postgres_user=openreplay
+      - postgres_password=${POSTGRES_PASSWORD}
+    depends_on:
+      - postgresql
+      - minio
+    networks:
+      - openreplay
+    restart: unless-stopped
+    volumes:
+      - ./storage:/storage
+
+  peers:
+    image: openreplay/peers:latest
+    container_name: openreplay-peers
+    ports:
+      - "9001:9001"
+    environment:
+      - ICE_SERVERS=${ICE_SERVERS}
+    networks:
+      - openreplay
+    restart: unless-stopped
+
+  sink:
+    image: openreplay/sink:latest
+    container_name: openreplay-sink
+    environment:
+      - S3_HOST=minio
+      - S3_KEY=${MINIO_ACCESS_KEY}
+      - S3_SECRET=${MINIO_SECRET_KEY}
+      - postgres_host=postgresql
+      - postgres_port=5432
+      - postgres_db=openreplay
+      - postgres_user=openreplay
+      - postgres_password=${POSTGRES_PASSWORD}
+      - redis_host=redis
+      - redis_port=6379
+      - kafka_host=kafka
+      - kafka_port=9092
+      - clickhouse_host=clickhouse
+      - clickhouse_port=9000
+    depends_on:
+      - postgresql
+      - redis
+      - kafka
+      - clickhouse
+      - minio
+    networks:
+      - openreplay
+    restart: unless-stopped
+
+  # Database Services
+  postgresql:
+    image: postgres:13-alpine
+    container_name: openreplay-postgres
+    environment:
+      - POSTGRES_DB=openreplay
+      - POSTGRES_USER=openreplay
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "5433:5432"  # 기존 5432 포트와 충돌 방지
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    networks:
+      - openreplay
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openreplay -d openreplay"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: openreplay-redis
+    ports:
+      - "6380:6379"  # 기존 6379 포트와 충돌 방지
+    volumes:
+      - redis_data:/data
+    networks:
+      - openreplay
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 1gb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: openreplay-clickhouse
+    ports:
+      - "8124:8123"  # 기존 8123 포트와 충돌 방지
+      - "9001:9000"
+    environment:
+      - CLICKHOUSE_DB=openreplay
+      - CLICKHOUSE_USER=openreplay
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./clickhouse/init:/docker-entrypoint-initdb.d
+    networks:
+      - openreplay
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  minio:
+    image: minio/minio:latest
+    container_name: openreplay-minio
+    ports:
+      - "9090:9000"
+      - "9091:9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    networks:
+      - openreplay
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: openreplay-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9093:9092"  # 기존 9092 포트와 충돌 방지
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - openreplay
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: openreplay-zookeeper
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=2000
+    ports:
+      - "2182:2181"  # 기존 2181 포트와 충돌 방지
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    networks:
+      - openreplay
+    restart: unless-stopped
+
+  # 통합 관리자 서비스
+  admin-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile.admin
+    container_name: openreplay-admin-manager
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - OPENREPLAY_API_URL=http://chalice:8080
+      - OPENREPLAY_FRONTEND_URL=http://frontend:3000
+      - DATABASE_URL=postgresql://openreplay:${POSTGRES_PASSWORD}@postgresql:5432/openreplay
+      - REDIS_URL=redis://redis:6379
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+    depends_on:
+      - chalice
+      - frontend
+      - postgresql
+      - redis
+      - minio
+    networks:
+      - openreplay
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+  redis_data:
+  clickhouse_data:
+  minio_data:
+  kafka_data:
+  zookeeper_data:
+  zookeeper_logs:
+
+networks:
+  openreplay:
+    driver: bridge
+    name: openreplay-network

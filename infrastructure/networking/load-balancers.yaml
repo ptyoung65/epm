@@ -1,0 +1,821 @@
+# AIRIS EPM Load Balancers
+# Comprehensive load balancing infrastructure with health checks and auto-scaling
+
+# MetalLB Configuration for On-Premises Load Balancing
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: metallb-system
+  labels:
+    name: metallb-system
+
+---
+# MetalLB Controller
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller
+  namespace: metallb-system
+  labels:
+    app: metallb
+    component: controller
+spec:
+  selector:
+    matchLabels:
+      app: metallb
+      component: controller
+  template:
+    metadata:
+      labels:
+        app: metallb
+        component: controller
+    spec:
+      serviceAccountName: controller
+      nodeSelector:
+        kubernetes.io/os: linux
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
+      containers:
+      - image: quay.io/metallb/controller:v0.13.12
+        name: controller
+        args:
+        - --port=7472
+        - --log-level=info
+        env:
+        - name: METALLB_ML_SECRET_NAME
+          value: memberlist
+        - name: METALLB_DEPLOYMENT
+          value: controller
+        ports:
+        - containerPort: 7472
+          name: monitoring
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: monitoring
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: monitoring
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+
+---
+# MetalLB Speaker DaemonSet
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: speaker
+  namespace: metallb-system
+  labels:
+    app: metallb
+    component: speaker
+spec:
+  selector:
+    matchLabels:
+      app: metallb
+      component: speaker
+  template:
+    metadata:
+      labels:
+        app: metallb
+        component: speaker
+    spec:
+      serviceAccountName: speaker
+      hostNetwork: true
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+        operator: Exists
+      - key: node-role.kubernetes.io/control-plane
+        effect: NoSchedule
+        operator: Exists
+      containers:
+      - image: quay.io/metallb/speaker:v0.13.12
+        name: speaker
+        args:
+        - --port=7472
+        - --log-level=info
+        env:
+        - name: METALLB_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: METALLB_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: METALLB_ML_BIND_ADDR
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: METALLB_ML_LABELS
+          value: "app=metallb,component=speaker"
+        - name: METALLB_ML_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: memberlist
+              key: secretkey
+        ports:
+        - containerPort: 7472
+          name: monitoring
+        - containerPort: 7946
+          name: memberlist-tcp
+        - containerPort: 7946
+          name: memberlist-udp
+          protocol: UDP
+        livenessProbe:
+          httpGet:
+            path: /metrics
+            port: monitoring
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /metrics
+            port: monitoring
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_RAW
+
+---
+# MetalLB IP Address Pool
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: airis-epm-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  - 192.168.1.240-192.168.1.250
+  autoAssign: true
+  avoidBuggyIPs: true
+
+---
+# MetalLB L2Advertisement
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: l2-advertisement
+  namespace: metallb-system
+spec:
+  ipAddressPools:
+  - airis-epm-pool
+
+---
+# HAProxy Load Balancer for Application Layer
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: haproxy-lb
+  namespace: airis-epm
+  labels:
+    app: haproxy-lb
+    component: load-balancer
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: haproxy-lb
+      component: load-balancer
+  template:
+    metadata:
+      labels:
+        app: haproxy-lb
+        component: load-balancer
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8404"
+    spec:
+      containers:
+      - name: haproxy
+        image: haproxy:2.8-alpine
+        ports:
+        - containerPort: 80
+          name: http
+        - containerPort: 443
+          name: https
+        - containerPort: 8404
+          name: stats
+        volumeMounts:
+        - name: config
+          mountPath: /usr/local/etc/haproxy
+        livenessProbe:
+          httpGet:
+            path: /stats
+            port: 8404
+          initialDelaySeconds: 30
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /stats
+            port: 8404
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_BIND_SERVICE
+      volumes:
+      - name: config
+        configMap:
+          name: haproxy-config
+
+---
+# HAProxy Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: haproxy-config
+  namespace: airis-epm
+data:
+  haproxy.cfg: |
+    global
+        daemon
+        user haproxy
+        group haproxy
+        
+        # SSL Configuration
+        ssl-default-bind-options ssl-min-ver TLSv1.2
+        ssl-default-bind-ciphers ECDHE+AESGCM:ECDHE+CHACHA20:RSA+AESGCM:RSA+AES:!aNULL:!MD5:!DSS
+        tune.ssl.default-dh-param 2048
+        
+        # Performance tuning
+        maxconn 4096
+        nbthread 4
+        
+        # Stats socket
+        stats socket /tmp/haproxy.sock mode 600 level admin
+        stats timeout 2m
+        
+    defaults
+        mode http
+        timeout connect 5000ms
+        timeout client 50000ms
+        timeout server 50000ms
+        timeout http-request 15s
+        timeout http-keep-alive 15s
+        
+        # Health checks
+        option httpchk GET /health
+        option log-health-checks
+        
+        # Performance
+        option httplog
+        option dontlognull
+        option http-server-close
+        option forwardfor
+        option redispatch
+        
+        retries 3
+        balance roundrobin
+        
+    # Frontend for HTTP (redirect to HTTPS)
+    frontend http_frontend
+        bind *:80
+        mode http
+        redirect scheme https code 301 if !{ ssl_fc }
+        
+    # Frontend for HTTPS
+    frontend https_frontend
+        bind *:443 ssl crt /etc/ssl/certs/airis-epm.pem
+        mode http
+        
+        # Security headers
+        http-response set-header Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        http-response set-header X-Frame-Options "DENY"
+        http-response set-header X-Content-Type-Options "nosniff"
+        http-response set-header X-XSS-Protection "1; mode=block"
+        http-response set-header Referrer-Policy "strict-origin-when-cross-origin"
+        
+        # ACLs for routing
+        acl is_api path_beg /api/
+        acl is_dashboard path_beg /dashboard/
+        acl is_monitoring path_beg /prometheus /grafana /kibana
+        acl is_websocket hdr(Upgrade) -i websocket
+        
+        # Rate limiting
+        stick-table type ip size 100k expire 30s store http_req_rate(10s)
+        http-request track-sc0 src
+        http-request reject if { sc_http_req_rate(0) gt 20 }
+        
+        # Routing
+        use_backend api_backend if is_api
+        use_backend dashboard_backend if is_dashboard
+        use_backend monitoring_backend if is_monitoring
+        default_backend dashboard_backend
+        
+    # API Backend
+    backend api_backend
+        option httpchk GET /api/health
+        http-check expect status 200
+        
+        # Servers (will be dynamically configured)
+        server api1 airis-epm-api-gateway:3000 check inter 2000 rise 3 fall 5 weight 100
+        server api2 airis-epm-api-gateway:3000 check inter 2000 rise 3 fall 5 weight 100 backup
+        
+    # Dashboard Backend
+    backend dashboard_backend
+        option httpchk GET /health
+        http-check expect status 200
+        
+        # Enable compression
+        compression algo gzip
+        compression type text/html text/plain text/css application/javascript application/json
+        
+        server dashboard1 airis-epm-frontend:80 check inter 2000 rise 3 fall 5 weight 100
+        server dashboard2 airis-epm-frontend:80 check inter 2000 rise 3 fall 5 weight 100 backup
+        
+    # Monitoring Backend
+    backend monitoring_backend
+        # Prometheus
+        acl is_prometheus path_beg /prometheus
+        use-server prometheus if is_prometheus
+        
+        # Grafana
+        acl is_grafana path_beg /grafana
+        use-server grafana if is_grafana
+        
+        # Kibana
+        acl is_kibana path_beg /kibana
+        use-server kibana if is_kibana
+        
+        server prometheus prometheus:9090 check inter 5000
+        server grafana grafana:3000 check inter 5000
+        server kibana kibana:5601 check inter 5000
+        
+    # Stats page
+    listen stats
+        bind *:8404
+        mode http
+        stats enable
+        stats uri /stats
+        stats refresh 30s
+        stats admin if TRUE
+        
+        # Authentication (base64 encoded admin:airis2025)
+        stats auth admin:airis2025
+        
+        # Detailed stats
+        stats show-legends
+        stats show-node
+        stats show-desc "AIRIS EPM Load Balancer Statistics"
+
+---
+# HAProxy Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: haproxy-lb
+  namespace: airis-epm
+  labels:
+    app: haproxy-lb
+  annotations:
+    metallb.universe.tf/address-pool: airis-epm-pool
+spec:
+  type: LoadBalancer
+  selector:
+    app: haproxy-lb
+    component: load-balancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: 443
+    protocol: TCP
+  - name: stats
+    port: 8404
+    targetPort: 8404
+    protocol: TCP
+
+---
+# NGINX Load Balancer for Static Content
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-static-lb
+  namespace: airis-epm
+  labels:
+    app: nginx-static-lb
+    component: load-balancer
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx-static-lb
+      component: load-balancer
+  template:
+    metadata:
+      labels:
+        app: nginx-static-lb
+        component: load-balancer
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25-alpine
+        ports:
+        - containerPort: 80
+          name: http
+        - containerPort: 8080
+          name: metrics
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        - name: cache
+          mountPath: /var/cache/nginx
+        - name: run
+          mountPath: /var/run
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 101
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_BIND_SERVICE
+      volumes:
+      - name: config
+        configMap:
+          name: nginx-static-config
+      - name: cache
+        emptyDir: {}
+      - name: run
+        emptyDir: {}
+
+---
+# NGINX Static Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-static-config
+  namespace: airis-epm
+data:
+  nginx.conf: |
+    user nginx;
+    worker_processes auto;
+    worker_rlimit_nofile 65535;
+    
+    error_log /var/log/nginx/error.log warn;
+    pid /var/run/nginx.pid;
+    
+    events {
+        worker_connections 65535;
+        use epoll;
+        multi_accept on;
+    }
+    
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+        
+        # Logging
+        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                        '$status $body_bytes_sent "$http_referer" '
+                        '"$http_user_agent" "$http_x_forwarded_for" '
+                        '$upstream_response_time $request_time';
+        
+        access_log /var/log/nginx/access.log main;
+        
+        # Performance optimizations
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        types_hash_max_size 2048;
+        client_max_body_size 50m;
+        
+        # Gzip compression
+        gzip on;
+        gzip_vary on;
+        gzip_proxied any;
+        gzip_comp_level 6;
+        gzip_types
+            text/plain
+            text/css
+            text/xml
+            text/javascript
+            application/javascript
+            application/xml+rss
+            application/json;
+        
+        # Cache settings
+        open_file_cache max=1000 inactive=20s;
+        open_file_cache_valid 30s;
+        open_file_cache_min_uses 2;
+        open_file_cache_errors on;
+        
+        # Rate limiting
+        limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+        limit_req_zone $binary_remote_addr zone=static:10m rate=50r/s;
+        
+        # Upstream for static content
+        upstream static_backend {
+            least_conn;
+            server airis-epm-frontend:80 max_fails=3 fail_timeout=30s weight=1;
+            keepalive 32;
+        }
+        
+        server {
+            listen 80;
+            server_name _;
+            
+            # Security headers
+            add_header X-Frame-Options "SAMEORIGIN" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header X-XSS-Protection "1; mode=block" always;
+            add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+            
+            # Static content with caching
+            location ~* \.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+                limit_req zone=static burst=20 nodelay;
+                
+                proxy_pass http://static_backend;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                
+                # Caching headers
+                expires 1y;
+                add_header Cache-Control "public, immutable";
+                
+                # Compression
+                gzip_static on;
+            }
+            
+            # API proxying with rate limiting
+            location /api/ {
+                limit_req zone=api burst=10 nodelay;
+                
+                proxy_pass http://airis-epm-api-gateway:3000;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+                
+                # Timeouts
+                proxy_connect_timeout 5s;
+                proxy_send_timeout 60s;
+                proxy_read_timeout 60s;
+            }
+            
+            # Default location
+            location / {
+                proxy_pass http://static_backend;
+                proxy_set_header Host $host;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header X-Forwarded-Proto $scheme;
+            }
+            
+            # Health check endpoint
+            location /nginx-health {
+                access_log off;
+                return 200 "healthy\n";
+                add_header Content-Type text/plain;
+            }
+        }
+        
+        # Metrics server
+        server {
+            listen 8080;
+            server_name _;
+            
+            location /metrics {
+                access_log off;
+                # Stub status for monitoring
+                stub_status on;
+            }
+        }
+    }
+
+---
+# NGINX Static Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-static-lb
+  namespace: airis-epm
+  labels:
+    app: nginx-static-lb
+spec:
+  type: ClusterIP
+  selector:
+    app: nginx-static-lb
+    component: load-balancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  - name: metrics
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+
+---
+# ServiceAccount for MetalLB Controller
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: controller
+  namespace: metallb-system
+
+---
+# ServiceAccount for MetalLB Speaker  
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: speaker
+  namespace: metallb-system
+
+---
+# ClusterRole for MetalLB Controller
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: metallb-system:controller
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - services
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+- apiGroups:
+  - metallb.io
+  resources:
+  - ipaddresspools
+  - l2advertisements
+  - bgpadvertisements
+  - bgppeers
+  - communities
+  verbs:
+  - get
+  - list
+  - watch
+
+---
+# ClusterRole for MetalLB Speaker
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: metallb-system:speaker
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - services
+  - endpoints
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - discovery.k8s.io
+  resources:
+  - endpointslices
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+- apiGroups:
+  - metallb.io
+  resources:
+  - ipaddresspools
+  - l2advertisements
+  - bgpadvertisements
+  - bgppeers
+  - communities
+  verbs:
+  - get
+  - list
+  - watch
+
+---
+# ClusterRoleBinding for MetalLB Controller
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: metallb-system:controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: metallb-system:controller
+subjects:
+- kind: ServiceAccount
+  name: controller
+  namespace: metallb-system
+
+---
+# ClusterRoleBinding for MetalLB Speaker
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: metallb-system:speaker
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: metallb-system:speaker
+subjects:
+- kind: ServiceAccount
+  name: speaker
+  namespace: metallb-system
+
+---
+# Secret for MetalLB Member List
+apiVersion: v1
+kind: Secret
+metadata:
+  name: memberlist
+  namespace: metallb-system
+type: Opaque
+data:
+  secretkey: YWlyaXMtZXBtLXNlY3JldC1rZXk=  # base64 encoded: airis-epm-secret-key

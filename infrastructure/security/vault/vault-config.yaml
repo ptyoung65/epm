@@ -1,0 +1,289 @@
+# HashiCorp Vault Configuration for AIRIS EPM
+# Secure secret management and encryption
+
+# Vault Server Configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vault-server
+  namespace: airis-epm
+  labels:
+    app: vault
+    component: server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: vault
+      component: server
+  template:
+    metadata:
+      labels:
+        app: vault
+        component: server
+    spec:
+      serviceAccountName: vault-server
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        fsGroup: 1000
+      containers:
+      - name: vault
+        image: vault:1.14.0
+        imagePullPolicy: IfNotPresent
+        args:
+        - server
+        - -config=/vault/config/vault.hcl
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - IPC_LOCK
+        env:
+        - name: VAULT_ADDR
+          value: "https://127.0.0.1:8200"
+        - name: VAULT_API_ADDR
+          value: "https://vault.airis-epm.svc.cluster.local:8200"
+        - name: VAULT_CLUSTER_ADDR
+          value: "https://vault.airis-epm.svc.cluster.local:8201"
+        - name: SKIP_CHOWN
+          value: "true"
+        - name: SKIP_SETCAP
+          value: "true"
+        ports:
+        - containerPort: 8200
+          name: vault-port
+          protocol: TCP
+        - containerPort: 8201
+          name: cluster-port
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command: ["/bin/sh", "-ec", "vault status -tls-skip-verify"]
+          failureThreshold: 2
+          initialDelaySeconds: 5
+          periodSeconds: 3
+          successThreshold: 1
+          timeoutSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: "/v1/sys/health?standbyok=true"
+            port: 8200
+            scheme: HTTPS
+          failureThreshold: 2
+          initialDelaySeconds: 60
+          periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 3
+        volumeMounts:
+        - name: vault-config
+          mountPath: /vault/config
+        - name: vault-data
+          mountPath: /vault/data
+        - name: vault-logs
+          mountPath: /vault/logs
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+      volumes:
+      - name: vault-config
+        configMap:
+          name: vault-config
+      - name: vault-data
+        persistentVolumeClaim:
+          claimName: vault-data-pvc
+      - name: vault-logs
+        emptyDir: {}
+
+---
+# Vault Configuration ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-config
+  namespace: airis-epm
+  labels:
+    app: vault
+data:
+  vault.hcl: |
+    ui = true
+    
+    listener "tcp" {
+      address     = "0.0.0.0:8200"
+      tls_cert_file = "/vault/tls/server.crt"
+      tls_key_file = "/vault/tls/server.key"
+      tls_min_version = "tls12"
+    }
+    
+    storage "raft" {
+      path = "/vault/data"
+      
+      retry_join {
+        leader_api_addr = "https://vault-0.vault.airis-epm.svc.cluster.local:8200"
+      }
+      retry_join {
+        leader_api_addr = "https://vault-1.vault.airis-epm.svc.cluster.local:8200"
+      }
+      retry_join {
+        leader_api_addr = "https://vault-2.vault.airis-epm.svc.cluster.local:8200"
+      }
+    }
+    
+    cluster_addr = "https://$(POD_IP):8201"
+    api_addr = "https://$(POD_NAME).vault.airis-epm.svc.cluster.local:8200"
+    
+    # Telemetry
+    telemetry {
+      prometheus_retention_time = "30s"
+      disable_hostname = true
+    }
+    
+    # Seal configuration (using Kubernetes secrets)
+    seal "kubernetes" {
+      secret_name = "vault-seal-key"
+      key_name = "key"
+    }
+
+---
+# Vault Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vault-server
+  namespace: airis-epm
+  labels:
+    app: vault
+
+---
+# Vault ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: vault-server-role
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get", "list", "create", "update", "patch"]
+- apiGroups: [""]
+  resources: ["serviceaccounts/token"]
+  verbs: ["create"]
+
+---
+# Vault ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: vault-server-binding
+subjects:
+- kind: ServiceAccount
+  name: vault-server
+  namespace: airis-epm
+roleRef:
+  kind: ClusterRole
+  name: vault-server-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Vault Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault
+  namespace: airis-epm
+  labels:
+    app: vault
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: vault-port
+    port: 8200
+    targetPort: 8200
+    protocol: TCP
+  - name: cluster-port
+    port: 8201
+    targetPort: 8201
+    protocol: TCP
+  selector:
+    app: vault
+    component: server
+
+---
+# Vault External Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault-external
+  namespace: airis-epm
+  labels:
+    app: vault
+spec:
+  type: LoadBalancer
+  ports:
+  - name: vault-port
+    port: 8200
+    targetPort: 8200
+    protocol: TCP
+  selector:
+    app: vault
+    component: server
+
+---
+# Vault Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vault-ingress
+  namespace: airis-epm
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - vault.airis.company.com
+    secretName: vault-tls
+  rules:
+  - host: vault.airis.company.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: vault-external
+            port:
+              number: 8200
+
+---
+# Vault Agent Injector
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingAdmissionWebhook
+metadata:
+  name: vault-agent-injector
+  labels:
+    app: vault-agent-injector
+webhooks:
+- name: vault.hashicorp.com
+  sideEffects: None
+  admissionReviewVersions: ["v1", "v1beta1"]
+  clientConfig:
+    service:
+      name: vault-agent-injector-svc
+      namespace: airis-epm
+      path: "/mutate"
+  rules:
+  - operations: ["CREATE", "UPDATE"]
+    apiGroups: [""]
+    apiVersions: ["v1"]
+    resources: ["pods"]

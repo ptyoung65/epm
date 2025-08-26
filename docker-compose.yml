@@ -1,4 +1,4 @@
-version: '3.8'
+# Docker Compose file for AIRIS EPM
 
 services:
   # Container Registry
@@ -72,17 +72,79 @@ services:
       - airis-apm-network
     restart: unless-stopped
 
-  # Session Replay Service
-  session-replay:
-    image: localhost:5000/airis-mon/session-replay:latest
-    container_name: airis-session-replay
+  # Session Replay Manager (OpenReplay 통합)
+  session-replay-manager:
+    build: 
+      context: ./services/session-replay-manager
+      dockerfile: Dockerfile.simple
+    image: airis-session-replay-manager:latest
+    container_name: airis-session-replay-manager
     ports:
       - "3004:3004"
+      - "3024:3024"  # OpenReplay Admin Dashboard
     environment:
       - NODE_ENV=production
       - PORT=3004
+      - ADMIN_PORT=3024
+      - OPENREPLAY_PROJECT_KEY=${OPENREPLAY_PROJECT_KEY:-airis-epm}
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/airis_apm
+      - REDIS_URL=redis://redis:6379
+      - MONGODB_URL=mongodb://mongodb:27017/airis-apm
+      - CLICKHOUSE_URL=http://clickhouse:8123
+      - SESSION_SECRET=${SESSION_SECRET:-airis-epm-session-secret}
+      - JWT_SECRET=${JWT_SECRET:-airis-epm-jwt-secret}
     volumes:
       - ./logs:/app/logs
+      - ./services/session-replay-manager/storage:/app/storage
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+      - mongodb
+      - clickhouse
+
+  # OpenReplay 통합 서비스 (간소화된 버전)
+  openreplay-api:
+    build:
+      context: ./services/openreplay-integration
+      dockerfile: Dockerfile
+    container_name: airis-openreplay-api
+    ports:
+      - "3030:3000"
+    environment:
+      - NODE_ENV=production
+      - POSTGRES_URL=postgresql://postgres:postgres@postgres:5432/airis_apm
+      - REDIS_URL=redis://redis:6379
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
+      - MINIO_BUCKET_NAME=openreplay-sessions
+    volumes:
+      - ./logs:/app/logs
+      - openreplay_sessions:/app/sessions
+    networks:
+      - airis-apm-network
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+      - minio
+
+  # MinIO for OpenReplay recording storage
+  minio:
+    image: minio/minio:latest
+    container_name: airis-openreplay-minio
+    ports:
+      - "9010:9000"
+      - "9011:9001"
+    environment:
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
     networks:
       - airis-apm-network
     restart: unless-stopped
@@ -278,3 +340,6 @@ volumes:
   redis_data:
   postgres_data:
   clickhouse_data:
+  minio_data:
+  openreplay_sessions:
+  openreplay_static:

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>데모 페이지 1 - AIRIS 다중 페이지 세션 추적</title>
+    <!-- rrweb 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js"></script>
+    <!-- AIRIS 세션 추적기 -->
+    <script src="/airis-session-tracker.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #2d3748;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        .btn {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0.5rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: #3182ce;
+            transform: translateY(-1px);
+        }
+        
+        .btn-success { background: #48bb78; }
+        .btn-danger { background: #e53e3e; }
+        .btn-warning { background: #ed8936; }
+        
+        .status-box {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .form-group {
+            margin: 1rem 0;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 데모 페이지 1</h1>
+            <p>AIRIS 다중 페이지 세션 추적 테스트</p>
+        </div>
+        
+        <div class="content">
+            <div class="status-box">
+                <h3>📊 세션 상태</h3>
+                <div id="sessionStatus">로딩 중...</div>
+                <br>
+                <button id="testBtn" class="btn" style="background: #ffa500;">🧪 테스트 버튼</button>
+                <button id="startBtn" class="btn btn-success">🔴 기록 시작</button>
+                <button id="stopBtn" class="btn btn-danger">⏹️ 기록 중지</button>
+                <button id="updateBtn" class="btn">🔄 상태 업데이트</button>
+            </div>
+
+            <div class="status-box">
+                <h3>🧪 상호작용 테스트</h3>
+                <div class="form-group">
+                    <label>이름:</label>
+                    <input type="text" id="nameInput" placeholder="이름을 입력하세요">
+                </div>
+                
+                <div class="form-group">
+                    <label>카테고리:</label>
+                    <select id="categorySelect">
+                        <option value="">선택하세요</option>
+                        <option value="home">홈페이지</option>
+                        <option value="product">제품 페이지</option>
+                        <option value="about">회사 소개</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>메모:</label>
+                    <textarea id="memoTextarea" rows="3" placeholder="메모를 작성하세요"></textarea>
+                </div>
+                
+                <button id="randomBtn" class="btn">🎲 랜덤 액션</button>
+                <button id="errorBtn" class="btn btn-warning">⚠️ 오류 발생</button>
+            </div>
+
+            <div class="status-box">
+                <h3>🔗 페이지 이동</h3>
+                <p>다른 페이지로 이동하여 다중 페이지 추적을 테스트해보세요:</p>
+                <a href="/demo-page-2.html" class="btn">📄 페이지 2로 이동</a>
+                <a href="/demo-page-3.html" class="btn">📄 페이지 3으로 이동</a>
+                <a href="/test-session-replay.html" class="btn">🎬 메인 테스트 페이지</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 오류 처리
+        window.addEventListener('error', (e) => {
+            console.error('🚨 JavaScript 오류 발생:', e.error);
+            console.error('🚨 오류 위치:', e.filename, 'line', e.lineno, 'col', e.colno);
+        });
+        
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('🚨 Promise 오류:', e.reason);
+        });
+        
+        // 페이지 로드 시 상태 업데이트
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🏠 데모 페이지 1 로드됨');
+            console.log('🔍 페이지 로드 시점 - rrweb 상태:', typeof window.rrweb, window.rrweb);
+            console.log('🔍 페이지 로드 시점 - airisTracker 상태:', typeof window.airisTracker, window.airisTracker);
+            
+            // 버튼 이벤트 리스너 추가
+            const testBtn = document.getElementById('testBtn');
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const updateBtn = document.getElementById('updateBtn');
+            const randomBtn = document.getElementById('randomBtn');
+            const errorBtn = document.getElementById('errorBtn');
+            
+            console.log('🔍 버튼 요소들 확인:', {
+                testBtn: !!testBtn,
+                startBtn: !!startBtn,
+                stopBtn: !!stopBtn,
+                updateBtn: !!updateBtn,
+                randomBtn: !!randomBtn,
+                errorBtn: !!errorBtn
+            });
+            
+            // 테스트 버튼 (기본 동작 확인)
+            if (testBtn) {
+                testBtn.addEventListener('click', () => {
+                    console.log('✅ 테스트 버튼 클릭 성공!');
+                    alert('🎉 JavaScript 이벤트 리스너가 정상 작동합니다!');
+                });
+            }
+            
+            if (startBtn) {
+                startBtn.addEventListener('click', () => {
+                    console.log('🔍 시작 버튼 클릭됨!');
+                    startTracking();
+                });
+            }
+            
+            if (stopBtn) {
+                stopBtn.addEventListener('click', () => {
+                    console.log('🔍 중지 버튼 클릭됨!');
+                    stopTracking();
+                });
+            }
+            
+            if (updateBtn) {
+                updateBtn.addEventListener('click', () => {
+                    console.log('🔍 업데이트 버튼 클릭됨!');
+                    updateStatus();
+                });
+            }
+            
+            if (randomBtn) {
+                randomBtn.addEventListener('click', () => {
+                    console.log('🔍 랜덤 버튼 클릭됨!');
+                    generateRandomActions();
+                });
+            }
+            
+            if (errorBtn) {
+                errorBtn.addEventListener('click', () => {
+                    console.log('🔍 오류 버튼 클릭됨!');
+                    simulateError();
+                });
+            }
+            
+            // 추적기 로딩 대기
+            setTimeout(() => {
+                console.log('🔍 3초 후 - rrweb 상태:', typeof window.rrweb, window.rrweb);
+                console.log('🔍 3초 후 - airisTracker 상태:', typeof window.airisTracker, window.airisTracker);
+                updateStatus();
+            }, 3000);
+            
+            updateStatus();
+            
+            // 입력 이벤트 리스너
+            document.getElementById('nameInput').addEventListener('input', () => {
+                console.log('📝 이름 입력:', document.getElementById('nameInput').value);
+            });
+            
+            document.getElementById('categorySelect').addEventListener('change', () => {
+                console.log('📋 카테고리 선택:', document.getElementById('categorySelect').value);
+            });
+            
+            document.getElementById('memoTextarea').addEventListener('input', () => {
+                console.log('📝 메모 입력:', document.getElementById('memoTextarea').value.length, '글자');
+            });
+        });
+
+        // 추적 시작
+        function startTracking() {
+            console.log('🔍 startTracking 함수 호출됨');
+            console.log('🔍 window.airisTracker 상태:', window.airisTracker);
+            console.log('🔍 window.rrweb 상태:', window.rrweb);
+            
+            if (window.airisTracker) {
+                console.log('🔍 AIRIS 추적기 발견, start() 메서드 호출 시도');
+                const result = window.airisTracker.start();
+                console.log('🔍 start() 결과:', result);
+                
+                if (result) {
+                    console.log('✅ 추적 시작됨');
+                    alert('🎬 세션 기록이 시작되었습니다!\n다른 페이지로 이동해도 계속 추적됩니다.');
+                } else {
+                    console.log('⚠️ 추적 시작 실패');
+                    alert('⚠️ 추적 시작에 실패했거나 이미 진행 중입니다.');
+                }
+                updateStatus();
+            } else {
+                console.log('❌ AIRIS 추적기가 없음');
+                console.log('🔍 모든 window 프로퍼티:', Object.keys(window).filter(key => key.includes('airis') || key.includes('AIRIS')));
+                alert('❌ AIRIS 추적기가 로드되지 않았습니다.');
+            }
+        }
+
+        // 추적 중지
+        function stopTracking() {
+            if (window.airisTracker) {
+                const result = window.airisTracker.stop();
+                if (result) {
+                    console.log('⏹️ 추적 중지됨');
+                    alert('⏹️ 세션 기록이 중지되었습니다.');
+                } else {
+                    alert('⚠️ 추적 중지에 실패했거나 진행 중이지 않습니다.');
+                }
+                updateStatus();
+            }
+        }
+
+        // 상태 업데이트
+        function updateStatus() {
+            const statusDiv = document.getElementById('sessionStatus');
+            
+            if (window.airisTracker) {
+                const status = window.airisTracker.getStatus();
+                statusDiv.innerHTML = `
+                    <strong>세션 ID:</strong> ${status.sessionId}<br>
+                    <strong>기록 상태:</strong> ${status.isRecording ? '🔴 기록 중' : '⏸️ 중지됨'}<br>
+                    <strong>시작 시간:</strong> ${status.startTime ? status.startTime.toLocaleString() : 'N/A'}<br>
+                    <strong>이벤트 수:</strong> ${status.eventCount}<br>
+                    <strong>버퍼 크기:</strong> ${status.bufferSize}<br>
+                    <strong>현재 페이지:</strong> 데모 페이지 1
+                `;
+            } else {
+                statusDiv.innerHTML = '❌ AIRIS 추적기가 로드되지 않았습니다.';
+            }
+        }
+
+        // 랜덤 액션 생성
+        function generateRandomActions() {
+            const nameInput = document.getElementById('nameInput');
+            const categorySelect = document.getElementById('categorySelect');
+            const memoTextarea = document.getElementById('memoTextarea');
+            
+            // 랜덤 데이터 생성
+            const names = ['김철수', '이영희', '박민수', '최지영', '정태민'];
+            const categories = ['home', 'product', 'about'];
+            const memos = ['테스트 메모입니다.', '이것은 샘플 텍스트입니다.', '랜덤으로 생성된 내용입니다.'];
+            
+            nameInput.value = names[Math.floor(Math.random() * names.length)];
+            categorySelect.value = categories[Math.floor(Math.random() * categories.length)];
+            memoTextarea.value = memos[Math.floor(Math.random() * memos.length)];
+            
+            // 이벤트 트리거
+            nameInput.dispatchEvent(new Event('input'));
+            categorySelect.dispatchEvent(new Event('change'));
+            memoTextarea.dispatchEvent(new Event('input'));
+            
+            console.log('🎲 랜덤 액션 실행됨');
+        }
+
+        // 오류 시뮬레이션
+        function simulateError() {
+            console.error('⚠️ 시뮬레이션된 오류:', new Error('데모 페이지 1에서 발생한 테스트 오류'));
+            alert('⚠️ 시뮬레이션 오류가 발생했습니다 (콘솔 확인)');
+        }
+
+        // 주기적으로 상태 업데이트
+        setInterval(updateStatus, 5000);
+    </script>
+</body>
+</html>

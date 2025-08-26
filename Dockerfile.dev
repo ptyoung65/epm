@@ -1,0 +1,45 @@
+# AIRIS EPM Development Dockerfile
+# Optimized for development with hot-reload and debugging
+
+FROM node:18-alpine AS development
+
+# Install development tools
+RUN apk add --no-cache curl bash
+
+# Create app directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies (including dev dependencies)
+RUN npm install
+
+# Create non-root user for development
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 && \
+    chown -R nodejs:nodejs /app
+
+# Switch to non-root user
+USER nodejs
+
+# Copy source code (will be overridden by volume in development)
+COPY --chown=nodejs:nodejs . .
+
+# Create logs directory
+RUN mkdir -p logs
+
+# Expose ports
+EXPOSE 3000 9229
+
+# Health check for development
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
+# Development command with debugging and hot-reload
+CMD ["npm", "run", "dev"]
+
+# Metadata
+LABEL maintainer="AIRIS Development Team"
+LABEL version="1.0.0-dev"
+LABEL description="AIRIS EPM Development Environment"

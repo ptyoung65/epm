@@ -49,9 +49,9 @@ check_prerequisites() {
         exit 1
     fi
     
-    # Check if docker-compose is installed
-    if ! command -v docker-compose &> /dev/null; then
-        log_error "Docker Compose is not installed"
+    # Check if docker compose is available
+    if ! docker compose version &> /dev/null; then
+        log_error "Docker Compose is not available"
         exit 1
     fi
     
@@ -77,15 +77,15 @@ deploy_development() {
             log_info "Starting development environment..."
             
             # Start the registry first
-            docker-compose -f docker-compose.dev.yml up -d registry
+            docker compose -f docker-compose.dev.yml up -d registry
             sleep 5
             
             # Start main application
-            docker-compose -f docker-compose.dev.yml up -d
+            docker compose -f docker-compose.dev.yml up -d
             
             # Start clickstack services
             cd clickstack-architecture
-            docker-compose -f docker-compose.dev.yml up -d
+            docker compose -f docker-compose.dev.yml up -d
             cd ..
             
             log_success "Development environment started"
@@ -93,9 +93,9 @@ deploy_development() {
             
         "stop")
             log_info "Stopping development environment..."
-            docker-compose -f docker-compose.dev.yml down
+            docker compose -f docker-compose.dev.yml down
             cd clickstack-architecture
-            docker-compose -f docker-compose.dev.yml down
+            docker compose -f docker-compose.dev.yml down
             cd ..
             log_success "Development environment stopped"
             ;;
@@ -233,9 +233,9 @@ check_status() {
     case $ENVIRONMENT in
         "development")
             log_info "Development environment status:"
-            docker-compose -f "$PROJECT_ROOT/docker-compose.dev.yml" ps
+            docker compose -f "$PROJECT_ROOT/docker-compose.dev.yml" ps
             cd "$PROJECT_ROOT/clickstack-architecture"
-            docker-compose -f docker-compose.dev.yml ps
+            docker compose -f docker-compose.dev.yml ps
             cd "$PROJECT_ROOT"
             ;;
             

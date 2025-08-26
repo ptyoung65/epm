@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>데모 페이지 2 - AIRIS 다중 페이지 세션 추적</title>
+    <!-- rrweb 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js"></script>
+    <!-- AIRIS 세션 추적기 -->
+    <script src="/airis-session-tracker.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            margin: 0;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #e53e3e;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .content {
+            padding: 2rem;
+        }
+        
+        .btn {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0.5rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: #3182ce;
+            transform: translateY(-1px);
+        }
+        
+        .product-card {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .product-card:hover {
+            border-color: #4299e1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .product-card.selected {
+            border-color: #48bb78;
+            background: #f0fff4;
+        }
+        
+        .status-box {
+            background: #fff5f5;
+            border: 2px solid #fed7d7;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .interactive-area {
+            background: #f7fafc;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 1rem 0;
+            text-align: center;
+            min-height: 150px;
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛍️ 데모 페이지 2</h1>
+            <p>제품 선택 및 상호작용 테스트 페이지</p>
+        </div>
+        
+        <div class="content">
+            <div class="status-box">
+                <h3>📊 세션 추적 상태</h3>
+                <div id="sessionStatus">로딩 중...</div>
+            </div>
+
+            <div>
+                <h3>🛒 제품 선택</h3>
+                <p>제품을 클릭하여 선택해보세요:</p>
+                
+                <div class="product-card" data-product="laptop">
+                    <h4>💻 노트북</h4>
+                    <p>고성능 개발용 노트북 - ₩1,500,000</p>
+                </div>
+                
+                <div class="product-card" data-product="monitor">
+                    <h4>🖥️ 모니터</h4>
+                    <p>4K 고해상도 모니터 - ₩800,000</p>
+                </div>
+                
+                <div class="product-card" data-product="keyboard">
+                    <h4>⌨️ 기계식 키보드</h4>
+                    <p>체리 MX 스위치 키보드 - ₩200,000</p>
+                </div>
+                
+                <div class="product-card" data-product="mouse">
+                    <h4>🖱️ 게이밍 마우스</h4>
+                    <p>고정밀 게이밍 마우스 - ₩150,000</p>
+                </div>
+            </div>
+
+            <div>
+                <h3>🎨 인터랙티브 영역</h3>
+                <p>아래 영역을 클릭하거나 드래그해보세요:</p>
+                <div class="interactive-area" id="interactiveArea">
+                    <div id="interactiveText">여기를 클릭하거나 드래그하세요!</div>
+                </div>
+            </div>
+
+            <div class="status-box">
+                <h3>🔗 페이지 이동</h3>
+                <a href="/demo-page-1.html" class="btn">🏠 페이지 1로 돌아가기</a>
+                <a href="/demo-page-3.html" class="btn">📄 페이지 3으로 이동</a>
+                <a href="/session-player.html" class="btn">🎬 세션 플레이어</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedProducts = [];
+        let clickCount = 0;
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🛍️ 데모 페이지 2 로드됨');
+            updateStatus();
+            setupInteractiveArea();
+            setupProductCards();
+        });
+        
+        // 제품 카드 이벤트 리스너 설정
+        function setupProductCards() {
+            const productCards = document.querySelectorAll('.product-card');
+            productCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const productId = card.dataset.product;
+                    selectProduct(productId);
+                });
+            });
+        }
+
+        // 제품 선택
+        function selectProduct(productId) {
+            const cards = document.querySelectorAll('.product-card');
+            const clickedCard = document.querySelector(`[data-product="${productId}"]`);
+            
+            // 선택 토글
+            if (selectedProducts.includes(productId)) {
+                selectedProducts = selectedProducts.filter(p => p !== productId);
+                clickedCard.classList.remove('selected');
+            } else {
+                selectedProducts.push(productId);
+                clickedCard.classList.add('selected');
+            }
+            
+            console.log('🛒 제품 선택 업데이트:', selectedProducts);
+            
+            // 애니메이션 효과
+            clickedCard.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                clickedCard.style.transform = '';
+            }, 150);
+            
+            updateStatus();
+        }
+
+        // 인터랙티브 영역 설정
+        function setupInteractiveArea() {
+            const area = document.getElementById('interactiveArea');
+            const text = document.getElementById('interactiveText');
+            
+            let isMouseDown = false;
+            let lastX = 0, lastY = 0;
+
+            area.addEventListener('mousedown', (e) => {
+                isMouseDown = true;
+                lastX = e.clientX;
+                lastY = e.clientY;
+                clickCount++;
+                
+                const rect = area.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // 클릭 지점에 임시 효과
+                const ripple = document.createElement('div');
+                ripple.style.cssText = `
+                    position: absolute;
+                    left: ${x}px;
+                    top: ${y}px;
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    background: rgba(66, 153, 225, 0.6);
+                    transform: translate(-50%, -50%);
+                    animation: ripple 0.6s ease-out;
+                    pointer-events: none;
+                `;
+                
+                area.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 600);
+                
+                text.textContent = `클릭 #${clickCount} (${Math.round(x)}, ${Math.round(y)})`;
+                
+                console.log('🎯 인터랙티브 클릭:', { x: Math.round(x), y: Math.round(y), count: clickCount });
+            });
+
+            area.addEventListener('mousemove', (e) => {
+                if (isMouseDown) {
+                    const deltaX = e.clientX - lastX;
+                    const deltaY = e.clientY - lastY;
+                    
+                    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+                        console.log('🖱️ 드래그 중:', { deltaX, deltaY });
+                    }
+                }
+            });
+
+            area.addEventListener('mouseup', () => {
+                isMouseDown = false;
+            });
+
+            // CSS 애니메이션 추가
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes ripple {
+                    to {
+                        transform: translate(-50%, -50%) scale(4);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // 상태 업데이트
+        function updateStatus() {
+            const statusDiv = document.getElementById('sessionStatus');
+            
+            if (window.airisTracker) {
+                const status = window.airisTracker.getStatus();
+                statusDiv.innerHTML = `
+                    <strong>세션 ID:</strong> ${status.sessionId}<br>
+                    <strong>기록 상태:</strong> ${status.isRecording ? '🔴 기록 중' : '⏸️ 중지됨'}<br>
+                    <strong>이벤트 수:</strong> ${status.eventCount}<br>
+                    <strong>선택된 제품:</strong> ${selectedProducts.length > 0 ? selectedProducts.join(', ') : '없음'}<br>
+                    <strong>클릭 횟수:</strong> ${clickCount}<br>
+                    <strong>현재 페이지:</strong> 데모 페이지 2 (제품 선택)
+                `;
+            } else {
+                statusDiv.innerHTML = '❌ AIRIS 추적기가 로드되지 않았습니다.';
+            }
+        }
+
+        // 주기적으로 상태 업데이트
+        setInterval(updateStatus, 3000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,332 @@
+# AIRIS EPM CI/CD Pipeline
+# Continuous Integration and Deployment for AIRIS Enterprise Performance Management
+
+name: AIRIS EPM CI/CD
+
+on:
+  push:
+    branches: [main, develop, 'feature/*', 'hotfix/*']
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: airis-epm
+
+jobs:
+  # Code Quality and Security Checks
+  code-quality:
+    name: Code Quality & Security
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm ci --prefer-offline --no-audit
+          
+      - name: Run linting
+        run: npm run lint:check
+
+      - name: Run type checking
+        run: npm run typecheck
+
+      - name: Security audit
+        run: |
+          npm audit --audit-level=high
+          npx audit-ci --moderate
+
+      - name: SAST Code Analysis
+        uses: github/super-linter@v5
+        env:
+          DEFAULT_BRANCH: main
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_ALL_CODEBASE: false
+          VALIDATE_JAVASCRIPT_ES: true
+          VALIDATE_TYPESCRIPT_ES: true
+          VALIDATE_DOCKERFILE_HADOLINT: true
+          VALIDATE_YAML: true
+
+  # Unit and Integration Testing
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    needs: code-quality
+    strategy:
+      matrix:
+        test-type: [unit, integration]
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: airis_epm_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      clickhouse:
+        image: clickhouse/clickhouse-server:23.8-alpine
+        env:
+          CLICKHOUSE_DB: airis_epm_test
+          CLICKHOUSE_USER: default
+        ports:
+          - 8123:8123
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Wait for services
+        run: |
+          sleep 10
+          curl --retry 10 --retry-connrefused http://localhost:8123/ping
+
+      - name: Run ${{ matrix.test-type }} tests
+        run: npm run test:${{ matrix.test-type }}
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/airis_epm_test
+          REDIS_URL: redis://localhost:6379
+          CLICKHOUSE_URL: http://localhost:8123
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: ${{ matrix.test-type }}
+          name: ${{ matrix.test-type }}-coverage
+
+  # Build and Test Docker Image
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: test
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-tag: ${{ steps.meta.outputs.tags }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: production
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+            VERSION=${{ steps.meta.outputs.version }}
+
+  # Security Container Scanning
+  security-scan:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ needs.build.outputs.image-tag }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Deploy to Development
+  deploy-dev:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    needs: [build, security-scan]
+    if: github.ref == 'refs/heads/develop'
+    environment: development
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG_DEV }}
+
+      - name: Deploy to Development
+        run: |
+          # Update image tag in deployment
+          sed -i "s|airis-epm:latest|${{ needs.build.outputs.image-tag }}|g" infrastructure/k8s/deployment.yaml
+          
+          # Apply Kubernetes manifests
+          kubectl apply -f infrastructure/k8s/namespace.yaml
+          kubectl apply -f infrastructure/k8s/configmap.yaml
+          kubectl apply -f infrastructure/k8s/secret.yaml
+          kubectl apply -f infrastructure/k8s/pvc.yaml
+          kubectl apply -f infrastructure/k8s/deployment.yaml
+          kubectl apply -f infrastructure/k8s/service.yaml
+          kubectl apply -f infrastructure/k8s/hpa.yaml
+          kubectl apply -f infrastructure/k8s/ingress.yaml
+          
+          # Wait for rollout
+          kubectl rollout status deployment/airis-epm-app -n airis-epm --timeout=600s
+
+      - name: Run smoke tests
+        run: |
+          sleep 30
+          # Get service endpoint
+          ENDPOINT=$(kubectl get ingress airis-epm-ingress -n airis-epm -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          
+          # Run basic health check
+          curl -f "http://$ENDPOINT/health" || exit 1
+          
+          # Run API tests
+          npm run test:e2e -- --baseUrl="http://$ENDPOINT"
+
+  # Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, security-scan]
+    if: github.ref == 'refs/heads/main'
+    environment: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG_STAGING }}
+
+      - name: Deploy to Staging (Blue-Green)
+        run: |
+          # Blue-Green deployment logic
+          ./scripts/ci/blue-green-deploy.sh staging ${{ needs.build.outputs.image-tag }}
+
+      - name: Run comprehensive tests
+        run: |
+          ENDPOINT=$(kubectl get ingress airis-epm-ingress -n airis-epm-staging -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+          
+          # Performance tests
+          npm run test:performance -- --baseUrl="http://$ENDPOINT"
+          
+          # Security tests
+          npm run test:security -- --baseUrl="http://$ENDPOINT"
+
+  # Deploy to Production (Manual approval required)
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG_PROD }}
+
+      - name: Deploy to Production (Canary)
+        run: |
+          # Canary deployment
+          ./scripts/ci/canary-deploy.sh production ${{ needs.build.outputs.image-tag }}
+
+      - name: Monitor deployment
+        run: |
+          # Monitor key metrics for 10 minutes
+          ./scripts/ci/deployment-monitor.sh 600
+
+      - name: Complete canary deployment
+        run: |
+          # Complete canary if metrics are good
+          ./scripts/ci/canary-complete.sh production
+
+  # Rollback capability
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    if: failure()
+    environment: production
+    
+    steps:
+      - name: Rollback Production
+        run: |
+          kubectl rollout undo deployment/airis-epm-app -n airis-epm-prod
+          kubectl rollout status deployment/airis-epm-app -n airis-epm-prod

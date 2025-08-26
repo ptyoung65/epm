@@ -1,0 +1,339 @@
+# AIRIS EPM Security Monitoring and Alerting
+# Real-time security event monitoring and incident response
+
+# Falco Security Monitoring
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: falco-security-monitor
+  namespace: airis-epm
+  labels:
+    app: falco
+    component: security-monitoring
+spec:
+  selector:
+    matchLabels:
+      app: falco
+      component: security-monitoring
+  template:
+    metadata:
+      labels:
+        app: falco
+        component: security-monitoring
+    spec:
+      serviceAccountName: falco-security-monitor
+      hostNetwork: true
+      hostPID: true
+      containers:
+      - name: falco
+        image: falcosecurity/falco-no-driver:0.35.0
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+        args:
+        - /usr/bin/falco
+        - --cri=/run/containerd/containerd.sock
+        - --k8s-api=https://kubernetes.default.svc.cluster.local
+        - --k8s-api-cert=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        - --k8s-api-token=/var/run/secrets/kubernetes.io/serviceaccount/token
+        env:
+        - name: FALCO_GRPC_ENABLED
+          value: "true"
+        - name: FALCO_GRPC_BIND_ADDRESS
+          value: "0.0.0.0:5060"
+        - name: FALCO_K8S_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: dev-fs
+          mountPath: /dev
+        - name: proc-fs
+          mountPath: /host/proc
+          readOnly: true
+        - name: boot-fs
+          mountPath: /host/boot
+          readOnly: true
+        - name: lib-modules
+          mountPath: /host/lib/modules
+          readOnly: true
+        - name: usr-fs
+          mountPath: /host/usr
+          readOnly: true
+        - name: etc-fs
+          mountPath: /host/etc
+          readOnly: true
+        - name: falco-config
+          mountPath: /etc/falco
+        - name: run-containerd
+          mountPath: /run/containerd
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        ports:
+        - containerPort: 5060
+          name: grpc
+        - containerPort: 8765
+          name: http
+      volumes:
+      - name: dev-fs
+        hostPath:
+          path: /dev
+      - name: proc-fs
+        hostPath:
+          path: /proc
+      - name: boot-fs
+        hostPath:
+          path: /boot
+      - name: lib-modules
+        hostPath:
+          path: /lib/modules
+      - name: usr-fs
+        hostPath:
+          path: /usr
+      - name: etc-fs
+        hostPath:
+          path: /etc
+      - name: run-containerd
+        hostPath:
+          path: /run/containerd
+      - name: falco-config
+        configMap:
+          name: falco-config
+      tolerations:
+      - operator: Exists
+
+---
+# Falco Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: falco-config
+  namespace: airis-epm
+  labels:
+    app: falco
+data:
+  falco.yaml: |
+    rules_file:
+      - /etc/falco/falco_rules.yaml
+      - /etc/falco/airis_epm_rules.yaml
+    
+    time_format_iso_8601: true
+    json_output: true
+    json_include_output_property: true
+    log_stderr: true
+    log_syslog: true
+    log_level: info
+    
+    priority: debug
+    
+    buffered_outputs: false
+    
+    outputs:
+      rate: 1
+      max_burst: 1000
+    
+    syslog_output:
+      enabled: true
+    
+    file_output:
+      enabled: true
+      keep_alive: false
+      filename: /var/log/falco.log
+    
+    stdout_output:
+      enabled: true
+    
+    webserver:
+      enabled: true
+      listen_port: 8765
+      ssl_enabled: false
+    
+    grpc:
+      enabled: true
+      bind_address: "0.0.0.0:5060"
+      
+  airis_epm_rules.yaml: |
+    # AIRIS EPM Specific Security Rules
+    
+    # Detect unauthorized access to sensitive files
+    - rule: AIRIS EPM Sensitive File Access
+      desc: Detect access to AIRIS EPM sensitive configuration files
+      condition: >
+        (open_read and
+        (fd.name contains "/app/config" or 
+         fd.name contains ".env" or
+         fd.name contains "secrets" or
+         fd.name contains "keys") and
+        container.image.repository contains "airis-epm" and
+        not proc.name in (node, npm, docker))
+      output: >
+        Unauthorized access to sensitive AIRIS EPM file 
+        (user=%user.name command=%proc.cmdline file=%fd.name 
+        container=%container.name image=%container.image.repository)
+      priority: HIGH
+      tags: [airis-epm, file-access, security]
+    
+    # Detect privilege escalation attempts
+    - rule: AIRIS EPM Privilege Escalation
+      desc: Detect privilege escalation in AIRIS EPM containers
+      condition: >
+        spawned_process and
+        container.image.repository contains "airis-epm" and
+        (proc.name in (su, sudo, doas) or
+         proc.args contains "chmod +s" or
+         proc.args contains "setuid")
+      output: >
+        Privilege escalation attempt in AIRIS EPM 
+        (user=%user.name command=%proc.cmdline 
+        container=%container.name image=%container.image.repository)
+      priority: CRITICAL
+      tags: [airis-epm, privilege-escalation, security]
+    
+    # Detect suspicious network activity
+    - rule: AIRIS EPM Suspicious Network Activity
+      desc: Detect unexpected network connections from AIRIS EPM
+      condition: >
+        (inbound_outbound) and
+        container.image.repository contains "airis-epm" and
+        not fd.sport in (3000, 8123, 5432, 6379, 27017, 443, 53) and
+        not fd.dport in (3000, 8123, 5432, 6379, 27017, 443, 53)
+      output: >
+        Suspicious network activity in AIRIS EPM 
+        (connection=%fd.name sport=%fd.sport dport=%fd.dport 
+        container=%container.name)
+      priority: WARNING
+      tags: [airis-epm, network, security]
+    
+    # Detect unauthorized container execution
+    - rule: AIRIS EPM Unauthorized Container Execution  
+      desc: Detect execution of unauthorized containers in AIRIS EPM namespace
+      condition: >
+        container and
+        k8s.ns.name = "airis-epm" and
+        not container.image.repository in (
+          "airis-epm", "postgres", "redis", "clickhouse", 
+          "mongo", "vault", "falco"
+        )
+      output: >
+        Unauthorized container execution in AIRIS EPM namespace 
+        (image=%container.image.repository container=%container.name 
+        namespace=%k8s.ns.name pod=%k8s.pod.name)
+      priority: HIGH
+      tags: [airis-epm, container, security]
+
+---
+# Falco Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: falco-security-monitor
+  namespace: airis-epm
+  labels:
+    app: falco
+
+---
+# Falco ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: falco-security-role
+rules:
+- apiGroups: [""]
+  resources: ["nodes", "namespaces", "pods", "events"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "daemonsets", "replicasets", "statefulsets"]
+  verbs: ["get", "list", "watch"]
+
+---
+# Falco ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: falco-security-binding
+subjects:
+- kind: ServiceAccount
+  name: falco-security-monitor
+  namespace: airis-epm
+roleRef:
+  kind: ClusterRole
+  name: falco-security-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Security Event Alerting via Prometheus AlertManager
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-alerts-config
+  namespace: airis-epm
+  labels:
+    app: security-monitoring
+data:
+  security-alerts.yaml: |
+    groups:
+    - name: airis-epm-security
+      rules:
+      - alert: AIRISEPMSecurityViolation
+        expr: increase(falco_events_total{source="falco", priority=~"Critical|High"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: airis-epm
+          team: security
+        annotations:
+          summary: "AIRIS EPM Security Violation Detected"
+          description: "Security violation detected in AIRIS EPM: {{ $labels.rule }}"
+          runbook_url: "https://docs.airis.company.com/security/incident-response"
+      
+      - alert: AIRISEPMUnauthorizedAccess
+        expr: increase(falco_events_total{source="falco", rule=~".*Unauthorized.*"}[10m]) > 5
+        for: 1m
+        labels:
+          severity: warning
+          service: airis-epm
+          team: security
+        annotations:
+          summary: "Multiple unauthorized access attempts in AIRIS EPM"
+          description: "{{ $value }} unauthorized access attempts detected in the last 10 minutes"
+      
+      - alert: AIRISEPMPrivilegeEscalation
+        expr: increase(falco_events_total{source="falco", rule=~".*Privilege.*"}[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          service: airis-epm
+          team: security
+        annotations:
+          summary: "Privilege escalation attempt in AIRIS EPM"
+          description: "Privilege escalation detected - immediate investigation required"
+          runbook_url: "https://docs.airis.company.com/security/privilege-escalation"
+
+---
+# Security Monitoring Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: falco-security-monitor
+  namespace: airis-epm
+  labels:
+    app: falco
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8765
+    targetPort: 8765
+    protocol: TCP
+    name: http
+  - port: 5060
+    targetPort: 5060
+    protocol: TCP
+    name: grpc
+  selector:
+    app: falco
+    component: security-monitoring

@@ -1,0 +1,27 @@
+{
+  "name": "airis-epm-business-metrics",
+  "version": "1.0.0",
+  "description": "AIRIS EPM Business Metrics Collection Engine",
+  "main": "api-service.js",
+  "scripts": {
+    "start": "node api-service.js",
+    "dev": "nodemon api-service.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.0"
+  },
+  "keywords": [
+    "business-metrics",
+    "roi",
+    "cost-optimization",
+    "sla-monitoring",
+    "epm"
+  ],
+  "author": "AIRIS EPM Team",
+  "license": "MIT"
+}

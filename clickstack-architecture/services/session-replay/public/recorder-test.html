@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS Session Recorder 테스트</title>
+    <script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/record/rrweb-record.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .status-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .status-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        
+        .status-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .status-recording { color: #e74c3c; }
+        .status-stopped { color: #95a5a6; }
+        .status-ready { color: #27ae60; }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary { background: #3498db; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-warning { background: #f39c12; color: white; }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .test-area {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px dashed #ddd;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        input, textarea, select {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin: 5px;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        
+        .logs {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎬 AIRIS Session Recorder</h1>
+        <p>사용자 세션 기록 및 Playwright 변환 테스트 도구</p>
+    </div>
+
+    <!-- 상태 패널 -->
+    <div class="status-panel">
+        <div class="status-card">
+            <div class="status-label">기록 상태</div>
+            <div id="status" class="status-value status-ready">준비됨</div>
+        </div>
+        <div class="status-card">
+            <div class="status-label">세션 ID</div>
+            <div id="sessionId" class="status-value">-</div>
+        </div>
+        <div class="status-card">
+            <div class="status-label">기록 시간</div>
+            <div id="duration" class="status-value">00:00</div>
+        </div>
+        <div class="status-card">
+            <div class="status-label">이벤트 수</div>
+            <div id="eventCount" class="status-value">0</div>
+        </div>
+    </div>
+
+    <!-- 제어 버튼 -->
+    <div class="card">
+        <h3>📹 기록 제어</h3>
+        <div class="controls">
+            <button id="startBtn" class="btn-success">기록 시작</button>
+            <button id="stopBtn" class="btn-danger" disabled>기록 중지</button>
+            <button id="customEventBtn" class="btn-primary">커스텀 이벤트 추가</button>
+            <button id="convertBtn" class="btn-warning" disabled>Playwright 변환</button>
+        </div>
+    </div>
+
+    <!-- 테스트 영역 -->
+    <div class="card">
+        <h3>🧪 상호작용 테스트 영역</h3>
+        <div class="test-area">
+            <p>이 영역에서 다양한 상호작용을 테스트해보세요. 모든 동작이 기록됩니다.</p>
+            
+            <div class="test-controls">
+                <input type="text" placeholder="텍스트 입력 테스트" />
+                <input type="email" placeholder="이메일 입력" />
+                <input type="password" placeholder="비밀번호 (마스킹됨)" />
+            </div>
+            
+            <div class="test-controls">
+                <select>
+                    <option>옵션 선택</option>
+                    <option>옵션 1</option>
+                    <option>옵션 2</option>
+                    <option>옵션 3</option>
+                </select>
+                <input type="range" min="0" max="100" value="50" />
+                <input type="color" value="#3498db" />
+            </div>
+            
+            <div class="test-controls">
+                <label><input type="checkbox" /> 체크박스 1</label>
+                <label><input type="checkbox" /> 체크박스 2</label>
+                <label><input type="radio" name="radio" /> 라디오 1</label>
+                <label><input type="radio" name="radio" /> 라디오 2</label>
+            </div>
+            
+            <textarea placeholder="여러 줄 텍스트 입력 테스트" rows="4" style="width: 300px;"></textarea>
+            
+            <div class="test-controls">
+                <button onclick="testClick()">클릭 테스트</button>
+                <button onclick="testScroll()">스크롤 테스트</button>
+                <button onclick="testAlert()">알림 테스트</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 로그 영역 -->
+    <div class="card">
+        <h3>📊 실시간 로그</h3>
+        <div id="logs" class="logs">시스템이 준비되었습니다...\n</div>
+        <button onclick="clearLogs()" style="margin-top: 10px;">로그 지우기</button>
+    </div>
+
+    <script src="session-recorder.js"></script>
+    <script>
+        // 전역 변수
+        let recorder = null;
+        let currentSessionId = null;
+        let updateTimer = null;
+
+        // DOM 요소들
+        const elements = {
+            status: document.getElementById('status'),
+            sessionId: document.getElementById('sessionId'),
+            duration: document.getElementById('duration'),
+            eventCount: document.getElementById('eventCount'),
+            startBtn: document.getElementById('startBtn'),
+            stopBtn: document.getElementById('stopBtn'),
+            customEventBtn: document.getElementById('customEventBtn'),
+            convertBtn: document.getElementById('convertBtn'),
+            logs: document.getElementById('logs')
+        };
+
+        // 초기화
+        function init() {
+            log('AIRIS Session Recorder 테스트 페이지가 로드되었습니다.');
+            
+            // 이벤트 리스너 등록
+            elements.startBtn.addEventListener('click', startRecording);
+            elements.stopBtn.addEventListener('click', stopRecording);
+            elements.customEventBtn.addEventListener('click', addCustomEvent);
+            elements.convertBtn.addEventListener('click', convertSession);
+
+            // AIRIS 세션 이벤트 리스너
+            window.addEventListener('airis:sessionStarted', (e) => {
+                log(`세션 시작됨: ${e.detail.sessionId}`);
+                currentSessionId = e.detail.sessionId;
+                updateUI();
+            });
+
+            window.addEventListener('airis:sessionStopped', (e) => {
+                log(`세션 종료됨: ${e.detail.sessionId}, 시간: ${Math.round(e.detail.duration/1000)}초`);
+                updateUI();
+            });
+
+            // 자동 업데이트 시작
+            startUpdateTimer();
+        }
+
+        // 로그 함수
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            elements.logs.textContent += `[${timestamp}] ${message}\n`;
+            elements.logs.scrollTop = elements.logs.scrollHeight;
+        }
+
+        // UI 업데이트
+        function updateUI() {
+            if (recorder && recorder.isRecording) {
+                elements.status.textContent = '기록 중';
+                elements.status.className = 'status-value status-recording';
+                elements.sessionId.textContent = currentSessionId || '-';
+                elements.startBtn.disabled = true;
+                elements.stopBtn.disabled = false;
+                elements.convertBtn.disabled = true;
+            } else {
+                elements.status.textContent = '중지됨';
+                elements.status.className = 'status-value status-stopped';
+                elements.startBtn.disabled = false;
+                elements.stopBtn.disabled = true;
+                if (currentSessionId) {
+                    elements.convertBtn.disabled = false;
+                }
+            }
+
+            if (recorder) {
+                const info = recorder.getSessionInfo();
+                elements.duration.textContent = formatDuration(info.duration);
+                elements.eventCount.textContent = info.eventsCount;
+            }
+        }
+
+        // 시간 형식 변환
+        function formatDuration(ms) {
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        // 기록 시작
+        async function startRecording() {
+            try {
+                log('세션 기록을 시작합니다...');
+                
+                // 기존 레코더 정리
+                if (recorder) {
+                    await recorder.stop();
+                }
+
+                // 새 레코더 생성
+                recorder = new AIRISSessionRecorder({
+                    apiEndpoint: '/api/v1/sessions',
+                    userId: `test_user_${Date.now()}`,
+                    autoStart: false,
+                    tags: ['test', 'manual']
+                });
+
+                await recorder.start();
+                updateUI();
+
+            } catch (error) {
+                log(`기록 시작 실패: ${error.message}`);
+                console.error('기록 시작 실패:', error);
+            }
+        }
+
+        // 기록 중지
+        async function stopRecording() {
+            if (recorder) {
+                try {
+                    log('세션 기록을 중지합니다...');
+                    await recorder.stop();
+                    updateUI();
+                } catch (error) {
+                    log(`기록 중지 실패: ${error.message}`);
+                }
+            }
+        }
+
+        // 커스텀 이벤트 추가
+        function addCustomEvent() {
+            if (recorder && recorder.isRecording) {
+                const eventData = {
+                    action: 'custom_test_event',
+                    timestamp: Date.now(),
+                    data: {
+                        page: window.location.pathname,
+                        userAction: 'manual_event_trigger'
+                    }
+                };
+                
+                recorder.addCustomEvent(eventData);
+                log('커스텀 이벤트가 추가되었습니다');
+            } else {
+                log('기록이 진행 중이 아닙니다');
+            }
+        }
+
+        // Playwright 스크립트 변환
+        async function convertSession() {
+            if (!currentSessionId) {
+                log('변환할 세션이 없습니다');
+                return;
+            }
+
+            try {
+                log('Playwright 스크립트로 변환 중...');
+                const response = await fetch(`/api/v1/sessions/${currentSessionId}/convert`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        browser: 'chromium',
+                        headless: false,
+                        slowMo: 100
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    log(`스크립트 변환 완료: ${result.script.fileName}`);
+                    log(`액션 수: ${result.script.actionsCount}`);
+                    
+                    // 스크립트 다운로드
+                    const link = document.createElement('a');
+                    link.href = `/api/v1/scripts/${result.script.id}/download`;
+                    link.download = result.script.fileName;
+                    link.click();
+                    log('스크립트 다운로드가 시작되었습니다');
+                } else {
+                    log(`변환 실패: ${result.error}`);
+                }
+            } catch (error) {
+                log(`변환 오류: ${error.message}`);
+            }
+        }
+
+        // 자동 업데이트 타이머
+        function startUpdateTimer() {
+            updateTimer = setInterval(() => {
+                if (recorder) {
+                    updateUI();
+                }
+            }, 1000);
+        }
+
+        // 테스트 함수들
+        function testClick() {
+            log('클릭 테스트 실행됨');
+        }
+
+        function testScroll() {
+            window.scrollTo({ top: Math.random() * 1000, behavior: 'smooth' });
+            log('스크롤 테스트 실행됨');
+        }
+
+        function testAlert() {
+            alert('알림 테스트입니다!');
+            log('알림 테스트 실행됨');
+        }
+
+        function clearLogs() {
+            elements.logs.textContent = '';
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', init);
+
+        // 개발자를 위한 전역 함수들
+        window.testRecorder = {
+            getRecorder: () => recorder,
+            getCurrentSession: () => currentSessionId,
+            log: log
+        };
+    </script>
+</body>
+</html>

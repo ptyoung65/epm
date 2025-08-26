@@ -1,0 +1,406 @@
+# AIRIS EPM Development Environment Configuration
+# Optimized for development workflow with debugging and fast iteration
+
+# Development Namespace
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: airis-epm-dev
+  labels:
+    environment: development
+    tier: dev
+    monitoring: enabled
+
+---
+# Development ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airis-epm-config
+  namespace: airis-epm-dev
+  labels:
+    environment: development
+    config-type: application
+data:
+  # Application Configuration
+  NODE_ENV: "development"
+  LOG_LEVEL: "debug"
+  DEBUG: "true"
+  ENVIRONMENT: "development"
+  
+  # Database URLs (Development)
+  CLICKHOUSE_URL: "http://clickhouse-dev.airis-epm-dev.svc.cluster.local:8123"
+  CLICKHOUSE_DATABASE: "airis_epm_dev"
+  
+  POSTGRESQL_URL: "postgresql://airis_epm_dev:dev-password@postgresql-dev.airis-epm-dev.svc.cluster.local:5432/airis_epm_dev"
+  
+  REDIS_URL: "redis://redis-dev.airis-epm-dev.svc.cluster.local:6379"
+  REDIS_DATABASE: "0"
+  
+  MONGODB_URL: "mongodb://airis_epm_dev:dev-password@mongodb-dev.airis-epm-dev.svc.cluster.local:27017/airis_epm_dev"
+  
+  # API Configuration
+  API_BASE_URL: "http://api-dev.airis.company.com"
+  API_TIMEOUT: "30000"
+  API_RATE_LIMIT: "1000"
+  
+  # Authentication (Development)
+  JWT_SECRET: "dev-jwt-secret-key-change-in-production"
+  JWT_EXPIRES_IN: "24h"
+  AUTH_PROVIDER: "local"
+  
+  # Monitoring & Observability
+  METRICS_ENABLED: "true"
+  TRACING_ENABLED: "true"
+  JAEGER_ENDPOINT: "http://jaeger-dev.airis-epm-dev.svc.cluster.local:14268"
+  
+  # Feature Flags
+  ENABLE_DEBUG_ROUTES: "true"
+  ENABLE_MOCK_DATA: "true"
+  ENABLE_HOT_RELOAD: "true"
+  DISABLE_AUTH: "false"
+  ENABLE_CORS: "true"
+  
+  # Performance Settings (Relaxed for Dev)
+  MAX_CONCURRENT_REQUESTS: "100"
+  CACHE_TTL: "60"
+  BATCH_SIZE: "100"
+  
+  # Development Tools
+  WEBPACK_DEV_SERVER: "true"
+  SOURCE_MAPS: "true"
+  MINIFY: "false"
+
+---
+# Development Secrets
+apiVersion: v1
+kind: Secret
+metadata:
+  name: airis-epm-secrets
+  namespace: airis-epm-dev
+  labels:
+    environment: development
+type: Opaque
+stringData:
+  # Database Credentials
+  clickhouse-user: "airis_epm_dev"
+  clickhouse-password: "dev-ch-password-2025"
+  
+  postgresql-user: "airis_epm_dev"
+  postgresql-password: "dev-pg-password-2025"
+  
+  redis-password: "dev-redis-password-2025"
+  
+  mongodb-user: "airis_epm_dev"
+  mongodb-password: "dev-mongo-password-2025"
+  
+  # API Keys (Development)
+  openai-api-key: "sk-dev-openai-key-here"
+  anthropic-api-key: "sk-dev-anthropic-key-here"
+  
+  # External Services
+  smtp-username: "dev@airis.company.com"
+  smtp-password: "dev-smtp-password"
+  
+  # SSL Certificates (Self-signed for dev)
+  tls-cert: |
+    -----BEGIN CERTIFICATE-----
+    ... DEV CERTIFICATE ...
+    -----END CERTIFICATE-----
+  tls-key: |
+    -----BEGIN PRIVATE KEY-----
+    ... DEV PRIVATE KEY ...
+    -----END PRIVATE KEY-----
+
+---
+# Development Resource Quotas
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: dev-resource-quota
+  namespace: airis-epm-dev
+spec:
+  hard:
+    # Compute Resources
+    requests.cpu: "8"
+    requests.memory: 16Gi
+    limits.cpu: "16"
+    limits.memory: 32Gi
+    
+    # Storage
+    requests.storage: 100Gi
+    persistentvolumeclaims: "10"
+    
+    # Objects
+    pods: "50"
+    services: "20"
+    configmaps: "20"
+    secrets: "20"
+    
+    # Load Balancers
+    services.loadbalancers: "2"
+
+---
+# Development Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dev-network-policy
+  namespace: airis-epm-dev
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow from ingress
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+  # Allow from same namespace
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: airis-epm-dev
+  # Allow from monitoring
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  # Allow DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow external APIs
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 80
+    - protocol: TCP
+      port: 443
+  # Allow internal cluster communication
+  - to:
+    - namespaceSelector: {}
+
+---
+# Development HPA Template
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dev-hpa-template
+  namespace: airis-epm-dev
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: airis-epm-app-dev
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 30
+
+---
+# Development Service Monitor
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: airis-epm-dev-metrics
+  namespace: airis-epm-dev
+  labels:
+    environment: development
+spec:
+  selector:
+    matchLabels:
+      monitoring: enabled
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+    honorLabels: true
+  namespaceSelector:
+    matchNames:
+    - airis-epm-dev
+
+---
+# Development Deployment Template
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airis-epm-app-dev
+  namespace: airis-epm-dev
+  labels:
+    app: airis-epm
+    environment: development
+    tier: application
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airis-epm
+      environment: development
+  template:
+    metadata:
+      labels:
+        app: airis-epm
+        environment: development
+        monitoring: enabled
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: airis-epm
+        image: localhost:5000/airis-epm:dev-latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3000
+          name: http
+        - containerPort: 8080
+          name: metrics
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: airis-epm-config
+              key: NODE_ENV
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: airis-epm-config
+              key: LOG_LEVEL
+        envFrom:
+        - configMapRef:
+            name: airis-epm-config
+        - secretRef:
+            name: airis-epm-secrets
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+        - name: app-logs
+          mountPath: /app/logs
+        - name: temp-storage
+          mountPath: /tmp
+      volumes:
+      - name: app-logs
+        emptyDir: {}
+      - name: temp-storage
+        emptyDir:
+          sizeLimit: 1Gi
+      nodeSelector:
+        environment: development
+      tolerations:
+      - key: "dev-only"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+
+---
+# Development Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: airis-epm-service-dev
+  namespace: airis-epm-dev
+  labels:
+    app: airis-epm
+    environment: development
+    monitoring: enabled
+spec:
+  type: ClusterIP
+  selector:
+    app: airis-epm
+    environment: development
+  ports:
+  - name: http
+    port: 80
+    targetPort: 3000
+    protocol: TCP
+  - name: metrics
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+
+---
+# Development Ingress
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: airis-epm-ingress-dev
+  namespace: airis-epm-dev
+  labels:
+    environment: development
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+spec:
+  rules:
+  - host: dev.airis.company.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: airis-epm-service-dev
+            port:
+              number: 80
+  tls:
+  - hosts:
+    - dev.airis.company.com
+    secretName: dev-tls-secret

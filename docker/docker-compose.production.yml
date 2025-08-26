@@ -1,0 +1,341 @@
+# AIRIS EPM - 프로덕션 Docker Compose 설정
+version: '3.8'
+
+services:
+  # AIRIS EPM 메인 애플리케이션
+  airis-epm-app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.production
+    image: airis-epm:latest
+    container_name: airis-epm-production
+    restart: unless-stopped
+    ports:
+      - "3002:3002"   # Dashboard UI
+      - "3300:3300"   # Realtime Hub
+      - "3500:3500"   # AI Prediction Service
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://airis:${POSTGRES_PASSWORD:-airispass}@postgres:5432/airis_epm
+      - MONGODB_URL=mongodb://mongodb:27017/airis_epm
+      - CLICKHOUSE_URL=http://clickhouse:8123
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-your-32-char-encryption-key-here}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3002,https://yourdomain.com}
+      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-1000}
+      - SESSION_SECRET=${SESSION_SECRET:-your-session-secret}
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./config/production.json:/app/config/production.json:ro
+    depends_on:
+      - redis
+      - postgres
+      - mongodb
+      - clickhouse
+    networks:
+      - airis-network
+    healthcheck:
+      test: ["CMD", "./scripts/health-check.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+  # Redis - 캐시 및 세션 스토어
+  redis:
+    image: redis:7-alpine
+    container_name: airis-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redispass}
+    volumes:
+      - redis-data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - airis-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+
+  # PostgreSQL - 관계형 데이터베이스
+  postgres:
+    image: postgres:15-alpine
+    container_name: airis-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=airis_epm
+      - POSTGRES_USER=airis
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-airispass}
+      - POSTGRES_INITDB_ARGS=--auth-local=trust
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    networks:
+      - airis-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airis -d airis_epm"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # MongoDB - 문서형 데이터베이스
+  mongodb:
+    image: mongo:6.0
+    container_name: airis-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD:-mongopass}
+      - MONGO_INITDB_DATABASE=airis_epm
+    volumes:
+      - mongodb-data:/data/db
+      - ./config/mongod.conf:/etc/mongod.conf:ro
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - airis-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # ClickHouse - 시계열 데이터베이스
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: airis-clickhouse
+    restart: unless-stopped
+    ports:
+      - "8123:8123"   # HTTP
+      - "9000:9000"   # Native TCP
+    environment:
+      - CLICKHOUSE_DB=airis_epm
+      - CLICKHOUSE_USER=airis
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-clickhousepass}
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ./config/clickhouse:/etc/clickhouse-server/config.d:ro
+      - ./sql/clickhouse-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - airis-network
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+  # Nginx - 리버스 프록시 및 로드 밸런서
+  nginx:
+    image: nginx:alpine
+    container_name: airis-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/nginx/sites-enabled:/etc/nginx/sites-enabled:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - airis-epm-app
+    networks:
+      - airis-network
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Prometheus - 메트릭 수집
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: airis-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=30d'
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus-data:/prometheus
+    networks:
+      - airis-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # Grafana - 대시보드 및 알림
+  grafana:
+    image: grafana/grafana:latest
+    container_name: airis-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-grafanapass}
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource,redis-datasource
+      - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL:-http://localhost:3001}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    networks:
+      - airis-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+
+  # Log aggregation
+  fluentd:
+    image: fluent/fluentd:v1.16-debian-1
+    container_name: airis-fluentd
+    restart: unless-stopped
+    ports:
+      - "24224:24224"
+      - "24224:24224/udp"
+    volumes:
+      - ./config/fluentd/fluent.conf:/fluentd/etc/fluent.conf:ro
+      - ./logs:/var/log
+    depends_on:
+      - airis-epm-app
+    networks:
+      - airis-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+
+# Persistent volumes
+volumes:
+  redis-data:
+    driver: local
+  postgres-data:
+    driver: local
+  mongodb-data:
+    driver: local
+  clickhouse-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+# Networks
+networks:
+  airis-network:
+    driver: bridge
+    name: airis-network
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# Deployment configuration
+x-common-deploy: &common-deploy
+  restart_policy:
+    condition: on-failure
+    delay: 5s
+    max_attempts: 3
+    window: 120s
+  update_config:
+    parallelism: 1
+    delay: 10s
+    failure_action: rollback
+    monitor: 60s
+  rollback_config:
+    parallelism: 1
+    delay: 5s
+    failure_action: pause
+    monitor: 60s

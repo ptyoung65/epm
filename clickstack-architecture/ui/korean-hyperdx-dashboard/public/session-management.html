@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS APM | 세션 관리 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/rrweb-player@latest/dist/index.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/rrweb-player@latest/dist/style.css">
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 221.2 83.2% 53.3%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 221.2 83.2% 53.3%;
+            --chart-1: 12 76% 61%;
+            --chart-2: 173 58% 39%;
+            --chart-3: 197 37% 24%;
+            --chart-4: 43 74% 66%;
+            --chart-5: 27 87% 67%;
+        }
+        
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 217.2 91.2% 59.8%;
+            --primary-foreground: 222.2 84% 4.9%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 224.3 76.3% 94.1%;
+            --chart-1: 220 70% 50%;
+            --chart-2: 160 60% 45%;
+            --chart-3: 30 80% 55%;
+            --chart-4: 280 65% 60%;
+            --chart-5: 340 75% 55%;
+        }
+        
+        body {
+            font-feature-settings: "rlig" 1, "calt" 1;
+        }
+        
+        .card {
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+        
+        .btn-primary {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            padding: 0.5rem 1rem;
+        }
+        
+        .btn-primary:hover {
+            background-color: hsl(var(--primary) / 0.9);
+        }
+        
+        .btn-ghost {
+            color: hsl(var(--foreground));
+            padding: 0.5rem 1rem;
+        }
+        
+        .btn-ghost:hover {
+            background-color: hsl(var(--accent));
+            color: hsl(var(--accent-foreground));
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 9999px;
+            padding: 0.125rem 0.625rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-recording { background-color: #fef3c7; color: #92400e; }
+        .status-completed { background-color: #d1fae5; color: #065f46; }
+        .status-failed { background-color: #fee2e2; color: #991b1b; }
+        
+        .rr-player { border-radius: 0.75rem; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 50;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        
+        .modal.show { display: flex; }
+        
+        .modal-content {
+            margin: auto;
+            background-color: hsl(var(--card));
+            border-radius: 0.75rem;
+            padding: 2rem;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 네비게이션 -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-xl font-bold text-gray-900">AIRIS APM</h1>
+                    </div>
+                    <div class="ml-10">
+                        <div class="flex items-baseline space-x-4">
+                            <a href="/" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">대시보드</a>
+                            <a href="/j2ee-dashboard.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">J2EE</a>
+                            <a href="/was-dashboard.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">WAS</a>
+                            <a href="/exception-dashboard.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">예외 추적</a>
+                            <a href="/topology-dashboard.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">토폴로지</a>
+                            <a href="/alert-dashboard.html" class="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium">알림</a>
+                            <a href="/session-management.html" class="bg-blue-100 text-blue-700 px-3 py-2 rounded-md text-sm font-medium">세션 관리</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-sm text-gray-500">
+                    <span id="current-time"></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 헤더 -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-900">🎬 세션 관리</h2>
+                    <p class="text-gray-600 mt-2">사용자 세션 기록, Playwright 변환 및 리플레이 관리</p>
+                </div>
+                <div class="flex space-x-3">
+                    <button onclick="refreshData()" class="btn btn-ghost">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        새로고침
+                    </button>
+                    <button onclick="openRecorderTest()" class="btn btn-primary">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                        테스트 레코더
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 통계 카드 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="card p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 110 2h-1v12a3 3 0 01-3 3H6a3 3 0 01-3-3V6H2a1 1 0 110-2h5z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">총 세션</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalSessions">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-red-100 rounded-lg">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">기록 중</p>
+                        <p class="text-2xl font-bold text-red-600" id="recordingSessions">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">완료된 세션</p>
+                        <p class="text-2xl font-bold text-green-600" id="completedSessions">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm text-gray-600">총 이벤트</p>
+                        <p class="text-2xl font-bold text-purple-600" id="totalEvents">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 필터 및 검색 -->
+        <div class="card p-6 mb-8">
+            <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex-1">
+                    <input type="text" id="searchInput" placeholder="세션 ID 또는 사용자 ID로 검색..." 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div class="sm:w-48">
+                    <select id="statusFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">모든 상태</option>
+                        <option value="recording">기록 중</option>
+                        <option value="completed">완료</option>
+                        <option value="failed">실패</option>
+                    </select>
+                </div>
+                <div class="sm:w-48">
+                    <select id="dateFilter" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        <option value="">전체 기간</option>
+                        <option value="today">오늘</option>
+                        <option value="week">최근 1주일</option>
+                        <option value="month">최근 1개월</option>
+                    </select>
+                </div>
+                <button onclick="applyFilters()" class="btn btn-primary px-6">검색</button>
+            </div>
+        </div>
+
+        <!-- 세션 테이블 -->
+        <div class="card">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">세션 목록</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">세션 ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">사용자</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">상태</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">시작 시간</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">기간</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">이벤트 수</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">액션</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessionsTable" class="divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    <svg class="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 110 2h-1v12a3 3 0 01-3 3H6a3 3 0 01-3-3V6H2a1 1 0 110-2h5z"></path>
+                                    </svg>
+                                    데이터를 불러오는 중...
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 세션 상세 모달 -->
+    <div id="sessionModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">세션 상세 정보</h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="sessionDetails">
+                <!-- 동적으로 로드됨 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 리플레이 모달 -->
+    <div id="replayModal" class="modal">
+        <div class="modal-content" style="max-width: 95vw;">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">세션 리플레이</h3>
+                <button onclick="closeReplayModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="replayContainer" style="height: 70vh;">
+                <!-- rrweb player가 여기에 로드됩니다 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let allSessions = [];
+        let filteredSessions = [];
+        let currentPlayer = null;
+
+        // 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+            loadSessionData();
+            
+            // 검색 입력 이벤트
+            document.getElementById('searchInput').addEventListener('input', debounce(applyFilters, 300));
+        });
+
+        // 현재 시간 업데이트
+        function updateCurrentTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = 
+                now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+        }
+
+        // 세션 데이터 로드
+        async function loadSessionData() {
+            try {
+                const response = await fetch('/api/v1/sessions');
+                const result = await response.json();
+                
+                if (result.success) {
+                    allSessions = result.sessions || [];
+                    filteredSessions = [...allSessions];
+                    updateStatistics();
+                    renderSessionsTable();
+                } else {
+                    console.error('세션 데이터 로드 실패:', result.error);
+                    showNoData('세션 데이터를 불러올 수 없습니다.');
+                }
+            } catch (error) {
+                console.error('API 호출 오류:', error);
+                showNoData('서버와 연결할 수 없습니다.');
+            }
+        }
+
+        // 통계 업데이트
+        function updateStatistics() {
+            const total = allSessions.length;
+            const recording = allSessions.filter(s => s.status === 'recording').length;
+            const completed = allSessions.filter(s => s.status === 'completed').length;
+            const totalEvents = allSessions.reduce((sum, s) => sum + (s.eventsCount || 0), 0);
+
+            document.getElementById('totalSessions').textContent = total.toLocaleString();
+            document.getElementById('recordingSessions').textContent = recording.toLocaleString();
+            document.getElementById('completedSessions').textContent = completed.toLocaleString();
+            document.getElementById('totalEvents').textContent = totalEvents.toLocaleString();
+        }
+
+        // 세션 테이블 렌더링
+        function renderSessionsTable() {
+            const tbody = document.getElementById('sessionsTable');
+            
+            if (filteredSessions.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <svg class="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-3-4h6m-3-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                세션이 없습니다
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filteredSessions.map(session => {
+                const statusBadge = getStatusBadge(session.status);
+                const duration = formatDuration(session.duration);
+                const startTime = new Date(session.startTime).toLocaleString('ko-KR');
+
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="text-sm font-medium text-gray-900">${session.id}</div>
+                            <div class="text-sm text-gray-500">${session.url || 'N/A'}</div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">${session.userId || 'anonymous'}</td>
+                        <td class="px-6 py-4">${statusBadge}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900">${startTime}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900">${duration}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900">${(session.eventsCount || 0).toLocaleString()}</td>
+                        <td class="px-6 py-4 text-sm font-medium space-x-2">
+                            <button onclick="viewSessionDetails('${session.id}')" class="text-blue-600 hover:text-blue-900">상세</button>
+                            ${session.status === 'completed' ? `<button onclick="replaySession('${session.id}')" class="text-green-600 hover:text-green-900">리플레이</button>` : ''}
+                            ${session.status === 'completed' ? `<button onclick="convertToPlaywright('${session.id}')" class="text-purple-600 hover:text-purple-900">변환</button>` : ''}
+                            <button onclick="deleteSession('${session.id}')" class="text-red-600 hover:text-red-900">삭제</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 상태 배지 생성
+        function getStatusBadge(status) {
+            const badges = {
+                recording: '<span class="status-badge status-recording">기록 중</span>',
+                completed: '<span class="status-badge status-completed">완료</span>',
+                failed: '<span class="status-badge status-failed">실패</span>'
+            };
+            return badges[status] || `<span class="status-badge">${status}</span>`;
+        }
+
+        // 기간 포맷팅
+        function formatDuration(duration) {
+            if (!duration) return '-';
+            const seconds = Math.floor(duration / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            
+            if (hours > 0) {
+                return `${hours}시간 ${minutes % 60}분`;
+            } else if (minutes > 0) {
+                return `${minutes}분 ${seconds % 60}초`;
+            } else {
+                return `${seconds}초`;
+            }
+        }
+
+        // 필터 적용
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const dateFilter = document.getElementById('dateFilter').value;
+
+            filteredSessions = allSessions.filter(session => {
+                // 검색 필터
+                const matchesSearch = !searchTerm || 
+                    session.id.toLowerCase().includes(searchTerm) ||
+                    (session.userId && session.userId.toLowerCase().includes(searchTerm));
+
+                // 상태 필터
+                const matchesStatus = !statusFilter || session.status === statusFilter;
+
+                // 날짜 필터
+                let matchesDate = true;
+                if (dateFilter) {
+                    const sessionDate = new Date(session.startTime);
+                    const now = new Date();
+                    
+                    switch (dateFilter) {
+                        case 'today':
+                            matchesDate = sessionDate.toDateString() === now.toDateString();
+                            break;
+                        case 'week':
+                            matchesDate = (now - sessionDate) <= 7 * 24 * 60 * 60 * 1000;
+                            break;
+                        case 'month':
+                            matchesDate = (now - sessionDate) <= 30 * 24 * 60 * 60 * 1000;
+                            break;
+                    }
+                }
+
+                return matchesSearch && matchesStatus && matchesDate;
+            });
+
+            renderSessionsTable();
+        }
+
+        // 세션 상세 보기
+        async function viewSessionDetails(sessionId) {
+            try {
+                const response = await fetch(`/api/v1/sessions/${sessionId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const session = result.session.session;
+                    const events = result.session.events || [];
+                    
+                    document.getElementById('sessionDetails').innerHTML = `
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="font-semibold mb-2">기본 정보</h4>
+                                <div class="space-y-2 text-sm">
+                                    <p><strong>세션 ID:</strong> ${session.id}</p>
+                                    <p><strong>사용자:</strong> ${session.userId || 'anonymous'}</p>
+                                    <p><strong>URL:</strong> ${session.url || 'N/A'}</p>
+                                    <p><strong>상태:</strong> ${getStatusBadge(session.status)}</p>
+                                    <p><strong>시작:</strong> ${new Date(session.startTime).toLocaleString('ko-KR')}</p>
+                                    ${session.endTime ? `<p><strong>종료:</strong> ${new Date(session.endTime).toLocaleString('ko-KR')}</p>` : ''}
+                                    <p><strong>기간:</strong> ${formatDuration(session.duration)}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold mb-2">메타데이터</h4>
+                                <div class="space-y-2 text-sm">
+                                    <p><strong>이벤트 수:</strong> ${events.length.toLocaleString()}</p>
+                                    <p><strong>디바이스:</strong> ${session.metadata?.device || 'N/A'}</p>
+                                    <p><strong>브라우저:</strong> ${session.metadata?.browser || 'N/A'}</p>
+                                    <p><strong>뷰포트:</strong> ${session.metadata?.viewport ? `${session.metadata.viewport.width}x${session.metadata.viewport.height}` : 'N/A'}</p>
+                                    <p><strong>태그:</strong> ${session.tags?.join(', ') || 'N/A'}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <h4 class="font-semibold mb-2">액션</h4>
+                            <div class="flex space-x-2">
+                                ${session.status === 'completed' ? `
+                                    <button onclick="replaySession('${session.id}')" class="btn btn-primary">리플레이</button>
+                                    <button onclick="convertToPlaywright('${session.id}')" class="btn btn-ghost">Playwright 변환</button>
+                                ` : ''}
+                                <button onclick="downloadSessionData('${session.id}')" class="btn btn-ghost">데이터 다운로드</button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.getElementById('sessionModal').classList.add('show');
+                } else {
+                    alert('세션 정보를 불러올 수 없습니다: ' + result.error);
+                }
+            } catch (error) {
+                console.error('세션 상세 조회 오류:', error);
+                alert('세션 정보를 불러오는 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 세션 리플레이
+        async function replaySession(sessionId) {
+            try {
+                const response = await fetch(`/api/v1/sessions/${sessionId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const events = result.session.events || [];
+                    
+                    if (events.length === 0) {
+                        alert('리플레이할 이벤트가 없습니다.');
+                        return;
+                    }
+
+                    // 기존 플레이어 정리
+                    if (currentPlayer) {
+                        currentPlayer.destroy();
+                        currentPlayer = null;
+                    }
+
+                    // 리플레이 컨테이너 초기화
+                    const container = document.getElementById('replayContainer');
+                    container.innerHTML = '';
+
+                    // rrweb player 생성
+                    currentPlayer = new rrwebPlayer({
+                        target: container,
+                        props: {
+                            events: events,
+                            width: container.offsetWidth - 20,
+                            height: container.offsetHeight - 20,
+                            autoPlay: false,
+                            speedOption: [1, 2, 4, 8]
+                        }
+                    });
+
+                    document.getElementById('replayModal').classList.add('show');
+                } else {
+                    alert('세션 데이터를 불러올 수 없습니다: ' + result.error);
+                }
+            } catch (error) {
+                console.error('리플레이 오류:', error);
+                alert('리플레이 중 오류가 발생했습니다.');
+            }
+        }
+
+        // Playwright 변환
+        async function convertToPlaywright(sessionId) {
+            try {
+                const response = await fetch(`/api/v1/sessions/${sessionId}/convert`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        browser: 'chromium',
+                        headless: false,
+                        slowMo: 100
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`Playwright 스크립트가 생성되었습니다!\n파일: ${result.script.fileName}\n액션 수: ${result.script.actionsCount}`);
+                    
+                    // 스크립트 다운로드
+                    const link = document.createElement('a');
+                    link.href = `/api/v1/scripts/${result.script.id}/download`;
+                    link.download = result.script.fileName;
+                    link.click();
+                } else {
+                    alert('변환 실패: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Playwright 변환 오류:', error);
+                alert('변환 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 세션 삭제
+        async function deleteSession(sessionId) {
+            if (!confirm('정말로 이 세션을 삭제하시겠습니까?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/sessions/${sessionId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('세션이 삭제되었습니다.');
+                    refreshData();
+                } else {
+                    alert('삭제 실패: ' + result.error);
+                }
+            } catch (error) {
+                console.error('세션 삭제 오류:', error);
+                alert('삭제 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 세션 데이터 다운로드
+        async function downloadSessionData(sessionId) {
+            try {
+                const response = await fetch(`/api/v1/sessions/${sessionId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const dataStr = JSON.stringify(result.session, null, 2);
+                    const blob = new Blob([dataStr], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `session_${sessionId}.json`;
+                    link.click();
+                    
+                    URL.revokeObjectURL(url);
+                } else {
+                    alert('다운로드 실패: ' + result.error);
+                }
+            } catch (error) {
+                console.error('다운로드 오류:', error);
+                alert('다운로드 중 오류가 발생했습니다.');
+            }
+        }
+
+        // 모달 닫기
+        function closeModal() {
+            document.getElementById('sessionModal').classList.remove('show');
+        }
+
+        function closeReplayModal() {
+            document.getElementById('replayModal').classList.remove('show');
+            if (currentPlayer) {
+                currentPlayer.destroy();
+                currentPlayer = null;
+            }
+        }
+
+        // 데이터 새로고침
+        function refreshData() {
+            loadSessionData();
+        }
+
+        // 테스트 레코더 열기
+        function openRecorderTest() {
+            window.open('/static/recorder-test.html', '_blank');
+        }
+
+        // 데이터 없음 표시
+        function showNoData(message) {
+            const tbody = document.getElementById('sessionsTable');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                        <div class="flex flex-col items-center">
+                            <svg class="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            ${message}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+
+        // 디바운스 함수
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // 모달 외부 클릭 시 닫기
+        document.getElementById('sessionModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal();
+        });
+
+        document.getElementById('replayModal').addEventListener('click', function(e) {
+            if (e.target === this) closeReplayModal();
+        });
+    </script>
+</body>
+</html>

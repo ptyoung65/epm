@@ -13,7 +13,7 @@ sleep 3
 
 # 기본 서비스들만 시작 (DB + 핵심 API)
 echo "🐳 기본 서비스들 시작 중..."
-docker-compose up -d registry mongodb redis postgres clickhouse api-gateway ui
+docker compose up -d registry mongodb redis postgres clickhouse api-gateway ui
 
 echo "⏳ 서비스 시작 대기 중..."
 sleep 10

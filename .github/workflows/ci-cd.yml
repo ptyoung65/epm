@@ -1,0 +1,586 @@
+# AIRIS EPM - CI/CD 워크플로우
+# GitHub Actions를 통한 자동화된 테스트, 빌드, 배포
+
+name: AIRIS EPM CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, 'feature/*', 'hotfix/*' ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+  release:
+    types: [ published ]
+
+env:
+  NODE_VERSION: '18.x'
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: airis-epm
+  COMPOSE_FILE: docker/docker-compose.production.yml
+
+jobs:
+  # 1. 코드 품질 검사 및 보안 스캔
+  code-quality:
+    name: 코드 품질 검사
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 코드 체크아웃
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Node.js 설정
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: |
+          src/dashboard/package-lock.json
+          src/realtime-hub/package-lock.json
+          src/ai-prediction/package-lock.json
+
+    - name: 의존성 설치 - Dashboard
+      working-directory: src/dashboard
+      run: npm ci
+
+    - name: 의존성 설치 - Realtime Hub
+      working-directory: src/realtime-hub
+      run: npm ci
+
+    - name: 의존성 설치 - AI Prediction
+      working-directory: src/ai-prediction
+      run: npm ci
+
+    - name: ESLint 검사
+      run: |
+        cd src/dashboard && npm run lint
+        cd ../realtime-hub && npm run lint
+        cd ../ai-prediction && npm run lint
+
+    - name: TypeScript 컴파일 검사
+      working-directory: src/dashboard
+      run: npm run type-check
+
+    - name: Prettier 포맷팅 검사
+      run: |
+        cd src/dashboard && npm run format:check
+        cd ../realtime-hub && npm run format:check
+        cd ../ai-prediction && npm run format:check
+
+    - name: 보안 취약점 스캔
+      run: |
+        cd src/dashboard && npm audit --audit-level=high
+        cd ../realtime-hub && npm audit --audit-level=high
+        cd ../ai-prediction && npm audit --audit-level=high
+
+    - name: SonarQube 스캔
+      uses: sonarqube-quality-gate-action@master
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # 2. 단위 테스트
+  unit-tests:
+    name: 단위 테스트
+    runs-on: ubuntu-latest
+    needs: code-quality
+
+    strategy:
+      matrix:
+        service: [dashboard, realtime-hub, ai-prediction]
+        node-version: ['18.x', '20.x']
+
+    steps:
+    - name: 코드 체크아웃
+      uses: actions/checkout@v4
+
+    - name: Node.js ${{ matrix.node-version }} 설정
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: src/${{ matrix.service }}/package-lock.json
+
+    - name: 의존성 설치
+      working-directory: src/${{ matrix.service }}
+      run: npm ci
+
+    - name: 단위 테스트 실행
+      working-directory: src/${{ matrix.service }}
+      run: npm run test:unit -- --coverage --watchAll=false
+
+    - name: 테스트 결과 업로드
+      uses: codecov/codecov-action@v3
+      with:
+        file: src/${{ matrix.service }}/coverage/lcov.info
+        name: ${{ matrix.service }}-coverage
+        fail_ci_if_error: false
+
+    - name: 테스트 리포트 저장
+      uses: dorny/test-reporter@v1
+      if: success() || failure()
+      with:
+        name: 'Unit Tests - ${{ matrix.service }}'
+        path: src/${{ matrix.service }}/test-results.xml
+        reporter: jest-junit
+
+  # 3. 통합 테스트
+  integration-tests:
+    name: 통합 테스트
+    runs-on: ubuntu-latest
+    needs: unit-tests
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      postgres:
+        image: postgres:15-alpine
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: airis_epm_test
+          POSTGRES_USER: airis
+          POSTGRES_PASSWORD: testpass
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      mongodb:
+        image: mongo:6.0
+        ports:
+          - 27017:27017
+        env:
+          MONGO_INITDB_ROOT_USERNAME: admin
+          MONGO_INITDB_ROOT_PASSWORD: testpass
+
+    steps:
+    - name: 코드 체크아웃
+      uses: actions/checkout@v4
+
+    - name: Node.js 설정
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: 모든 서비스 의존성 설치
+      run: |
+        cd src/dashboard && npm ci
+        cd ../realtime-hub && npm ci
+        cd ../ai-prediction && npm ci
+        cd ../../tests && npm ci
+
+    - name: 데이터베이스 초기화
+      run: |
+        cd sql && psql -h localhost -U airis -d airis_epm_test -f schema.sql
+      env:
+        PGPASSWORD: testpass
+
+    - name: 서비스 시작
+      run: |
+        cd src/realtime-hub && npm start &
+        cd ../ai-prediction && npm start &
+        cd ../dashboard && npm run build && npm run serve &
+        sleep 30  # 서비스 시작 대기
+
+    - name: 통합 테스트 실행
+      working-directory: tests
+      run: npm run test:integration
+      env:
+        NODE_ENV: test
+        REDIS_URL: redis://localhost:6379
+        POSTGRES_URL: postgresql://airis:testpass@localhost:5432/airis_epm_test
+        MONGODB_URL: mongodb://admin:testpass@localhost:27017/airis_epm_test
+
+    - name: 통합 테스트 결과 저장
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: integration-test-results
+        path: tests/reports/
+
+  # 4. E2E 테스트
+  e2e-tests:
+    name: E2E 테스트
+    runs-on: ubuntu-latest
+    needs: integration-tests
+
+    steps:
+    - name: 코드 체크아웃
+      uses: actions/checkout@v4
+
+    - name: Node.js 설정
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Docker 설정
+      uses: docker/setup-buildx-action@v3
+
+    - name: 테스트 환경 구성
+      run: |
+        docker compose -f ${{ env.COMPOSE_FILE }} up -d
+        sleep 60  # 전체 스택 시작 대기
+
+    - name: E2E 테스트 의존성 설치
+      working-directory: tests
+      run: npm ci
+
+    - name: E2E 테스트 실행
+      working-directory: tests
+      run: npm run test:e2e
+      env:
+        HEADLESS: true
+        BASE_URL: http://localhost:3002
+
+    - name: 스크린샷 저장
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: e2e-screenshots
+        path: tests/screenshots/
+
+    - name: E2E 테스트 결과 저장
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: e2e-test-results
+        path: tests/reports/
+
+    - name: 테스트 환경 정리
+      if: always()
+      run: docker compose -f ${{ env.COMPOSE_FILE }} down -v
+
+  # 5. 보안 테스트
+  security-tests:
+    name: 보안 테스트
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: 코드 체크아웃
+      uses: actions/checkout@v4
+
+    - name: OWASP ZAP 동적 보안 스캔
+      uses: zaproxy/action-full-scan@v0.7.0
+      with:
+        target: 'http://localhost:3002'
+        rules_file_name: '.zap/rules.tsv'
+        cmd_options: '-a'
+
+    - name: Snyk 취약점 스캔
+      uses: snyk/actions/node@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
+
+    - name: CodeQL 분석
+      uses: github/codeql-action/analyze@v2
+      with:
+        languages: javascript
+
+  # 6. Docker 이미지 빌드
+  docker-build:
+    name: Docker 이미지 빌드
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    if: github.event_name == 'push'
+
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+    - name: 코드 체크아웃
+      uses: actions/checkout@v4
+
+    - name: Docker Buildx 설정
+      uses: docker/setup-buildx-action@v3
+
+    - name: 레지스트리 로그인
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.DOCKER_REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: 메타데이터 추출
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Docker 이미지 빌드 및 푸시
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: docker/Dockerfile.production
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64,linux/arm64
+
+    - name: 이미지 보안 스캔
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ steps.meta.outputs.tags }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: SARIF 결과 업로드
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  # 7. 성능 테스트
+  performance-tests:
+    name: 성능 테스트
+    runs-on: ubuntu-latest
+    needs: docker-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - name: 코드 체크아웃
+      uses: actions/checkout@v4
+
+    - name: Docker 설정
+      uses: docker/setup-buildx-action@v3
+
+    - name: 성능 테스트 환경 구성
+      run: |
+        docker compose -f ${{ env.COMPOSE_FILE }} up -d
+        sleep 120  # 완전한 초기화 대기
+
+    - name: K6 성능 테스트 실행
+      uses: grafana/k6-action@v0.3.0
+      with:
+        filename: tests/performance/load-test.js
+      env:
+        BASE_URL: http://localhost:3002
+
+    - name: Artillery.js 부하 테스트
+      run: |
+        npm install -g artillery
+        artillery run tests/performance/artillery-config.yml --output performance-report.json
+        artillery report performance-report.json --output performance-report.html
+
+    - name: 성능 테스트 결과 저장
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-test-results
+        path: |
+          performance-report.json
+          performance-report.html
+
+    - name: 성능 임계값 검사
+      run: |
+        node tests/performance/check-thresholds.js performance-report.json
+
+  # 8. 스테이징 배포
+  deploy-staging:
+    name: 스테이징 환경 배포
+    runs-on: ubuntu-latest
+    needs: [docker-build, e2e-tests]
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+      url: https://staging.airis-epm.com
+
+    steps:
+    - name: 코드 체크아웃
+      uses: actions/checkout@v4
+
+    - name: 스테이징 서버 배포
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USER }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        script: |
+          cd /opt/airis-epm
+          git pull origin develop
+          docker compose -f docker/docker-compose.production.yml pull
+          docker compose -f docker/docker-compose.production.yml down
+          docker compose -f docker/docker-compose.production.yml up -d
+          sleep 30
+          curl -f http://localhost:3002/health || exit 1
+
+    - name: 스테이징 환경 스모크 테스트
+      run: |
+        curl -f https://staging.airis-epm.com/health
+        curl -f https://staging.airis-epm.com/api/health
+
+    - name: Slack 알림
+      uses: 8398a7/action-slack@v3
+      if: always()
+      with:
+        status: ${{ job.status }}
+        text: "스테이징 배포 ${{ job.status }}"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # 9. 프로덕션 배포
+  deploy-production:
+    name: 프로덕션 환경 배포
+    runs-on: ubuntu-latest
+    needs: [docker-build, performance-tests, security-tests]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://airis-epm.com
+
+    steps:
+    - name: 코드 체크아웃
+      uses: actions/checkout@v4
+
+    - name: 배포 승인 대기
+      uses: trstringer/manual-approval@v1
+      with:
+        secret: ${{ github.TOKEN }}
+        approvers: ${{ secrets.PRODUCTION_APPROVERS }}
+        minimum-approvals: 2
+        issue-title: "프로덕션 배포 승인 요청"
+
+    - name: Blue-Green 배포 실행
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          cd /opt/airis-epm
+          
+          # 현재 버전 백업
+          docker tag airis-epm:latest airis-epm:backup
+          
+          # 새 이미지 pull
+          docker pull ${{ needs.docker-build.outputs.image-tag }}
+          docker tag ${{ needs.docker-build.outputs.image-tag }} airis-epm:latest
+          
+          # Blue-Green 배포
+          ./scripts/blue-green-deploy.sh
+          
+          # 헬스 체크
+          sleep 60
+          curl -f http://localhost:3002/health || (echo "Health check failed" && exit 1)
+          
+          # 이전 버전 정리
+          docker rmi airis-epm:backup || true
+
+    - name: 배포 후 검증
+      run: |
+        # API 엔드포인트 검증
+        curl -f https://airis-epm.com/health
+        curl -f https://airis-epm.com/api/health
+        curl -f https://airis-epm.com/api/executive-kpis
+        
+        # 실시간 기능 검증
+        node tests/deployment/verify-websocket.js
+
+    - name: 롤백 준비
+      if: failure()
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          cd /opt/airis-epm
+          ./scripts/rollback.sh
+
+    - name: 배포 성공 알림
+      if: success()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        text: "프로덕션 배포 성공! 🎉"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    - name: 배포 실패 알림
+      if: failure()
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        text: "프로덕션 배포 실패! 긴급 확인 필요 🚨"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # 10. 배포 후 모니터링
+  post-deployment-monitoring:
+    name: 배포 후 모니터링
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    if: success()
+
+    steps:
+    - name: Datadog 배포 이벤트 전송
+      uses: masci/datadog@v1
+      with:
+        api-key: ${{ secrets.DATADOG_API_KEY }}
+        events: |
+          - title: "AIRIS EPM 배포 완료"
+            text: "Version ${{ github.sha }} 배포 성공"
+            alert_type: "success"
+            source_type_name: "github"
+
+    - name: 배포 메트릭 추적 시작
+      run: |
+        curl -X POST https://api.airis-epm.com/internal/deployment/track \
+          -H "Authorization: Bearer ${{ secrets.MONITORING_TOKEN }}" \
+          -d '{"version": "${{ github.sha }}", "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}'
+
+    - name: 30분 후 배포 상태 확인 스케줄링
+      uses: peter-evans/repository-dispatch@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        event-type: check-deployment-health
+        client-payload: '{"version": "${{ github.sha }}", "deployment_time": "${{ github.event.head_commit.timestamp }}"}'
+
+# 워크플로우 정리
+  cleanup:
+    name: 워크플로우 정리
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [code-quality, unit-tests, integration-tests, e2e-tests, docker-build]
+
+    steps:
+    - name: 테스트 아티팩트 정리
+      uses: geekyeggo/delete-artifact@v2
+      with:
+        name: |
+          integration-test-results
+          e2e-test-results
+          e2e-screenshots
+        failOnError: false
+
+    - name: Docker 캐시 정리
+      run: docker builder prune -f

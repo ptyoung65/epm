@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS EPM 개발자 포털</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Malgun Gothic", "맑은 고딕", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-healthy { background-color: #10b981; }
+        .status-warning { background-color: #f59e0b; }
+        .status-error { background-color: #ef4444; }
+        
+        .code-block {
+            background: #1f2937;
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+        }
+        
+        .nav-tab {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-tab.active {
+            border-bottom: 2px solid #667eea;
+            color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .language-selector {
+            position: relative;
+        }
+        
+        .language-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        
+        .language-dropdown.show {
+            display: block;
+        }
+        
+        .metric-card {
+            background: linear-gradient(45deg, #f8fafc, #ffffff);
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-color, #667eea);
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(90deg);
+            transform-origin: 50% 50%;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-fadeInUp {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .tooltip {
+            position: relative;
+        }
+        
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .tooltip:hover::after {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(-5px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="gradient-bg text-white">
+        <div class="container mx-auto px-6 py-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold mb-2">AIRIS EPM 개발자 포털</h1>
+                    <p class="text-xl opacity-90">Enterprise Performance Management API</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <div class="text-sm opacity-75">API 상태</div>
+                        <div class="flex items-center">
+                            <span class="status-dot status-healthy"></span>
+                            <span id="api-status">정상</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm opacity-75">버전</div>
+                        <div class="font-mono">v1.0.0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-6">
+            <div class="flex space-x-8">
+                <button class="nav-tab py-4 px-2 font-semibold active" data-tab="overview">개요</button>
+                <button class="nav-tab py-4 px-2 font-semibold" data-tab="quickstart">빠른 시작</button>
+                <button class="nav-tab py-4 px-2 font-semibold" data-tab="apis">API 문서</button>
+                <button class="nav-tab py-4 px-2 font-semibold" data-tab="sdks">SDK & 도구</button>
+                <button class="nav-tab py-4 px-2 font-semibold" data-tab="examples">예제</button>
+                <button class="nav-tab py-4 px-2 font-semibold" data-tab="console">API 콘솔</button>
+                <button class="nav-tab py-4 px-2 font-semibold" data-tab="monitoring">모니터링</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Overview Tab -->
+        <div id="overview" class="tab-content active animate-fadeInUp">
+            <!-- Welcome Section -->
+            <div class="bg-white rounded-lg shadow-sm p-8 mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">AIRIS EPM API에 오신 것을 환영합니다!</h2>
+                <p class="text-lg text-gray-600 mb-6">
+                    Enterprise Performance Management를 위한 강력하고 유연한 API를 제공합니다. 
+                    실시간 성능 모니터링, 데이터 품질 관리, 고급 분석 기능을 통해 시스템을 최적화하세요.
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="metric-card" style="--accent-color: #10b981;">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-semibold text-gray-900">API 요청</h3>
+                                <p class="text-2xl font-bold text-green-600">1.2M</p>
+                            </div>
+                            <i class="fas fa-chart-line text-2xl text-green-500"></i>
+                        </div>
+                        <p class="text-sm text-gray-500">지난 30일</p>
+                    </div>
+                    
+                    <div class="metric-card" style="--accent-color: #3b82f6;">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-semibold text-gray-900">평균 응답시간</h3>
+                                <p class="text-2xl font-bold text-blue-600">95ms</p>
+                            </div>
+                            <i class="fas fa-clock text-2xl text-blue-500"></i>
+                        </div>
+                        <p class="text-sm text-gray-500">99.9% 가용성</p>
+                    </div>
+                    
+                    <div class="metric-card" style="--accent-color: #8b5cf6;">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-semibold text-gray-900">활성 개발자</h3>
+                                <p class="text-2xl font-bold text-purple-600">1,543</p>
+                            </div>
+                            <i class="fas fa-users text-2xl text-purple-500"></i>
+                        </div>
+                        <p class="text-sm text-gray-500">이번 달</p>
+                    </div>
+                    
+                    <div class="metric-card" style="--accent-color: #f59e0b;">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-semibold text-gray-900">모니터링 노드</h3>
+                                <p class="text-2xl font-bold text-yellow-600">8,921</p>
+                            </div>
+                            <i class="fas fa-server text-2xl text-yellow-500"></i>
+                        </div>
+                        <p class="text-sm text-gray-500">전 세계</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow-sm p-6 card-hover">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-blue-100 p-3 rounded-lg">
+                            <i class="fas fa-chart-bar text-2xl text-blue-600"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold ml-4">실시간 모니터링</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        시스템 성능, 애플리케이션 메트릭, 인프라 상태를 실시간으로 추적하고 분석합니다.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>• CPU, 메모리, 디스크, 네트워크 모니터링</li>
+                        <li>• 응답 시간 및 처리량 추적</li>
+                        <li>• 커스텀 메트릭 지원</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm p-6 card-hover">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-green-100 p-3 rounded-lg">
+                            <i class="fas fa-shield-alt text-2xl text-green-600"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold ml-4">데이터 품질 관리</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        데이터 검증, 이상 탐지, 자동 정제를 통해 높은 데이터 품질을 보장합니다.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>• 실시간 데이터 검증</li>
+                        <li>• AI 기반 이상 탐지</li>
+                        <li>• 자동 데이터 정제</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm p-6 card-hover">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-purple-100 p-3 rounded-lg">
+                            <i class="fas fa-brain text-2xl text-purple-600"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold ml-4">AI 분석</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        머신러닝 기반 예측 분석과 지능형 알림으로 사전 대응이 가능합니다.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>• 예측적 성능 분석</li>
+                        <li>• 이상 패턴 자동 감지</li>
+                        <li>• 스마트 알림 시스템</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm p-6 card-hover">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-red-100 p-3 rounded-lg">
+                            <i class="fas fa-bell text-2xl text-red-600"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold ml-4">지능형 알림</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        다중 채널 알림, 에스컬레이션, 상관관계 분석을 통한 효율적인 장애 관리.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>• 이메일, 슬랙, SMS 알림</li>
+                        <li>• 알림 중복 제거</li>
+                        <li>• 자동 에스컬레이션</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm p-6 card-hover">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-indigo-100 p-3 rounded-lg">
+                            <i class="fas fa-code text-2xl text-indigo-600"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold ml-4">개발자 친화적</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        REST API, GraphQL, 다양한 언어 SDK로 빠르고 쉬운 통합을 지원합니다.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>• 9개 언어 SDK 제공</li>
+                        <li>• OpenAPI 3.0 스펙</li>
+                        <li>• 자동 코드 생성</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white rounded-lg shadow-sm p-6 card-hover">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-yellow-100 p-3 rounded-lg">
+                            <i class="fas fa-rocket text-2xl text-yellow-600"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold ml-4">고성능 & 확장성</h3>
+                    </div>
+                    <p class="text-gray-600 mb-4">
+                        다층 캐싱, 쿼리 최적화, 연결 풀링으로 최적의 성능을 제공합니다.
+                    </p>
+                    <ul class="text-sm text-gray-500 space-y-1">
+                        <li>• Redis 다층 캐싱</li>
+                        <li>• 자동 쿼리 최적화</li>
+                        <li>• CDN 통합</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Start Tab -->
+        <div id="quickstart" class="tab-content">
+            <div class="bg-white rounded-lg shadow-sm p-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">빠른 시작 가이드</h2>
+                
+                <!-- Step 1 -->
+                <div class="mb-8">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4">1</div>
+                        <h3 class="text-xl font-semibold">API 키 발급</h3>
+                    </div>
+                    <div class="ml-12">
+                        <p class="text-gray-600 mb-4">개발자 계정을 생성하고 API 키를 발급받으세요.</p>
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
+                            <p class="text-blue-800">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                개발 환경에서는 무료로 월 10만 요청까지 사용 가능합니다.
+                            </p>
+                        </div>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+                            <i class="fas fa-key mr-2"></i>API 키 발급받기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="mb-8">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4">2</div>
+                        <h3 class="text-xl font-semibold">첫 번째 API 호출</h3>
+                    </div>
+                    <div class="ml-12">
+                        <p class="text-gray-600 mb-4">cURL을 사용하여 시스템 상태를 확인해보세요.</p>
+                        
+                        <div class="language-selector mb-4">
+                            <button class="flex items-center justify-between w-48 px-4 py-2 bg-gray-100 rounded-lg" onclick="toggleLanguageDropdown('quickstart-lang')">
+                                <span id="quickstart-selected-lang">cURL</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div id="quickstart-lang" class="language-dropdown">
+                                <div class="p-2">
+                                    <button class="block w-full text-left px-3 py-2 hover:bg-gray-100 rounded" onclick="selectLanguage('quickstart', 'curl', 'cURL')">cURL</button>
+                                    <button class="block w-full text-left px-3 py-2 hover:bg-gray-100 rounded" onclick="selectLanguage('quickstart', 'javascript', 'JavaScript')">JavaScript</button>
+                                    <button class="block w-full text-left px-3 py-2 hover:bg-gray-100 rounded" onclick="selectLanguage('quickstart', 'python', 'Python')">Python</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="quickstart-curl" class="code-sample">
+                            <div class="code-block text-gray-300">
+<pre><span class="text-yellow-400">curl</span> <span class="text-green-400">-X GET</span> \\
+  <span class="text-blue-400">"https://api.airis-epm.com/v1/health"</span> \\
+  <span class="text-green-400">-H</span> <span class="text-blue-400">"Authorization: Bearer YOUR_API_KEY"</span> \\
+  <span class="text-green-400">-H</span> <span class="text-blue-400">"Content-Type: application/json"</span></pre>
+                            </div>
+                        </div>
+
+                        <div id="quickstart-javascript" class="code-sample" style="display: none;">
+                            <div class="code-block text-gray-300">
+<pre><span class="text-purple-400">const</span> { AirisEPMClient } <span class="text-yellow-400">=</span> <span class="text-green-400">require</span>(<span class="text-blue-400">'airis-epm-sdk-js'</span>);
+
+<span class="text-purple-400">const</span> client <span class="text-yellow-400">=</span> <span class="text-purple-400">new</span> <span class="text-green-400">AirisEPMClient</span>({
+  apiKey: <span class="text-blue-400">'YOUR_API_KEY'</span>,
+  baseURL: <span class="text-blue-400">'https://api.airis-epm.com/v1'</span>
+});
+
+<span class="text-purple-400">async function</span> <span class="text-green-400">checkHealth</span>() {
+  <span class="text-purple-400">const</span> result <span class="text-yellow-400">=</span> <span class="text-purple-400">await</span> client.<span class="text-green-400">testConnection</span>();
+  <span class="text-green-400">console</span>.<span class="text-green-400">log</span>(result);
+}</pre>
+                            </div>
+                        </div>
+
+                        <div id="quickstart-python" class="code-sample" style="display: none;">
+                            <div class="code-block text-gray-300">
+<pre><span class="text-purple-400">from</span> airis_epm_sdk <span class="text-purple-400">import</span> create_client
+
+client <span class="text-yellow-400">=</span> <span class="text-green-400">create_client</span>(
+    api_key<span class="text-yellow-400">=</span><span class="text-blue-400">'YOUR_API_KEY'</span>,
+    base_url<span class="text-yellow-400">=</span><span class="text-blue-400">'https://api.airis-epm.com/v1'</span>
+)
+
+result <span class="text-yellow-400">=</span> client.<span class="text-green-400">test_connection</span>()
+<span class="text-green-400">print</span>(result)</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="mb-8">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-purple-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4">3</div>
+                        <h3 class="text-xl font-semibold">SDK 설치 및 사용</h3>
+                    </div>
+                    <div class="ml-12">
+                        <p class="text-gray-600 mb-4">원하는 프로그래밍 언어의 SDK를 설치하고 사용해보세요.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="border rounded-lg p-4">
+                                <h4 class="font-semibold mb-2">JavaScript/Node.js</h4>
+                                <div class="code-block text-gray-300 text-sm">
+<pre>npm install airis-epm-sdk-js</pre>
+                                </div>
+                            </div>
+                            <div class="border rounded-lg p-4">
+                                <h4 class="font-semibold mb-2">Python</h4>
+                                <div class="code-block text-gray-300 text-sm">
+<pre>pip install airis-epm-sdk</pre>
+                                </div>
+                            </div>
+                            <div class="border rounded-lg p-4">
+                                <h4 class="font-semibold mb-2">Java</h4>
+                                <div class="code-block text-gray-300 text-sm">
+<pre>&lt;dependency&gt;
+  &lt;groupId&gt;com.airis.epm&lt;/groupId&gt;
+  &lt;artifactId&gt;sdk&lt;/artifactId&gt;
+&lt;/dependency&gt;</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div>
+                    <div class="flex items-center mb-4">
+                        <div class="bg-yellow-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4">4</div>
+                        <h3 class="text-xl font-semibold">추가 리소스</h3>
+                    </div>
+                    <div class="ml-12">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <a href="#" class="block border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-book text-2xl text-blue-500 mb-2"></i>
+                                <h5 class="font-semibold">API 문서</h5>
+                                <p class="text-sm text-gray-600">완전한 API 참조</p>
+                            </a>
+                            <a href="#" class="block border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-code text-2xl text-green-500 mb-2"></i>
+                                <h5 class="font-semibold">코드 예제</h5>
+                                <p class="text-sm text-gray-600">9개 언어 예제</p>
+                            </a>
+                            <a href="#" class="block border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-flask text-2xl text-purple-500 mb-2"></i>
+                                <h5 class="font-semibold">Postman</h5>
+                                <p class="text-sm text-gray-600">테스트 컬렉션</p>
+                            </a>
+                            <a href="#" class="block border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-comments text-2xl text-red-500 mb-2"></i>
+                                <h5 class="font-semibold">커뮤니티</h5>
+                                <p class="text-sm text-gray-600">Q&A 및 지원</p>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- APIs Tab -->
+        <div id="apis" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- REST APIs -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-exchange-alt text-2xl text-blue-600 mr-3"></i>
+                        <h3 class="text-xl font-semibold">REST API</h3>
+                        <span class="ml-auto bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">v1.0.0</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">RESTful API를 통한 모든 기능에 대한 완전한 접근</p>
+                    
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <span class="font-medium">성능 모니터링</span>
+                            <span class="text-green-600 text-sm">15 endpoints</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <span class="font-medium">데이터 품질</span>
+                            <span class="text-green-600 text-sm">8 endpoints</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <span class="font-medium">분석 & 리포팅</span>
+                            <span class="text-green-600 text-sm">12 endpoints</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <span class="font-medium">알림 관리</span>
+                            <span class="text-green-600 text-sm">10 endpoints</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <a href="./swagger-ui.html" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center py-2 px-4 rounded-lg transition-colors">
+                            <i class="fas fa-book mr-2"></i>API 문서
+                        </a>
+                        <a href="./postman-collection.json" class="flex-1 bg-orange-600 hover:bg-orange-700 text-white text-center py-2 px-4 rounded-lg transition-colors">
+                            <i class="fas fa-download mr-2"></i>Postman
+                        </a>
+                    </div>
+                </div>
+
+                <!-- GraphQL API -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex items-center mb-4">
+                        <i class="fas fa-project-diagram text-2xl text-purple-600 mr-3"></i>
+                        <h3 class="text-xl font-semibold">GraphQL API</h3>
+                        <span class="ml-auto bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">Latest</span>
+                    </div>
+                    <p class="text-gray-600 mb-4">유연한 데이터 조회와 실시간 구독을 지원하는 GraphQL</p>
+                    
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <span class="font-medium">쿼리</span>
+                            <span class="text-purple-600 text-sm">25 queries</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <span class="font-medium">뮤테이션</span>
+                            <span class="text-purple-600 text-sm">18 mutations</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <span class="font-medium">구독</span>
+                            <span class="text-purple-600 text-sm">8 subscriptions</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <span class="font-medium">타입</span>
+                            <span class="text-purple-600 text-sm">45 types</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <a href="./graphql-playground.html" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white text-center py-2 px-4 rounded-lg transition-colors">
+                            <i class="fas fa-play mr-2"></i>Playground
+                        </a>
+                        <a href="./schema.graphql" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white text-center py-2 px-4 rounded-lg transition-colors">
+                            <i class="fas fa-file-code mr-2"></i>스키마
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SDKs & Tools Tab -->
+        <div id="sdks" class="tab-content">
+            <div class="bg-white rounded-lg shadow-sm p-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">SDK 및 도구</h2>
+                
+                <!-- Language SDKs -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold mb-4">프로그래밍 언어별 SDK</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="border rounded-lg p-4 card-hover">
+                            <div class="flex items-center mb-3">
+                                <i class="fab fa-js-square text-2xl text-yellow-500 mr-3"></i>
+                                <div>
+                                    <h4 class="font-semibold">JavaScript</h4>
+                                    <p class="text-sm text-gray-500">Node.js & Browser</p>
+                                </div>
+                            </div>
+                            <div class="code-block text-xs text-gray-300 mb-3">
+<pre>npm install airis-epm-sdk-js</pre>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500">v1.0.0</span>
+                                <a href="#" class="text-blue-600 text-sm hover:underline">문서 보기</a>
+                            </div>
+                        </div>
+
+                        <div class="border rounded-lg p-4 card-hover">
+                            <div class="flex items-center mb-3">
+                                <i class="fab fa-python text-2xl text-blue-600 mr-3"></i>
+                                <div>
+                                    <h4 class="font-semibold">Python</h4>
+                                    <p class="text-sm text-gray-500">3.8+</p>
+                                </div>
+                            </div>
+                            <div class="code-block text-xs text-gray-300 mb-3">
+<pre>pip install airis-epm-sdk</pre>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500">v1.0.0</span>
+                                <a href="#" class="text-blue-600 text-sm hover:underline">문서 보기</a>
+                            </div>
+                        </div>
+
+                        <div class="border rounded-lg p-4 card-hover">
+                            <div class="flex items-center mb-3">
+                                <i class="fab fa-java text-2xl text-red-600 mr-3"></i>
+                                <div>
+                                    <h4 class="font-semibold">Java</h4>
+                                    <p class="text-sm text-gray-500">11+</p>
+                                </div>
+                            </div>
+                            <div class="code-block text-xs text-gray-300 mb-3">
+<pre>Maven / Gradle</pre>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500">v1.0.0</span>
+                                <a href="#" class="text-blue-600 text-sm hover:underline">문서 보기</a>
+                            </div>
+                        </div>
+
+                        <div class="border rounded-lg p-4 card-hover">
+                            <div class="flex items-center mb-3">
+                                <i class="fab fa-microsoft text-2xl text-blue-500 mr-3"></i>
+                                <div>
+                                    <h4 class="font-semibold">C#</h4>
+                                    <p class="text-sm text-gray-500">.NET 6.0+</p>
+                                </div>
+                            </div>
+                            <div class="code-block text-xs text-gray-300 mb-3">
+<pre>Install-Package AirisEPM.SDK</pre>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500">v1.0.0</span>
+                                <a href="#" class="text-blue-600 text-sm hover:underline">문서 보기</a>
+                            </div>
+                        </div>
+
+                        <div class="border rounded-lg p-4 card-hover">
+                            <div class="flex items-center mb-3">
+                                <i class="fab fa-golang text-2xl text-cyan-600 mr-3"></i>
+                                <div>
+                                    <h4 class="font-semibold">Go</h4>
+                                    <p class="text-sm text-gray-500">1.19+</p>
+                                </div>
+                            </div>
+                            <div class="code-block text-xs text-gray-300 mb-3">
+<pre>go get github.com/airis/sdk-go</pre>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500">v1.0.0</span>
+                                <a href="#" class="text-blue-600 text-sm hover:underline">문서 보기</a>
+                            </div>
+                        </div>
+
+                        <div class="border rounded-lg p-4 card-hover">
+                            <div class="flex items-center mb-3">
+                                <i class="fab fa-php text-2xl text-purple-600 mr-3"></i>
+                                <div>
+                                    <h4 class="font-semibold">PHP</h4>
+                                    <p class="text-sm text-gray-500">8.0+</p>
+                                </div>
+                            </div>
+                            <div class="code-block text-xs text-gray-300 mb-3">
+<pre>composer require airis/epm-sdk</pre>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500">v1.0.0</span>
+                                <a href="#" class="text-blue-600 text-sm hover:underline">문서 보기</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Development Tools -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">개발 도구</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="border rounded-lg p-6">
+                            <div class="flex items-center mb-4">
+                                <i class="fas fa-flask text-2xl text-orange-500 mr-3"></i>
+                                <h4 class="text-lg font-semibold">Postman Collection</h4>
+                            </div>
+                            <p class="text-gray-600 mb-4">완전한 API 테스트 컬렉션으로 모든 엔드포인트를 쉽게 테스트할 수 있습니다.</p>
+                            <ul class="text-sm text-gray-500 mb-4">
+                                <li>• 사전 구성된 환경 변수</li>
+                                <li>• 자동 인증 처리</li>
+                                <li>• 응답 검증 테스트</li>
+                                <li>• 실제 예제 데이터</li>
+                            </ul>
+                            <a href="./postman-collection.json" class="inline-flex items-center text-orange-600 hover:text-orange-700">
+                                <i class="fas fa-download mr-2"></i>컬렉션 다운로드
+                            </a>
+                        </div>
+
+                        <div class="border rounded-lg p-6">
+                            <div class="flex items-center mb-4">
+                                <i class="fas fa-terminal text-2xl text-gray-700 mr-3"></i>
+                                <h4 class="text-lg font-semibold">CLI 도구</h4>
+                            </div>
+                            <p class="text-gray-600 mb-4">명령줄에서 AIRIS EPM API를 관리하고 모니터링할 수 있는 도구입니다.</p>
+                            <ul class="text-sm text-gray-500 mb-4">
+                                <li>• 빠른 설정 및 테스트</li>
+                                <li>• 배치 데이터 업로드</li>
+                                <li>• 실시간 모니터링</li>
+                                <li>• 자동화 스크립트 지원</li>
+                            </ul>
+                            <a href="#" class="inline-flex items-center text-gray-600 hover:text-gray-700">
+                                <i class="fas fa-download mr-2"></i>CLI 다운로드
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Examples Tab -->
+        <div id="examples" class="tab-content">
+            <div class="bg-white rounded-lg shadow-sm p-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">코드 예제</h2>
+                <p class="text-gray-600 mb-8">실제 사용 사례를 바탕으로 한 코드 예제들을 확인해보세요.</p>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">기본 사용법</h3>
+                        <div class="space-y-4">
+                            <div class="border rounded-lg p-4">
+                                <h4 class="font-semibold mb-2">📊 성능 메트릭 수집</h4>
+                                <p class="text-sm text-gray-600 mb-3">시스템 성능 데이터를 수집하고 API로 전송하는 방법</p>
+                                <div class="flex space-x-2">
+                                    <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">JavaScript</span>
+                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Python</span>
+                                    <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Java</span>
+                                </div>
+                            </div>
+                            
+                            <div class="border rounded-lg p-4">
+                                <h4 class="font-semibold mb-2">🔍 데이터 품질 검증</h4>
+                                <p class="text-sm text-gray-600 mb-3">실시간으로 데이터 품질을 검증하고 이상을 탐지하는 방법</p>
+                                <div class="flex space-x-2">
+                                    <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">JavaScript</span>
+                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Python</span>
+                                </div>
+                            </div>
+                            
+                            <div class="border rounded-lg p-4">
+                                <h4 class="font-semibold mb-2">🚨 알림 규칙 설정</h4>
+                                <p class="text-sm text-gray-600 mb-3">커스텀 알림 규칙을 생성하고 관리하는 방법</p>
+                                <div class="flex space-x-2">
+                                    <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">JavaScript</span>
+                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Python</span>
+                                    <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Java</span>
+                                    <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">GraphQL</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">고급 사용법</h3>
+                        <div class="space-y-4">
+                            <div class="border rounded-lg p-4">
+                                <h4 class="font-semibold mb-2">📈 실시간 대시보드</h4>
+                                <p class="text-sm text-gray-600 mb-3">GraphQL 구독을 사용한 실시간 모니터링 대시보드 구축</p>
+                                <div class="flex space-x-2">
+                                    <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">React</span>
+                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Vue.js</span>
+                                    <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">GraphQL</span>
+                                </div>
+                            </div>
+                            
+                            <div class="border rounded-lg p-4">
+                                <h4 class="font-semibold mb-2">⚡ 배치 데이터 처리</h4>
+                                <p class="text-sm text-gray-600 mb-3">대용량 데이터를 효율적으로 처리하는 최적화 기법</p>
+                                <div class="flex space-x-2">
+                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Python</span>
+                                    <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">Java</span>
+                                    <span class="text-xs bg-cyan-100 text-cyan-800 px-2 py-1 rounded">Go</span>
+                                </div>
+                            </div>
+                            
+                            <div class="border rounded-lg p-4">
+                                <h4 class="font-semibold mb-2">🔧 에러 처리 & 재시도</h4>
+                                <p class="text-sm text-gray-600 mb-3">안정적인 API 통합을 위한 에러 처리 및 재시도 로직</p>
+                                <div class="flex space-x-2">
+                                    <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">JavaScript</span>
+                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Python</span>
+                                    <span class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">Best Practices</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 text-center">
+                    <a href="#" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors">
+                        <i class="fas fa-code mr-2"></i>
+                        모든 예제 보기
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Console Tab -->
+        <div id="console" class="tab-content">
+            <div class="bg-white rounded-lg shadow-sm p-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">API 테스트 콘솔</h2>
+                <p class="text-gray-600 mb-8">브라우저에서 직접 API를 테스트해보세요.</p>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Request Builder -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">요청 구성</h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">엔드포인트</label>
+                                <div class="flex">
+                                    <select id="method" class="px-3 py-2 border border-r-0 rounded-l-lg bg-gray-50 min-w-0 w-24">
+                                        <option value="GET">GET</option>
+                                        <option value="POST">POST</option>
+                                        <option value="PUT">PUT</option>
+                                        <option value="DELETE">DELETE</option>
+                                    </select>
+                                    <input id="endpoint" type="text" class="flex-1 px-3 py-2 border rounded-r-lg" value="/health" placeholder="/api/endpoint">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">헤더</label>
+                                <textarea id="headers" class="w-full px-3 py-2 border rounded-lg font-mono text-sm" rows="3" placeholder='{"Authorization": "Bearer YOUR_API_KEY", "Content-Type": "application/json"}'>{"Authorization": "Bearer YOUR_API_KEY", "Content-Type": "application/json"}</textarea>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">요청 본문</label>
+                                <textarea id="body" class="w-full px-3 py-2 border rounded-lg font-mono text-sm" rows="6" placeholder="JSON 요청 본문을 입력하세요"></textarea>
+                            </div>
+                            
+                            <button onclick="sendApiRequest()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg transition-colors">
+                                <i class="fas fa-paper-plane mr-2"></i>요청 전송
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Response Display -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4">응답 결과</h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">상태 코드</label>
+                                <div id="status" class="px-3 py-2 bg-gray-100 rounded-lg font-mono text-sm">
+                                    요청을 전송하면 상태 코드가 여기에 표시됩니다.
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">응답 헤더</label>
+                                <div id="response-headers" class="px-3 py-2 bg-gray-100 rounded-lg font-mono text-sm h-20 overflow-y-auto">
+                                    요청을 전송하면 응답 헤더가 여기에 표시됩니다.
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">응답 본문</label>
+                                <div id="response-body" class="px-3 py-2 bg-gray-100 rounded-lg font-mono text-sm h-48 overflow-y-auto">
+                                    요청을 전송하면 응답 본문이 여기에 표시됩니다.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Test Buttons -->
+                <div class="mt-8">
+                    <h4 class="text-lg font-semibold mb-4">빠른 테스트</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="setQuickTest('GET', '/health')" class="px-4 py-2 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 transition-colors">
+                            시스템 상태 확인
+                        </button>
+                        <button onclick="setQuickTest('GET', '/performance/metrics')" class="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors">
+                            메트릭 조회
+                        </button>
+                        <button onclick="setQuickTest('GET', '/alerts')" class="px-4 py-2 bg-red-100 text-red-800 rounded-lg hover:bg-red-200 transition-colors">
+                            알림 목록
+                        </button>
+                        <button onclick="setQuickTest('POST', '/data-quality/validation')" class="px-4 py-2 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200 transition-colors">
+                            데이터 검증
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monitoring Tab -->
+        <div id="monitoring" class="tab-content">
+            <div class="bg-white rounded-lg shadow-sm p-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-6">실시간 모니터링</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <!-- API Health -->
+                    <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-green-900">API 상태</h3>
+                            <span class="status-dot status-healthy"></span>
+                        </div>
+                        <div class="text-3xl font-bold text-green-600 mb-2" id="api-uptime">99.9%</div>
+                        <p class="text-sm text-green-700">지난 30일 가동률</p>
+                    </div>
+                    
+                    <!-- Response Time -->
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-blue-900">응답 시간</h3>
+                            <i class="fas fa-clock text-blue-600"></i>
+                        </div>
+                        <div class="text-3xl font-bold text-blue-600 mb-2" id="avg-response">95ms</div>
+                        <p class="text-sm text-blue-700">평균 응답 시간</p>
+                    </div>
+                    
+                    <!-- Request Rate -->
+                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-purple-900">요청 빈도</h3>
+                            <i class="fas fa-tachometer-alt text-purple-600"></i>
+                        </div>
+                        <div class="text-3xl font-bold text-purple-600 mb-2" id="request-rate">1.2K</div>
+                        <p class="text-sm text-purple-700">분당 요청 수</p>
+                    </div>
+                </div>
+                
+                <!-- Service Status -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold mb-4">서비스 상태</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center">
+                                <span class="status-dot status-healthy"></span>
+                                <span class="font-medium">Performance Monitoring API</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-semibold text-green-600">Operational</div>
+                                <div class="text-xs text-gray-500">응답시간: 45ms</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center">
+                                <span class="status-dot status-healthy"></span>
+                                <span class="font-medium">Data Quality API</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-semibold text-green-600">Operational</div>
+                                <div class="text-xs text-gray-500">응답시간: 72ms</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center">
+                                <span class="status-dot status-warning"></span>
+                                <span class="font-medium">Analytics API</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-semibold text-yellow-600">Degraded</div>
+                                <div class="text-xs text-gray-500">응답시간: 184ms</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center">
+                                <span class="status-dot status-healthy"></span>
+                                <span class="font-medium">Alerts API</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-semibold text-green-600">Operational</div>
+                                <div class="text-xs text-gray-500">응답시간: 38ms</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center">
+                                <span class="status-dot status-healthy"></span>
+                                <span class="font-medium">GraphQL API</span>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-semibold text-green-600">Operational</div>
+                                <div class="text-xs text-gray-500">응답시간: 52ms</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Incidents -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4">최근 사건</h3>
+                    <div class="space-y-3">
+                        <div class="bg-green-50 border-l-4 border-green-400 p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="font-medium text-green-800">모든 시스템 정상 운영</div>
+                                    <div class="text-sm text-green-600 mt-1">모든 API 서비스가 정상적으로 작동하고 있습니다.</div>
+                                </div>
+                                <div class="text-sm text-green-600">5분 전</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="font-medium text-yellow-800">Analytics API 성능 저하</div>
+                                    <div class="text-sm text-yellow-600 mt-1">일시적인 성능 저하가 발생했으나 현재 복구 중입니다.</div>
+                                </div>
+                                <div class="text-sm text-yellow-600">2시간 전</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 border-l-4 border-gray-400 p-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="font-medium text-gray-800">정기 유지보수 완료</div>
+                                    <div class="text-sm text-gray-600 mt-1">데이터베이스 최적화 작업이 성공적으로 완료되었습니다.</div>
+                                </div>
+                                <div class="text-sm text-gray-600">어제</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-16">
+        <div class="container mx-auto px-6 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">API 문서</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="./swagger-ui.html" class="hover:text-white">REST API</a></li>
+                        <li><a href="./graphql-playground.html" class="hover:text-white">GraphQL</a></li>
+                        <li><a href="#" class="hover:text-white">인증 가이드</a></li>
+                        <li><a href="#" class="hover:text-white">제한사항</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">SDK & 도구</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#" class="hover:text-white">JavaScript SDK</a></li>
+                        <li><a href="#" class="hover:text-white">Python SDK</a></li>
+                        <li><a href="#" class="hover:text-white">Java SDK</a></li>
+                        <li><a href="./postman-collection.json" class="hover:text-white">Postman 컬렉션</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">지원</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#" class="hover:text-white">헬프 센터</a></li>
+                        <li><a href="#" class="hover:text-white">커뮤니티 포럼</a></li>
+                        <li><a href="#" class="hover:text-white">버그 리포트</a></li>
+                        <li><a href="#" class="hover:text-white">기능 요청</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">연락처</h4>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="mailto:support@airis-epm.com" class="hover:text-white">support@airis-epm.com</a></li>
+                        <li><a href="#" class="hover:text-white">기술 지원</a></li>
+                        <li><a href="#" class="hover:text-white">영업 문의</a></li>
+                        <li><a href="#" class="hover:text-white">파트너십</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-700 mt-8 pt-8 flex items-center justify-between">
+                <p class="text-gray-400">&copy; 2024 AIRIS EPM. All rights reserved.</p>
+                <div class="flex space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-github"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-twitter"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-slack"></i></a>
+                    <a href="#" class="text-gray-400 hover:text-white"><i class="fab fa-discord"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab
+                tab.classList.add('active');
+                const tabId = tab.getAttribute('data-tab');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Language selector
+        function toggleLanguageDropdown(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            dropdown.classList.toggle('show');
+            
+            // Close other dropdowns
+            document.querySelectorAll('.language-dropdown').forEach(d => {
+                if (d.id !== dropdownId) {
+                    d.classList.remove('show');
+                }
+            });
+        }
+
+        function selectLanguage(context, lang, displayName) {
+            document.getElementById(context + '-selected-lang').textContent = displayName;
+            document.getElementById(context + '-lang').classList.remove('show');
+            
+            // Hide all code samples
+            document.querySelectorAll(`[id^="${context}-"]`).forEach(sample => {
+                sample.style.display = 'none';
+            });
+            
+            // Show selected language sample
+            document.getElementById(context + '-' + lang).style.display = 'block';
+        }
+
+        // API Console
+        function setQuickTest(method, endpoint, body = '') {
+            document.getElementById('method').value = method;
+            document.getElementById('endpoint').value = endpoint;
+            if (body) {
+                document.getElementById('body').value = body;
+            }
+        }
+
+        function sendApiRequest() {
+            const method = document.getElementById('method').value;
+            const endpoint = document.getElementById('endpoint').value;
+            const headers = document.getElementById('headers').value;
+            const body = document.getElementById('body').value;
+
+            // This would be replaced with actual API call
+            document.getElementById('status').textContent = '200 OK';
+            document.getElementById('response-headers').textContent = 'Content-Type: application/json\\nX-RateLimit-Remaining: 999';
+            document.getElementById('response-body').textContent = JSON.stringify({
+                success: true,
+                message: 'Test response from AIRIS EPM API',
+                timestamp: new Date().toISOString()
+            }, null, 2);
+        }
+
+        // API Status monitoring
+        async function updateApiStatus() {
+            try {
+                // This would be replaced with actual API call
+                document.getElementById('api-status').textContent = '정상';
+                document.getElementById('api-uptime').textContent = '99.9%';
+                document.getElementById('avg-response').textContent = Math.floor(Math.random() * 50 + 80) + 'ms';
+                document.getElementById('request-rate').textContent = (Math.random() * 0.5 + 1.0).toFixed(1) + 'K';
+            } catch (error) {
+                document.getElementById('api-status').textContent = '오류';
+                const statusDot = document.querySelector('#api-status').previousElementSibling;
+                statusDot.className = 'status-dot status-error';
+            }
+        }
+
+        // Close language dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.language-selector')) {
+                document.querySelectorAll('.language-dropdown').forEach(dropdown => {
+                    dropdown.classList.remove('show');
+                });
+            }
+        });
+
+        // Update API status periodically
+        updateApiStatus();
+        setInterval(updateApiStatus, 30000); // Every 30 seconds
+
+        // Add animation to metric cards
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-fadeInUp');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.metric-card, .card-hover').forEach(card => {
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>

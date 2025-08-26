@@ -24,7 +24,7 @@ log_warn() {
 
 # 1. 기존 컨테이너 정리
 log_info "기존 컨테이너 정리 중..."
-docker-compose down 2>/dev/null || true
+docker compose down 2>/dev/null || true
 
 # 2. 컨테이너 레지스트리 시작
 log_info "컨테이너 레지스트리 시작..."
@@ -173,7 +173,7 @@ fi
 
 # 6. Docker Compose로 전체 시스템 시작
 log_info "Docker Compose로 전체 시스템 시작..."
-docker-compose up -d || {
+docker compose up -d || {
     log_error "Docker Compose 시작 실패"
     exit 1
 }
@@ -240,9 +240,9 @@ log_info "서비스 상태: $healthy_count/$total_count 개 서비스가 응답 
 # 10. 실행 중인 컨테이너 표시
 echo ""
 log_info "실행 중인 컨테이너:"
-docker-compose ps
+docker compose ps
 
 echo ""
 log_info "💡 시스템이 완전히 시작되려면 1-2분 정도 소요될 수 있습니다."
-log_info "💡 문제가 있다면 'docker-compose logs [서비스명]'으로 로그를 확인하세요."
-log_info "💡 전체 시스템 중지: docker-compose down"
+log_info "💡 문제가 있다면 'docker compose logs [서비스명]'으로 로그를 확인하세요."
+log_info "💡 전체 시스템 중지: docker compose down"

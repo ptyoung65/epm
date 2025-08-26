@@ -1,0 +1,517 @@
+# AIRIS EPM Redis Cluster Configuration
+# High-availability Redis cluster with automatic failover
+
+# Redis ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: airis-epm
+  labels:
+    app: redis
+    component: database
+data:
+  redis.conf: |
+    # Network configuration
+    bind 0.0.0.0
+    port 6379
+    protected-mode yes
+    tcp-backlog 511
+    timeout 0
+    tcp-keepalive 300
+
+    # General configuration
+    daemonize no
+    supervised no
+    pidfile /var/run/redis_6379.pid
+    loglevel notice
+    logfile ""
+    syslog-enabled yes
+    syslog-ident redis
+    syslog-facility local0
+
+    # Snapshotting configuration
+    save 900 1
+    save 300 10
+    save 60 10000
+    stop-writes-on-bgsave-error yes
+    rdbcompression yes
+    rdbchecksum yes
+    dbfilename dump.rdb
+    dir /data
+
+    # Replication configuration
+    replica-serve-stale-data yes
+    replica-read-only yes
+    repl-diskless-sync no
+    repl-diskless-sync-delay 5
+    repl-diskless-load disabled
+    repl-disable-tcp-nodelay no
+    replica-priority 100
+
+    # Security configuration
+    requirepass ${REDIS_PASSWORD}
+    rename-command FLUSHDB ""
+    rename-command FLUSHALL ""
+    rename-command EVAL ""
+    rename-command DEBUG ""
+    rename-command CONFIG "CONFIG_8f7e3a9b2d4c6e1f"
+
+    # Memory management
+    maxmemory 4gb
+    maxmemory-policy allkeys-lru
+    maxmemory-samples 5
+
+    # Lazy freeing
+    lazyfree-lazy-eviction yes
+    lazyfree-lazy-expire yes
+    lazyfree-lazy-server-del yes
+    replica-lazy-flush yes
+
+    # Append only file
+    appendonly yes
+    appendfilename "appendonly.aof"
+    appendfsync everysec
+    no-appendfsync-on-rewrite no
+    auto-aof-rewrite-percentage 100
+    auto-aof-rewrite-min-size 64mb
+    aof-load-truncated yes
+    aof-use-rdb-preamble yes
+
+    # Lua scripting
+    lua-time-limit 5000
+
+    # Redis cluster
+    cluster-enabled yes
+    cluster-config-file nodes-6379.conf
+    cluster-node-timeout 15000
+    cluster-announce-ip ${POD_IP}
+    cluster-announce-port 6379
+    cluster-announce-bus-port 16379
+
+    # Slow log
+    slowlog-log-slower-than 10000
+    slowlog-max-len 128
+
+    # Latency monitor
+    latency-monitor-threshold 100
+
+    # Event notification
+    notify-keyspace-events Ex
+
+    # Hash configuration
+    hash-max-ziplist-entries 512
+    hash-max-ziplist-value 64
+
+    # List configuration
+    list-max-ziplist-size -2
+    list-compress-depth 0
+
+    # Set configuration
+    set-max-intset-entries 512
+
+    # Sorted set configuration
+    zset-max-ziplist-entries 128
+    zset-max-ziplist-value 64
+
+    # Stream configuration
+    stream-node-max-bytes 4096
+    stream-node-max-entries 100
+
+    # Client output buffer limits
+    client-output-buffer-limit normal 0 0 0
+    client-output-buffer-limit replica 256mb 64mb 60
+    client-output-buffer-limit pubsub 32mb 8mb 60
+
+    # Client query buffer
+    client-query-buffer-limit 1gb
+    proto-max-bulk-len 512mb
+
+    # Frequency of rehashing
+    hz 10
+
+    # AOF rewrite incremental fsync
+    aof-rewrite-incremental-fsync yes
+
+    # RDB save incremental fsync
+    rdb-save-incremental-fsync yes
+
+  sentinel.conf: |
+    # Sentinel configuration for Redis HA
+    port 26379
+    bind 0.0.0.0
+    
+    # Sentinel auth
+    requirepass ${REDIS_PASSWORD}
+    
+    # Monitor master
+    sentinel monitor airis-epm-master redis-0.redis-headless.airis-epm.svc.cluster.local 6379 2
+    sentinel auth-pass airis-epm-master ${REDIS_PASSWORD}
+    sentinel down-after-milliseconds airis-epm-master 5000
+    sentinel failover-timeout airis-epm-master 60000
+    sentinel parallel-syncs airis-epm-master 1
+    
+    # Sentinel announce
+    sentinel announce-ip ${POD_IP}
+    sentinel announce-port 26379
+    
+    # Logging
+    logfile /var/log/redis-sentinel.log
+    syslog-enabled yes
+    syslog-ident redis-sentinel
+    syslog-facility local0
+
+---
+# Redis StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: airis-epm
+  labels:
+    app: redis
+    component: database
+spec:
+  serviceName: redis-headless
+  replicas: 6
+  selector:
+    matchLabels:
+      app: redis
+      component: database
+  template:
+    metadata:
+      labels:
+        app: redis
+        component: database
+    spec:
+      serviceAccountName: airis-epm-db-operator
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+      initContainers:
+      - name: volume-permissions
+        image: busybox:1.35
+        command: ['sh', '-c', 'chown -R 999:999 /data']
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+        securityContext:
+          runAsUser: 0
+      containers:
+      - name: redis
+        image: redis:7.2-alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 6379
+          name: redis
+        - containerPort: 16379
+          name: redis-cluster
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-credentials
+              key: password
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+        - name: redis-config
+          mountPath: /etc/redis
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Replace environment variables in config
+          envsubst < /etc/redis/redis.conf > /tmp/redis.conf
+          redis-server /tmp/redis.conf
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - --no-auth-warning
+            - -a
+            - $(REDIS_PASSWORD)
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - --no-auth-warning
+            - -a
+            - $(REDIS_PASSWORD)
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 3
+          timeoutSeconds: 1
+          successThreshold: 1
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "1000m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: redis-config
+        configMap:
+          name: redis-config
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: fast-ssd
+      resources:
+        requests:
+          storage: 20Gi
+
+---
+# Redis Headless Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-headless
+  namespace: airis-epm
+  labels:
+    app: redis
+    component: database
+spec:
+  clusterIP: None
+  selector:
+    app: redis
+    component: database
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: 6379
+  - name: redis-cluster
+    port: 16379
+    targetPort: 16379
+
+---
+# Redis Load Balancer Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-lb
+  namespace: airis-epm
+  labels:
+    app: redis
+    component: database
+spec:
+  type: ClusterIP
+  selector:
+    app: redis
+    component: database
+  ports:
+  - name: redis
+    port: 6379
+    targetPort: 6379
+
+---
+# Redis Sentinel StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-sentinel
+  namespace: airis-epm
+  labels:
+    app: redis-sentinel
+    component: monitoring
+spec:
+  serviceName: redis-sentinel-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: redis-sentinel
+      component: monitoring
+  template:
+    metadata:
+      labels:
+        app: redis-sentinel
+        component: monitoring
+    spec:
+      serviceAccountName: airis-epm-monitoring
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+      containers:
+      - name: sentinel
+        image: redis:7.2-alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 26379
+          name: sentinel
+        env:
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-credentials
+              key: password
+        volumeMounts:
+        - name: sentinel-config
+          mountPath: /etc/redis
+        - name: sentinel-data
+          mountPath: /data
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Replace environment variables in config
+          envsubst < /etc/redis/sentinel.conf > /tmp/sentinel.conf
+          redis-sentinel /tmp/sentinel.conf
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - -p
+            - "26379"
+            - --no-auth-warning
+            - -a
+            - $(REDIS_PASSWORD)
+            - sentinel
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - -p
+            - "26379"
+            - --no-auth-warning
+            - -a
+            - $(REDIS_PASSWORD)
+            - sentinel
+            - ping
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "200m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          capabilities:
+            drop:
+            - ALL
+      volumes:
+      - name: sentinel-config
+        configMap:
+          name: redis-config
+  volumeClaimTemplates:
+  - metadata:
+      name: sentinel-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: fast-ssd
+      resources:
+        requests:
+          storage: 1Gi
+
+---
+# Redis Sentinel Headless Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-sentinel-headless
+  namespace: airis-epm
+  labels:
+    app: redis-sentinel
+    component: monitoring
+spec:
+  clusterIP: None
+  selector:
+    app: redis-sentinel
+    component: monitoring
+  ports:
+  - name: sentinel
+    port: 26379
+    targetPort: 26379
+
+---
+# Redis Cluster Initialization Job
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: redis-cluster-init
+  namespace: airis-epm
+  labels:
+    app: redis-cluster-init
+    component: setup
+spec:
+  template:
+    spec:
+      serviceAccountName: airis-epm-db-operator
+      restartPolicy: OnFailure
+      containers:
+      - name: redis-cluster-init
+        image: redis:7.2-alpine
+        env:
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: redis-credentials
+              key: password
+        command:
+        - /bin/sh
+        - -c
+        - |
+          # Wait for all Redis instances to be ready
+          for i in 0 1 2 3 4 5; do
+            until redis-cli -h redis-$i.redis-headless.airis-epm.svc.cluster.local -a $REDIS_PASSWORD ping; do
+              echo "Waiting for redis-$i..."
+              sleep 2
+            done
+          done
+          
+          # Create Redis cluster
+          redis-cli --cluster create \
+            redis-0.redis-headless.airis-epm.svc.cluster.local:6379 \
+            redis-1.redis-headless.airis-epm.svc.cluster.local:6379 \
+            redis-2.redis-headless.airis-epm.svc.cluster.local:6379 \
+            redis-3.redis-headless.airis-epm.svc.cluster.local:6379 \
+            redis-4.redis-headless.airis-epm.svc.cluster.local:6379 \
+            redis-5.redis-headless.airis-epm.svc.cluster.local:6379 \
+            --cluster-replicas 1 \
+            --cluster-yes \
+            -a $REDIS_PASSWORD
+            
+          echo "Redis cluster initialized successfully!"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"

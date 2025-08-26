@@ -1,0 +1,87 @@
+# AIRIS EPM - 프로덕션 Docker 이미지
+# Multi-stage build for optimized production deployment
+
+# Stage 1: Build stage for React dashboard
+FROM node:18-alpine AS dashboard-builder
+
+WORKDIR /app/dashboard
+
+# Copy package files
+COPY src/dashboard/package*.json ./
+RUN npm ci --only=production
+
+# Copy dashboard source code
+COPY src/dashboard/ ./
+
+# Build production dashboard
+RUN npm run build
+
+# Stage 2: Build stage for Node.js services
+FROM node:18-alpine AS services-builder
+
+WORKDIR /app/services
+
+# Copy all service package files
+COPY src/*/package*.json ./
+RUN find . -name "package*.json" -execdir npm ci --only=production \;
+
+# Copy service source code
+COPY src/realtime-hub/ ./realtime-hub/
+COPY src/ai-prediction/ ./ai-prediction/
+
+# Stage 3: Production runtime
+FROM node:18-alpine AS production
+
+# Install system dependencies
+RUN apk add --no-cache \
+    curl \
+    bash \
+    tzdata \
+    && rm -rf /var/cache/apk/*
+
+# Set timezone to Asia/Seoul
+ENV TZ=Asia/Seoul
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Create app user for security
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S airis -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Copy built dashboard from builder stage
+COPY --from=dashboard-builder --chown=airis:nodejs /app/dashboard/build ./dashboard/build
+
+# Copy services from builder stage
+COPY --from=services-builder --chown=airis:nodejs /app/services ./services
+
+# Copy production configuration files
+COPY --chown=airis:nodejs docker/config/production.json ./config/
+COPY --chown=airis:nodejs docker/scripts/start-production.sh ./scripts/
+COPY --chown=airis:nodejs docker/scripts/health-check.sh ./scripts/
+
+# Make scripts executable
+RUN chmod +x ./scripts/*.sh
+
+# Create directories for logs and data
+RUN mkdir -p /app/logs /app/data /app/tmp && \
+    chown -R airis:nodejs /app/logs /app/data /app/tmp
+
+# Health check configuration
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD ./scripts/health-check.sh
+
+# Switch to non-root user
+USER airis
+
+# Expose ports
+EXPOSE 3002 3300 3500
+
+# Environment variables
+ENV NODE_ENV=production
+ENV LOG_LEVEL=info
+ENV MAX_OLD_SPACE_SIZE=2048
+
+# Start command
+CMD ["./scripts/start-production.sh"]

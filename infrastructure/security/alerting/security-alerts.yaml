@@ -1,0 +1,535 @@
+# AIRIS EPM Security Alerting and Incident Response
+# Advanced security event correlation and automated response
+
+# Prometheus Security Rules
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: airis-epm-security-rules
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    component: security-monitoring
+spec:
+  groups:
+  - name: airis-epm.security.critical
+    interval: 30s
+    rules:
+    - alert: AIRISEPMCriticalSecurityViolation
+      expr: increase(falco_events_total{source="falco", priority="Critical"}[2m]) > 0
+      for: 0m
+      labels:
+        severity: critical
+        service: airis-epm
+        team: security
+        escalation_tier: "1"
+      annotations:
+        summary: "🚨 CRITICAL: Security violation detected in AIRIS EPM"
+        description: "Critical security event: {{ $labels.rule }} - Immediate investigation required"
+        runbook_url: "https://docs.airis.company.com/security/critical-incidents"
+        slack_channel: "#airis-epm-critical"
+    
+    - alert: AIRISEPMPrivilegeEscalationAttempt
+      expr: increase(falco_events_total{source="falco", rule=~".*Privilege.*Escalation.*"}[5m]) > 0
+      for: 0m
+      labels:
+        severity: critical
+        service: airis-epm
+        team: security
+        escalation_tier: "1"
+      annotations:
+        summary: "🔓 Privilege escalation attempt detected"
+        description: "Unauthorized privilege escalation attempt in AIRIS EPM container {{ $labels.container_name }}"
+        runbook_url: "https://docs.airis.company.com/security/privilege-escalation"
+    
+    - alert: AIRISEPMSuspiciousNetworkActivity
+      expr: increase(falco_events_total{source="falco", rule=~".*Network.*"}[10m]) > 5
+      for: 2m
+      labels:
+        severity: warning
+        service: airis-epm
+        team: security
+        escalation_tier: "2"
+      annotations:
+        summary: "🌐 Suspicious network activity patterns"
+        description: "Unusual network activity detected: {{ $value }} suspicious connections in 10 minutes"
+        runbook_url: "https://docs.airis.company.com/security/network-investigation"
+
+  - name: airis-epm.security.authentication
+    interval: 60s
+    rules:
+    - alert: AIRISEPMFailedAuthenticationSpike
+      expr: rate(authentication_failures_total{service="airis-epm"}[5m]) > 10
+      for: 5m
+      labels:
+        severity: warning
+        service: airis-epm
+        team: security
+        escalation_tier: "2"
+      annotations:
+        summary: "🔐 High authentication failure rate"
+        description: "Authentication failure rate: {{ $value | humanize }}% - Potential brute force attack"
+        runbook_url: "https://docs.airis.company.com/security/auth-incidents"
+    
+    - alert: AIRISEPMUnauthorizedAPIAccess
+      expr: rate(http_requests_total{service="airis-epm", status=~"401|403"}[10m]) > 5
+      for: 3m
+      labels:
+        severity: warning
+        service: airis-epm
+        team: security
+        escalation_tier: "2"
+      annotations:
+        summary: "🚫 Unauthorized API access attempts"
+        description: "Multiple unauthorized API access attempts from {{ $labels.source_ip }}"
+
+  - name: airis-epm.security.compliance
+    interval: 300s
+    rules:
+    - alert: AIRISEPMVulnerabilityThresholdExceeded
+      expr: trivy_vulnerabilities_total{severity="Critical"} > 0
+      for: 0m
+      labels:
+        severity: high
+        service: airis-epm
+        team: security
+        escalation_tier: "2"
+      annotations:
+        summary: "🔍 Critical vulnerabilities detected"
+        description: "{{ $value }} critical vulnerabilities found in AIRIS EPM images"
+        runbook_url: "https://docs.airis.company.com/security/vulnerability-management"
+    
+    - alert: AIRISEPMComplianceViolation
+      expr: compliance_score{service="airis-epm"} < 80
+      for: 15m
+      labels:
+        severity: high
+        service: airis-epm
+        team: security
+        escalation_tier: "2"
+      annotations:
+        summary: "📋 Security compliance score below threshold"
+        description: "Compliance score: {{ $value }}% - Immediate remediation required"
+
+---
+# AlertManager Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alertmanager-config
+  namespace: airis-epm
+  labels:
+    app: alertmanager
+data:
+  alertmanager.yml: |
+    global:
+      smtp_smarthost: 'smtp.airis.company.com:587'
+      smtp_from: 'alerts@airis.company.com'
+      smtp_auth_username: 'alerts@airis.company.com'
+      smtp_auth_password_file: '/etc/alertmanager/secrets/smtp_password'
+      slack_api_url_file: '/etc/alertmanager/secrets/slack_api_url'
+    
+    templates:
+    - '/etc/alertmanager/templates/*.tmpl'
+    
+    route:
+      group_by: ['alertname', 'service', 'severity']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 1h
+      receiver: 'default'
+      routes:
+      - match:
+          severity: critical
+          escalation_tier: "1"
+        receiver: 'critical-security-team'
+        group_wait: 0s
+        repeat_interval: 5m
+      - match:
+          severity: critical
+        receiver: 'security-team'
+        group_wait: 30s
+        repeat_interval: 15m
+      - match:
+          severity: warning
+        receiver: 'security-team'
+        group_wait: 2m
+        repeat_interval: 1h
+      - match:
+          team: security
+        receiver: 'security-team'
+    
+    inhibit_rules:
+    - source_match:
+        severity: 'critical'
+      target_match:
+        severity: 'warning'
+      equal: ['alertname', 'service']
+    
+    receivers:
+    - name: 'default'
+      slack_configs:
+      - channel: '#airis-epm-alerts'
+        title: 'AIRIS EPM Alert'
+        text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+    
+    - name: 'critical-security-team'
+      email_configs:
+      - to: 'security-critical@airis.company.com'
+        subject: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Service: {{ .Labels.service }}
+          Runbook: {{ .Annotations.runbook_url }}
+          {{ end }}
+      slack_configs:
+      - channel: '#airis-security-critical'
+        title: '🚨 CRITICAL SECURITY ALERT'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Service:* {{ .Labels.service }}
+          *Description:* {{ .Annotations.description }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+          {{ end }}
+        send_resolved: true
+      pagerduty_configs:
+      - routing_key_file: '/etc/alertmanager/secrets/pagerduty_key'
+        description: '{{ .GroupLabels.alertname }} - {{ .CommonAnnotations.summary }}'
+    
+    - name: 'security-team'
+      email_configs:
+      - to: 'security@airis.company.com'
+        subject: 'AIRIS EPM Security Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Service: {{ .Labels.service }}
+          {{ end }}
+      slack_configs:
+      - channel: '#airis-epm-security'
+        title: 'Security Alert'
+        text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+
+---
+# Security Incident Response Playbook
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: security-playbooks
+  namespace: airis-epm
+  labels:
+    app: airis-epm
+    component: security
+data:
+  critical-incident-response.md: |
+    # AIRIS EPM Critical Security Incident Response Playbook
+    
+    ## Phase 1: Immediate Response (0-15 minutes)
+    
+    ### 1. Alert Acknowledgment
+    - [ ] Acknowledge alert in PagerDuty/AlertManager
+    - [ ] Post in #airis-security-critical channel
+    - [ ] Assign incident commander
+    
+    ### 2. Initial Assessment
+    - [ ] Verify alert authenticity (not false positive)
+    - [ ] Determine scope and impact
+    - [ ] Check Falco logs for additional context
+    - [ ] Review recent deployments/changes
+    
+    ### 3. Immediate Containment
+    - [ ] Isolate affected containers/pods if needed
+    - [ ] Block suspicious IP addresses at network level
+    - [ ] Revoke compromised credentials immediately
+    - [ ] Enable additional monitoring/logging
+    
+    ## Phase 2: Investigation (15-60 minutes)
+    
+    ### 1. Evidence Collection
+    - [ ] Export relevant logs from ClickHouse
+    - [ ] Capture network traffic if applicable
+    - [ ] Document timeline of events
+    - [ ] Preserve container images for forensics
+    
+    ### 2. Impact Analysis
+    - [ ] Identify affected systems and data
+    - [ ] Assess potential data exposure
+    - [ ] Determine business impact
+    - [ ] Check for lateral movement
+    
+    ### 3. Root Cause Analysis
+    - [ ] Identify attack vector
+    - [ ] Trace attacker actions
+    - [ ] Identify security gaps
+    - [ ] Document findings
+    
+    ## Phase 3: Recovery (1-4 hours)
+    
+    ### 1. System Hardening
+    - [ ] Apply security patches
+    - [ ] Update security policies
+    - [ ] Strengthen access controls
+    - [ ] Deploy additional monitoring
+    
+    ### 2. Service Restoration
+    - [ ] Verify system integrity
+    - [ ] Restore from clean backups if needed
+    - [ ] Gradually restore services
+    - [ ] Monitor for recurring issues
+    
+    ## Phase 4: Post-Incident (4+ hours)
+    
+    ### 1. Lessons Learned
+    - [ ] Conduct post-incident review
+    - [ ] Update security policies
+    - [ ] Improve detection capabilities
+    - [ ] Update incident playbooks
+    
+    ### 2. Communication
+    - [ ] Notify stakeholders
+    - [ ] Prepare incident report
+    - [ ] Update security training
+    - [ ] Share findings with team
+  
+  privilege-escalation-response.md: |
+    # Privilege Escalation Incident Response
+    
+    ## Immediate Actions
+    1. **Isolate the Container**: `kubectl cordon <node>` if needed
+    2. **Check Process Tree**: Review Falco output for process hierarchy
+    3. **Verify User Context**: Confirm if escalation was successful
+    4. **Block Network**: Apply network policy to isolate pod
+    
+    ## Investigation Steps
+    1. Check recent container deployments
+    2. Review security context of affected pods
+    3. Examine file system changes
+    4. Check for persistence mechanisms
+    
+    ## Recovery Actions
+    1. Terminate compromised containers
+    2. Deploy from clean images
+    3. Update security policies
+    4. Strengthen RBAC controls
+
+---
+# Security Event Correlation Engine
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: security-correlation-engine
+  namespace: airis-epm
+  labels:
+    app: security-correlation
+    component: analysis
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: security-correlation
+      component: analysis
+  template:
+    metadata:
+      labels:
+        app: security-correlation
+        component: analysis
+    spec:
+      serviceAccountName: airis-epm-monitoring
+      containers:
+      - name: correlation-engine
+        image: python:3.11-alpine
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          pip install pandas numpy scikit-learn requests prometheus-client
+          python3 /app/security_correlation.py
+        ports:
+        - containerPort: 8080
+          name: metrics
+        env:
+        - name: PROMETHEUS_URL
+          value: "http://prometheus.monitoring.svc.cluster.local:9090"
+        - name: FALCO_ENDPOINT
+          value: "http://falco-security-monitor.airis-epm.svc.cluster.local:8765"
+        volumeMounts:
+        - name: correlation-scripts
+          mountPath: /app
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+      volumes:
+      - name: correlation-scripts
+        configMap:
+          name: correlation-engine-config
+
+---
+# Correlation Engine Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: correlation-engine-config
+  namespace: airis-epm
+data:
+  security_correlation.py: |
+    #!/usr/bin/env python3
+    import time
+    import json
+    import requests
+    from datetime import datetime, timedelta
+    from prometheus_client import start_http_server, Gauge, Counter
+    import logging
+    
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    
+    # Prometheus metrics
+    security_threat_score = Gauge('security_threat_score', 'Current security threat score', ['service'])
+    security_incidents_total = Counter('security_incidents_total', 'Total security incidents', ['type', 'severity'])
+    
+    class SecurityCorrelationEngine:
+        def __init__(self):
+            self.prometheus_url = os.environ.get('PROMETHEUS_URL', 'http://prometheus:9090')
+            self.falco_endpoint = os.environ.get('FALCO_ENDPOINT', 'http://falco:8765')
+            self.threat_score = 0
+            self.incident_patterns = {}
+            
+        def fetch_security_events(self):
+            """Fetch security events from Falco and Prometheus"""
+            try:
+                # Fetch Falco events
+                falco_response = requests.get(f"{self.falco_endpoint}/api/v1/events", timeout=30)
+                falco_events = falco_response.json() if falco_response.status_code == 200 else []
+                
+                # Fetch Prometheus metrics
+                prom_query = 'rate(falco_events_total[5m])'
+                prom_response = requests.get(f"{self.prometheus_url}/api/v1/query", 
+                                           params={'query': prom_query}, timeout=30)
+                prom_data = prom_response.json() if prom_response.status_code == 200 else {}
+                
+                return falco_events, prom_data
+                
+            except Exception as e:
+                logger.error(f"Error fetching security events: {e}")
+                return [], {}
+        
+        def calculate_threat_score(self, falco_events, prom_data):
+            """Calculate dynamic threat score based on events"""
+            score = 0
+            
+            # Base score from Falco events
+            for event in falco_events[-100:]:  # Last 100 events
+                priority = event.get('priority', '').lower()
+                if priority == 'critical':
+                    score += 50
+                elif priority == 'high':
+                    score += 25
+                elif priority == 'warning':
+                    score += 10
+                elif priority == 'info':
+                    score += 2
+                    
+            # Adjust score based on event frequency
+            if prom_data.get('data', {}).get('result'):
+                for result in prom_data['data']['result']:
+                    rate = float(result['value'][1])
+                    if rate > 10:  # High event rate
+                        score += 30
+                    elif rate > 5:  # Medium event rate
+                        score += 15
+                        
+            # Normalize score to 0-100 range
+            self.threat_score = min(100, max(0, score))
+            return self.threat_score
+        
+        def detect_patterns(self, events):
+            """Detect attack patterns and anomalies"""
+            patterns = {
+                'privilege_escalation': 0,
+                'lateral_movement': 0,
+                'data_exfiltration': 0,
+                'persistence': 0
+            }
+            
+            for event in events:
+                rule = event.get('rule', '').lower()
+                
+                if 'privilege' in rule or 'escalation' in rule:
+                    patterns['privilege_escalation'] += 1
+                elif 'network' in rule or 'connection' in rule:
+                    patterns['lateral_movement'] += 1
+                elif 'file' in rule and ('write' in rule or 'copy' in rule):
+                    patterns['data_exfiltration'] += 1
+                elif 'cron' in rule or 'startup' in rule:
+                    patterns['persistence'] += 1
+                    
+            return patterns
+        
+        def generate_recommendations(self, threat_score, patterns):
+            """Generate security recommendations based on analysis"""
+            recommendations = []
+            
+            if threat_score > 70:
+                recommendations.append("CRITICAL: Immediate security review required")
+                recommendations.append("Consider activating incident response team")
+                
+            if patterns['privilege_escalation'] > 5:
+                recommendations.append("Multiple privilege escalation attempts - review RBAC policies")
+                
+            if patterns['lateral_movement'] > 10:
+                recommendations.append("Potential lateral movement - check network segmentation")
+                
+            if patterns['data_exfiltration'] > 3:
+                recommendations.append("Possible data exfiltration - review data access logs")
+                
+            return recommendations
+        
+        def run(self):
+            """Main correlation engine loop"""
+            logger.info("Starting Security Correlation Engine")
+            start_http_server(8080)  # Start metrics server
+            
+            while True:
+                try:
+                    # Fetch events
+                    falco_events, prom_data = self.fetch_security_events()
+                    
+                    # Calculate threat score
+                    threat_score = self.calculate_threat_score(falco_events, prom_data)
+                    security_threat_score.labels(service='airis-epm').set(threat_score)
+                    
+                    # Detect patterns
+                    patterns = self.detect_patterns(falco_events)
+                    
+                    # Generate recommendations
+                    recommendations = self.generate_recommendations(threat_score, patterns)
+                    
+                    # Log findings
+                    logger.info(f"Threat Score: {threat_score}, Patterns: {patterns}")
+                    if recommendations:
+                        logger.warning(f"Recommendations: {recommendations}")
+                    
+                    # Update metrics
+                    for pattern_type, count in patterns.items():
+                        if count > 0:
+                            security_incidents_total.labels(type=pattern_type, severity='auto-detected').inc(count)
+                    
+                    time.sleep(60)  # Run every minute
+                    
+                except Exception as e:
+                    logger.error(f"Error in correlation engine: {e}")
+                    time.sleep(30)  # Shorter sleep on error
+    
+    if __name__ == "__main__":
+        engine = SecurityCorrelationEngine()
+        engine.run()

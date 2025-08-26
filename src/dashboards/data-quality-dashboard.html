@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>데이터 품질 모니터링 대시보드 - AIRIS EPM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96.1%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --success: 142 76% 36%;
+            --warning: 38 92% 50%;
+            --error: 0 84% 60%;
+            --info: 199 89% 48%;
+        }
+        
+        .quality-grade {
+            display: inline-block;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 48px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .grade-a { background: linear-gradient(135deg, #10b981, #059669); }
+        .grade-b { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .grade-c { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .grade-d { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .grade-f { background: linear-gradient(135deg, #6b7280, #374151); }
+        
+        .trend-up { color: #10b981; }
+        .trend-down { color: #ef4444; }
+        .trend-stable { color: #6b7280; }
+        
+        .anomaly-indicator {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">데이터 품질 모니터링</h1>
+                    <p class="text-sm text-gray-600">실시간 데이터 품질 관리 시스템</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span id="connectionStatus" class="text-sm text-gray-600">
+                        <span class="inline-block w-2 h-2 bg-gray-400 rounded-full mr-1"></span>
+                        연결 대기중
+                    </span>
+                    <button onclick="refreshDashboard()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition">
+                        새로고침
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- Overall Quality Score -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">전체 품질 점수</p>
+                        <div class="flex items-center space-x-3">
+                            <span id="qualityGrade" class="quality-grade grade-a">A</span>
+                            <div>
+                                <p id="qualityScore" class="text-2xl font-bold">95%</p>
+                                <p id="qualityTrend" class="text-sm trend-stable">→ 안정</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Validation Success Rate -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">검증 성공률</p>
+                        <p id="validationRate" class="text-2xl font-bold">98.5%</p>
+                        <p class="text-sm text-gray-500">
+                            <span id="validationErrors">2</span> 오류
+                        </p>
+                    </div>
+                    <span id="validationTrend" class="text-2xl trend-up">↑</span>
+                </div>
+            </div>
+
+            <!-- Anomaly Detection -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">이상치 탐지</p>
+                        <p id="anomalyRate" class="text-2xl font-bold">0.5%</p>
+                        <p class="text-sm text-gray-500">
+                            <span id="anomalyCount">12</span> 건 탐지
+                        </p>
+                    </div>
+                    <span id="anomalyTrend" class="text-2xl trend-down">↓</span>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-sm text-gray-600 mb-1">처리 성능</p>
+                        <p id="avgDuration" class="text-2xl font-bold">45ms</p>
+                        <p class="text-sm text-gray-500">
+                            <span id="throughput">2.3k</span>/sec
+                        </p>
+                    </div>
+                    <span id="performanceTrend" class="text-2xl trend-stable">→</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Quality Score Timeline -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">품질 점수 추이</h3>
+                <div class="h-64">
+                    <canvas id="qualityTimelineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Validation Distribution -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">검증 결과 분포</h3>
+                <div class="h-64">
+                    <canvas id="validationPieChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Anomaly Heatmap -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">이상치 발생 패턴</h3>
+                <div class="h-64">
+                    <canvas id="anomalyHeatmapChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Performance Histogram -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">처리 시간 분포</h3>
+                <div class="h-64">
+                    <canvas id="performanceHistogramChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Alerts & Recommendations -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Recent Alerts -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">최근 알림</h3>
+                <div id="alertsList" class="space-y-3 max-h-80 overflow-y-auto">
+                    <!-- Alerts will be populated here -->
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold mb-4">권장사항</h3>
+                <div id="recommendationsList" class="space-y-3 max-h-80 overflow-y-auto">
+                    <!-- Recommendations will be populated here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // WebSocket 연결
+        const socket = io('/quality');
+        let charts = {};
+        
+        // 연결 상태 업데이트
+        socket.on('connect', () => {
+            updateConnectionStatus(true);
+            console.log('Connected to quality monitoring');
+        });
+        
+        socket.on('disconnect', () => {
+            updateConnectionStatus(false);
+            console.log('Disconnected from quality monitoring');
+        });
+        
+        // 대시보드 업데이트
+        socket.on('dashboard-update', (data) => {
+            updateDashboard(data);
+        });
+        
+        // 이상치 알림
+        socket.on('anomaly-detected', (anomaly) => {
+            showAnomalyAlert(anomaly);
+        });
+        
+        function updateConnectionStatus(connected) {
+            const statusEl = document.getElementById('connectionStatus');
+            if (connected) {
+                statusEl.innerHTML = '<span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span>연결됨';
+                statusEl.className = 'text-sm text-green-600';
+            } else {
+                statusEl.innerHTML = '<span class="inline-block w-2 h-2 bg-red-500 rounded-full mr-1"></span>연결 끊김';
+                statusEl.className = 'text-sm text-red-600';
+            }
+        }
+        
+        function updateDashboard(data) {
+            // Summary 업데이트
+            updateSummary(data.summary);
+            
+            // Charts 업데이트
+            updateCharts(data.charts);
+            
+            // Alerts 업데이트
+            updateAlerts(data.alerts);
+            
+            // Recommendations 업데이트
+            updateRecommendations(data.recommendations);
+        }
+        
+        function updateSummary(summary) {
+            // Overall Quality
+            const qualityScore = Math.round(summary.overallQuality.score * 100);
+            document.getElementById('qualityScore').textContent = qualityScore + '%';
+            document.getElementById('qualityGrade').textContent = summary.overallQuality.grade;
+            document.getElementById('qualityGrade').className = `quality-grade grade-${summary.overallQuality.grade.toLowerCase()}`;
+            updateTrend('qualityTrend', summary.overallQuality.trend);
+            
+            // Validation
+            document.getElementById('validationRate').textContent = summary.validation.successRate.toFixed(1) + '%';
+            document.getElementById('validationErrors').textContent = summary.validation.errorCount;
+            updateTrend('validationTrend', summary.validation.trend);
+            
+            // Anomalies
+            document.getElementById('anomalyRate').textContent = summary.anomalies.detectionRate.toFixed(1) + '%';
+            document.getElementById('anomalyCount').textContent = summary.anomalies.count;
+            updateTrend('anomalyTrend', summary.anomalies.trend);
+            
+            // Performance
+            document.getElementById('avgDuration').textContent = Math.round(summary.performance.avgDuration) + 'ms';
+            document.getElementById('throughput').textContent = (summary.performance.throughput / 1000).toFixed(1) + 'k';
+            updateTrend('performanceTrend', summary.performance.trend);
+        }
+        
+        function updateTrend(elementId, trend) {
+            const element = document.getElementById(elementId);
+            element.className = `text-2xl trend-${trend}`;
+            
+            if (trend === 'up') {
+                element.textContent = '↑';
+            } else if (trend === 'down') {
+                element.textContent = '↓';
+            } else {
+                element.textContent = '→';
+            }
+        }
+        
+        function updateCharts(chartsData) {
+            // Quality Timeline Chart
+            updateQualityTimelineChart(chartsData.qualityTimeSeries || []);
+            
+            // Validation Pie Chart
+            updateValidationPieChart(chartsData.validationPieChart || {});
+            
+            // Anomaly Heatmap
+            updateAnomalyHeatmapChart(chartsData.anomalyHeatmap || {});
+            
+            // Performance Histogram
+            updatePerformanceHistogramChart(chartsData.performanceHistogram || {});
+        }
+        
+        function updateQualityTimelineChart(data) {
+            const ctx = document.getElementById('qualityTimelineChart').getContext('2d');
+            
+            if (charts.qualityTimeline) {
+                charts.qualityTimeline.destroy();
+            }
+            
+            charts.qualityTimeline = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => new Date(d.timestamp).toLocaleTimeString()),
+                    datasets: [{
+                        label: '품질 점수',
+                        data: data.map(d => d.value * 100),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateValidationPieChart(data) {
+            const ctx = document.getElementById('validationPieChart').getContext('2d');
+            
+            if (charts.validationPie) {
+                charts.validationPie.destroy();
+            }
+            
+            charts.validationPie = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['성공', '실패'],
+                    datasets: [{
+                        data: [data.passed || 0, data.failed || 0],
+                        backgroundColor: ['#10b981', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+        
+        function updateAnomalyHeatmapChart(data) {
+            const ctx = document.getElementById('anomalyHeatmapChart').getContext('2d');
+            
+            if (charts.anomalyHeatmap) {
+                charts.anomalyHeatmap.destroy();
+            }
+            
+            // Prepare heatmap data for bar chart visualization
+            const days = ['일', '월', '화', '수', '목', '금', '토'];
+            const hours = Array.from({length: 24}, (_, i) => i);
+            const datasets = [];
+            
+            // Create a dataset for each hour
+            hours.forEach(hour => {
+                const dayData = days.map((_, dayIndex) => {
+                    const key = `${dayIndex}_${hour}`;
+                    return data[key] || 0;
+                });
+                
+                datasets.push({
+                    label: `${hour}시`,
+                    data: dayData,
+                    backgroundColor: `rgba(239, 68, 68, ${Math.random() * 0.5 + 0.3})`
+                });
+            });
+            
+            charts.anomalyHeatmap = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: days,
+                    datasets: datasets.slice(0, 4) // Show only first 4 hours for simplicity
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true }
+                    }
+                }
+            });
+        }
+        
+        function updatePerformanceHistogramChart(data) {
+            const ctx = document.getElementById('performanceHistogramChart').getContext('2d');
+            
+            if (charts.performanceHistogram) {
+                charts.performanceHistogram.destroy();
+            }
+            
+            charts.performanceHistogram = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(data),
+                    datasets: [{
+                        label: '처리 건수',
+                        data: Object.values(data),
+                        backgroundColor: '#3b82f6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateAlerts(alerts) {
+            const alertsList = document.getElementById('alertsList');
+            alertsList.innerHTML = '';
+            
+            if (!alerts || alerts.length === 0) {
+                alertsList.innerHTML = '<p class="text-gray-500 text-sm">최근 알림이 없습니다.</p>';
+                return;
+            }
+            
+            alerts.forEach(alert => {
+                const alertEl = document.createElement('div');
+                alertEl.className = `p-3 rounded-lg border-l-4 ${getSeverityColor(alert.severity)}`;
+                alertEl.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="font-medium text-sm">${alert.metric}</p>
+                            <p class="text-xs text-gray-600">${alert.type}: ${alert.value} (임계값: ${alert.threshold})</p>
+                        </div>
+                        <span class="text-xs text-gray-500">${new Date(alert.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                `;
+                alertsList.appendChild(alertEl);
+            });
+        }
+        
+        function updateRecommendations(recommendations) {
+            const recommendationsList = document.getElementById('recommendationsList');
+            recommendationsList.innerHTML = '';
+            
+            if (!recommendations || recommendations.length === 0) {
+                recommendationsList.innerHTML = '<p class="text-gray-500 text-sm">권장사항이 없습니다. 시스템이 정상 작동중입니다.</p>';
+                return;
+            }
+            
+            recommendations.forEach(rec => {
+                const recEl = document.createElement('div');
+                recEl.className = `p-3 rounded-lg ${getPriorityColor(rec.priority)}`;
+                recEl.innerHTML = `
+                    <div class="flex items-start space-x-2">
+                        <span class="text-lg">${getPriorityIcon(rec.priority)}</span>
+                        <div>
+                            <p class="font-medium text-sm">${rec.type}</p>
+                            <p class="text-xs text-gray-600">${rec.message}</p>
+                        </div>
+                    </div>
+                `;
+                recommendationsList.appendChild(recEl);
+            });
+        }
+        
+        function getSeverityColor(severity) {
+            switch(severity) {
+                case 'critical': return 'border-red-500 bg-red-50';
+                case 'high': return 'border-orange-500 bg-orange-50';
+                case 'medium': return 'border-yellow-500 bg-yellow-50';
+                case 'low': return 'border-blue-500 bg-blue-50';
+                default: return 'border-gray-500 bg-gray-50';
+            }
+        }
+        
+        function getPriorityColor(priority) {
+            switch(priority) {
+                case 'high': return 'bg-red-50';
+                case 'medium': return 'bg-yellow-50';
+                case 'low': return 'bg-blue-50';
+                default: return 'bg-gray-50';
+            }
+        }
+        
+        function getPriorityIcon(priority) {
+            switch(priority) {
+                case 'high': return '🔴';
+                case 'medium': return '🟡';
+                case 'low': return '🔵';
+                default: return '⚪';
+            }
+        }
+        
+        function showAnomalyAlert(anomaly) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg anomaly-indicator z-50';
+            notification.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <span class="text-xl">⚠️</span>
+                    <div>
+                        <p class="font-bold">이상치 탐지!</p>
+                        <p class="text-sm">${anomaly.metricName}: ${anomaly.value}</p>
+                        <p class="text-xs">신뢰도: ${(anomaly.confidence * 100).toFixed(1)}%</p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remove notification after 5 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+        
+        function refreshDashboard() {
+            socket.emit('refresh');
+        }
+        
+        // Initial chart setup
+        window.addEventListener('DOMContentLoaded', () => {
+            // Initialize with empty charts
+            updateCharts({
+                qualityTimeSeries: [],
+                validationPieChart: { passed: 0, failed: 0 },
+                anomalyHeatmap: {},
+                performanceHistogram: {}
+            });
+        });
+    </script>
+</body>
+</html>
