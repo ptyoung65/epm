@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔗 통합 세션-텔레메트리 분석 대시보드 - AIRIS APM</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- D3.js for advanced visualizations -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* shadcn/ui CSS Variables */
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 47.4% 11.2%;
+            --border: 214.3 31.8% 91.4%;
+            --radius: 0.5rem;
+        }
+
+        .modern-card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: calc(var(--radius));
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .btn-primary {
+            background: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            border: 1px solid hsl(var(--primary));
+            border-radius: calc(var(--radius));
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: hsl(var(--primary) / 0.9);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: hsl(var(--foreground));
+            border: 1px solid hsl(var(--border));
+            border-radius: calc(var(--radius));
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .btn-ghost:hover {
+            background: hsl(var(--accent));
+        }
+
+        /* 차트 컨테이너 고정 높이 */
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        /* 상관관계 시각화 스타일 */
+        .correlation-timeline {
+            border: 1px solid hsl(var(--border));
+            border-radius: calc(var(--radius));
+            background: hsl(var(--card));
+        }
+
+        .timeline-event {
+            position: relative;
+            padding: 0.75rem;
+            border-left: 3px solid transparent;
+            margin: 0.25rem 0;
+        }
+
+        .timeline-event.session-event {
+            border-left-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .timeline-event.otel-event {
+            border-left-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .timeline-event.correlated {
+            border-left-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        /* 인사이트 카드 스타일 */
+        .insight-card {
+            border-left: 4px solid transparent;
+        }
+
+        .insight-card.critical {
+            border-left-color: #ef4444;
+        }
+
+        .insight-card.high {
+            border-left-color: #f97316;
+        }
+
+        .insight-card.medium {
+            border-left-color: #eab308;
+        }
+
+        .insight-card.low {
+            border-left-color: #22c55e;
+        }
+
+        /* 세션 리스트 스타일 */
+        .session-item {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .session-item:hover {
+            background: hsl(var(--accent));
+        }
+
+        .session-item.active {
+            background: hsl(var(--primary) / 0.1);
+            border-color: hsl(var(--primary));
+        }
+
+        /* 로딩 애니메이션 */
+        .loading-spinner {
+            border: 2px solid hsl(var(--border));
+            border-top: 2px solid hsl(var(--primary));
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 반응형 */
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Modern Header -->
+    <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
+        <div class="container mx-auto flex h-14 items-center px-4">
+            <div class="mr-4 flex items-center space-x-2">
+                <h1 class="font-bold text-xl text-foreground">AIRIS APM</h1>
+                <span class="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">통합 모니터링</span>
+            </div>
+            
+            <!-- Navigation Menu -->
+            <nav class="flex items-center space-x-6 text-sm ml-6">
+                <button onclick="window.location.href = '/'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+                    통합 대시보드
+                </button>
+                <button onclick="window.location.href = '/j2ee-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+                    J2EE 모니터링
+                </button>
+                <button onclick="window.location.href = '/was-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+                    WAS 모니터링
+                </button>
+                <button onclick="window.location.href = '/exception-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+                    예외 추적
+                </button>
+                <button onclick="window.location.href = '/topology-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+                    서비스 토폴로지
+                </button>
+                <button onclick="window.location.href = '/alert-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+                    알림 관리
+                </button>
+                <button onclick="window.location.href = '/ontology.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+                    온톨로지
+                </button>
+                <button onclick="window.location.href = '/session-replay.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+                    세션 리플레이
+                </button>
+                <span class="font-medium text-foreground/80 hover:text-foreground transition-colors">
+                    🔗 세션-텔레메트리 분석
+                </span>
+            </nav>
+            
+            <div class="flex items-center space-x-4 ml-auto">
+                <select id="timeRange" class="text-sm border border-border rounded-md px-3 py-1 bg-background">
+                    <option value="1h">최근 1시간</option>
+                    <option value="24h" selected>최근 24시간</option>
+                    <option value="7d">최근 7일</option>
+                    <option value="30d">최근 30일</option>
+                </select>
+                
+                <button id="refreshBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+                    새로고침
+                </button>
+                
+                <button id="themeToggle" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 w-9">
+                    🌙
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 개요 통계 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="modern-card p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-100 rounded-md flex items-center justify-center">
+                            <span class="text-blue-600">👥</span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">총 세션 수</p>
+                        <p id="totalSessions" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modern-card p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-100 rounded-md flex items-center justify-center">
+                            <span class="text-green-600">🔗</span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">상관관계 수</p>
+                        <p id="totalCorrelations" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modern-card p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-orange-100 rounded-md flex items-center justify-center">
+                            <span class="text-orange-600">💡</span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">생성된 인사이트</p>
+                        <p id="totalInsights" class="text-2xl font-semibold text-gray-900">-</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modern-card p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-purple-100 rounded-md flex items-center justify-center">
+                            <span class="text-purple-600">⚡</span>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">평균 응답시간</p>
+                        <p id="avgResponseTime" class="text-2xl font-semibold text-gray-900">-ms</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 메인 컨텐츠 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 왼쪽: 세션 목록 -->
+            <div class="lg:col-span-1">
+                <div class="modern-card">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-900">세션 목록</h3>
+                        <div class="mt-2 flex space-x-2">
+                            <select id="sessionFilter" class="text-sm border border-gray-300 rounded px-2 py-1">
+                                <option value="all">전체 세션</option>
+                                <option value="active">활성 세션</option>
+                                <option value="completed">완료된 세션</option>
+                                <option value="error">오류 발생 세션</option>
+                            </select>
+                            <button id="loadMoreSessions" class="text-sm btn-ghost px-2 py-1">
+                                더보기
+                            </button>
+                        </div>
+                    </div>
+                    <div class="max-h-96 overflow-y-auto">
+                        <div id="sessionList" class="divide-y divide-gray-200">
+                            <!-- 세션 목록이 여기에 동적으로 로드됩니다 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 오른쪽: 선택된 세션 상세 정보 -->
+            <div class="lg:col-span-2">
+                <div id="sessionDetails" class="space-y-6">
+                    <!-- 세션이 선택되지 않았을 때 표시 -->
+                    <div id="noSessionSelected" class="modern-card p-8 text-center">
+                        <div class="text-6xl mb-4">🔍</div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">세션을 선택하세요</h3>
+                        <p class="text-gray-500">왼쪽 목록에서 세션을 클릭하여 상세 정보를 확인하세요</p>
+                    </div>
+
+                    <!-- 선택된 세션의 상세 정보 -->
+                    <div id="selectedSessionContent" class="hidden space-y-6">
+                        <!-- 세션 기본 정보 -->
+                        <div class="modern-card p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">📋 세션 기본 정보</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">세션 ID</p>
+                                    <p id="sessionId" class="font-mono text-sm">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">OpenTelemetry Trace ID</p>
+                                    <p id="otelTraceId" class="font-mono text-sm">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">시작 시간</p>
+                                    <p id="sessionStartTime" class="text-sm">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">지속 시간</p>
+                                    <p id="sessionDuration" class="text-sm">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">페이지 뷰</p>
+                                    <p id="pageViews" class="text-sm">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">상태</p>
+                                    <p id="sessionStatus" class="text-sm">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">-</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 성능 메트릭 차트 -->
+                        <div class="modern-card p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">📊 성능 메트릭</h3>
+                            <div class="chart-container">
+                                <canvas id="performanceChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- 상관관계 타임라인 -->
+                        <div class="modern-card p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">⏱️ 세션-텔레메트리 상관관계 타임라인</h3>
+                            <div id="correlationTimeline" class="correlation-timeline max-h-80 overflow-y-auto">
+                                <!-- 타임라인 이벤트들이 여기에 표시됩니다 -->
+                            </div>
+                        </div>
+
+                        <!-- AI 인사이트 -->
+                        <div class="modern-card p-6">
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">💡 AI 분석 인사이트</h3>
+                            <div id="insightsList" class="space-y-4">
+                                <!-- 인사이트 카드들이 여기에 표시됩니다 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 전체 분석 차트 섹션 -->
+        <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- 세션 트렌드 차트 -->
+            <div class="modern-card p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">📈 세션 생성 트렌드</h3>
+                <div class="chart-container">
+                    <canvas id="sessionTrendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 상관관계 분석 차트 -->
+            <div class="modern-card p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">🔗 상관관계 분석</h3>
+                <div class="chart-container">
+                    <canvas id="correlationChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수
+        let sessions = [];
+        let selectedSession = null;
+        let performanceChart = null;
+        let sessionTrendChart = null;
+        let correlationChart = null;
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🔗 통합 세션-텔레메트리 분석 대시보드 초기화 중...');
+            
+            setupEventListeners();
+            await loadDashboardData();
+            setupCharts();
+            
+            // 5분마다 자동 새로고침
+            setInterval(loadDashboardData, 5 * 60 * 1000);
+        });
+
+        // 이벤트 리스너 설정
+        function setupEventListeners() {
+            document.getElementById('refreshBtn').addEventListener('click', loadDashboardData);
+            document.getElementById('exportBtn').addEventListener('click', exportData);
+            document.getElementById('sessionFilter').addEventListener('change', filterSessions);
+            document.getElementById('loadMoreSessions').addEventListener('click', loadMoreSessions);
+        }
+
+        // 대시보드 데이터 로드
+        async function loadDashboardData() {
+            try {
+                showLoading(true);
+                console.log('대시보드 데이터 로딩 중...');
+
+                // 개요 통계 로드
+                await loadOverviewStats();
+                
+                // 세션 목록 로드
+                await loadSessions();
+                
+                // 차트 데이터 로드
+                await loadChartData();
+
+                showLoading(false);
+                console.log('대시보드 데이터 로딩 완료');
+
+            } catch (error) {
+                console.error('대시보드 데이터 로딩 실패:', error);
+                showError('데이터를 불러오는 중 오류가 발생했습니다: ' + error.message);
+                showLoading(false);
+            }
+        }
+
+        // 개요 통계 로드
+        async function loadOverviewStats() {
+            try {
+                // 실제 API가 없으므로 모의 데이터 사용
+                const stats = {
+                    totalSessions: Math.floor(Math.random() * 1000) + 500,
+                    totalCorrelations: Math.floor(Math.random() * 5000) + 2000,
+                    totalInsights: Math.floor(Math.random() * 200) + 100,
+                    avgResponseTime: Math.floor(Math.random() * 300) + 150
+                };
+
+                document.getElementById('totalSessions').textContent = stats.totalSessions.toLocaleString();
+                document.getElementById('totalCorrelations').textContent = stats.totalCorrelations.toLocaleString();
+                document.getElementById('totalInsights').textContent = stats.totalInsights.toLocaleString();
+                document.getElementById('avgResponseTime').textContent = stats.avgResponseTime + 'ms';
+
+            } catch (error) {
+                console.error('개요 통계 로드 실패:', error);
+            }
+        }
+
+        // 세션 목록 로드
+        async function loadSessions() {
+            try {
+                // 실제 API가 없으므로 모의 데이터 생성
+                sessions = generateMockSessions(20);
+                renderSessionList(sessions);
+
+            } catch (error) {
+                console.error('세션 목록 로드 실패:', error);
+            }
+        }
+
+        // 모의 세션 데이터 생성
+        function generateMockSessions(count) {
+            const sessions = [];
+            const statuses = ['active', 'completed', 'failed'];
+            const pages = ['/dashboard', '/profile', '/settings', '/analytics', '/reports'];
+            
+            for (let i = 0; i < count; i++) {
+                const startTime = new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000);
+                const duration = Math.floor(Math.random() * 1800) + 300; // 5분-35분
+                
+                sessions.push({
+                    airis_session_id: `airis-${Date.now()}-${i}`,
+                    otel_session_id: `otel-session-${i}`,
+                    otel_trace_id: `trace-${Math.random().toString(16).substr(2, 16)}`,
+                    user_id: `user-${Math.floor(Math.random() * 100)}`,
+                    session_start_time: startTime.toISOString(),
+                    session_end_time: new Date(startTime.getTime() + duration * 1000).toISOString(),
+                    session_duration_ms: duration * 1000,
+                    total_page_views: Math.floor(Math.random() * 10) + 1,
+                    actual_page_count: Math.floor(Math.random() * 8) + 1,
+                    replay_event_count: Math.floor(Math.random() * 500) + 100,
+                    replay_status: statuses[Math.floor(Math.random() * statuses.length)],
+                    otel_span_count: Math.floor(Math.random() * 50) + 10,
+                    otel_error_count: Math.floor(Math.random() * 5),
+                    avg_response_time_ms: Math.floor(Math.random() * 300) + 50,
+                    total_requests: Math.floor(Math.random() * 100) + 20,
+                    critical_insights_count: Math.floor(Math.random() * 3),
+                    high_insights_count: Math.floor(Math.random() * 5),
+                    current_page: pages[Math.floor(Math.random() * pages.length)]
+                });
+            }
+            
+            return sessions.sort((a, b) => new Date(b.session_start_time) - new Date(a.session_start_time));
+        }
+
+        // 세션 목록 렌더링
+        function renderSessionList(sessionList) {
+            const container = document.getElementById('sessionList');
+            container.innerHTML = '';
+
+            sessionList.forEach((session, index) => {
+                const sessionElement = createSessionElement(session, index);
+                container.appendChild(sessionElement);
+            });
+        }
+
+        // 세션 요소 생성
+        function createSessionElement(session, index) {
+            const div = document.createElement('div');
+            div.className = 'session-item p-4 modern-card m-2';
+            div.dataset.sessionId = session.airis_session_id;
+            
+            const statusColor = getStatusColor(session.replay_status);
+            const duration = formatDuration(session.session_duration_ms);
+            const startTime = new Date(session.session_start_time).toLocaleString();
+
+            div.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2 h-2 rounded-full ${statusColor}"></span>
+                            <span class="font-mono text-xs text-gray-600">${session.airis_session_id.substr(-8)}</span>
+                        </div>
+                        <div class="mt-1">
+                            <p class="text-sm text-gray-900">사용자: ${session.user_id || '익명'}</p>
+                            <p class="text-xs text-gray-500">${startTime}</p>
+                            <p class="text-xs text-gray-500">지속시간: ${duration}</p>
+                        </div>
+                        <div class="mt-2 flex space-x-2">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                📊 ${session.otel_span_count}개 span
+                            </span>
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                📄 ${session.actual_page_count}개 페이지
+                            </span>
+                            ${session.otel_error_count > 0 ? `
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    ❌ ${session.otel_error_count}개 오류
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs font-medium ${getStatusTextColor(session.replay_status)}">
+                            ${getStatusText(session.replay_status)}
+                        </span>
+                    </div>
+                </div>
+            `;
+
+            div.addEventListener('click', () => selectSession(session));
+            return div;
+        }
+
+        // 세션 선택
+        async function selectSession(session) {
+            selectedSession = session;
+            
+            // 이전 선택 해제
+            document.querySelectorAll('.session-item').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // 현재 선택 활성화
+            document.querySelector(`[data-session-id="${session.airis_session_id}"]`).classList.add('active');
+            
+            // 상세 정보 표시
+            document.getElementById('noSessionSelected').classList.add('hidden');
+            document.getElementById('selectedSessionContent').classList.remove('hidden');
+            
+            // 세션 기본 정보 업데이트
+            updateSessionBasicInfo(session);
+            
+            // 상세 데이터 로드
+            await loadSessionDetails(session);
+        }
+
+        // 세션 기본 정보 업데이트
+        function updateSessionBasicInfo(session) {
+            document.getElementById('sessionId').textContent = session.airis_session_id;
+            document.getElementById('otelTraceId').textContent = session.otel_trace_id || '-';
+            document.getElementById('sessionStartTime').textContent = new Date(session.session_start_time).toLocaleString();
+            document.getElementById('sessionDuration').textContent = formatDuration(session.session_duration_ms);
+            document.getElementById('pageViews').textContent = `${session.actual_page_count}개 페이지`;
+            
+            const statusElement = document.getElementById('sessionStatus').querySelector('span');
+            statusElement.textContent = getStatusText(session.replay_status);
+            statusElement.className = `inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeColor(session.replay_status)}`;
+        }
+
+        // 세션 상세 데이터 로드
+        async function loadSessionDetails(session) {
+            try {
+                // 성능 메트릭 차트 업데이트
+                updatePerformanceChart(session);
+                
+                // 상관관계 타임라인 로드
+                await loadCorrelationTimeline(session);
+                
+                // AI 인사이트 로드
+                await loadSessionInsights(session);
+
+            } catch (error) {
+                console.error('세션 상세 정보 로드 실패:', error);
+            }
+        }
+
+        // 성능 메트릭 차트 업데이트
+        function updatePerformanceChart(session) {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            if (performanceChart) {
+                performanceChart.destroy();
+            }
+
+            const performanceData = generateMockPerformanceData(session);
+
+            performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: performanceData.labels,
+                    datasets: [
+                        {
+                            label: '응답 시간 (ms)',
+                            data: performanceData.responseTime,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: '오류 수',
+                            data: performanceData.errors,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        x: {
+                            display: true,
+                            title: {
+                                display: true,
+                                text: '시간'
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: '응답 시간 (ms)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: '오류 수'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '실시간 성능 메트릭'
+                        }
+                    }
+                }
+            });
+        }
+
+        // 상관관계 타임라인 로드
+        async function loadCorrelationTimeline(session) {
+            const timeline = document.getElementById('correlationTimeline');
+            timeline.innerHTML = '';
+
+            const correlations = generateMockCorrelations(session);
+
+            correlations.forEach(corr => {
+                const eventElement = createTimelineEvent(corr);
+                timeline.appendChild(eventElement);
+            });
+        }
+
+        // 타임라인 이벤트 생성
+        function createTimelineEvent(correlation) {
+            const div = document.createElement('div');
+            const eventClass = correlation.type === 'session' ? 'session-event' : 
+                              correlation.type === 'otel' ? 'otel-event' : 'correlated';
+            
+            div.className = `timeline-event ${eventClass}`;
+            
+            const time = new Date(correlation.timestamp).toLocaleTimeString();
+            const confidence = correlation.confidence ? `(신뢰도: ${Math.round(correlation.confidence * 100)}%)` : '';
+
+            div.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="font-medium text-sm">${correlation.title}</p>
+                        <p class="text-xs text-gray-600">${correlation.description}</p>
+                        ${correlation.duration ? `<p class="text-xs text-gray-500">소요시간: ${correlation.duration}ms</p>` : ''}
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs font-mono text-gray-500">${time}</p>
+                        ${confidence ? `<p class="text-xs text-gray-400">${confidence}</p>` : ''}
+                    </div>
+                </div>
+            `;
+
+            return div;
+        }
+
+        // 세션 인사이트 로드
+        async function loadSessionInsights(session) {
+            const container = document.getElementById('insightsList');
+            container.innerHTML = '';
+
+            const insights = generateMockInsights(session);
+
+            if (insights.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <div class="text-4xl mb-2">🎯</div>
+                        <p>이 세션에 대한 인사이트가 아직 생성되지 않았습니다.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            insights.forEach(insight => {
+                const insightElement = createInsightCard(insight);
+                container.appendChild(insightElement);
+            });
+        }
+
+        // 인사이트 카드 생성
+        function createInsightCard(insight) {
+            const div = document.createElement('div');
+            div.className = `insight-card modern-card p-4 ${insight.severity}`;
+
+            const severityIcon = getSeverityIcon(insight.severity);
+            const severityColor = getSeverityColor(insight.severity);
+
+            div.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        <span class="text-lg">${severityIcon}</span>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="font-medium text-sm text-gray-900">${insight.title}</h4>
+                        <p class="text-sm text-gray-600 mt-1">${insight.description}</p>
+                        ${insight.recommendations && insight.recommendations.length > 0 ? `
+                            <div class="mt-2">
+                                <p class="text-xs font-medium text-gray-700">권장사항:</p>
+                                <ul class="text-xs text-gray-600 list-disc list-inside mt-1">
+                                    ${insight.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                                </ul>
+                            </div>
+                        ` : ''}
+                        <div class="flex justify-between items-center mt-3">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${severityColor}">
+                                ${insight.severity.toUpperCase()}
+                            </span>
+                            <span class="text-xs text-gray-500">
+                                ${new Date(insight.timestamp).toLocaleString()}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            return div;
+        }
+
+        // 차트 데이터 로드
+        async function loadChartData() {
+            try {
+                // 세션 트렌드 차트
+                updateSessionTrendChart();
+                
+                // 상관관계 분석 차트
+                updateCorrelationChart();
+
+            } catch (error) {
+                console.error('차트 데이터 로드 실패:', error);
+            }
+        }
+
+        // 세션 트렌드 차트 업데이트
+        function updateSessionTrendChart() {
+            const ctx = document.getElementById('sessionTrendChart').getContext('2d');
+            
+            if (sessionTrendChart) {
+                sessionTrendChart.destroy();
+            }
+
+            const trendData = generateMockTrendData();
+
+            sessionTrendChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: trendData.labels,
+                    datasets: [
+                        {
+                            label: '새 세션',
+                            data: trendData.newSessions,
+                            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                            borderColor: '#3b82f6',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '완료된 세션',
+                            data: trendData.completedSessions,
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                            borderColor: '#10b981',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '세션 수'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: '시간'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '최근 24시간 세션 트렌드'
+                        }
+                    }
+                }
+            });
+        }
+
+        // 상관관계 분석 차트 업데이트
+        function updateCorrelationChart() {
+            const ctx = document.getElementById('correlationChart').getContext('2d');
+            
+            if (correlationChart) {
+                correlationChart.destroy();
+            }
+
+            const correlationData = generateMockCorrelationData();
+
+            correlationChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['높은 신뢰도 (90%+)', '중간 신뢰도 (70-90%)', '낮은 신뢰도 (<70%)'],
+                    datasets: [{
+                        data: correlationData.confidence,
+                        backgroundColor: [
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(239, 68, 68, 0.8)'
+                        ],
+                        borderColor: [
+                            '#10b981',
+                            '#f59e0b',
+                            '#ef4444'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: '상관관계 신뢰도 분포'
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // 차트 초기 설정
+        function setupCharts() {
+            Chart.defaults.font.family = 'Inter';
+            Chart.defaults.font.size = 12;
+        }
+
+        // 세션 필터링
+        function filterSessions() {
+            const filter = document.getElementById('sessionFilter').value;
+            let filteredSessions = sessions;
+
+            switch (filter) {
+                case 'active':
+                    filteredSessions = sessions.filter(s => s.replay_status === 'active');
+                    break;
+                case 'completed':
+                    filteredSessions = sessions.filter(s => s.replay_status === 'completed');
+                    break;
+                case 'error':
+                    filteredSessions = sessions.filter(s => s.otel_error_count > 0);
+                    break;
+                default:
+                    filteredSessions = sessions;
+            }
+
+            renderSessionList(filteredSessions);
+        }
+
+        // 더 많은 세션 로드
+        function loadMoreSessions() {
+            const moreSessions = generateMockSessions(10);
+            sessions.push(...moreSessions);
+            renderSessionList(sessions);
+        }
+
+        // 데이터 내보내기
+        function exportData() {
+            try {
+                const exportData = {
+                    sessions: sessions,
+                    selectedSession: selectedSession,
+                    exportTime: new Date().toISOString(),
+                    totalSessions: sessions.length
+                };
+
+                const dataStr = JSON.stringify(exportData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `airis-session-telemetry-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                console.log('데이터 내보내기 완료');
+
+            } catch (error) {
+                console.error('데이터 내보내기 실패:', error);
+                alert('데이터 내보내기에 실패했습니다: ' + error.message);
+            }
+        }
+
+        // 로딩 표시
+        function showLoading(show) {
+            const refreshIcon = document.getElementById('refreshIcon');
+            if (show) {
+                refreshIcon.innerHTML = '<div class="loading-spinner"></div>';
+            } else {
+                refreshIcon.textContent = '🔄';
+            }
+        }
+
+        // 오류 표시
+        function showError(message) {
+            // 간단한 오류 표시 (실제로는 더 정교한 UI 구현 필요)
+            console.error(message);
+        }
+
+        // === 유틸리티 함수들 ===
+
+        function getStatusColor(status) {
+            switch (status) {
+                case 'active': return 'bg-green-500';
+                case 'completed': return 'bg-blue-500';
+                case 'failed': return 'bg-red-500';
+                default: return 'bg-gray-500';
+            }
+        }
+
+        function getStatusTextColor(status) {
+            switch (status) {
+                case 'active': return 'text-green-700';
+                case 'completed': return 'text-blue-700';
+                case 'failed': return 'text-red-700';
+                default: return 'text-gray-700';
+            }
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'active': return '진행 중';
+                case 'completed': return '완료됨';
+                case 'failed': return '실패함';
+                default: return '알 수 없음';
+            }
+        }
+
+        function getStatusBadgeColor(status) {
+            switch (status) {
+                case 'active': return 'bg-green-100 text-green-800';
+                case 'completed': return 'bg-blue-100 text-blue-800';
+                case 'failed': return 'bg-red-100 text-red-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        function formatDuration(ms) {
+            if (!ms) return '0초';
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+
+            if (hours > 0) {
+                return `${hours}시간 ${minutes % 60}분`;
+            } else if (minutes > 0) {
+                return `${minutes}분 ${seconds % 60}초`;
+            } else {
+                return `${seconds}초`;
+            }
+        }
+
+        function getSeverityIcon(severity) {
+            switch (severity) {
+                case 'critical': return '🔥';
+                case 'high': return '⚠️';
+                case 'medium': return '💡';
+                case 'low': return 'ℹ️';
+                default: return '📝';
+            }
+        }
+
+        function getSeverityColor(severity) {
+            switch (severity) {
+                case 'critical': return 'bg-red-100 text-red-800';
+                case 'high': return 'bg-orange-100 text-orange-800';
+                case 'medium': return 'bg-yellow-100 text-yellow-800';
+                case 'low': return 'bg-green-100 text-green-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+
+        // === 모의 데이터 생성 함수들 ===
+
+        function generateMockPerformanceData(session) {
+            const labels = [];
+            const responseTime = [];
+            const errors = [];
+            
+            const startTime = new Date(session.session_start_time);
+            const duration = session.session_duration_ms || 300000; // 5분 기본값
+            const points = Math.min(20, Math.floor(duration / 15000)); // 15초 간격으로 최대 20개 포인트
+
+            for (let i = 0; i < points; i++) {
+                const time = new Date(startTime.getTime() + (i * duration / points));
+                labels.push(time.toLocaleTimeString());
+                responseTime.push(Math.floor(Math.random() * 200) + 50 + Math.sin(i * 0.5) * 30);
+                errors.push(Math.random() < 0.1 ? Math.floor(Math.random() * 3) + 1 : 0);
+            }
+
+            return { labels, responseTime, errors };
+        }
+
+        function generateMockCorrelations(session) {
+            const correlations = [];
+            const startTime = new Date(session.session_start_time);
+            const eventCount = Math.floor(Math.random() * 10) + 5;
+
+            const eventTypes = [
+                { type: 'session', title: '페이지 로드', desc: '사용자가 페이지에 접속했습니다' },
+                { type: 'otel', title: 'HTTP 요청', desc: 'API 엔드포인트 호출이 감지되었습니다' },
+                { type: 'correlated', title: '클릭 이벤트', desc: '사용자 클릭과 서버 요청이 연관되었습니다' },
+                { type: 'session', title: '폼 제출', desc: '사용자가 폼을 제출했습니다' },
+                { type: 'otel', title: '데이터베이스 쿼리', desc: '데이터베이스 조회가 실행되었습니다' }
+            ];
+
+            for (let i = 0; i < eventCount; i++) {
+                const eventType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+                const timestamp = new Date(startTime.getTime() + Math.random() * (session.session_duration_ms || 300000));
+                
+                correlations.push({
+                    ...eventType,
+                    timestamp: timestamp.toISOString(),
+                    duration: Math.floor(Math.random() * 500) + 50,
+                    confidence: eventType.type === 'correlated' ? Math.random() * 0.3 + 0.7 : null
+                });
+            }
+
+            return correlations.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        }
+
+        function generateMockInsights(session) {
+            const insights = [];
+            const insightTypes = [
+                {
+                    severity: 'high',
+                    title: '높은 응답 시간 감지',
+                    description: '평균 응답 시간이 임계값을 초과했습니다.',
+                    recommendations: ['데이터베이스 쿼리 최적화', '캐시 시스템 검토']
+                },
+                {
+                    severity: 'medium',
+                    title: '사용자 이탈 패턴',
+                    description: '사용자가 특정 페이지에서 이탈하는 패턴이 발견되었습니다.',
+                    recommendations: ['UX/UI 개선', '페이지 로딩 속도 최적화']
+                },
+                {
+                    severity: 'low',
+                    title: '정상적인 사용자 흐름',
+                    description: '사용자가 예상된 경로대로 사이트를 이용했습니다.',
+                    recommendations: []
+                }
+            ];
+
+            // 세션의 문제 상황에 따라 인사이트 생성
+            if (session.otel_error_count > 0) {
+                insights.push({
+                    severity: 'critical',
+                    title: '오류 발생 감지',
+                    description: `${session.otel_error_count}개의 오류가 이 세션에서 발생했습니다.`,
+                    recommendations: ['에러 로그 분석', '예외 처리 개선'],
+                    timestamp: session.session_start_time
+                });
+            }
+
+            if (session.avg_response_time_ms > 200) {
+                insights.push({
+                    ...insightTypes[0],
+                    timestamp: session.session_start_time
+                });
+            }
+
+            // 랜덤하게 추가 인사이트 생성
+            if (Math.random() < 0.5) {
+                const randomInsight = insightTypes[Math.floor(Math.random() * insightTypes.length)];
+                insights.push({
+                    ...randomInsight,
+                    timestamp: new Date(new Date(session.session_start_time).getTime() + Math.random() * (session.session_duration_ms || 300000)).toISOString()
+                });
+            }
+
+            return insights;
+        }
+
+        function generateMockTrendData() {
+            const labels = [];
+            const newSessions = [];
+            const completedSessions = [];
+
+            for (let i = 23; i >= 0; i--) {
+                const hour = new Date();
+                hour.setHours(hour.getHours() - i);
+                labels.push(hour.getHours() + ':00');
+                
+                const newCount = Math.floor(Math.random() * 50) + 10;
+                const completedCount = Math.floor(newCount * 0.8) + Math.floor(Math.random() * 10);
+                
+                newSessions.push(newCount);
+                completedSessions.push(completedCount);
+            }
+
+            return { labels, newSessions, completedSessions };
+        }
+
+        function generateMockCorrelationData() {
+            return {
+                confidence: [
+                    Math.floor(Math.random() * 100) + 50,  // 높은 신뢰도
+                    Math.floor(Math.random() * 80) + 30,   // 중간 신뢰도
+                    Math.floor(Math.random() * 40) + 10    // 낮은 신뢰도
+                ]
+            };
+        }
+    </script>
+</body>
+</html>

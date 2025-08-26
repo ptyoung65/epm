@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세션 리플레이 관리 - AIRIS APM</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link href="./css/tailwind.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- rrweb 라이브러리 -->
+  <script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js"></script>
+  <!-- rrweb 플레이어 -->
+  <script src="https://unpkg.com/rrweb-player@latest/dist/index.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/rrweb-player@latest/dist/style.css">
+  
+  <style>
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    /* shadcn/ui CSS Variables */
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 222.2 84% 4.9%;
+      --card: 0 0% 100%;
+      --card-foreground: 222.2 84% 4.9%;
+      --popover: 0 0% 100%;
+      --popover-foreground: 222.2 84% 4.9%;
+      --primary: 222.2 47.4% 11.2%;
+      --primary-foreground: 210 40% 98%;
+      --secondary: 210 40% 96%;
+      --secondary-foreground: 222.2 47.4% 11.2%;
+      --muted: 210 40% 96%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --accent: 210 40% 96%;
+      --accent-foreground: 222.2 47.4% 11.2%;
+      --destructive: 0 84.2% 60.2%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 214.3 31.8% 91.4%;
+      --input: 214.3 31.8% 91.4%;
+      --ring: 222.2 84% 4.9%;
+      --radius: 0.5rem;
+    }
+
+    .dark {
+      --background: 222.2 84% 4.9%;
+      --foreground: 210 40% 98%;
+      --card: 222.2 84% 4.9%;
+      --card-foreground: 210 40% 98%;
+      --popover: 222.2 84% 4.9%;
+      --popover-foreground: 210 40% 98%;
+      --primary: 210 40% 98%;
+      --primary-foreground: 222.2 47.4% 11.2%;
+      --secondary: 222.2 84% 4.9%;
+      --secondary-foreground: 210 40% 98%;
+      --muted: 222.2 84% 4.9%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --accent: 222.2 84% 4.9%;
+      --accent-foreground: 210 40% 98%;
+      --destructive: 0 62.8% 30.6%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 217.2 32.6% 17.5%;
+      --input: 217.2 32.6% 17.5%;
+      --ring: 212.7 26.8% 83.9%;
+    }
+
+    .bg-background { background-color: hsl(var(--background)); }
+    .text-foreground { color: hsl(var(--foreground)); }
+    .bg-card { background-color: hsl(var(--card)); }
+    .text-card-foreground { color: hsl(var(--card-foreground)); }
+    .bg-primary { background-color: hsl(var(--primary)); }
+    .text-primary-foreground { color: hsl(var(--primary-foreground)); }
+    .text-primary { color: hsl(var(--primary)); }
+    .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+    .border-border { border-color: hsl(var(--border)); }
+    .text-destructive { color: hsl(var(--destructive)); }
+    
+    .metric-card {
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    .chart-container {
+      position: relative;
+      height: 256px;
+      width: 100%;
+    }
+    
+    /* 탭 시스템 스타일 */
+    .tab-btn {
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .tab-btn:hover {
+      background-color: hsl(var(--muted));
+      color: hsl(var(--foreground));
+    }
+    
+    .tab-content {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* 세션 카드 스타일 */
+    .session-card {
+      transition: all 0.2s ease-in-out;
+      border: 1px solid hsl(var(--border));
+      background: hsl(var(--card));
+    }
+    
+    .session-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.1);
+      border-color: hsl(var(--primary));
+    }
+    
+    /* 버튼 스타일 - shadcn/ui 호환 */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      border-radius: calc(var(--radius) - 2px);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s ease-in-out;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    
+    .btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+  </style>
+    
+    <!-- AIRIS 통합 세션 추적기 -->
+    <script>
+      /**
+       * AIRIS 통합 세션 추적기 - 실제 작동 버전
+       * rrweb 기반 세션 기록 및 재생 기능
+       */
+      (function(global) {
+        'use strict';
+
+        class AIRISSessionTracker {
+          constructor() {
+            this.sessionId = null;
+            this.isRecording = false;
+            this.events = [];
+            this.recorder = null;
+            this.eventsCount = 0;
+            this.pageCount = 1;
+            this.startTime = null;
+            
+            this.logger = {
+              info: (msg, data) => console.log(`[AIRIS] ${msg}`, data || ''),
+              warn: (msg, data) => console.warn(`[AIRIS] ${msg}`, data || ''),
+              error: (msg, data) => console.error(`[AIRIS] ${msg}`, data || '')
+            };
+            
+            this.logger.info('AIRIS 세션 추적기 초기화됨');
+          }
+
+          generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+          }
+
+          startRecording(options = {}) {
+            if (this.isRecording) {
+              this.logger.warn('이미 기록 중입니다');
+              return { success: false, message: '이미 기록 중입니다' };
+            }
+
+            this.sessionId = this.generateSessionId();
+            this.events = [];
+            this.eventsCount = 0;
+            this.pageCount = 1;
+            this.startTime = Date.now();
+            this.isRecording = true;
+
+            try {
+              this.recorder = rrweb.record({
+                emit: (event, isCheckout) => {
+                  if (this.isRecording) {
+                    this.events.push(event);
+                    this.eventsCount++;
+                    
+                    // 메타 이벤트 처리
+                    if (event.type === 2) { // Meta event
+                      if (event.data && event.data.href && event.data.href !== window.location.href) {
+                        this.pageCount++;
+                      }
+                    }
+                    
+                    // 주기적으로 로컬 저장
+                    if (this.eventsCount % 50 === 0) {
+                      this.saveToLocalStorage();
+                    }
+                  }
+                },
+                checkoutEveryNms: 10000,
+                sampling: {
+                  mousemove: false,
+                  mouseInteraction: {
+                    MouseUp: false,
+                    MouseDown: false,
+                    Click: true,
+                    ContextMenu: false,
+                    DblClick: false,
+                    Focus: false,
+                    Blur: false,
+                    TouchStart: false,
+                    TouchEnd: false,
+                  }
+                }
+              });
+
+              this.logger.info('세션 기록 시작됨', {
+                sessionId: this.sessionId,
+                timestamp: new Date().toISOString()
+              });
+
+              return {
+                success: true,
+                sessionId: this.sessionId,
+                message: '세션 기록이 시작되었습니다'
+              };
+
+            } catch (error) {
+              this.logger.error('세션 기록 시작 실패', error);
+              this.isRecording = false;
+              return {
+                success: false,
+                message: '세션 기록 시작에 실패했습니다: ' + error.message
+              };
+            }
+          }
+
+          stopRecording() {
+            if (!this.isRecording) {
+              this.logger.warn('현재 기록 중이 아닙니다');
+              return { success: false, message: '현재 기록 중이 아닙니다' };
+            }
+
+            try {
+              if (this.recorder && typeof this.recorder === 'function') {
+                this.recorder();
+                this.recorder = null;
+              }
+
+              this.isRecording = false;
+              const endTime = Date.now();
+              const duration = endTime - this.startTime;
+
+              // 최종 저장
+              this.saveToLocalStorage(true);
+
+              const result = {
+                success: true,
+                sessionId: this.sessionId,
+                eventsCount: this.eventsCount,
+                pageCount: this.pageCount,
+                duration: duration,
+                events: [...this.events],
+                message: `세션 기록 완료: ${this.eventsCount}개 이벤트, ${this.pageCount}개 페이지, ${Math.round(duration/1000)}초`
+              };
+
+              this.logger.info('세션 기록 중지됨', result);
+              return result;
+
+            } catch (error) {
+              this.logger.error('세션 기록 중지 실패', error);
+              return {
+                success: false,
+                message: '세션 기록 중지에 실패했습니다: ' + error.message
+              };
+            }
+          }
+
+          saveToLocalStorage(isFinal = false) {
+            if (!this.sessionId || this.events.length === 0) return;
+
+            try {
+              const sessionData = {
+                session_id: this.sessionId,
+                user_id: 'anonymous',
+                url: window.location.href,
+                korean_timestamp: new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }),
+                start_time: this.startTime,
+                duration: Date.now() - this.startTime,
+                event_count: this.eventsCount,
+                page_count: this.pageCount,
+                events: [...this.events],
+                status: isFinal ? 'completed' : 'recording',
+                metadata: {
+                  userAgent: navigator.userAgent,
+                  viewport: {
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                  }
+                }
+              };
+
+              const savedSessions = JSON.parse(localStorage.getItem('airisRecordedSessions') || '[]');
+              
+              // 기존 세션 업데이트 또는 새로 추가
+              const existingIndex = savedSessions.findIndex(s => s.session_id === this.sessionId);
+              if (existingIndex >= 0) {
+                savedSessions[existingIndex] = sessionData;
+              } else {
+                savedSessions.unshift(sessionData);
+              }
+              
+              // 최대 20개 세션만 보관
+              localStorage.setItem('airisRecordedSessions', JSON.stringify(savedSessions.slice(0, 20)));
+              
+              this.logger.info('세션 로컬 저장 완료', {
+                sessionId: this.sessionId,
+                events: this.eventsCount,
+                status: sessionData.status
+              });
+
+            } catch (error) {
+              this.logger.error('로컬 저장 실패', error);
+            }
+          }
+
+          getStatus() {
+            return {
+              isRecording: this.isRecording,
+              sessionId: this.sessionId,
+              eventsCount: this.eventsCount,
+              pageCount: this.pageCount,
+              duration: this.startTime ? Date.now() - this.startTime : 0,
+              startTime: this.startTime ? new Date(this.startTime) : null,
+              eventCount: this.eventsCount,
+              bufferSize: this.events.length
+            };
+          }
+
+          start() {
+            return this.startRecording();
+          }
+
+          stop() {
+            return this.stopRecording();
+          }
+
+          getSavedSessions() {
+            try {
+              return JSON.parse(localStorage.getItem('airisRecordedSessions') || '[]');
+            } catch (error) {
+              this.logger.error('저장된 세션 불러오기 실패', error);
+              return [];
+            }
+          }
+        }
+
+        // 전역 인스턴스 생성
+        window.airisTracker = new AIRISSessionTracker();
+        window.airisRecorder = window.airisTracker; // 호환성을 위한 별칭
+        
+        console.log('✅ AIRIS 세션 추적기 로드 완료');
+        
+      })(window);
+    </script>
+</head>
+<body class="bg-background text-foreground">
+  <!-- Header Navigation -->
+  <header class="bg-background sticky top-0 z-50 w-full border-b border-border backdrop-blur">
+    <div class="container mx-auto flex h-16 items-center px-4">
+      <div class="flex items-center space-x-4">
+        <div class="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
+          <span class="text-primary-foreground font-bold text-lg">A</span>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-foreground">AIRIS APM</h1>
+          <p class="text-xs text-muted-foreground">통합 모니터링 대시보드</p>
+        </div>
+      </div>
+      
+      <!-- Navigation Menu -->
+      <nav class="flex items-center space-x-6 text-sm ml-6">
+        <button onclick="window.location.href = '/'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+          통합 대시보드
+        </button>
+        <button onclick="window.location.href = '/j2ee-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+          J2EE 모니터링
+        </button>
+        <button onclick="window.location.href = '/was-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+          WAS 모니터링
+        </button>
+        <button onclick="window.location.href = '/exception-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+          예외 추적
+        </button>
+        <button onclick="window.location.href = '/topology-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+          서비스 토폴로지
+        </button>
+        <button onclick="window.location.href = '/alert-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+          알림 관리
+        </button>
+        <button onclick="window.location.href = '/ontology.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+          온톨로지
+        </button>
+        <span class="font-medium text-foreground/80 hover:text-foreground transition-colors">
+          세션 리플레이
+        </span>
+        <button onclick="window.location.href = '/session-telemetry-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+          🔗 세션-텔레메트리 분석
+        </button>
+      </nav>
+      
+      <div class="flex items-center space-x-4 ml-auto">
+        <select id="timeRange" class="text-sm border border-border rounded-md px-3 py-1 bg-background">
+          <option value="1h">최근 1시간</option>
+          <option value="24h" selected>최근 24시간</option>
+          <option value="7d">최근 7일</option>
+          <option value="30d">최근 30일</option>
+        </select>
+        
+        <button id="refreshBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+          새로고침
+        </button>
+        
+        <button id="themeToggle" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 w-9">
+          🌙
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-6">
+    <!-- Session Status Card -->
+    <div class="bg-card border border-border rounded-lg p-6 shadow-sm mb-6 metric-card">
+      <h3 class="text-lg font-semibold text-card-foreground mb-4">📊 세션 상태</h3>
+      <div id="sessionStatus" class="text-muted-foreground mb-4">로딩 중...</div>
+      
+      <div class="flex flex-wrap gap-3">
+        <button id="testBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-orange-500 text-white hover:bg-orange-600 h-9 px-4 py-2">
+          🧪 테스트 버튼
+        </button>
+        <button id="startBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-green-500 text-white hover:bg-green-600 h-9 px-4 py-2">
+          🔴 기록 시작
+        </button>
+        <button id="stopBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-red-500 text-white hover:bg-red-600 h-9 px-4 py-2">
+          ⏹️ 기록 중지
+        </button>
+        <button id="updateBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2">
+          🔄 상태 업데이트
+        </button>
+      </div>
+    </div>
+
+    <!-- Interactive Test Card -->
+    <div class="bg-card border border-border rounded-lg p-6 shadow-sm mb-6 metric-card">
+      <h3 class="text-lg font-semibold text-card-foreground mb-4">🧪 상호작용 테스트</h3>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="space-y-2">
+          <label for="nameInput" class="text-sm font-medium text-foreground">이름</label>
+          <input type="text" id="nameInput" placeholder="이름을 입력하세요" 
+                 class="flex h-10 w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+        </div>
+        
+        <div class="space-y-2">
+          <label for="categorySelect" class="text-sm font-medium text-foreground">카테고리</label>
+          <select id="categorySelect" 
+                  class="flex h-10 w-full items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+            <option value="">선택하세요</option>
+            <option value="home">홈페이지</option>
+            <option value="product">제품 페이지</option>
+            <option value="about">회사 소개</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="space-y-2 mb-4">
+        <label for="memoTextarea" class="text-sm font-medium text-foreground">메모</label>
+        <textarea id="memoTextarea" rows="3" placeholder="메모를 작성하세요"
+                  class="flex min-h-[80px] w-full rounded-md border border-border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"></textarea>
+      </div>
+      
+      <div class="flex flex-wrap gap-3">
+        <button id="randomBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2">
+          🎲 랜덤 액션
+        </button>
+        <button id="errorBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-yellow-500 text-white hover:bg-yellow-600 h-9 px-4 py-2">
+          ⚠️ 오류 발생
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab-based Session Management System -->
+    <div class="bg-card border border-border rounded-lg p-6 metric-card">
+      <h3 class="text-lg font-semibold text-card-foreground mb-6">🎬 세션 관리 시스템</h3>
+      
+      <!-- Tab Navigation -->
+      <div class="border-b border-border mb-6">
+        <nav class="flex space-x-1" role="tablist">
+          <button class="tab-btn px-4 py-2 font-medium text-sm rounded-t-md transition-colors" 
+                  data-tab="sessions" onclick="switchTab('sessions')" 
+                  style="color: hsl(var(--primary)); border-bottom: 2px solid hsl(var(--primary));">
+            📋 세션 목록
+          </button>
+          <button class="tab-btn px-4 py-2 font-medium text-sm rounded-t-md transition-colors text-muted-foreground hover:text-foreground" 
+                  data-tab="player" onclick="switchTab('player')">
+            🎥 세션 플레이어
+          </button>
+          <button class="tab-btn px-4 py-2 font-medium text-sm rounded-t-md transition-colors text-muted-foreground hover:text-foreground" 
+                  data-tab="settings" onclick="switchTab('settings')">
+            ⚙️ 설정
+          </button>
+        </nav>
+      </div>
+                
+      <!-- Tab Contents -->
+      
+      <!-- Sessions List Tab -->
+      <div id="tab-sessions" class="tab-content" style="display: block;">
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+          <h4 class="text-green-800 font-medium mb-2">📋 저장된 세션 관리</h4>
+          <p class="text-green-700 text-sm">기록된 세션을 확인하고 관리하세요. 세션을 선택하면 플레이어 탭에서 재생할 수 있습니다.</p>
+        </div>
+        
+        <div class="flex flex-wrap gap-3 mb-4 items-center">
+          <button onclick="refreshSessionList()" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-green-500 text-white hover:bg-green-600 h-9 px-4 py-2">
+            🔄 새로고침
+          </button>
+          <button onclick="clearAllSessions()" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-red-500 text-white hover:bg-red-600 h-9 px-4 py-2">
+            🗑️ 모든 세션 삭제
+          </button>
+          <span id="sessionCount" class="text-muted-foreground text-sm">세션 로딩 중...</span>
+        </div>
+        
+        <div id="sessionsList" class="max-h-96 overflow-y-auto space-y-2">
+          <div class="text-center py-8 text-muted-foreground">
+            <h4 class="font-medium mb-2">📂 세션 목록을 불러오는 중...</h4>
+            <p class="text-sm">잠시 기다려주세요.</p>
+          </div>
+        </div>
+      </div>
+                
+      <!-- Session Player Tab -->
+      <div id="tab-player" class="tab-content" style="display: none;">
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+          <h4 class="text-blue-800 font-medium mb-2">🎥 향상된 세션 플레이어</h4>
+          <p class="text-blue-700 text-sm">session-player.html의 모든 기능을 통합한 고급 플레이어입니다. rrweb-player와 대체 플레이어를 지원합니다.</p>
+        </div>
+        
+        <div class="flex flex-wrap gap-4 items-center mb-4">
+          <select id="enhancedSessionSelect" class="flex-1 min-w-[300px] px-3 py-2 border border-border rounded-md bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent">
+            <option value="">세션을 선택하세요...</option>
+          </select>
+          <button onclick="loadEnhancedSession()" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-500 text-white hover:bg-blue-600 h-9 px-4 py-2 whitespace-nowrap">
+            📂 세션 로드
+          </button>
+          <span id="enhancedStatus" class="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+            준비 중...
+          </span>
+        </div>
+        
+        <div id="enhancedSessionInfo" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4 hidden">
+          <h4 class="text-blue-800 font-medium mb-2">📊 세션 정보</h4>
+          <div id="enhancedSessionDetails" class="text-blue-700 text-sm"></div>
+        </div>
+        
+        <div id="enhancedPlayerContainer" class="w-full min-h-[500px] border border-border rounded-lg bg-card flex items-center justify-center text-muted-foreground">
+          <div class="text-center">
+            <h4 class="font-medium mb-2">🎥 세션 플레이어</h4>
+            <p class="text-sm mb-4">위에서 세션을 선택하고 로드하면 여기에 플레이어가 나타납니다.</p>
+            <p class="text-xs text-muted-foreground">💡 팁: 세션 목록 탭에서 세션을 확인한 후 여기서 재생하세요.</p>
+          </div>
+        </div>
+      </div>
+                
+      <!-- Settings Tab -->
+      <div id="tab-settings" class="tab-content" style="display: none;">
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+          <h4 class="text-amber-800 font-medium mb-2">⚙️ 플레이어 설정</h4>
+          <p class="text-amber-700 text-sm">세션 플레이어의 동작과 저장소를 설정하세요.</p>
+        </div>
+        
+        <div class="grid gap-6 max-w-2xl">
+          <div class="bg-card border border-border rounded-lg p-4">
+            <h5 class="font-medium text-card-foreground mb-3">🎮 플레이어 옵션</h5>
+            <div class="space-y-2">
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" id="autoPlay" class="rounded border-border">
+                <span class="text-sm text-card-foreground">자동 재생 활성화</span>
+              </label>
+              <label class="flex items-center space-x-2">
+                <input type="checkbox" id="showController" checked class="rounded border-border">
+                <span class="text-sm text-card-foreground">플레이어 컨트롤 표시</span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="bg-card border border-border rounded-lg p-4">
+            <h5 class="font-medium text-card-foreground mb-3">💾 저장소 관리</h5>
+            <div class="flex flex-wrap gap-2 mb-4">
+              <button onclick="exportSessions()" class="btn bg-green-500 text-white px-4 py-2 hover:bg-green-600">
+                📤 세션 내보내기
+              </button>
+              <button onclick="importSessions()" class="btn bg-blue-500 text-white px-4 py-2 hover:bg-blue-600">
+                📥 세션 가져오기
+              </button>
+            </div>
+            <div id="storageInfo" class="text-sm text-muted-foreground">
+              저장소 정보를 불러오는 중...
+            </div>
+          </div>
+          
+          <div class="bg-card border border-border rounded-lg p-4">
+            <h5 class="font-medium text-card-foreground mb-3">🔧 시스템 정보</h5>
+            <div id="systemInfo" class="text-sm text-muted-foreground leading-relaxed">
+              시스템 정보를 불러오는 중...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+        // 전역 오류 처리
+        window.addEventListener('error', (e) => {
+            console.error('🚨 JavaScript 오류 발생:', e.error);
+            console.error('🚨 오류 위치:', e.filename, 'line', e.lineno, 'col', e.colno);
+        });
+        
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('🚨 Promise 오류:', e.reason);
+        });
+        
+        // 페이지 로드 시 상태 업데이트
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🎬 세션 리플레이 페이지 로드됨');
+            console.log('🔍 페이지 로드 시점 - rrweb 상태:', typeof window.rrweb, window.rrweb);
+            console.log('🔍 페이지 로드 시점 - airisTracker 상태:', typeof window.airisTracker, window.airisTracker);
+            
+            // 버튼 이벤트 리스너 추가
+            const testBtn = document.getElementById('testBtn');
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const updateBtn = document.getElementById('updateBtn');
+            const randomBtn = document.getElementById('randomBtn');
+            const errorBtn = document.getElementById('errorBtn');
+            
+            console.log('🔍 버튼 요소들 확인:', {
+                testBtn: !!testBtn,
+                startBtn: !!startBtn,
+                stopBtn: !!stopBtn,
+                updateBtn: !!updateBtn,
+                randomBtn: !!randomBtn,
+                errorBtn: !!errorBtn
+            });
+            
+            // 테스트 버튼 (기본 동작 확인)
+            if (testBtn) {
+                testBtn.addEventListener('click', () => {
+                    console.log('✅ 테스트 버튼 클릭 성공!');
+                    alert('🎉 JavaScript 이벤트 리스너가 정상 작동합니다!');
+                });
+            }
+            
+            if (startBtn) {
+                startBtn.addEventListener('click', () => {
+                    console.log('🔍 시작 버튼 클릭됨!');
+                    startTracking();
+                });
+            }
+            
+            if (stopBtn) {
+                stopBtn.addEventListener('click', () => {
+                    console.log('🔍 중지 버튼 클릭됨!');
+                    stopTracking();
+                });
+            }
+            
+            if (updateBtn) {
+                updateBtn.addEventListener('click', () => {
+                    console.log('🔍 업데이트 버튼 클릭됨!');
+                    updateStatus();
+                });
+            }
+            
+            if (randomBtn) {
+                randomBtn.addEventListener('click', () => {
+                    console.log('🔍 랜덤 버튼 클릭됨!');
+                    generateRandomActions();
+                });
+            }
+            
+            if (errorBtn) {
+                errorBtn.addEventListener('click', () => {
+                    console.log('🔍 오류 버튼 클릭됨!');
+                    simulateError();
+                });
+            }
+            
+            // 추적기 로딩 대기
+            setTimeout(() => {
+                console.log('🔍 3초 후 - rrweb 상태:', typeof window.rrweb, window.rrweb);
+                console.log('🔍 3초 후 - airisTracker 상태:', typeof window.airisTracker, window.airisTracker);
+                updateStatus();
+            }, 3000);
+            
+            updateStatus();
+            
+            // 입력 이벤트 리스너
+            document.getElementById('nameInput').addEventListener('input', () => {
+                console.log('📝 이름 입력:', document.getElementById('nameInput').value);
+            });
+            
+            document.getElementById('categorySelect').addEventListener('change', () => {
+                console.log('📋 카테고리 선택:', document.getElementById('categorySelect').value);
+            });
+            
+            document.getElementById('memoTextarea').addEventListener('input', () => {
+                console.log('📝 메모 입력:', document.getElementById('memoTextarea').value.length, '글자');
+            });
+        });
+
+        // 추적 시작
+        function startTracking() {
+            console.log('🔍 startTracking 함수 호출됨');
+            console.log('🔍 window.airisTracker 상태:', window.airisTracker);
+            console.log('🔍 window.rrweb 상태:', window.rrweb);
+            
+            if (window.airisTracker) {
+                console.log('🔍 AIRIS 추적기 발견, start() 메서드 호출 시도');
+                const result = window.airisTracker.start();
+                console.log('🔍 start() 결과:', result);
+                
+                if (result && result.success) {
+                    console.log('✅ 추적 시작됨');
+                    alert('🎬 세션 기록이 시작되었습니다!\n다른 페이지로 이동해도 계속 추적됩니다.');
+                } else {
+                    console.log('⚠️ 추적 시작 실패');
+                    alert(`⚠️ ${result ? result.message : '추적 시작에 실패했습니다.'}`);
+                }
+                updateStatus();
+            } else {
+                console.log('❌ AIRIS 추적기가 없음');
+                console.log('🔍 모든 window 프로퍼티:', Object.keys(window).filter(key => key.includes('airis') || key.includes('AIRIS')));
+                alert('❌ AIRIS 추적기가 로드되지 않았습니다.');
+            }
+        }
+
+        // 추적 중지
+        function stopTracking() {
+            if (window.airisTracker) {
+                const result = window.airisTracker.stop();
+                if (result && result.success) {
+                    console.log('⏹️ 추적 중지됨');
+                    alert(`⏹️ ${result.message}`);
+                } else {
+                    alert(`⚠️ ${result ? result.message : '추적 중지에 실패했습니다.'}`);
+                }
+                updateStatus();
+            }
+        }
+
+        // 상태 업데이트
+        function updateStatus() {
+            const statusDiv = document.getElementById('sessionStatus');
+            
+            if (window.airisTracker) {
+                const status = window.airisTracker.getStatus();
+                statusDiv.innerHTML = `
+                    <strong>세션 ID:</strong> ${status.sessionId}<br>
+                    <strong>기록 상태:</strong> ${status.isRecording ? '🔴 기록 중' : '⏸️ 중지됨'}<br>
+                    <strong>시작 시간:</strong> ${status.startTime ? status.startTime.toLocaleString() : 'N/A'}<br>
+                    <strong>이벤트 수:</strong> ${status.eventCount}<br>
+                    <strong>버퍼 크기:</strong> ${status.bufferSize}<br>
+                    <strong>현재 페이지:</strong> 세션 리플레이 관리
+                `;
+            } else {
+                statusDiv.innerHTML = '❌ AIRIS 추적기가 로드되지 않았습니다.';
+            }
+        }
+
+        // 랜덤 액션 생성
+        function generateRandomActions() {
+            const nameInput = document.getElementById('nameInput');
+            const categorySelect = document.getElementById('categorySelect');
+            const memoTextarea = document.getElementById('memoTextarea');
+            
+            // 랜덤 데이터 생성
+            const names = ['김철수', '이영희', '박민수', '최지영', '정태민'];
+            const categories = ['home', 'product', 'about'];
+            const memos = ['테스트 메모입니다.', '이것은 샘플 텍스트입니다.', '랜덤으로 생성된 내용입니다.'];
+            
+            nameInput.value = names[Math.floor(Math.random() * names.length)];
+            categorySelect.value = categories[Math.floor(Math.random() * categories.length)];
+            memoTextarea.value = memos[Math.floor(Math.random() * memos.length)];
+            
+            // 이벤트 트리거
+            nameInput.dispatchEvent(new Event('input'));
+            categorySelect.dispatchEvent(new Event('change'));
+            memoTextarea.dispatchEvent(new Event('input'));
+            
+            console.log('🎲 랜덤 액션 실행됨');
+        }
+
+        // 오류 시뮬레이션
+        function simulateError() {
+            console.error('⚠️ 시뮬레이션된 오류:', new Error('세션 리플레이 페이지에서 발생한 테스트 오류'));
+            alert('⚠️ 시뮬레이션 오류가 발생했습니다 (콘솔 확인)');
+        }
+
+        // 세션 목록 로드
+        function loadSessions() {
+            if (!window.airisTracker) {
+                console.log('❌ AIRIS 추적기가 없어 세션을 로드할 수 없습니다');
+                return;
+            }
+
+            const sessions = window.airisTracker.getSavedSessions();
+            const sessionsList = document.getElementById('sessionsList');
+            
+            if (sessions.length === 0) {
+                sessionsList.innerHTML = '<p>기록된 세션이 없습니다.</p>';
+                return;
+            }
+
+            let html = '';
+            sessions.forEach((session, index) => {
+                const duration = Math.round(session.duration / 1000);
+                html += `
+                    <div style="border: 1px solid #ddd; margin: 10px 0; padding: 10px; border-radius: 5px;">
+                        <strong>세션 ${session.session_id.split('_')[1]}</strong> 
+                        (${session.event_count || session.eventsCount || 0}개 이벤트, ${duration}초)
+                        <br>
+                        <small>${session.korean_timestamp || new Date(session.start_time).toLocaleString()}</small>
+                        <br>
+                        <button onclick="playSession('${session.session_id}', ${index})" class="btn" style="margin-top: 5px;">▶️ 재생</button>
+                        <button onclick="deleteSession('${session.session_id}', ${index})" class="btn btn-danger" style="margin-top: 5px;">🗑️ 삭제</button>
+                    </div>
+                `;
+            });
+            
+            sessionsList.innerHTML = html;
+        }
+
+        // 세션 재생
+        function playSession(sessionId, index) {
+            if (!window.airisTracker) {
+                alert('❌ AIRIS 추적기가 없습니다.');
+                return;
+            }
+
+            const sessions = window.airisTracker.getSavedSessions();
+            const session = sessions[index];
+            
+            if (!session || !session.events || session.events.length === 0) {
+                alert('⚠️ 세션 데이터가 없거나 이벤트가 없습니다.');
+                return;
+            }
+
+            const playerContainer = document.getElementById('playerContainer');
+            playerContainer.innerHTML = '';
+
+            try {
+                // rrweb 플레이어 생성
+                const replayer = new rrwebPlayer({
+                    target: playerContainer,
+                    props: {
+                        events: session.events,
+                        width: playerContainer.offsetWidth - 20,
+                        height: 380,
+                        autoPlay: false,
+                        showController: true,
+                        speedOption: [1, 2, 4, 8]
+                    }
+                });
+                
+                console.log(`✅ 세션 ${sessionId} 재생 시작 (${session.events.length}개 이벤트)`);
+                alert(`✅ 세션 재생을 시작합니다!\n이벤트: ${session.events.length}개\n시간: ${Math.round(session.duration/1000)}초`);
+                
+            } catch (error) {
+                console.error('❌ 재생 오류:', error);
+                playerContainer.innerHTML = '<p>❌ 재생 중 오류가 발생했습니다.</p>';
+                alert('❌ 재생 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 세션 삭제
+        function deleteSession(sessionId, index) {
+            if (!confirm(`세션 ${sessionId}를 삭제하시겠습니까?`)) {
+                return;
+            }
+
+            try {
+                const sessions = window.airisTracker.getSavedSessions();
+                const filteredSessions = sessions.filter(s => s.session_id !== sessionId);
+                localStorage.setItem('airisRecordedSessions', JSON.stringify(filteredSessions));
+                
+                console.log(`🗑️ 세션 ${sessionId} 삭제됨`);
+                loadSessions(); // 목록 새로고침
+                alert('✅ 세션이 삭제되었습니다.');
+                
+            } catch (error) {
+                console.error('❌ 삭제 오류:', error);
+                alert('❌ 삭제 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 모든 세션 삭제
+        function clearAllSessions() {
+            if (!confirm('모든 기록된 세션을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+                return;
+            }
+
+            try {
+                localStorage.removeItem('airisRecordedSessions');
+                loadSessions(); // 목록 새로고침
+                document.getElementById('playerContainer').innerHTML = '<p>세션을 선택하면 리플레이가 시작됩니다</p>';
+                
+                console.log('🗑️ 모든 세션 삭제됨');
+                alert('✅ 모든 세션이 삭제되었습니다.');
+                
+            } catch (error) {
+                console.error('❌ 전체 삭제 오류:', error);
+                alert('❌ 삭제 중 오류가 발생했습니다: ' + error.message);
+            }
+        }
+
+        // 주기적으로 상태 업데이트
+        setInterval(updateStatus, 5000);
+
+        // 향상된 세션 플레이어 기능 추가
+        let enhancedPlayerInstance = null;
+        
+        // 향상된 세션 선택 상태 업데이트
+        function updateEnhancedStatus(message, type = 'loading') {
+            const statusEl = document.getElementById('enhancedStatus');
+            if (statusEl) {
+                statusEl.textContent = message;
+                statusEl.className = `status ${type}`;
+                
+                // 스타일 적용
+                const styles = {
+                    loading: { background: '#fef3c7', color: '#92400e' },
+                    ready: { background: '#d1fae5', color: '#065f46' },
+                    error: { background: '#fee2e2', color: '#991b1b' },
+                    playing: { background: '#dbeafe', color: '#1d4ed8' }
+                };
+                
+                if (styles[type]) {
+                    Object.assign(statusEl.style, styles[type]);
+                }
+            }
+        }
+        
+        // 향상된 세션 로드
+        function loadEnhancedSessions() {
+            if (!window.airisTracker) {
+                updateEnhancedStatus('AIRIS 추적기가 없습니다', 'error');
+                return;
+            }
+            
+            const sessions = window.airisTracker.getSavedSessions();
+            const sessionSelect = document.getElementById('enhancedSessionSelect');
+            
+            if (!sessionSelect) return;
+            
+            sessionSelect.innerHTML = '<option value="">세션을 선택하세요...</option>';
+            
+            if (!sessions || sessions.length === 0) {
+                updateEnhancedStatus('저장된 세션이 없습니다', 'error');
+                return;
+            }
+            
+            sessions.forEach((session, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                
+                const eventCount = session.event_count || session.eventsCount || 0;
+                const duration = session.duration ? Math.round(session.duration/1000) : 0;
+                const sessionNum = session.session_id ? session.session_id.split('_')[1] : index + 1;
+                
+                let displayText = `세션 ${sessionNum}`;
+                if (eventCount) displayText += ` (${eventCount}개 이벤트)`;
+                if (duration) displayText += ` ${duration}초`;
+                if (session.korean_timestamp || session.start_time) {
+                    const date = session.korean_timestamp || new Date(session.start_time).toLocaleString();
+                    displayText += ` - ${date}`;
+                }
+                
+                option.textContent = displayText;
+                sessionSelect.appendChild(option);
+            });
+            
+            updateEnhancedStatus(`${sessions.length}개 세션 로드 완료`, 'ready');
+        }
+        
+        // 향상된 세션 플레이어로 재생
+        function loadEnhancedSession() {
+            const sessionSelect = document.getElementById('enhancedSessionSelect');
+            const sessionIndex = sessionSelect.value;
+            
+            if (!sessionIndex && sessionIndex !== '0') {
+                updateEnhancedStatus('세션을 선택해주세요', 'error');
+                return;
+            }
+            
+            if (!window.airisTracker) {
+                updateEnhancedStatus('AIRIS 추적기가 없습니다', 'error');
+                return;
+            }
+            
+            const sessions = window.airisTracker.getSavedSessions();
+            const session = sessions[parseInt(sessionIndex)];
+            
+            if (!session) {
+                updateEnhancedStatus('세션을 찾을 수 없습니다', 'error');
+                return;
+            }
+            
+            updateEnhancedStatus('세션 로딩 중...', 'loading');
+            
+            // 세션 정보 표시
+            displayEnhancedSessionInfo(session);
+            
+            // rrweb 이벤트 확인
+            if (!session.events || session.events.length === 0) {
+                updateEnhancedStatus('재생 가능한 이벤트가 없습니다', 'error');
+                showEnhancedPlayerError('이 세션에는 rrweb 이벤트 데이터가 없습니다.');
+                return;
+            }
+            
+            // 향상된 플레이어로 재생
+            playEnhancedSession(session.events, session);
+        }
+        
+        // 향상된 세션 정보 표시
+        function displayEnhancedSessionInfo(session) {
+            const sessionInfo = document.getElementById('enhancedSessionInfo');
+            const sessionDetails = document.getElementById('enhancedSessionDetails');
+            
+            if (!sessionInfo || !sessionDetails) return;
+            
+            const details = [];
+            details.push(`<strong>세션 ID:</strong> ${session.session_id || 'N/A'}`);
+            details.push(`<strong>생성 시간:</strong> ${session.korean_timestamp || new Date(session.start_time).toLocaleString()}`);
+            if (session.duration) details.push(`<strong>지속 시간:</strong> ${Math.round(session.duration/1000)}초`);
+            if (session.event_count || session.eventsCount) details.push(`<strong>이벤트 수:</strong> ${session.event_count || session.eventsCount}개`);
+            if (session.events) details.push(`<strong>rrweb 이벤트:</strong> ${session.events.length}개`);
+            
+            sessionDetails.innerHTML = details.join('<br>');
+            sessionInfo.style.display = 'block';
+        }
+        
+        // 향상된 플레이어로 재생
+        function playEnhancedSession(events, session) {
+            const playerContainer = document.getElementById('enhancedPlayerContainer');
+            if (!playerContainer) return;
+            
+            try {
+                // 기존 플레이어 정리
+                if (enhancedPlayerInstance) {
+                    enhancedPlayerInstance.destroy?.();
+                }
+                
+                playerContainer.innerHTML = '';
+                
+                console.log('향상된 플레이어 - rrweb 이벤트 수:', events.length);
+                
+                // rrweb-player 사용 시도
+                if (typeof rrwebPlayer !== 'undefined') {
+                    enhancedPlayerInstance = new rrwebPlayer({
+                        target: playerContainer,
+                        props: {
+                            events: events,
+                            width: playerContainer.offsetWidth - 20,
+                            height: 480,
+                            autoPlay: false,
+                            speedOption: [0.5, 1, 2, 4],
+                            showController: true,
+                            tags: {
+                                'session-id': session.session_id
+                            }
+                        }
+                    });
+                    
+                    updateEnhancedStatus('재생 준비 완료', 'playing');
+                    console.log('향상된 rrweb 플레이어 생성 완료');
+                } else {
+                    // 대체 플레이어 사용
+                    playEnhancedSessionWithReplayer(events, playerContainer);
+                }
+                
+            } catch (error) {
+                console.error('향상된 플레이어 생성 실패:', error);
+                updateEnhancedStatus('플레이어 생성 실패', 'error');
+                showEnhancedPlayerError(`플레이어 생성 실패: ${error.message}`);
+            }
+        }
+        
+        // 대체 향상된 플레이어 (rrweb.Replayer)
+        function playEnhancedSessionWithReplayer(events, container) {
+            try {
+                container.innerHTML = '<div id="enhanced-replayer-container" style="width: 100%; height: 480px; border: 1px solid #ddd; background: #f9fafb;"></div>';
+                
+                const replayer = new rrweb.Replayer(events, {
+                    target: document.getElementById('enhanced-replayer-container'),
+                    props: {
+                        width: container.offsetWidth - 40,
+                        height: 440,
+                    }
+                });
+                
+                // 향상된 재생 컨트롤 추가
+                const controls = document.createElement('div');
+                controls.style.cssText = 'padding: 1rem; background: #f1f5f9; border-top: 1px solid #e2e8f0; text-align: center; display: flex; gap: 1rem; justify-content: center; align-items: center;';
+                controls.innerHTML = `
+                    <button onclick="window.enhancedReplayer.play()" class="btn" style="background: #10b981; padding: 0.5rem 1rem;">▶️ 재생</button>
+                    <button onclick="window.enhancedReplayer.pause()" class="btn" style="background: #f59e0b; padding: 0.5rem 1rem;">⏸️ 일시정지</button>
+                    <button onclick="window.enhancedReplayer.goto(0)" class="btn" style="background: #6b7280; padding: 0.5rem 1rem;">⏪ 처음으로</button>
+                    <span style="color: #64748b; font-size: 0.875rem;">향상된 세션 플레이어</span>
+                `;
+                
+                container.appendChild(controls);
+                window.enhancedReplayer = replayer; // 전역 접근을 위해
+                
+                updateEnhancedStatus('대체 플레이어 준비 완료', 'playing');
+                console.log('향상된 rrweb.Replayer 생성 완료');
+                
+            } catch (error) {
+                console.error('대체 향상된 플레이어 실패:', error);
+                updateEnhancedStatus('플레이어 완전 실패', 'error');
+                showEnhancedPlayerError(`플레이어를 생성할 수 없습니다: ${error.message}`);
+            }
+        }
+        
+        // 향상된 플레이어 오류 표시
+        function showEnhancedPlayerError(message) {
+            const playerContainer = document.getElementById('enhancedPlayerContainer');
+            if (!playerContainer) return;
+            
+            playerContainer.innerHTML = `
+                <div style="text-align: center; padding: 3rem; color: #ef4444; background: #fef2f2; border-radius: 8px; margin: 1rem;">
+                    <h3>❌ 플레이어 오류</h3>
+                    <p style="margin: 1rem 0; color: #374151;">${message}</p>
+                    <div style="margin-top: 2rem; padding: 1rem; background: white; border-radius: 8px; text-align: left; color: #6b7280; font-size: 0.875rem;">
+                        <h4 style="color: #374151;">해결 방법:</h4>
+                        <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                            <li>위의 "기록시작" → "기록중지"로 새 세션을 만들어보세요</li>
+                            <li>브라우저를 새로고침하고 다시 시도해보세요</li>
+                            <li>다른 세션을 선택해보세요</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 탭 전환 기능
+        function switchTab(tabName) {
+            // 모든 탭 컨텐츠 숨기기
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => {
+                content.style.display = 'none';
+            });
+            
+            // 모든 탭 버튼 비활성화
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => {
+                btn.style.color = '#6b7280';
+                btn.style.borderBottomColor = 'transparent';
+            });
+            
+            // 선택된 탭 활성화
+            const selectedContent = document.getElementById(`tab-${tabName}`);
+            const selectedButton = document.querySelector(`[data-tab="${tabName}"]`);
+            
+            if (selectedContent && selectedButton) {
+                selectedContent.style.display = 'block';
+                selectedButton.style.color = '#3b82f6';
+                selectedButton.style.borderBottomColor = '#3b82f6';
+                
+                // 탭별 초기화
+                if (tabName === 'sessions') {
+                    refreshSessionList();
+                } else if (tabName === 'player') {
+                    loadEnhancedSessions();
+                } else if (tabName === 'settings') {
+                    loadSettingsInfo();
+                }
+            }
+        }
+        
+        // 새로운 세션 목록 새로고침
+        function refreshSessionList() {
+            if (!window.airisTracker) {
+                document.getElementById('sessionsList').innerHTML = `
+                    <div class="text-center py-12 bg-red-50 border border-red-200 rounded-lg">
+                        <h4 class="text-red-800 font-medium mb-2">❌ AIRIS 추적기가 없습니다</h4>
+                        <p class="text-red-700 text-sm">페이지를 새로고침하고 다시 시도해보세요.</p>
+                    </div>
+                `;
+                document.getElementById('sessionCount').textContent = '추적기 없음';
+                return;
+            }
+            
+            const sessions = window.airisTracker.getSavedSessions();
+            const sessionsList = document.getElementById('sessionsList');
+            const sessionCount = document.getElementById('sessionCount');
+            
+            if (!sessions || sessions.length === 0) {
+                sessionsList.innerHTML = `
+                    <div class="text-center py-12 bg-gray-50 border border-gray-200 rounded-lg">
+                        <h4 class="text-gray-800 font-medium mb-3">📂 저장된 세션이 없습니다</h4>
+                        <p class="text-gray-600 text-sm mb-4">위의 "📹 세션 기록" 섹션에서 "기록시작" 버튼을 눌러 새로운 세션을 녹화해보세요.</p>
+                        <div class="max-w-md mx-auto bg-white border border-gray-200 rounded-lg p-4 text-left">
+                            <h5 class="text-gray-700 font-medium mb-2">💡 세션 생성 방법:</h5>
+                            <ol class="text-gray-600 text-sm space-y-1 list-decimal list-inside">
+                                <li>"기록시작" 버튼 클릭</li>
+                                <li>페이지에서 여러 상호작용 수행</li>
+                                <li>"기록중지" 버튼 클릭</li>
+                                <li>세션 목록에서 확인</li>
+                            </ol>
+                        </div>
+                    </div>
+                `;
+                sessionCount.textContent = '세션 0개';
+                return;
+            }
+            
+            let html = '';
+            sessions.forEach((session, index) => {
+                const duration = session.duration ? Math.round(session.duration/1000) : 0;
+                const eventCount = session.event_count || session.eventsCount || 0;
+                const createdAt = session.korean_timestamp || new Date(session.start_time).toLocaleString();
+                const sessionNum = session.session_id ? session.session_id.split('_')[1] : index + 1;
+                
+                html += `
+                    <div class="session-card bg-card border border-border rounded-lg p-4 mb-3 hover:shadow-lg transition-all duration-200">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex-1">
+                                <h4 class="text-card-foreground font-semibold text-lg mb-2">
+                                    🎬 세션 ${sessionNum}
+                                </h4>
+                                <div class="text-muted-foreground text-sm space-y-1">
+                                    <div class="flex flex-wrap gap-4">
+                                        <span class="inline-flex items-center">
+                                            📊 <strong class="ml-1">${eventCount}</strong>개 이벤트
+                                        </span>
+                                        <span class="inline-flex items-center">
+                                            ⏱️ <strong class="ml-1">${duration}</strong>초
+                                        </span>
+                                    </div>
+                                    <div class="text-xs">
+                                        🕒 ${createdAt}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 ml-4">
+                                <button onclick="selectSessionForPlayer('${session.session_id}', ${index})" 
+                                        class="btn bg-blue-500 text-white px-3 py-1 text-sm hover:bg-blue-600 whitespace-nowrap">
+                                    🎥 플레이어로 보내기
+                                </button>
+                                <button onclick="deleteSessionFromList('${session.session_id}', ${index})" 
+                                        class="btn bg-red-500 text-white px-3 py-1 text-sm hover:bg-red-600">
+                                    🗑️ 삭제
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- 세션 상세 정보 (접을 수 있음) -->
+                        <div class="border-t border-border pt-3 mt-3">
+                            <details class="cursor-pointer">
+                                <summary class="font-medium text-card-foreground text-sm hover:text-primary transition-colors">
+                                    📋 상세 정보 보기
+                                </summary>
+                                <div class="mt-2 p-3 bg-muted/50 rounded-md text-xs text-muted-foreground space-y-1">
+                                    <div><strong>세션 ID:</strong> ${session.session_id}</div>
+                                    <div><strong>시작 시간:</strong> ${new Date(session.start_time).toLocaleString()}</div>
+                                    <div><strong>페이지 수:</strong> ${session.page_count || 1}</div>
+                                    <div><strong>버퍼 크기:</strong> ${session.buffer_size || 'N/A'}</div>
+                                    <div><strong>rrweb 이벤트:</strong> ${session.events ? session.events.length : 0}개</div>
+                                    <div><strong>재생 가능:</strong> ${session.events && session.events.length > 0 ? '✅ 예' : '❌ 아니오'}</div>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            sessionsList.innerHTML = html;
+            sessionCount.textContent = `세션 ${sessions.length}개`;
+        }
+        
+        // 세션을 플레이어 탭으로 보내기
+        function selectSessionForPlayer(sessionId, index) {
+            // 플레이어 탭으로 전환
+            switchTab('player');
+            
+            // 드롭다운에서 해당 세션 선택
+            const sessionSelect = document.getElementById('enhancedSessionSelect');
+            if (sessionSelect) {
+                sessionSelect.value = index;
+                // 자동으로 로드
+                setTimeout(() => {
+                    loadEnhancedSession();
+                    alert(`✅ 세션이 플레이어 탭으로 이동되었습니다!\n세션을 로드하는 중입니다...`);
+                }, 500);
+            }
+        }
+        
+        // 세션 목록에서 삭제
+        function deleteSessionFromList(sessionId, index) {
+            if (!confirm(`세션 "${sessionId}"을(를) 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.`)) {
+                return;
+            }
+            
+            try {
+                const sessions = window.airisTracker.getSavedSessions();
+                const filteredSessions = sessions.filter((_, i) => i !== index);
+                localStorage.setItem('airisRecordedSessions', JSON.stringify(filteredSessions));
+                refreshSessionList(); // 목록 새로고침
+                loadEnhancedSessions(); // 플레이어 드롭다운도 새로고침
+                
+                console.log(`🗑️ 세션 ${sessionId} 삭제됨`);
+                alert('✅ 세션이 삭제되었습니다.');
+            } catch (error) {
+                console.error('세션 삭제 실패:', error);
+                alert('❌ 세션 삭제에 실패했습니다.');
+            }
+        }
+        
+        // 설정 정보 로드
+        function loadSettingsInfo() {
+            // 저장소 정보
+            const storageInfo = document.getElementById('storageInfo');
+            if (storageInfo && window.airisTracker) {
+                const sessions = window.airisTracker.getSavedSessions();
+                const totalSessions = sessions.length;
+                const totalEvents = sessions.reduce((sum, s) => sum + (s.event_count || s.eventsCount || 0), 0);
+                const storageSize = JSON.stringify(sessions).length;
+                
+                storageInfo.innerHTML = `
+                    📊 <strong>총 세션:</strong> ${totalSessions}개<br>
+                    📈 <strong>총 이벤트:</strong> ${totalEvents.toLocaleString()}개<br>
+                    💾 <strong>저장 크기:</strong> ${(storageSize / 1024).toFixed(1)} KB<br>
+                    🗂️ <strong>저장 위치:</strong> localStorage (airisRecordedSessions)
+                `;
+            }
+            
+            // 시스템 정보
+            const systemInfo = document.getElementById('systemInfo');
+            if (systemInfo) {
+                systemInfo.innerHTML = `
+                    🌐 <strong>브라우저:</strong> ${navigator.userAgent.split(' ')[0]}<br>
+                    📱 <strong>플랫폼:</strong> ${navigator.platform}<br>
+                    🎬 <strong>rrweb 버전:</strong> ${typeof rrweb !== 'undefined' ? 'Available' : 'Not loaded'}<br>
+                    🎮 <strong>rrweb-player:</strong> ${typeof rrwebPlayer !== 'undefined' ? 'Available' : 'Not loaded'}<br>
+                    🔧 <strong>AIRIS 추적기:</strong> ${window.airisTracker ? 'Loaded' : 'Not loaded'}<br>
+                    ⏰ <strong>로드 시간:</strong> ${new Date().toLocaleString()}
+                `;
+            }
+        }
+        
+        // 세션 내보내기
+        function exportSessions() {
+            if (!window.airisTracker) {
+                alert('❌ AIRIS 추적기가 없습니다.');
+                return;
+            }
+            
+            const sessions = window.airisTracker.getSavedSessions();
+            if (sessions.length === 0) {
+                alert('📂 내보낼 세션이 없습니다.');
+                return;
+            }
+            
+            const exportData = {
+                exportDate: new Date().toISOString(),
+                version: '1.0',
+                totalSessions: sessions.length,
+                sessions: sessions
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `airis-sessions-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert(`✅ ${sessions.length}개 세션이 내보내기되었습니다.`);
+        }
+        
+        // 세션 가져오기
+        function importSessions() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const importData = JSON.parse(e.target.result);
+                        if (!importData.sessions || !Array.isArray(importData.sessions)) {
+                            throw new Error('올바르지 않은 파일 형식입니다.');
+                        }
+                        
+                        // 기존 세션과 병합
+                        const existingSessions = window.airisTracker ? window.airisTracker.getSavedSessions() : [];
+                        const mergedSessions = [...existingSessions, ...importData.sessions];
+                        
+                        localStorage.setItem('airisRecordedSessions', JSON.stringify(mergedSessions));
+                        refreshSessionList();
+                        loadEnhancedSessions();
+                        loadSettingsInfo();
+                        
+                        alert(`✅ ${importData.sessions.length}개 세션이 가져오기되었습니다.`);
+                    } catch (error) {
+                        console.error('가져오기 실패:', error);
+                        alert(`❌ 세션 가져오기에 실패했습니다: ${error.message}`);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // 페이지 로드시 초기화
+        setTimeout(() => {
+            // 기본 세션 목록 탭 활성화
+            switchTab('sessions');
+            
+            // 향상된 플레이어용 세션 목록도 로드
+            loadEnhancedSessions();
+        }, 2000);
+    </script>
+  </main>
+
+  <!-- Theme toggle functionality -->
+  <script>
+    // Theme toggle functionality
+    const themeToggle = document.getElementById('themeToggle');
+    let isDark = false;
+
+    themeToggle.addEventListener('click', () => {
+      isDark = !isDark;
+      document.documentElement.classList.toggle('dark');
+      themeToggle.textContent = isDark ? '☀️' : '🌙';
+      localStorage.setItem('darkMode', isDark);
+    });
+
+    // Load saved theme
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme === 'true') {
+      isDark = true;
+      document.documentElement.classList.add('dark');
+      themeToggle.textContent = '☀️';
+    }
+  </script>
+</body>
+</html>
