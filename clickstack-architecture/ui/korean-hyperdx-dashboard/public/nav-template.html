@@ -1,0 +1,99 @@
+<!-- 표준 AIRIS EPM 드롭다운 네비게이션 템플릿 -->
+<!-- 사용법: CURRENT_PAGE_TITLE과 CURRENT_PAGE_ICON을 실제 페이지에 맞게 변경 -->
+<header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
+  <div class="container mx-auto flex h-14 items-center px-4">
+    <div class="mr-4 flex items-center space-x-2">
+      <h1 class="font-bold text-xl text-foreground">AIRIS EPM</h1>
+      <span class="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">CURRENT_PAGE_TITLE</span>
+    </div>
+    
+    <!-- Navigation Menu with Dropdown -->
+    <nav class="flex items-center space-x-6 text-sm ml-6">
+      <!-- 메인 대시보드 -->
+      <a href="/" class="text-foreground/60 hover:text-foreground/80 px-3 py-2 text-sm font-medium transition-colors">📊 메인</a>
+      
+      <!-- APM 모니터링 드롭다운 -->
+      <div class="relative group">
+        <button class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+          ⚡ APM 모니터링 ▾
+        </button>
+        <div class="absolute top-full left-0 mt-1 w-48 bg-background border border-border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+          <a href="/j2ee-dashboard.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">☕ J2EE 모니터링</a>
+          <a href="/was-dashboard.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">🏗️ WAS 모니터링</a>
+          <a href="/exception-dashboard.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">🚨 예외 추적</a>
+          <a href="/topology-dashboard.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">🗺️ 서비스 토폴로지</a>
+          <a href="/alert-dashboard.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">🔔 알림 관리</a>
+        </div>
+      </div>
+
+      <!-- 인프라 모니터링 드롭다운 -->
+      <div class="relative group">
+        <button class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+          🖥️ 인프라 모니터링 ▾
+        </button>
+        <div class="absolute top-full left-0 mt-1 w-48 bg-background border border-border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+          <a href="/app-monitoring.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">📱 애플리케이션 모니터링</a>
+          <a href="/system-monitoring.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">⚙️ 시스템 모니터링</a>
+          <a href="/db-monitoring.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">🗃️ 데이터베이스 모니터링</a>
+          <a href="/web-monitoring.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">🌐 웹 성능 모니터링</a>
+        </div>
+      </div>
+
+      <!-- 관찰성 드롭다운 -->
+      <div class="relative group">
+        <button class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+          🔍 관찰성 ▾
+        </button>
+        <div class="absolute top-full left-0 mt-1 w-48 bg-background border border-border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+          <a href="/logs-dashboard.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">📋 로그 대시보드</a>
+          <a href="/metrics-dashboard.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">📊 메트릭 대시보드</a>
+          <a href="/traces-dashboard.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">🔗 트레이스 대시보드</a>
+        </div>
+      </div>
+
+      <!-- 세션 분석 드롭다운 -->
+      <div class="relative group">
+        <button class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+          👥 세션 분석 ▾
+        </button>
+        <div class="absolute top-full left-0 mt-1 w-48 bg-background border border-border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+          <a href="/session-analysis.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">📈 세션 분석</a>
+          <a href="/session-telemetry-dashboard.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">🛰️ 세션 텔레메트리</a>
+          <a href="/session-replay.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">🎬 세션 리플레이</a>
+        </div>
+      </div>
+
+      <!-- 시스템 관리 드롭다운 -->
+      <div class="relative group">
+        <button class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+          🛠️ 시스템 관리 ▾
+        </button>
+        <div class="absolute top-full left-0 mt-1 w-48 bg-background border border-border rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+          <a href="/services-management.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">⚙️ 서비스 관리</a>
+          <a href="/deployment-manager.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">🚀 배포 관리</a>
+          <a href="/ontology.html" class="block px-4 py-2 text-sm text-foreground hover:bg-secondary">🧠 온톨로지 시스템</a>
+        </div>
+      </div>
+
+      <!-- 포털 링크 -->
+      <a href="/portal.html" class="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 px-3 py-2 text-sm font-medium">🏠 포털</a>
+    </nav>
+    
+    <div class="flex items-center space-x-4 ml-auto">
+      <button id="themeToggle" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 w-9">
+        🌙
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- 현재 페이지별 활성화 스타일 적용 방법:
+1. 메인 대시보드 (index.html): 
+   - 📊 메인을 강조: class="font-medium text-primary bg-primary/10 px-3 py-1 rounded-md"
+   
+2. J2EE 모니터링 (j2ee-dashboard.html):
+   - ⚡ APM 모니터링 버튼을 강조: class="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+   - ☕ J2EE 모니터링 항목을 강조: class="...bg-blue-50 dark:bg-blue-900/30..."
+   
+3. 기타 페이지도 동일한 패턴으로 해당 그룹과 메뉴 항목을 강조 표시
+-->

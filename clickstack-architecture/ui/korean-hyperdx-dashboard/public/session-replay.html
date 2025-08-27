@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AIRIS APM | 세션 리플레이</title>
+  <title>AIRIS EPM | 세션 리플레이</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <link href="./css/tailwind.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- rrweb 라이브러리 -->
@@ -119,40 +119,100 @@
   <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
     <div class="container mx-auto flex h-14 items-center px-4">
       <div class="mr-4 flex items-center space-x-2">
-        <h1 class="font-bold text-xl text-foreground">AIRIS APM</h1>
+        <h1 class="font-bold text-xl text-foreground">AIRIS EPM</h1>
         <span class="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">통합 모니터링</span>
       </div>
       
-      <!-- Navigation Menu -->
-      <nav class="flex items-center space-x-6 text-sm ml-6">
-        <button onclick="window.location.href = '/'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-          통합 대시보드
-        </button>
-        <button onclick="window.location.href = '/j2ee-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-          J2EE 모니터링
-        </button>
-        <button onclick="window.location.href = '/was-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-          WAS 모니터링
-        </button>
-        <button onclick="window.location.href = '/exception-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-          예외 추적
-        </button>
-        <button onclick="window.location.href = '/topology-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-          서비스 토폴로지
-        </button>
-        <button onclick="window.location.href = '/alert-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-          알림 관리
-        </button>
-        <button onclick="window.location.href = '/ontology.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-          온톨로지
-        </button>
-        <span class="font-medium text-foreground/80 hover:text-foreground transition-colors">
-          세션 리플레이
-        </span>
-        <button onclick="window.location.href = '/session-telemetry-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-          🔗 세션-텔레메트리 분석
-        </button>
-      </nav>
+          <!-- Navigation -->
+    <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+            </div>
+            <div class="ml-10 flex items-center space-x-8">
+              <!-- 메인 대시보드 -->
+              <a href="/" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 text-sm font-medium">📊 메인</a>
+              
+              <!-- APM 모니터링 드롭다운 -->
+              <div class="relative group">
+                <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                  ⚡ APM 모니터링 ▾
+                </button>
+                <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <a href="/j2ee-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">☕ J2EE 모니터링</a>
+                  <a href="/was-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🏗️ WAS 모니터링</a>
+                  <a href="/exception-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🚨 예외 추적</a>
+                  <a href="/topology-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🗺️ 서비스 토폴로지</a>
+                  <a href="/alert-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🔔 알림 관리</a>
+                </div>
+              </div>
+
+              <!-- 인프라 모니터링 드롭다운 -->
+              <div class="relative group">
+                <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                  🖥️ 인프라 모니터링 ▾
+                </button>
+                <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <a href="/app-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📱 애플리케이션 모니터링</a>
+                  <a href="/system-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">⚙️ 시스템 모니터링</a>
+                  <a href="/db-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🗃️ 데이터베이스 모니터링</a>
+                  <a href="/web-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🌐 웹 성능 모니터링</a>
+                </div>
+              </div>
+
+              <!-- 관찰성 드롭다운 -->
+              <div class="relative group">
+                <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                  🔍 관찰성 ▾
+                </button>
+                <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <a href="/logs-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📋 로그 대시보드</a>
+                  <a href="/metrics-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📊 메트릭 대시보드</a>
+                  <a href="/traces-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🔗 트레이스 대시보드</a>
+                </div>
+              </div>
+
+              <!-- 세션 분석 드롭다운 -->
+              <div class="relative group">
+                <button class="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                  👥 세션 분석 ▾
+                </button>
+                <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <a href="/session-analysis.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📈 세션 분석</a>
+                  <a href="/session-telemetry-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🛰️ 세션 텔레메트리</a>
+                  <a href="/session-replay.html" class="block px-4 py-2 text-sm text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50">🎬 세션 리플레이</a>
+                </div>
+              </div>
+
+              <!-- 시스템 관리 드롭다운 -->
+              <div class="relative group">
+                <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                  🛠️ 시스템 관리 ▾
+                </button>
+                <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <a href="/services-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">⚙️ 서비스 관리</a>
+                  <a href="/deployment-manager.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🚀 배포 관리</a>
+                  <a href="/ontology.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🧠 온톨로지 시스템</a>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <div class="flex items-center space-x-4">
+            <button id="darkModeToggle" class="p-2 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+              <span class="dark:hidden">🌙</span>
+              <span class="hidden dark:inline">☀️</span>
+            </button>
+            <div id="systemStatus" class="flex items-center space-x-2">
+              <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <span class="text-sm text-gray-600 dark:text-gray-300">시스템 정상</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
       
       <div class="flex items-center space-x-4 ml-auto">
         <select id="timeRange" class="text-sm border border-border rounded-md px-3 py-1 bg-background">
@@ -249,15 +309,15 @@
       <div class="border-b border-border mb-6">
         <nav class="flex space-x-1" role="tablist">
           <button class="tab-btn px-4 py-2 font-medium text-sm rounded-t-md transition-colors active" 
-                  data-tab="sessions" onclick="switchTab('sessions')">
+                  data-tab="sessions" >
             📋 세션 목록
           </button>
           <button class="tab-btn px-4 py-2 font-medium text-sm rounded-t-md transition-colors text-muted-foreground hover:text-foreground" 
-                  data-tab="player" onclick="switchTab('player')">
+                  data-tab="player" >
             🎥 세션 플레이어
           </button>
           <button class="tab-btn px-4 py-2 font-medium text-sm rounded-t-md transition-colors text-muted-foreground hover:text-foreground" 
-                  data-tab="settings" onclick="switchTab('settings')">
+                  data-tab="settings" >
             ⚙️ 설정
           </button>
         </nav>
@@ -273,10 +333,10 @@
         </div>
         
         <div class="flex flex-wrap gap-3 mb-4 items-center">
-          <button onclick="refreshSessionList()" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-green-500 text-white hover:bg-green-600 h-9 px-4 py-2">
+          <button  class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-green-500 text-white hover:bg-green-600 h-9 px-4 py-2">
             🔄 새로고침
           </button>
-          <button onclick="clearAllSessions()" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-red-500 text-white hover:bg-red-600 h-9 px-4 py-2">
+          <button  class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-red-500 text-white hover:bg-red-600 h-9 px-4 py-2">
             🗑️ 모든 세션 삭제
           </button>
           <span id="sessionCount" class="text-muted-foreground text-sm">세션 로딩 중...</span>
@@ -301,7 +361,7 @@
           <select id="enhancedSessionSelect" class="flex-1 min-w-[300px] px-3 py-2 border border-border rounded-md bg-background text-foreground focus:ring-2 focus:ring-primary focus:border-transparent">
             <option value="">세션을 선택하세요...</option>
           </select>
-          <button onclick="loadEnhancedSession()" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-500 text-white hover:bg-blue-600 h-9 px-4 py-2 whitespace-nowrap">
+          <button  class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-500 text-white hover:bg-blue-600 h-9 px-4 py-2 whitespace-nowrap">
             📂 세션 로드
           </button>
           <span id="enhancedStatus" class="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
@@ -837,4 +897,33 @@
     }
   </script>
 </body>
-</html>
+</html
+    /* Dropdown 메뉴 완전 제어 - 모든 Tailwind 클래스 오버라이드 */
+    .relative.group div.absolute {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      transform: translateY(-10px) !important;
+      transition: all 0.2s ease-in-out !important;
+      z-index: 9999 !important;
+      pointer-events: none !important;
+    }
+    .relative.group:hover div.absolute {
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: translateY(0) !important;
+      z-index: 9999 !important;
+      pointer-events: auto !important;
+    }
+    
+    /* 추가 강제 오버라이드 - Tailwind 클래스별 */
+    .group-hover\:opacity-100 { opacity: 1 !important; }
+    .group-hover\:visible { visibility: visible !important; }
+    .opacity-0 { opacity: 0 !important; }
+    .invisible { visibility: hidden !important; }
+    
+    /* 드롭다운 항목들 모두 강제 표시 */
+    .relative.group:hover .absolute a {
+      opacity: 1 !important;
+      visibility: visible !important;
+      display: block !important;
+    }>

@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS EPM 서비스 관리 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* shadcn/ui 테마 CSS 변수 */
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 221.2 83.2% 53.3%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 221.2 83.2% 53.3%;
+            --radius: 0.75rem;
+            --success: 142.1 76.2% 36.3%;
+            --warning: 47.9 95.8% 53.1%;
+            --info: 199.2 95.8% 48.4%;
+            --error: 0 84.2% 60.2%;
+        }
+
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 217.2 91.2% 59.8%;
+            --primary-foreground: 222.2 84% 4.9%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 224.3 76.3% 94.1%;
+        }
+
+        .status-healthy { @apply text-green-600 bg-green-50 border-green-200; }
+        .status-unhealthy { @apply text-red-600 bg-red-50 border-red-200; }
+        .status-warning { @apply text-yellow-600 bg-yellow-50 border-yellow-200; }
+        .status-loading { @apply text-blue-600 bg-blue-50 border-blue-200; }
+        
+        .dark .status-healthy { @apply text-green-400 bg-green-900/20 border-green-800; }
+        .dark .status-unhealthy { @apply text-red-400 bg-red-900/20 border-red-800; }
+        .dark .status-warning { @apply text-yellow-400 bg-yellow-900/20 border-yellow-800; }
+        .dark .status-loading { @apply text-blue-400 bg-blue-900/20 border-blue-800; }
+
+        .service-card {
+            @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm hover:shadow-md transition-all;
+        }
+
+        .chart-container {
+            @apply h-64 w-full;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <!-- 네비게이션 바 -->
+    <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+                    </div>
+                    <div class="ml-10 flex items-center space-x-8">
+                        <!-- 메인 대시보드 -->
+                        <a href="/" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 text-sm font-medium">📊 메인</a>
+                        
+                        <!-- APM 모니터링 드롭다운 -->
+                        <div class="relative group">
+                            <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                                ⚡ APM 모니터링 ▾
+                            </button>
+                            <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                <a href="/j2ee-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">☕ J2EE 모니터링</a>
+                                <a href="/was-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🏗️ WAS 모니터링</a>
+                                <a href="/exception-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🚨 예외 추적</a>
+                                <a href="/topology-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🗺️ 서비스 토폴로지</a>
+                                <a href="/alert-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🔔 알림 관리</a>
+                            </div>
+                        </div>
+
+                        <!-- 인프라 모니터링 드롭다운 -->
+                        <div class="relative group">
+                            <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                                🖥️ 인프라 모니터링 ▾
+                            </button>
+                            <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                <a href="/app-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📱 애플리케이션 모니터링</a>
+                                <a href="/system-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">⚙️ 시스템 모니터링</a>
+                                <a href="/db-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🗃️ 데이터베이스 모니터링</a>
+                                <a href="/web-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🌐 웹 성능 모니터링</a>
+                            </div>
+                        </div>
+
+                        <!-- 관찰성 드롭다운 -->
+                        <div class="relative group">
+                            <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                                🔍 관찰성 ▾
+                            </button>
+                            <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                <a href="/logs-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📋 로그 대시보드</a>
+                                <a href="/metrics-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📊 메트릭 대시보드</a>
+                                <a href="/traces-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🔗 트레이스 대시보드</a>
+                            </div>
+                        </div>
+
+                        <!-- 세션 분석 드롭다운 -->
+                        <div class="relative group">
+                            <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                                👥 세션 분석 ▾
+                            </button>
+                            <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                <a href="/session-analysis.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📈 세션 분석</a>
+                                <a href="/session-telemetry-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🛰️ 세션 텔레메트리</a>
+                                <a href="/session-replay.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🎬 세션 리플레이</a>
+                            </div>
+                        </div>
+
+                        <!-- 시스템 관리 드롭다운 -->
+                        <div class="relative group">
+                            <button class="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 transition-colors border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                                🛠️ 시스템 관리 ▾
+                            </button>
+                            <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                <a href="/services-management.html" class="block px-4 py-2 text-sm text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50">⚙️ 서비스 관리</a>
+                                <a href="/deployment-manager.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🚀 배포 관리</a>
+                                <a href="/ontology.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🧠 온톨로지 시스템</a>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="darkModeToggle" class="p-2 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                        <span class="dark:hidden">🌙</span>
+                        <span class="hidden dark:inline">☀️</span>
+                    </button>
+                    <div id="systemStatus" class="flex items-center space-x-2">
+                        <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                        <span class="text-sm text-gray-600 dark:text-gray-300">시스템 정상</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 메인 컨텐츠 -->
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- 헤더 -->
+        <div class="px-4 py-6 sm:px-0">
+            <div class="flex justify-between items-center">
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">AIRIS EPM 서비스 관리 대시보드</h1>
+                <div class="flex space-x-4">
+                    <button onclick="refreshAll()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                        🔄 전체 새로고침
+                    </button>
+                    <button onclick="exportServiceStatus()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+                        📊 상태 내보내기
+                    </button>
+                </div>
+            </div>
+            <p class="mt-2 text-gray-600 dark:text-gray-400">모든 EPM 마이크로서비스의 상태를 실시간으로 모니터링하고 관리하세요</p>
+        </div>
+
+        <!-- 통계 개요 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-sm">✓</span>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">정상 서비스</dt>
+                                <dd class="text-lg font-medium text-gray-900 dark:text-white" id="healthyCount">-</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-sm">✗</span>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">오류 서비스</dt>
+                                <dd class="text-lg font-medium text-gray-900 dark:text-white" id="unhealthyCount">-</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-sm">⚡</span>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">총 서비스</dt>
+                                <dd class="text-lg font-medium text-gray-900 dark:text-white" id="totalServices">13</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                                <span class="text-white text-sm">⏱</span>
+                            </div>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">평균 응답시간</dt>
+                                <dd class="text-lg font-medium text-gray-900 dark:text-white" id="avgResponseTime">-</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 서비스 상태 그리드 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="servicesGrid">
+            <!-- 서비스 카드들이 동적으로 생성됩니다 -->
+        </div>
+
+        <!-- 시스템 리소스 모니터링 -->
+        <div class="mt-8">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">시스템 리소스 모니터링</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="service-card">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">서비스 상태 분포</h3>
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+                <div class="service-card">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">응답시간 추이</h3>
+                    <div class="chart-container">
+                        <canvas id="responseTimeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 데이터베이스 서비스 -->
+        <div class="mt-8">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">데이터베이스 서비스</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" id="databaseGrid">
+                <!-- 데이터베이스 서비스 카드들이 동적으로 생성됩니다 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // EPM 서비스 설정
+        const services = [
+            { name: 'API Gateway', port: 3000, url: 'http://localhost:3000', healthEndpoint: '/health', icon: '🚪', description: 'API 게이트웨이 서비스' },
+            { name: 'Data Ingestion', port: 3007, url: 'http://localhost:3007', healthEndpoint: '/health', icon: '📥', description: '데이터 수집 서비스' },
+            { name: 'UI Dashboard', port: 3001, url: 'http://localhost:3001', healthEndpoint: '/', icon: '🖥️', description: '사용자 인터페이스 대시보드' },
+            { name: 'Session Replay', port: 3003, url: 'http://localhost:3003', healthEndpoint: '/health', icon: '📹', description: '세션 재생 서비스' },
+            { name: 'AIOps Engine', port: 3004, url: 'http://localhost:3004', healthEndpoint: '/health', icon: '🤖', description: 'AI 기반 운영 서비스' },
+            { name: 'Event Delta Analyzer', port: 3005, url: 'http://localhost:3005', healthEndpoint: '/health', icon: '📊', description: '이벤트 변화 분석 서비스' },
+            { name: 'NLP Search', port: 3006, url: 'http://localhost:3006', healthEndpoint: '/health', icon: '🔍', description: '자연어 검색 서비스' },
+            { name: 'J2EE Monitor', port: 3008, url: 'http://localhost:3008', healthEndpoint: '/health', icon: '☕', description: 'J2EE 모니터링 서비스' },
+            { name: 'WAS Monitor', port: 3009, url: 'http://localhost:3009', healthEndpoint: '/health', icon: '🏗️', description: 'WAS 모니터링 서비스' },
+            { name: 'Exception Tracker', port: 3010, url: 'http://localhost:3010', healthEndpoint: '/health', icon: '🚨', description: '예외 추적 서비스' },
+            { name: 'Alert Notification', port: 3011, url: 'http://localhost:3011', healthEndpoint: '/health', icon: '🔔', description: '알림 서비스' },
+            { name: 'Service Topology', port: 3012, url: 'http://localhost:3012', healthEndpoint: '/health', icon: '🗺️', description: '서비스 토폴로지' },
+        ];
+
+        const databases = [
+            { name: 'ClickHouse', port: 8123, url: 'http://localhost:8123', healthEndpoint: '/ping', icon: '🏠', description: '고성능 분석 데이터베이스' },
+            { name: 'MongoDB', port: 27017, url: 'mongodb://localhost:27017', icon: '🍃', description: '문서형 데이터베이스' },
+            { name: 'Redis', port: 6379, url: 'redis://localhost:6379', icon: '🔴', description: '인메모리 캐시' },
+            { name: 'PostgreSQL', port: 5432, url: 'postgresql://localhost:5432', icon: '🐘', description: '관계형 데이터베이스' }
+        ];
+
+        let statusChart = null;
+        let responseTimeChart = null;
+        let serviceStatuses = {};
+        let responseTimes = [];
+
+        // 다크 모드 토글
+        document.getElementById('darkModeToggle').addEventListener('click', function() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+        });
+
+        // 다크 모드 상태 복원
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+
+        // 서비스 상태 확인
+        async function checkServiceHealth(service) {
+            try {
+                const startTime = performance.now();
+                const response = await fetch(service.url + service.healthEndpoint, {
+                    method: 'GET',
+                    timeout: 5000
+                });
+                const endTime = performance.now();
+                const responseTime = Math.round(endTime - startTime);
+
+                if (response.ok) {
+                    return { status: 'healthy', responseTime, data: await response.text() };
+                } else {
+                    return { status: 'unhealthy', responseTime, error: `HTTP ${response.status}` };
+                }
+            } catch (error) {
+                return { status: 'unhealthy', responseTime: 0, error: error.message };
+            }
+        }
+
+        // 서비스 카드 생성
+        function createServiceCard(service, status) {
+            const statusClass = status.status === 'healthy' ? 'status-healthy' : 
+                               status.status === 'unhealthy' ? 'status-unhealthy' : 'status-loading';
+            
+            const statusIcon = status.status === 'healthy' ? '✅' : 
+                              status.status === 'unhealthy' ? '❌' : '⏳';
+
+            return `
+                <div class="service-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl">${service.icon}</span>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${service.name}</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">${service.description}</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-end space-y-2">
+                            <span class="${statusClass} px-2 py-1 rounded-full text-xs font-medium border">
+                                ${statusIcon} ${status.status === 'healthy' ? '정상' : status.status === 'unhealthy' ? '오류' : '확인중'}
+                            </span>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">포트: ${service.port}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">응답시간:</span>
+                            <span class="text-sm font-medium text-gray-900 dark:text-white">
+                                ${status.responseTime > 0 ? status.responseTime + 'ms' : '-'}
+                            </span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">상태:</span>
+                            <span class="text-sm font-medium text-gray-900 dark:text-white">
+                                ${status.error || (status.status === 'healthy' ? '정상 동작' : '확인중')}
+                            </span>
+                        </div>
+                        
+                        <div class="flex space-x-2 pt-2">
+                            <a href="${service.url}" target="_blank" 
+                               class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center py-2 px-3 rounded text-sm font-medium">
+                                🔗 접속
+                            </a>
+                            <button onclick="checkSingleService('${service.name}')" 
+                                    class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-3 rounded text-sm font-medium">
+                                🔄 새로고침
+                            </button>
+                        </div>
+                        
+                        ${service.name === 'UI Dashboard' ? `
+                            <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">빠른 접근:</p>
+                                <div class="grid grid-cols-2 gap-1 text-xs">
+                                    <a href="/j2ee-dashboard.html" target="_blank" class="text-blue-600 hover:text-blue-800">J2EE 대시보드</a>
+                                    <a href="/was-dashboard.html" target="_blank" class="text-blue-600 hover:text-blue-800">WAS 대시보드</a>
+                                    <a href="/exception-dashboard.html" target="_blank" class="text-blue-600 hover:text-blue-800">예외 추적</a>
+                                    <a href="/topology-dashboard.html" target="_blank" class="text-blue-600 hover:text-blue-800">서비스 맵</a>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 데이터베이스 카드 생성
+        function createDatabaseCard(database, status = { status: 'loading' }) {
+            const statusClass = status.status === 'healthy' ? 'status-healthy' : 
+                               status.status === 'unhealthy' ? 'status-unhealthy' : 'status-loading';
+            
+            const statusIcon = status.status === 'healthy' ? '✅' : 
+                              status.status === 'unhealthy' ? '❌' : '⏳';
+
+            return `
+                <div class="service-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-2xl">${database.icon}</span>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${database.name}</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">${database.description}</p>
+                            </div>
+                        </div>
+                        <span class="${statusClass} px-2 py-1 rounded-full text-xs font-medium border">
+                            ${statusIcon} ${status.status === 'healthy' ? '연결됨' : status.status === 'unhealthy' ? '연결 실패' : '확인중'}
+                        </span>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">포트:</span>
+                            <span class="text-sm font-medium text-gray-900 dark:text-white">${database.port}</span>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">연결 URL:</span>
+                            <span class="text-xs font-mono text-gray-600 dark:text-gray-400 truncate">${database.url}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 모든 서비스 상태 확인
+        async function checkAllServices() {
+            const grid = document.getElementById('servicesGrid');
+            const dbGrid = document.getElementById('databaseGrid');
+            
+            // 로딩 상태 표시
+            grid.innerHTML = services.map(service => createServiceCard(service, { status: 'loading' })).join('');
+            dbGrid.innerHTML = databases.map(db => createDatabaseCard(db, { status: 'loading' })).join('');
+
+            let healthyCount = 0;
+            let unhealthyCount = 0;
+            let totalResponseTime = 0;
+            let responseCount = 0;
+
+            // 서비스 상태 확인
+            for (const service of services) {
+                try {
+                    const status = await checkServiceHealth(service);
+                    serviceStatuses[service.name] = status;
+                    
+                    if (status.status === 'healthy') {
+                        healthyCount++;
+                    } else {
+                        unhealthyCount++;
+                    }
+                    
+                    if (status.responseTime > 0) {
+                        totalResponseTime += status.responseTime;
+                        responseCount++;
+                    }
+
+                    // 개별 카드 업데이트
+                    const cardIndex = services.indexOf(service);
+                    const cards = grid.children;
+                    if (cards[cardIndex]) {
+                        cards[cardIndex].outerHTML = createServiceCard(service, status);
+                    }
+                } catch (error) {
+                    console.error(`Error checking ${service.name}:`, error);
+                    unhealthyCount++;
+                }
+            }
+
+            // 통계 업데이트
+            document.getElementById('healthyCount').textContent = healthyCount;
+            document.getElementById('unhealthyCount').textContent = unhealthyCount;
+            document.getElementById('avgResponseTime').textContent = responseCount > 0 ? Math.round(totalResponseTime / responseCount) + 'ms' : '-';
+
+            // 응답시간 데이터 업데이트
+            responseTimes.push({
+                time: new Date().toLocaleTimeString(),
+                value: responseCount > 0 ? Math.round(totalResponseTime / responseCount) : 0
+            });
+
+            if (responseTimes.length > 10) {
+                responseTimes.shift();
+            }
+
+            // 차트 업데이트
+            updateCharts(healthyCount, unhealthyCount);
+
+            // 시스템 상태 업데이트
+            const systemStatus = document.getElementById('systemStatus');
+            if (healthyCount === services.length) {
+                systemStatus.innerHTML = `
+                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="text-sm text-gray-600 dark:text-gray-300">시스템 정상</span>
+                `;
+            } else if (unhealthyCount > healthyCount) {
+                systemStatus.innerHTML = `
+                    <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    <span class="text-sm text-gray-600 dark:text-gray-300">시스템 오류</span>
+                `;
+            } else {
+                systemStatus.innerHTML = `
+                    <div class="w-3 h-3 bg-yellow-500 rounded-full animate-pulse"></div>
+                    <span class="text-sm text-gray-600 dark:text-gray-300">일부 오류</span>
+                `;
+            }
+        }
+
+        // 개별 서비스 확인
+        async function checkSingleService(serviceName) {
+            const service = services.find(s => s.name === serviceName);
+            if (!service) return;
+
+            const status = await checkServiceHealth(service);
+            serviceStatuses[service.name] = status;
+
+            // 해당 카드만 업데이트
+            const cardIndex = services.indexOf(service);
+            const cards = document.getElementById('servicesGrid').children;
+            if (cards[cardIndex]) {
+                cards[cardIndex].outerHTML = createServiceCard(service, status);
+            }
+        }
+
+        // 차트 업데이트
+        function updateCharts(healthy, unhealthy) {
+            // 상태 분포 차트
+            if (statusChart) {
+                statusChart.data.datasets[0].data = [healthy, unhealthy, services.length - healthy - unhealthy];
+                statusChart.update();
+            } else {
+                const ctx = document.getElementById('statusChart').getContext('2d');
+                statusChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['정상', '오류', '확인중'],
+                        datasets: [{
+                            data: [healthy, unhealthy, services.length - healthy - unhealthy],
+                            backgroundColor: ['#10B981', '#EF4444', '#F59E0B']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 응답시간 차트
+            if (responseTimeChart && responseTimes.length > 0) {
+                responseTimeChart.data.labels = responseTimes.map(rt => rt.time);
+                responseTimeChart.data.datasets[0].data = responseTimes.map(rt => rt.value);
+                responseTimeChart.update();
+            } else if (responseTimes.length > 0) {
+                const ctx = document.getElementById('responseTimeChart').getContext('2d');
+                responseTimeChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: responseTimes.map(rt => rt.time),
+                        datasets: [{
+                            label: '응답시간 (ms)',
+                            data: responseTimes.map(rt => rt.value),
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // 전체 새로고침
+        function refreshAll() {
+            checkAllServices();
+        }
+
+        // 상태 내보내기
+        function exportServiceStatus() {
+            const data = {
+                timestamp: new Date().toISOString(),
+                services: serviceStatuses,
+                summary: {
+                    total: services.length,
+                    healthy: Object.values(serviceStatuses).filter(s => s.status === 'healthy').length,
+                    unhealthy: Object.values(serviceStatuses).filter(s => s.status === 'unhealthy').length
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `airis-epm-status-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 초기 실행
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAllServices();
+            // 30초마다 자동 새로고침
+            setInterval(checkAllServices, 30000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIRIS EPM | 로그 모니터링 대시보드</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    
+    /* Dropdown 메뉴 완전 제어 - 모든 Tailwind 클래스 오버라이드 */
+    .relative.group div.absolute {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      transform: translateY(-10px) !important;
+      transition: all 0.2s ease-in-out !important;
+      z-index: 9999 !important;
+      pointer-events: none !important;
+    }
+    .relative.group:hover div.absolute {
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: translateY(0) !important;
+      z-index: 9999 !important;
+      pointer-events: auto !important;
+    }
+    
+    /* 추가 강제 오버라이드 - Tailwind 클래스별 */
+    .group-hover\:opacity-100 { opacity: 1 !important; }
+    .group-hover\:visible { visibility: visible !important; }
+    .opacity-0 { opacity: 0 !important; }
+    .invisible { visibility: hidden !important; }
+    
+    /* 드롭다운 항목들 모두 강제 표시 */
+    .relative.group:hover .absolute a {
+      opacity: 1 !important;
+      visibility: visible !important;
+      display: block !important;
+    }
+    
+    /* shadcn/ui CSS Variables */
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 222.2 84% 4.9%;
+      --card: 0 0% 100%;
+      --card-foreground: 222.2 84% 4.9%;
+      --popover: 0 0% 100%;
+      --popover-foreground: 222.2 84% 4.9%;
+      --primary: 222.2 47.4% 11.2%;
+      --primary-foreground: 210 40% 98%;
+      --secondary: 210 40% 96%;
+      --secondary-foreground: 222.2 47.4% 11.2%;
+      --muted: 210 40% 96%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --accent: 210 40% 96%;
+      --accent-foreground: 222.2 47.4% 11.2%;
+      --destructive: 0 84.2% 60.2%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 214.3 31.8% 91.4%;
+      --input: 214.3 31.8% 91.4%;
+      --ring: 222.2 84% 4.9%;
+      --radius: 0.5rem;
+    }
+
+    .dark {
+      --background: 222.2 84% 4.9%;
+      --foreground: 210 40% 98%;
+      --card: 222.2 84% 4.9%;
+      --card-foreground: 210 40% 98%;
+      --popover: 222.2 84% 4.9%;
+      --popover-foreground: 210 40% 98%;
+      --primary: 210 40% 98%;
+      --primary-foreground: 222.2 47.4% 11.2%;
+      --secondary: 217.2 32.6% 17.5%;
+      --secondary-foreground: 210 40% 98%;
+      --muted: 217.2 32.6% 17.5%;
+      --muted-foreground: 215 20.2% 65.1%;
+      --accent: 217.2 32.6% 17.5%;
+      --accent-foreground: 210 40% 98%;
+      --destructive: 0 62.8% 30.6%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 217.2 32.6% 17.5%;
+      --input: 217.2 32.6% 17.5%;
+      --ring: 212.7 26.8% 83.9%;
+    }
+    
+    .log-entry {
+      transition: all 0.2s ease;
+    }
+    .log-entry:hover {
+      background-color: hsl(var(--muted));
+    }
+    
+    .log-error { border-left: 4px solid #ef4444; }
+    .log-warn { border-left: 4px solid #f59e0b; }
+    .log-info { border-left: 4px solid #3b82f6; }
+    .log-debug { border-left: 4px solid #6b7280; }
+    
+    .search-highlight {
+      background-color: yellow;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body class="bg-background text-foreground">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- Navigation -->
+    <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+            </div>
+            <div class="ml-10 flex items-center space-x-8">
+              <!-- 메인 대시보드 -->
+              <a href="/" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 text-sm font-medium">📊 메인</a>
+              
+              <!-- APM 모니터링 드롭다운 -->
+              <div class="relative group">
+                <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                  ⚡ APM 모니터링 ▾
+                </button>
+                <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <a href="/j2ee-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">☕ J2EE 모니터링</a>
+                  <a href="/was-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🏗️ WAS 모니터링</a>
+                  <a href="/exception-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🚨 예외 추적</a>
+                  <a href="/topology-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🗺️ 서비스 토폴로지</a>
+                  <a href="/alert-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🔔 알림 관리</a>
+                </div>
+              </div>
+
+              <!-- 인프라 모니터링 드롭다운 -->
+              <div class="relative group">
+                <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                  🖥️ 인프라 모니터링 ▾
+                </button>
+                <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <a href="/app-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📱 애플리케이션 모니터링</a>
+                  <a href="/system-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">⚙️ 시스템 모니터링</a>
+                  <a href="/db-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🗃️ 데이터베이스 모니터링</a>
+                  <a href="/web-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🌐 웹 성능 모니터링</a>
+                </div>
+              </div>
+
+              <!-- 관찰성 드롭다운 (현재 활성) -->
+              <div class="relative group">
+                <button class="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                  🔍 관찰성 ▾
+                </button>
+                <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <a href="/logs-dashboard.html" class="block px-4 py-2 text-sm text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50">📋 로그 대시보드</a>
+                  <a href="/metrics-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📊 메트릭 대시보드</a>
+                  <a href="/traces-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🔗 트레이스 대시보드</a>
+                </div>
+              </div>
+
+              <!-- 세션 분석 드롭다운 -->
+              <div class="relative group">
+                <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                  👥 세션 분석 ▾
+                </button>
+                <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <a href="/session-analysis.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📈 세션 분석</a>
+                  <a href="/session-telemetry-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🛰️ 세션 텔레메트리</a>
+                  <a href="/session-replay.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🎬 세션 리플레이</a>
+                </div>
+              </div>
+
+              <!-- 시스템 관리 드롭다운 -->
+              <div class="relative group">
+                <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                  🛠️ 시스템 관리 ▾
+                </button>
+                <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <a href="/services-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">⚙️ 서비스 관리</a>
+                  <a href="/deployment-manager.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🚀 배포 관리</a>
+                  <a href="/ontology.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🧠 온톨로지 시스템</a>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <div class="flex items-center space-x-4">
+            <button id="darkModeToggle" class="p-2 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+              <span class="dark:hidden">🌙</span>
+              <span class="hidden dark:inline">☀️</span>
+            </button>
+            <div id="systemStatus" class="flex items-center space-x-2">
+              <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <span class="text-sm text-gray-600 dark:text-gray-300">시스템 정상</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow">
+      <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        <div class="md:flex md:items-center md:justify-between">
+          <div class="flex-1 min-w-0">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
+              📄 로그 모니터링 대시보드
+            </h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              실시간 로그 수집, 분석 및 알림 관리
+            </p>
+          </div>
+          <div class="mt-4 md:mt-0 flex space-x-3">
+            <button id="refreshBtn" class="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">
+              🔄 새로고침
+            </button>
+            <button id="exportBtn" class="bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/80 transition-colors">
+              💾 내보내기
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-card rounded-lg border border-border p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">총 로그 수</p>
+              <p class="text-2xl font-bold text-card-foreground" id="totalLogs">0</p>
+            </div>
+            <div class="h-8 w-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+              <span class="text-blue-600 dark:text-blue-400">📄</span>
+            </div>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">지난 24시간</p>
+        </div>
+
+        <div class="bg-card rounded-lg border border-border p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">에러 로그</p>
+              <p class="text-2xl font-bold text-red-600" id="errorLogs">0</p>
+            </div>
+            <div class="h-8 w-8 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+              <span class="text-red-600 dark:text-red-400">❌</span>
+            </div>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">지난 1시간</p>
+        </div>
+
+        <div class="bg-card rounded-lg border border-border p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">경고 로그</p>
+              <p class="text-2xl font-bold text-yellow-600" id="warnLogs">0</p>
+            </div>
+            <div class="h-8 w-8 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+              <span class="text-yellow-600 dark:text-yellow-400">⚠️</span>
+            </div>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">지난 1시간</p>
+        </div>
+
+        <div class="bg-card rounded-lg border border-border p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">로그 속도</p>
+              <p class="text-2xl font-bold text-green-600" id="logRate">0</p>
+            </div>
+            <div class="h-8 w-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+              <span class="text-green-600 dark:text-green-400">⚡</span>
+            </div>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">로그/분</p>
+        </div>
+      </div>
+
+      <!-- Search and Filters -->
+      <div class="bg-card rounded-lg border border-border p-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div class="lg:col-span-2">
+            <label class="block text-sm font-medium text-card-foreground mb-2">로그 검색</label>
+            <input type="text" id="searchInput" placeholder="키워드, 에러 메시지, 서비스명..." 
+                   class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-card-foreground mb-2">서비스</label>
+            <select id="serviceFilter" class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring">
+              <option value="">모든 서비스</option>
+              <option value="api-gateway">API Gateway</option>
+              <option value="analytics-engine">Analytics Engine</option>
+              <option value="session-replay">Session Replay</option>
+              <option value="aiops">AIOps</option>
+              <option value="j2ee-monitor">J2EE Monitor</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-card-foreground mb-2">로그 레벨</label>
+            <select id="levelFilter" class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring">
+              <option value="">모든 레벨</option>
+              <option value="error">ERROR</option>
+              <option value="warn">WARN</option>
+              <option value="info">INFO</option>
+              <option value="debug">DEBUG</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-card-foreground mb-2">시간 범위</label>
+            <select id="timeFilter" class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring">
+              <option value="1h">최근 1시간</option>
+              <option value="6h">최근 6시간</option>
+              <option value="24h">최근 24시간</option>
+              <option value="7d">최근 7일</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Log Volume Chart -->
+        <div class="bg-card rounded-lg border border-border p-6">
+          <h3 class="text-lg font-semibold text-card-foreground mb-4">📊 로그 볼륨 추이</h3>
+          <div class="h-64">
+            <canvas id="logVolumeChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Log Level Distribution -->
+        <div class="bg-card rounded-lg border border-border p-6">
+          <h3 class="text-lg font-semibold text-card-foreground mb-4">📈 로그 레벨 분포</h3>
+          <div class="h-64">
+            <canvas id="logLevelChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service Log Distribution -->
+      <div class="bg-card rounded-lg border border-border p-6 mb-8">
+        <h3 class="text-lg font-semibold text-card-foreground mb-4">🏗️ 서비스별 로그 분포</h3>
+        <div class="h-64">
+          <canvas id="serviceLogChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Real-time Log Stream -->
+      <div class="bg-card rounded-lg border border-border p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-card-foreground">🔄 실시간 로그 스트림</h3>
+          <div class="flex items-center space-x-2">
+            <label class="flex items-center">
+              <input type="checkbox" id="autoScroll" checked class="mr-2">
+              <span class="text-sm text-muted-foreground">자동 스크롤</span>
+            </label>
+            <button id="clearLogsBtn" class="px-3 py-1 text-xs bg-destructive text-destructive-foreground rounded hover:bg-destructive/90">
+              지우기
+            </button>
+          </div>
+        </div>
+        
+        <div id="logContainer" class="bg-muted rounded-lg p-4 h-96 overflow-y-auto font-mono text-sm">
+          <div class="text-center text-muted-foreground py-8">
+            로그를 불러오는 중...
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    // Navigation event listeners
+    document.getElementById('homeBtn').addEventListener('click', () => window.location.href = '/');
+    document.getElementById('metricsBtn').addEventListener('click', () => window.location.href = '/metrics-dashboard.html');
+    document.getElementById('tracesBtn').addEventListener('click', () => window.location.href = '/traces-dashboard.html');
+    document.getElementById('servicesBtn').addEventListener('click', () => window.location.href = '/services-management.html');
+
+    let logVolumeChart, logLevelChart, serviceLogChart;
+    let logs = [];
+    let filteredLogs = [];
+
+    // Initialize charts
+    function initCharts() {
+      // Log Volume Chart
+      const logVolumeCtx = document.getElementById('logVolumeChart').getContext('2d');
+      logVolumeChart = new Chart(logVolumeCtx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: '로그 수/분',
+            data: [],
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: true, position: 'top' }
+          },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: '로그 수' } },
+            x: { title: { display: true, text: '시간' } }
+          }
+        }
+      });
+
+      // Log Level Chart
+      const logLevelCtx = document.getElementById('logLevelChart').getContext('2d');
+      logLevelChart = new Chart(logLevelCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['ERROR', 'WARN', 'INFO', 'DEBUG'],
+          datasets: [{
+            data: [0, 0, 0, 0],
+            backgroundColor: [
+              'rgba(239, 68, 68, 0.8)',   // red
+              'rgba(245, 158, 11, 0.8)',  // yellow
+              'rgba(59, 130, 246, 0.8)',  // blue
+              'rgba(107, 114, 128, 0.8)'  // gray
+            ],
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+
+      // Service Log Chart
+      const serviceLogCtx = document.getElementById('serviceLogChart').getContext('2d');
+      serviceLogChart = new Chart(serviceLogCtx, {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: '로그 수',
+            data: [],
+            backgroundColor: 'rgba(34, 197, 94, 0.8)',
+            borderColor: 'rgb(34, 197, 94)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: '로그 수' } },
+            x: { title: { display: true, text: '서비스' } }
+          }
+        }
+      });
+    }
+
+    // Generate sample log data
+    function generateSampleLogs() {
+      const services = ['api-gateway', 'analytics-engine', 'session-replay', 'aiops', 'j2ee-monitor'];
+      const levels = ['error', 'warn', 'info', 'debug'];
+      const messages = {
+        error: [
+          'Database connection failed',
+          'Authentication failed for user',
+          'Memory allocation error',
+          'Service timeout occurred',
+          'Invalid request parameters'
+        ],
+        warn: [
+          'High memory usage detected',
+          'Slow query performance',
+          'Deprecated API usage',
+          'Rate limit approaching',
+          'Cache miss ratio high'
+        ],
+        info: [
+          'User logged in successfully',
+          'Request processed successfully',
+          'Service started',
+          'Configuration loaded',
+          'Health check passed'
+        ],
+        debug: [
+          'Processing request',
+          'Query executed',
+          'Cache hit',
+          'Response time: 45ms',
+          'Memory usage: 75%'
+        ]
+      };
+
+      // Generate logs for the last hour
+      const now = new Date();
+      for (let i = 0; i < 500; i++) {
+        const timestamp = new Date(now.getTime() - Math.random() * 3600000); // Last hour
+        const service = services[Math.floor(Math.random() * services.length)];
+        const level = levels[Math.floor(Math.random() * levels.length)];
+        const message = messages[level][Math.floor(Math.random() * messages[level].length)];
+
+        logs.push({
+          id: i,
+          timestamp,
+          service,
+          level,
+          message,
+          details: `[${service}] ${message} - Thread: worker-${Math.floor(Math.random() * 10)}`,
+          traceId: 'trace-' + Math.random().toString(36).substring(7)
+        });
+      }
+
+      logs.sort((a, b) => b.timestamp - a.timestamp);
+      filteredLogs = [...logs];
+    }
+
+    // Update statistics
+    function updateStats() {
+      const now = new Date();
+      const oneHourAgo = new Date(now.getTime() - 3600000);
+      const oneDayAgo = new Date(now.getTime() - 86400000);
+
+      const totalLogs = logs.filter(log => log.timestamp >= oneDayAgo).length;
+      const errorLogs = logs.filter(log => log.level === 'error' && log.timestamp >= oneHourAgo).length;
+      const warnLogs = logs.filter(log => log.level === 'warn' && log.timestamp >= oneHourAgo).length;
+      const logRate = Math.round(totalLogs / (24 * 60));
+
+      document.getElementById('totalLogs').textContent = totalLogs.toLocaleString();
+      document.getElementById('errorLogs').textContent = errorLogs.toLocaleString();
+      document.getElementById('warnLogs').textContent = warnLogs.toLocaleString();
+      document.getElementById('logRate').textContent = logRate.toLocaleString();
+    }
+
+    // Update charts
+    function updateCharts() {
+      // Log Volume Chart
+      const volumeData = {};
+      logs.forEach(log => {
+        const minute = new Date(log.timestamp);
+        minute.setSeconds(0, 0);
+        const key = minute.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'});
+        volumeData[key] = (volumeData[key] || 0) + 1;
+      });
+
+      const sortedKeys = Object.keys(volumeData).sort();
+      logVolumeChart.data.labels = sortedKeys.slice(-20); // Last 20 minutes
+      logVolumeChart.data.datasets[0].data = sortedKeys.slice(-20).map(key => volumeData[key]);
+      logVolumeChart.update('none');
+
+      // Log Level Chart
+      const levelCounts = {error: 0, warn: 0, info: 0, debug: 0};
+      logs.forEach(log => levelCounts[log.level]++);
+      logLevelChart.data.datasets[0].data = [
+        levelCounts.error, levelCounts.warn, levelCounts.info, levelCounts.debug
+      ];
+      logLevelChart.update('none');
+
+      // Service Log Chart
+      const serviceCounts = {};
+      logs.forEach(log => {
+        serviceCounts[log.service] = (serviceCounts[log.service] || 0) + 1;
+      });
+      serviceLogChart.data.labels = Object.keys(serviceCounts);
+      serviceLogChart.data.datasets[0].data = Object.values(serviceCounts);
+      serviceLogChart.update('none');
+    }
+
+    // Display logs
+    function displayLogs() {
+      const container = document.getElementById('logContainer');
+      const autoScroll = document.getElementById('autoScroll').checked;
+      
+      if (filteredLogs.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted-foreground py-8">검색 조건에 맞는 로그가 없습니다.</div>';
+        return;
+      }
+
+      const logsHTML = filteredLogs.slice(0, 100).map(log => {
+        const levelClass = `log-${log.level}`;
+        const timeStr = log.timestamp.toLocaleString('ko-KR');
+        const levelBadge = getLevelBadge(log.level);
+        
+        return `
+          <div class="log-entry ${levelClass} mb-2 p-3 rounded border-l-4">
+            <div class="flex items-start justify-between">
+              <div class="flex-1">
+                <div class="flex items-center space-x-2 mb-1">
+                  <span class="text-xs text-gray-500">${timeStr}</span>
+                  ${levelBadge}
+                  <span class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded">${log.service}</span>
+                  <span class="text-xs text-gray-500">${log.traceId}</span>
+                </div>
+                <div class="text-sm">${highlightSearch(log.message)}</div>
+                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">${log.details}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = logsHTML;
+      
+      if (autoScroll) {
+        container.scrollTop = 0;
+      }
+    }
+
+    function getLevelBadge(level) {
+      const badges = {
+        error: '<span class="text-xs px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded">ERROR</span>',
+        warn: '<span class="text-xs px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded">WARN</span>',
+        info: '<span class="text-xs px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded">INFO</span>',
+        debug: '<span class="text-xs px-2 py-1 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 rounded">DEBUG</span>'
+      };
+      return badges[level] || badges.info;
+    }
+
+    function highlightSearch(text) {
+      const searchTerm = document.getElementById('searchInput').value;
+      if (!searchTerm) return text;
+      
+      const regex = new RegExp(`(${searchTerm})`, 'gi');
+      return text.replace(regex, '<span class="search-highlight">$1</span>');
+    }
+
+    // Filter logs
+    function filterLogs() {
+      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+      const serviceFilter = document.getElementById('serviceFilter').value;
+      const levelFilter = document.getElementById('levelFilter').value;
+      const timeFilter = document.getElementById('timeFilter').value;
+
+      const now = new Date();
+      const timeThresholds = {
+        '1h': 3600000,
+        '6h': 6 * 3600000,
+        '24h': 24 * 3600000,
+        '7d': 7 * 24 * 3600000
+      };
+      const timeThreshold = now.getTime() - timeThresholds[timeFilter];
+
+      filteredLogs = logs.filter(log => {
+        const matchesSearch = !searchTerm || 
+          log.message.toLowerCase().includes(searchTerm) ||
+          log.service.toLowerCase().includes(searchTerm);
+        const matchesService = !serviceFilter || log.service === serviceFilter;
+        const matchesLevel = !levelFilter || log.level === levelFilter;
+        const matchesTime = log.timestamp.getTime() >= timeThreshold;
+
+        return matchesSearch && matchesService && matchesLevel && matchesTime;
+      });
+
+      displayLogs();
+      updateStats();
+    }
+
+    // Event listeners
+    document.getElementById('searchInput').addEventListener('input', filterLogs);
+    document.getElementById('serviceFilter').addEventListener('change', filterLogs);
+    document.getElementById('levelFilter').addEventListener('change', filterLogs);
+    document.getElementById('timeFilter').addEventListener('change', filterLogs);
+
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      generateSampleLogs();
+      filterLogs();
+      updateCharts();
+    });
+
+    document.getElementById('clearLogsBtn').addEventListener('click', () => {
+      document.getElementById('logContainer').innerHTML = 
+        '<div class="text-center text-muted-foreground py-8">로그가 지워졌습니다.</div>';
+    });
+
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const dataStr = JSON.stringify(filteredLogs, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `logs-${new Date().toISOString().slice(0,10)}.json`;
+      link.click();
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      initCharts();
+      generateSampleLogs();
+      filterLogs();
+      updateCharts();
+
+      // Auto-refresh every 30 seconds
+      setInterval(() => {
+        // Add new logs periodically
+        if (Math.random() > 0.7) {
+          const services = ['api-gateway', 'analytics-engine', 'session-replay', 'aiops', 'j2ee-monitor'];
+          const levels = ['error', 'warn', 'info', 'debug'];
+          const level = levels[Math.floor(Math.random() * levels.length)];
+          const service = services[Math.floor(Math.random() * services.length)];
+          
+          logs.unshift({
+            id: logs.length,
+            timestamp: new Date(),
+            service,
+            level,
+            message: `Real-time ${level} from ${service}`,
+            details: `[${service}] Real-time log entry - Thread: worker-${Math.floor(Math.random() * 10)}`,
+            traceId: 'trace-' + Math.random().toString(36).substring(7)
+          });
+
+          if (logs.length > 1000) logs = logs.slice(0, 1000); // Keep only recent logs
+          filterLogs();
+          updateCharts();
+        }
+      }, 30000);
+    });
+  </script>
+</body>
+</html>

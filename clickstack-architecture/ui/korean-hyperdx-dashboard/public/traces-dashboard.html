@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIRIS EPM | 트레이스 모니터링 대시보드</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    * { font-family: 'Inter', sans-serif; }
+    
+    /* shadcn/ui CSS Variables */
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 222.2 84% 4.9%;
+      --card: 0 0% 100%;
+      --card-foreground: 222.2 84% 4.9%;
+      --popover: 0 0% 100%;
+      --popover-foreground: 222.2 84% 4.9%;
+      --primary: 222.2 47.4% 11.2%;
+      --primary-foreground: 210 40% 98%;
+      --secondary: 210 40% 96%;
+      --secondary-foreground: 222.2 47.4% 11.2%;
+      --muted: 210 40% 96%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --accent: 210 40% 96%;
+      --accent-foreground: 222.2 47.4% 11.2%;
+      --destructive: 0 84.2% 60.2%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 214.3 31.8% 91.4%;
+      --input: 214.3 31.8% 91.4%;
+      --ring: 222.2 84% 4.9%;
+      --radius: 0.5rem;
+    }
+
+    .dark {
+      --background: 222.2 84% 4.9%;
+      --foreground: 210 40% 98%;
+      --card: 222.2 84% 4.9%;
+      --card-foreground: 210 40% 98%;
+      --popover: 222.2 84% 4.9%;
+      --popover-foreground: 210 40% 98%;
+      --primary: 210 40% 98%;
+      --primary-foreground: 222.2 47.4% 11.2%;
+      --secondary: 217.2 32.6% 17.5%;
+      --secondary-foreground: 210 40% 98%;
+      --muted: 217.2 32.6% 17.5%;
+      --muted-foreground: 215 20.2% 65.1%;
+      --accent: 217.2 32.6% 17.5%;
+      --accent-foreground: 210 40% 98%;
+      --destructive: 0 62.8% 30.6%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 217.2 32.6% 17.5%;
+      --input: 217.2 32.6% 17.5%;
+      --ring: 212.7 26.8% 83.9%;
+    }
+    
+    .trace-timeline {
+      background: linear-gradient(90deg, #f0f9ff 0%, #e0f2fe 50%, #f0f9ff 100%);
+    }
+    
+    .span-bar {
+      height: 20px;
+      border-radius: 4px;
+      position: relative;
+      margin: 2px 0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .span-bar:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .span-level-0 { margin-left: 0; }
+    .span-level-1 { margin-left: 20px; }
+    .span-level-2 { margin-left: 40px; }
+    .span-level-3 { margin-left: 60px; }
+    
+    .service-api-gateway { background-color: #3b82f6; }
+    .service-analytics { background-color: #10b981; }
+    .service-database { background-color: #f59e0b; }
+    .service-cache { background-color: #ef4444; }
+    .service-external { background-color: #8b5cf6; }
+    
+    .trace-flow-diagram {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .span-details {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px;
+      margin-top: 8px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    
+    .error-span {
+      border-left: 4px solid #ef4444;
+      background-color: #fef2f2;
+    }
+    
+    .slow-span {
+      border-left: 4px solid #f59e0b;
+      background-color: #fffbeb;
+    }
+  </style>
+</head>
+<body class="bg-background text-foreground">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <!-- Navigation -->
+    <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+            </div>
+            <div class="ml-10 flex items-center space-x-8">
+              <!-- 메인 대시보드 -->
+              <a href="/" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 text-sm font-medium">📊 메인</a>
+              
+              <!-- APM 모니터링 드롭다운 -->
+              <div class="relative group">
+                <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                  ⚡ APM 모니터링 ▾
+                </button>
+                <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <a href="/j2ee-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">☕ J2EE 모니터링</a>
+                  <a href="/was-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🏗️ WAS 모니터링</a>
+                  <a href="/exception-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🚨 예외 추적</a>
+                  <a href="/topology-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🗺️ 서비스 토폴로지</a>
+                  <a href="/alert-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🔔 알림 관리</a>
+                </div>
+              </div>
+
+              <!-- 인프라 모니터링 드롭다운 -->
+              <div class="relative group">
+                <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                  🖥️ 인프라 모니터링 ▾
+                </button>
+                <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <a href="/app-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📱 애플리케이션 모니터링</a>
+                  <a href="/system-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">⚙️ 시스템 모니터링</a>
+                  <a href="/db-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🗃️ 데이터베이스 모니터링</a>
+                  <a href="/web-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🌐 웹 성능 모니터링</a>
+                </div>
+              </div>
+
+              <!-- 관찰성 드롭다운 -->
+              <div class="relative group">
+                <button class="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                  🔍 관찰성 ▾
+                </button>
+                <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <a href="/logs-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📋 로그 대시보드</a>
+                  <a href="/metrics-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📊 메트릭 대시보드</a>
+                  <a href="/traces-dashboard.html" class="block px-4 py-2 text-sm text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50">🔗 트레이스 대시보드</a>
+                </div>
+              </div>
+
+              <!-- 세션 분석 드롭다운 -->
+              <div class="relative group">
+                <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                  👥 세션 분석 ▾
+                </button>
+                <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <a href="/session-analysis.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📈 세션 분석</a>
+                  <a href="/session-telemetry-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🛰️ 세션 텔레메트리</a>
+                  <a href="/session-replay.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🎬 세션 리플레이</a>
+                </div>
+              </div>
+
+              <!-- 시스템 관리 드롭다운 -->
+              <div class="relative group">
+                <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                  🛠️ 시스템 관리 ▾
+                </button>
+                <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <a href="/services-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">⚙️ 서비스 관리</a>
+                  <a href="/deployment-manager.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🚀 배포 관리</a>
+                  <a href="/ontology.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🧠 온톨로지 시스템</a>
+                </div>
+              </div>
+
+            </div>
+          </div>
+          <div class="flex items-center space-x-4">
+            <button id="darkModeToggle" class="p-2 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+              <span class="dark:hidden">🌙</span>
+              <span class="hidden dark:inline">☀️</span>
+            </button>
+            <div id="systemStatus" class="flex items-center space-x-2">
+              <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <span class="text-sm text-gray-600 dark:text-gray-300">시스템 정상</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow">
+      <div class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        <div class="md:flex md:items-center md:justify-between">
+          <div class="flex-1 min-w-0">
+            <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
+              🔍 트레이스 모니터링 대시보드
+            </h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              분산 시스템 요청 추적 및 성능 분석
+            </p>
+          </div>
+          <div class="mt-4 md:mt-0 flex space-x-3">
+            <button id="refreshBtn" class="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors">
+              🔄 새로고침
+            </button>
+            <button id="searchBtn" class="bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/80 transition-colors">
+              🔍 트레이스 검색
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-card rounded-lg border border-border p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">총 트레이스</p>
+              <p class="text-2xl font-bold text-card-foreground" id="totalTraces">0</p>
+            </div>
+            <div class="h-8 w-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+              <span class="text-blue-600 dark:text-blue-400">🔍</span>
+            </div>
+          </div>
+          <p class="text-xs text-muted-foreground mt-2">지난 1시간</p>
+        </div>
+
+        <div class="bg-card rounded-lg border border-border p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">평균 지연시간</p>
+              <p class="text-2xl font-bold text-card-foreground" id="avgLatency">0ms</p>
+            </div>
+            <div class="h-8 w-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+              <span class="text-green-600 dark:text-green-400">⏱️</span>
+            </div>
+          </div>
+          <p class="text-xs text-green-600 mt-2">↘️ -15ms 개선</p>
+        </div>
+
+        <div class="bg-card rounded-lg border border-border p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">에러 트레이스</p>
+              <p class="text-2xl font-bold text-red-600" id="errorTraces">0</p>
+            </div>
+            <div class="h-8 w-8 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+              <span class="text-red-600 dark:text-red-400">❌</span>
+            </div>
+          </div>
+          <p class="text-xs text-red-600 mt-2">↗️ +3 증가</p>
+        </div>
+
+        <div class="bg-card rounded-lg border border-border p-6">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-medium text-muted-foreground">느린 트레이스</p>
+              <p class="text-2xl font-bold text-yellow-600" id="slowTraces">0</p>
+            </div>
+            <div class="h-8 w-8 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center">
+              <span class="text-yellow-600 dark:text-yellow-400">⚠️</span>
+            </div>
+          </div>
+          <p class="text-xs text-yellow-600 mt-2">&gt;1초 응답</p>
+        </div>
+      </div>
+
+      <!-- Search and Filters -->
+      <div class="bg-card rounded-lg border border-border p-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-card-foreground mb-2">트레이스 ID</label>
+            <input type="text" id="traceIdInput" placeholder="trace-id-12345..." 
+                   class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-card-foreground mb-2">서비스</label>
+            <select id="serviceFilter" class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring">
+              <option value="">모든 서비스</option>
+              <option value="api-gateway">API Gateway</option>
+              <option value="analytics">Analytics</option>
+              <option value="database">Database</option>
+              <option value="cache">Cache</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-card-foreground mb-2">상태</label>
+            <select id="statusFilter" class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring">
+              <option value="">모든 상태</option>
+              <option value="success">성공</option>
+              <option value="error">에러</option>
+              <option value="slow">느림</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-card-foreground mb-2">지연시간</label>
+            <select id="latencyFilter" class="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring">
+              <option value="">모든 범위</option>
+              <option value="0-100">&lt; 100ms</option>
+              <option value="100-500">100-500ms</option>
+              <option value="500-1000">500ms-1s</option>
+              <option value="1000+">&gt; 1s</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Latency Distribution -->
+        <div class="bg-card rounded-lg border border-border p-6">
+          <h3 class="text-lg font-semibold text-card-foreground mb-4">📊 지연시간 분포</h3>
+          <div class="h-64">
+            <canvas id="latencyChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Service Calls -->
+        <div class="bg-card rounded-lg border border-border p-6">
+          <h3 class="text-lg font-semibold text-card-foreground mb-4">🏗️ 서비스 호출 분포</h3>
+          <div class="h-64">
+            <canvas id="serviceCallsChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trace Timeline -->
+      <div class="bg-card rounded-lg border border-border p-6 mb-8">
+        <h3 class="text-lg font-semibold text-card-foreground mb-4">⏰ 트레이스 타임라인</h3>
+        <div class="h-64">
+          <canvas id="timelineChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Recent Traces Table -->
+      <div class="bg-card rounded-lg border border-border p-6 mb-8">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-card-foreground">🔄 최근 트레이스</h3>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-muted-foreground">자동 새로고침</span>
+            <input type="checkbox" id="autoRefresh" checked class="ml-2">
+          </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-border">
+            <thead class="bg-muted">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">트레이스 ID</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">서비스</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">작업</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">시작 시간</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">지연시간</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">스팬 수</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">상태</th>
+              </tr>
+            </thead>
+            <tbody id="tracesTable" class="bg-card divide-y divide-border">
+              <!-- Table rows will be populated by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Trace Detail Modal -->
+      <div id="traceDetailModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+          <div class="bg-card rounded-lg border border-border max-w-4xl w-full max-h-screen overflow-auto">
+            <div class="p-6 border-b border-border">
+              <div class="flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-card-foreground" id="modalTraceId">트레이스 세부 정보</h3>
+                <button id="closeModal" class="text-muted-foreground hover:text-foreground">✕</button>
+              </div>
+            </div>
+            <div class="p-6">
+              <!-- Trace Flow Diagram -->
+              <div class="mb-6">
+                <h4 class="text-md font-medium text-card-foreground mb-3">🌊 트레이스 플로우</h4>
+                <div id="traceFlowDiagram" class="trace-flow-diagram h-64 p-4">
+                  <!-- D3.js diagram will be rendered here -->
+                </div>
+              </div>
+
+              <!-- Span Timeline -->
+              <div class="mb-6">
+                <h4 class="text-md font-medium text-card-foreground mb-3">📊 스팬 타임라인</h4>
+                <div id="spanTimeline" class="trace-timeline p-4 rounded-lg">
+                  <!-- Span bars will be rendered here -->
+                </div>
+              </div>
+
+              <!-- Trace Metadata -->
+              <div>
+                <h4 class="text-md font-medium text-card-foreground mb-3">📋 트레이스 정보</h4>
+                <div id="traceMetadata" class="bg-muted rounded-lg p-4 font-mono text-sm">
+                  <!-- Trace metadata will be displayed here -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    // Navigation event listeners
+    document.getElementById('homeBtn').addEventListener('click', () => window.location.href = '/');
+    document.getElementById('logsBtn').addEventListener('click', () => window.location.href = '/logs-dashboard.html');
+    document.getElementById('metricsBtn').addEventListener('click', () => window.location.href = '/metrics-dashboard.html');
+    document.getElementById('servicesBtn').addEventListener('click', () => window.location.href = '/services-management.html');
+
+    let latencyChart, serviceCallsChart, timelineChart;
+    let traces = [];
+    let filteredTraces = [];
+
+    // Initialize charts
+    function initCharts() {
+      // Latency Distribution Chart
+      const latencyCtx = document.getElementById('latencyChart').getContext('2d');
+      latencyChart = new Chart(latencyCtx, {
+        type: 'histogram',
+        data: {
+          labels: ['0-100ms', '100-200ms', '200-500ms', '500ms-1s', '1-2s', '>2s'],
+          datasets: [{
+            label: '트레이스 수',
+            data: [0, 0, 0, 0, 0, 0],
+            backgroundColor: [
+              'rgba(34, 197, 94, 0.8)',   // green
+              'rgba(59, 130, 246, 0.8)',  // blue
+              'rgba(245, 158, 11, 0.8)',  // yellow
+              'rgba(249, 115, 22, 0.8)',  // orange
+              'rgba(239, 68, 68, 0.8)',   // red
+              'rgba(127, 29, 29, 0.8)'    // dark red
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: '트레이스 수' }
+            },
+            x: {
+              title: { display: true, text: '지연시간 범위' }
+            }
+          }
+        }
+      });
+
+      // Service Calls Chart
+      const serviceCtx = document.getElementById('serviceCallsChart').getContext('2d');
+      serviceCallsChart = new Chart(serviceCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['API Gateway', 'Analytics', 'Database', 'Cache', 'External'],
+          datasets: [{
+            data: [0, 0, 0, 0, 0],
+            backgroundColor: [
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(16, 185, 129, 0.8)',
+              'rgba(245, 158, 11, 0.8)',
+              'rgba(239, 68, 68, 0.8)',
+              'rgba(139, 92, 246, 0.8)'
+            ],
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+
+      // Timeline Chart
+      const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+      timelineChart = new Chart(timelineCtx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: '트레이스/분',
+            data: [],
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: '트레이스 수' }
+            },
+            x: {
+              title: { display: true, text: '시간' }
+            }
+          }
+        }
+      });
+    }
+
+    // Generate sample trace data
+    function generateSampleTraces() {
+      const services = ['api-gateway', 'analytics', 'database', 'cache', 'external'];
+      const operations = {
+        'api-gateway': ['GET /users', 'POST /orders', 'GET /products'],
+        'analytics': ['process_event', 'generate_report', 'calculate_metrics'],
+        'database': ['select_users', 'insert_order', 'update_product'],
+        'cache': ['get_session', 'set_cache', 'invalidate_cache'],
+        'external': ['payment_api', 'email_service', 'sms_gateway']
+      };
+
+      const now = new Date();
+      traces = [];
+
+      for (let i = 0; i < 200; i++) {
+        const startTime = new Date(now.getTime() - Math.random() * 3600000); // Last hour
+        const rootService = services[Math.floor(Math.random() * services.length)];
+        const operation = operations[rootService][Math.floor(Math.random() * operations[rootService].length)];
+        const duration = Math.random() * 2000 + 50; // 50-2050ms
+        const spanCount = Math.floor(Math.random() * 15) + 3; // 3-17 spans
+        
+        const hasError = Math.random() < 0.05; // 5% error rate
+        const isSlow = duration > 1000;
+        
+        const traceId = 'trace-' + Math.random().toString(36).substring(2, 15);
+        
+        traces.push({
+          traceId,
+          rootService,
+          operation,
+          startTime,
+          duration: Math.round(duration),
+          spanCount,
+          status: hasError ? 'error' : (isSlow ? 'slow' : 'success'),
+          spans: generateSpans(traceId, rootService, spanCount, duration)
+        });
+      }
+
+      traces.sort((a, b) => b.startTime - a.startTime);
+      filteredTraces = [...traces];
+    }
+
+    function generateSpans(traceId, rootService, count, totalDuration) {
+      const spans = [];
+      const services = ['api-gateway', 'analytics', 'database', 'cache', 'external'];
+      let currentTime = 0;
+      
+      for (let i = 0; i < count; i++) {
+        const service = i === 0 ? rootService : services[Math.floor(Math.random() * services.length)];
+        const duration = Math.random() * (totalDuration / count * 2);
+        const level = Math.min(Math.floor(i / 3), 3);
+        
+        spans.push({
+          spanId: 'span-' + Math.random().toString(36).substring(2, 10),
+          service,
+          operation: `operation_${i + 1}`,
+          startTime: currentTime,
+          duration: Math.round(duration),
+          level,
+          hasError: Math.random() < 0.03
+        });
+        
+        currentTime += duration * 0.7; // Some overlap
+      }
+      
+      return spans;
+    }
+
+    // Update statistics
+    function updateStats() {
+      const totalTraces = filteredTraces.length;
+      const avgLatency = Math.round(filteredTraces.reduce((sum, t) => sum + t.duration, 0) / totalTraces) || 0;
+      const errorTraces = filteredTraces.filter(t => t.status === 'error').length;
+      const slowTraces = filteredTraces.filter(t => t.status === 'slow').length;
+
+      document.getElementById('totalTraces').textContent = totalTraces.toLocaleString();
+      document.getElementById('avgLatency').textContent = `${avgLatency}ms`;
+      document.getElementById('errorTraces').textContent = errorTraces.toLocaleString();
+      document.getElementById('slowTraces').textContent = slowTraces.toLocaleString();
+    }
+
+    // Update charts
+    function updateCharts() {
+      // Latency Distribution
+      const latencyBuckets = [0, 0, 0, 0, 0, 0];
+      filteredTraces.forEach(trace => {
+        if (trace.duration <= 100) latencyBuckets[0]++;
+        else if (trace.duration <= 200) latencyBuckets[1]++;
+        else if (trace.duration <= 500) latencyBuckets[2]++;
+        else if (trace.duration <= 1000) latencyBuckets[3]++;
+        else if (trace.duration <= 2000) latencyBuckets[4]++;
+        else latencyBuckets[5]++;
+      });
+
+      latencyChart.data.datasets[0].data = latencyBuckets;
+      latencyChart.update('none');
+
+      // Service Calls
+      const serviceCounts = {};
+      filteredTraces.forEach(trace => {
+        serviceCounts[trace.rootService] = (serviceCounts[trace.rootService] || 0) + 1;
+      });
+
+      const services = ['api-gateway', 'analytics', 'database', 'cache', 'external'];
+      serviceCallsChart.data.datasets[0].data = services.map(s => serviceCounts[s] || 0);
+      serviceCallsChart.update('none');
+
+      // Timeline
+      const timelineBuckets = {};
+      filteredTraces.forEach(trace => {
+        const minute = new Date(trace.startTime);
+        minute.setSeconds(0, 0);
+        const key = minute.toLocaleTimeString('ko-KR', {hour: '2-digit', minute: '2-digit'});
+        timelineBuckets[key] = (timelineBuckets[key] || 0) + 1;
+      });
+
+      const sortedKeys = Object.keys(timelineBuckets).sort();
+      timelineChart.data.labels = sortedKeys.slice(-20);
+      timelineChart.data.datasets[0].data = sortedKeys.slice(-20).map(key => timelineBuckets[key]);
+      timelineChart.update('none');
+    }
+
+    // Display traces table
+    function displayTracesTable() {
+      const tbody = document.getElementById('tracesTable');
+      const displayTraces = filteredTraces.slice(0, 50); // Show first 50
+
+      tbody.innerHTML = displayTraces.map(trace => {
+        const statusBadge = getStatusBadge(trace.status);
+        const timeStr = trace.startTime.toLocaleString('ko-KR');
+        
+        return `
+          <tr class="hover:bg-muted/50 cursor-pointer" >
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-card-foreground">${trace.traceId.substring(0, 12)}...</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">${trace.rootService}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">${trace.operation}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">${timeStr}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">${trace.duration}ms</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">${trace.spanCount}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm">${statusBadge}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function getStatusBadge(status) {
+      const badges = {
+        success: '<span class="px-2 py-1 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded">성공</span>',
+        error: '<span class="px-2 py-1 text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded">에러</span>',
+        slow: '<span class="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded">느림</span>'
+      };
+      return badges[status] || badges.success;
+    }
+
+    // Show trace detail modal
+    function showTraceDetail(traceId) {
+      const trace = traces.find(t => t.traceId === traceId);
+      if (!trace) return;
+
+      document.getElementById('modalTraceId').textContent = `트레이스: ${traceId}`;
+      document.getElementById('traceDetailModal').classList.remove('hidden');
+
+      // Render trace flow diagram
+      renderTraceFlowDiagram(trace);
+      
+      // Render span timeline
+      renderSpanTimeline(trace);
+      
+      // Display trace metadata
+      displayTraceMetadata(trace);
+    }
+
+    function renderTraceFlowDiagram(trace) {
+      const container = d3.select('#traceFlowDiagram');
+      container.selectAll('*').remove();
+
+      const width = 800;
+      const height = 200;
+      const svg = container.append('svg')
+        .attr('width', width)
+        .attr('height', height);
+
+      const services = [...new Set(trace.spans.map(s => s.service))];
+      const xScale = d3.scalePoint()
+        .domain(services)
+        .range([50, width - 50]);
+
+      // Draw service nodes
+      svg.selectAll('.service-node')
+        .data(services)
+        .enter().append('circle')
+        .attr('class', 'service-node')
+        .attr('cx', d => xScale(d))
+        .attr('cy', height / 2)
+        .attr('r', 30)
+        .attr('fill', d => getServiceColor(d))
+        .attr('stroke', '#333')
+        .attr('stroke-width', 2);
+
+      // Add service labels
+      svg.selectAll('.service-label')
+        .data(services)
+        .enter().append('text')
+        .attr('class', 'service-label')
+        .attr('x', d => xScale(d))
+        .attr('y', height / 2 + 5)
+        .attr('text-anchor', 'middle')
+        .attr('font-size', '10px')
+        .attr('fill', 'white')
+        .text(d => d.replace('-', ''));
+    }
+
+    function renderSpanTimeline(trace) {
+      const container = document.getElementById('spanTimeline');
+      const totalDuration = trace.duration;
+      
+      const spansHtml = trace.spans.map(span => {
+        const widthPercent = (span.duration / totalDuration) * 100;
+        const leftPercent = (span.startTime / totalDuration) * 100;
+        const serviceClass = `service-${span.service.replace('-', '')}`;
+        const errorClass = span.hasError ? 'error-span' : '';
+        
+        return `
+          <div class="span-bar span-level-${span.level} ${serviceClass} ${errorClass}" 
+               style="width: ${widthPercent}%; margin-left: ${leftPercent}%"
+               title="${span.service} - ${span.operation} (${span.duration}ms)">
+            <div class="text-xs text-white px-2 py-1 truncate">
+              ${span.service}: ${span.duration}ms
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      container.innerHTML = spansHtml;
+    }
+
+    function displayTraceMetadata(trace) {
+      const metadata = {
+        'Trace ID': trace.traceId,
+        'Root Service': trace.rootService,
+        'Operation': trace.operation,
+        'Start Time': trace.startTime.toISOString(),
+        'Total Duration': `${trace.duration}ms`,
+        'Span Count': trace.spanCount,
+        'Status': trace.status.toUpperCase(),
+        'Error Count': trace.spans.filter(s => s.hasError).length
+      };
+      
+      const metadataHtml = Object.entries(metadata)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join('
+    /* Dropdown 메뉴 완전 제어 - 모든 Tailwind 클래스 오버라이드 */
+    .relative.group div.absolute {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      transform: translateY(-10px) !important;
+      transition: all 0.2s ease-in-out !important;
+      z-index: 9999 !important;
+      pointer-events: none !important;
+    }
+    .relative.group:hover div.absolute {
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: translateY(0) !important;
+      z-index: 9999 !important;
+      pointer-events: auto !important;
+    }
+    
+    /* 추가 강제 오버라이드 - Tailwind 클래스별 */
+    .group-hover\:opacity-100 { opacity: 1 !important; }
+    .group-hover\:visible { visibility: visible !important; }
+    .opacity-0 { opacity: 0 !important; }
+    .invisible { visibility: hidden !important; }
+    
+    /* 드롭다운 항목들 모두 강제 표시 */
+    .relative.group:hover .absolute a {
+      opacity: 1 !important;
+      visibility: visible !important;
+      display: block !important;
+    }\n');
+      
+      document.getElementById('traceMetadata').textContent = metadataHtml;
+    }
+
+    function getServiceColor(service) {
+      const colors = {
+        'api-gateway': '#3b82f6',
+        'analytics': '#10b981',
+        'database': '#f59e0b',
+        'cache': '#ef4444',
+        'external': '#8b5cf6'
+      };
+      return colors[service] || '#6b7280';
+    }
+
+    // Filter traces
+    function filterTraces() {
+      const traceIdFilter = document.getElementById('traceIdInput').value.toLowerCase();
+      const serviceFilter = document.getElementById('serviceFilter').value;
+      const statusFilter = document.getElementById('statusFilter').value;
+      const latencyFilter = document.getElementById('latencyFilter').value;
+
+      filteredTraces = traces.filter(trace => {
+        const matchesTraceId = !traceIdFilter || trace.traceId.toLowerCase().includes(traceIdFilter);
+        const matchesService = !serviceFilter || trace.rootService === serviceFilter;
+        const matchesStatus = !statusFilter || trace.status === statusFilter;
+        
+        let matchesLatency = true;
+        if (latencyFilter) {
+          const duration = trace.duration;
+          switch (latencyFilter) {
+            case '0-100': matchesLatency = duration < 100; break;
+            case '100-500': matchesLatency = duration >= 100 && duration < 500; break;
+            case '500-1000': matchesLatency = duration >= 500 && duration < 1000; break;
+            case '1000+': matchesLatency = duration >= 1000; break;
+          }
+        }
+
+        return matchesTraceId && matchesService && matchesStatus && matchesLatency;
+      });
+
+      displayTracesTable();
+      updateStats();
+      updateCharts();
+    }
+
+    // Event listeners
+    document.getElementById('traceIdInput').addEventListener('input', filterTraces);
+    document.getElementById('serviceFilter').addEventListener('change', filterTraces);
+    document.getElementById('statusFilter').addEventListener('change', filterTraces);
+    document.getElementById('latencyFilter').addEventListener('change', filterTraces);
+
+    document.getElementById('refreshBtn').addEventListener('click', () => {
+      generateSampleTraces();
+      filterTraces();
+    });
+
+    document.getElementById('searchBtn').addEventListener('click', () => {
+      const traceId = prompt('검색할 트레이스 ID를 입력하세요:');
+      if (traceId) {
+        document.getElementById('traceIdInput').value = traceId;
+        filterTraces();
+      }
+    });
+
+    document.getElementById('closeModal').addEventListener('click', () => {
+      document.getElementById('traceDetailModal').classList.add('hidden');
+    });
+
+    // Make showTraceDetail available globally
+    window.showTraceDetail = showTraceDetail;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      initCharts();
+      generateSampleTraces();
+      filterTraces();
+
+      // Auto-refresh if enabled
+      setInterval(() => {
+        if (document.getElementById('autoRefresh').checked) {
+          // Add some new traces
+          const newTraces = 5;
+          for (let i = 0; i < newTraces; i++) {
+            const services = ['api-gateway', 'analytics', 'database', 'cache', 'external'];
+            const rootService = services[Math.floor(Math.random() * services.length)];
+            const duration = Math.random() * 1500 + 50;
+            const traceId = 'trace-' + Math.random().toString(36).substring(2, 15);
+            
+            traces.unshift({
+              traceId,
+              rootService,
+              operation: `realtime_op_${i}`,
+              startTime: new Date(),
+              duration: Math.round(duration),
+              spanCount: Math.floor(Math.random() * 10) + 3,
+              status: Math.random() > 0.95 ? 'error' : (duration > 1000 ? 'slow' : 'success'),
+              spans: generateSpans(traceId, rootService, Math.floor(Math.random() * 10) + 3, duration)
+            });
+          }
+          
+          if (traces.length > 500) traces = traces.slice(0, 500);
+          filterTraces();
+        }
+      }, 10000);
+    });
+  </script>
+</body>
+</html>

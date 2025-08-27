@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS EPM | 시스템 모니터링</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        
+        /* Dropdown 메뉴 완전 제어 - 모든 Tailwind 클래스 오버라이드 */
+        .relative.group div.absolute {
+          opacity: 0 !important;
+          visibility: hidden !important;
+          transform: translateY(-10px) !important;
+          transition: all 0.2s ease-in-out !important;
+          z-index: 9999 !important;
+          pointer-events: none !important;
+        }
+        .relative.group:hover div.absolute {
+          opacity: 1 !important;
+          visibility: visible !important;
+          transform: translateY(0) !important;
+          z-index: 9999 !important;
+          pointer-events: auto !important;
+        }
+        
+        /* 추가 강제 오버라이드 - Tailwind 클래스별 */
+        .group-hover\:opacity-100 { opacity: 1 !important; }
+        .group-hover\:visible { visibility: visible !important; }
+        .opacity-0 { opacity: 0 !important; }
+        .invisible { visibility: hidden !important; }
+        
+        /* 드롭다운 항목들 모두 강제 표시 */
+        .relative.group:hover .absolute a {
+          opacity: 1 !important;
+          visibility: visible !important;
+          display: block !important;
+        }
+        
+        /* shadcn/ui CSS Variables */
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --border: 214.3 31.8% 91.4%;
+            --radius: 0.5rem;
+        }
+
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 222.2 84% 4.9%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 222.2 84% 4.9%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --border: 217.2 32.6% 17.5%;
+        }
+
+        .bg-background { background-color: hsl(var(--background)); }
+        .text-foreground { color: hsl(var(--foreground)); }
+        .bg-card { background-color: hsl(var(--card)); }
+        .text-card-foreground { color: hsl(var(--card-foreground)); }
+        .bg-primary { background-color: hsl(var(--primary)); }
+        .text-primary-foreground { color: hsl(var(--primary-foreground)); }
+        .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+        .border-border { border-color: hsl(var(--border)); }
+        
+        .metric-card {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 256px;
+            width: 100%;
+        }
+        
+        .server-status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-healthy { background-color: #22c55e; }
+        .status-warning { background-color: #eab308; }
+        .status-critical { background-color: #ef4444; }
+    </style>
+</head>
+<body class="bg-background text-foreground">
+  <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+                </div>
+                <div class="ml-10 flex items-center space-x-8">
+                    <!-- 메인 대시보드 -->
+                    <a href="/" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 text-sm font-medium">📊 메인</a>
+                    
+                    <!-- APM 모니터링 드롭다운 -->
+                    <div class="relative group">
+                        <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                            ⚡ APM 모니터링 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/j2ee-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">☕ J2EE 모니터링</a>
+                            <a href="/was-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🏗️ WAS 모니터링</a>
+                            <a href="/exception-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🚨 예외 추적</a>
+                            <a href="/topology-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🗺️ 서비스 토폴로지</a>
+                            <a href="/alert-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🔔 알림 관리</a>
+                        </div>
+                    </div>
+
+                    <!-- 인프라 모니터링 드롭다운 (현재 활성) -->
+                    <div class="relative group">
+                        <button class="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                            🖥️ 인프라 모니터링 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/app-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📱 애플리케이션 모니터링</a>
+                            <a href="/system-monitoring.html" class="block px-4 py-2 text-sm text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50">⚙️ 시스템 모니터링</a>
+                            <a href="/db-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🗃️ 데이터베이스 모니터링</a>
+                            <a href="/web-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🌐 웹 성능 모니터링</a>
+                        </div>
+                    </div>
+
+                    <!-- 관찰성 드롭다운 -->
+                    <div class="relative group">
+                        <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                            🔍 관찰성 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/logs-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📋 로그 대시보드</a>
+                            <a href="/metrics-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📊 메트릭 대시보드</a>
+                            <a href="/traces-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🔗 트레이스 대시보드</a>
+                        </div>
+                    </div>
+
+                    <!-- 세션 분석 드롭다운 -->
+                    <div class="relative group">
+                        <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                            👥 세션 분석 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/session-analysis.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📈 세션 분석</a>
+                            <a href="/session-telemetry-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🛰️ 세션 텔레메트리</a>
+                            <a href="/session-replay.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🎬 세션 리플레이</a>
+                        </div>
+                    </div>
+
+                    <!-- 시스템 관리 드롭다운 -->
+                    <div class="relative group">
+                        <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                            🛠️ 시스템 관리 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/services-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">⚙️ 서비스 관리</a>
+                            <a href="/deployment-manager.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🚀 배포 관리</a>
+                            <a href="/ontology.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🧠 온톨로지 시스템</a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="darkModeToggle" class="p-2 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                    <span class="dark:hidden">🌙</span>
+                    <span class="hidden dark:inline">☀️</span>
+                </button>
+                <div id="systemStatus" class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="text-sm text-gray-600 dark:text-gray-300">시스템 정상</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
+    <div class="container mx-auto flex h-14 items-center px-4">
+      <div class="mr-4 flex items-center space-x-2">
+        <span class="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">시스템 모니터링</span>
+      </div>
+                </button>
+            </nav>
+            
+            <div class="flex items-center space-x-4 ml-auto">
+                <select id="timeRange" class="text-sm border border-border rounded-md px-3 py-1 bg-background">
+                    <option value="5m">최근 5분</option>
+                    <option value="1h" selected>최근 1시간</option>
+                    <option value="24h">최근 24시간</option>
+                    <option value="7d">최근 7일</option>
+                </select>
+                <button class="bg-primary text-primary-foreground px-3 py-1 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
+                    새로고침
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-6 space-y-6">
+        <!-- System Overview Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-card p-6 rounded-lg border border-border metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-muted-foreground">CPU 사용률</p>
+                        <p class="text-2xl font-bold text-card-foreground" id="cpuUsage">67.3%</p>
+                    </div>
+                    <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">🖥️</span>
+                    </div>
+                </div>
+                <p class="text-xs text-yellow-600 mt-2">⚠️ 평균보다 높음</p>
+            </div>
+
+            <div class="bg-card p-6 rounded-lg border border-border metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-muted-foreground">메모리 사용률</p>
+                        <p class="text-2xl font-bold text-card-foreground" id="memoryUsage">83.7%</p>
+                    </div>
+                    <div class="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">💾</span>
+                    </div>
+                </div>
+                <p class="text-xs text-red-600 mt-2">↗ 주의 필요 (80% 초과)</p>
+            </div>
+
+            <div class="bg-card p-6 rounded-lg border border-border metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-muted-foreground">디스크 사용률</p>
+                        <p class="text-2xl font-bold text-card-foreground" id="diskUsage">45.2%</p>
+                    </div>
+                    <div class="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">💽</span>
+                    </div>
+                </div>
+                <p class="text-xs text-green-600 mt-2">✅ 정상 범위</p>
+            </div>
+
+            <div class="bg-card p-6 rounded-lg border border-border metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-muted-foreground">네트워크 I/O</p>
+                        <p class="text-2xl font-bold text-card-foreground" id="networkIO">124 MB/s</p>
+                    </div>
+                    <div class="h-12 w-12 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">🌐</span>
+                    </div>
+                </div>
+                <p class="text-xs text-green-600 mt-2">↗ +15% vs 평균</p>
+            </div>
+        </div>
+
+        <!-- System Performance Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <h3 class="text-lg font-semibold mb-4 text-card-foreground">시스템 리소스 사용률</h3>
+                <div class="chart-container">
+                    <canvas id="systemResourceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <h3 class="text-lg font-semibold mb-4 text-card-foreground">네트워크 트래픽</h3>
+                <div class="chart-container">
+                    <canvas id="networkTrafficChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Server Status -->
+        <div class="bg-card rounded-lg border border-border">
+            <div class="p-6 border-b border-border">
+                <h3 class="text-lg font-semibold text-card-foreground">서버 상태</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-card-foreground">웹 서버</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="server-status status-healthy"></span>
+                                    <span class="text-sm font-medium">nginx-01</span>
+                                </div>
+                                <span class="text-xs text-green-700">정상</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="server-status status-healthy"></span>
+                                    <span class="text-sm font-medium">nginx-02</span>
+                                </div>
+                                <span class="text-xs text-green-700">정상</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="server-status status-warning"></span>
+                                    <span class="text-sm font-medium">apache-01</span>
+                                </div>
+                                <span class="text-xs text-yellow-700">경고</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-card-foreground">애플리케이션 서버</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="server-status status-healthy"></span>
+                                    <span class="text-sm font-medium">tomcat-01</span>
+                                </div>
+                                <span class="text-xs text-green-700">정상</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="server-status status-healthy"></span>
+                                    <span class="text-sm font-medium">was-01</span>
+                                </div>
+                                <span class="text-xs text-green-700">정상</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="server-status status-critical"></span>
+                                    <span class="text-sm font-medium">weblogic-01</span>
+                                </div>
+                                <span class="text-xs text-red-700">오류</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-card-foreground">데이터베이스</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="server-status status-healthy"></span>
+                                    <span class="text-sm font-medium">postgres-01</span>
+                                </div>
+                                <span class="text-xs text-green-700">정상</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="server-status status-healthy"></span>
+                                    <span class="text-sm font-medium">mongodb-01</span>
+                                </div>
+                                <span class="text-xs text-green-700">정상</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                                <div class="flex items-center">
+                                    <span class="server-status status-warning"></span>
+                                    <span class="text-sm font-medium">redis-01</span>
+                                </div>
+                                <span class="text-xs text-yellow-700">경고</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Process Monitoring -->
+        <div class="bg-card rounded-lg border border-border">
+            <div class="p-6 border-b border-border">
+                <h3 class="text-lg font-semibold text-card-foreground">프로세스 모니터링</h3>
+            </div>
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-border">
+                                <th class="text-left py-3 px-4 font-medium text-muted-foreground">프로세스</th>
+                                <th class="text-left py-3 px-4 font-medium text-muted-foreground">PID</th>
+                                <th class="text-left py-3 px-4 font-medium text-muted-foreground">CPU %</th>
+                                <th class="text-left py-3 px-4 font-medium text-muted-foreground">메모리 %</th>
+                                <th class="text-left py-3 px-4 font-medium text-muted-foreground">상태</th>
+                                <th class="text-left py-3 px-4 font-medium text-muted-foreground">업타임</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-border">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-lg">☕</span>
+                                        <span class="font-medium">java (tomcat)</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">1234</td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">15.7%</span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs">42.3%</span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">실행중</span>
+                                </td>
+                                <td class="py-3 px-4">2d 14h 23m</td>
+                            </tr>
+                            <tr class="border-b border-border">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-lg">🗄️</span>
+                                        <span class="font-medium">postgres</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">5678</td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">3.2%</span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">18.9%</span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">실행중</span>
+                                </td>
+                                <td class="py-3 px-4">5d 8h 47m</td>
+                            </tr>
+                            <tr class="border-b border-border">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-lg">📊</span>
+                                        <span class="font-medium">clickhouse-server</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">9012</td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">8.4%</span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">12.7%</span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">실행중</span>
+                                </td>
+                                <td class="py-3 px-4">1d 3h 12m</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-lg">🌐</span>
+                                        <span class="font-medium">nginx</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">3456</td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">1.8%</span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">2.3%</span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">실행중</span>
+                                </td>
+                                <td class="py-3 px-4">7d 16h 2m</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Alerts -->
+        <div class="bg-card rounded-lg border border-border">
+            <div class="p-6 border-b border-border">
+                <h3 class="text-lg font-semibold text-card-foreground">시스템 알림</h3>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="flex items-start space-x-4 p-4 bg-red-50 rounded-lg">
+                        <span class="text-2xl">🔴</span>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium text-sm">WebLogic 서버 응답 없음</span>
+                                <span class="text-xs text-muted-foreground">3분 전</span>
+                            </div>
+                            <div class="text-sm text-muted-foreground mt-1">
+                                weblogic-01 서버가 3분간 응답하지 않고 있습니다. 즉시 확인이 필요합니다.
+                            </div>
+                            <div class="flex items-center space-x-4 mt-2 text-xs">
+                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded">심각</span>
+                                <span class="text-muted-foreground">서버: weblogic-01</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4 p-4 bg-yellow-50 rounded-lg">
+                        <span class="text-2xl">🟡</span>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium text-sm">메모리 사용률 80% 초과</span>
+                                <span class="text-xs text-muted-foreground">5분 전</span>
+                            </div>
+                            <div class="text-sm text-muted-foreground mt-1">
+                                시스템 메모리 사용률이 83.7%로 임계치를 초과했습니다.
+                            </div>
+                            <div class="flex items-center space-x-4 mt-2 text-xs">
+                                <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">경고</span>
+                                <span class="text-muted-foreground">전체 시스템</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4 p-4 bg-blue-50 rounded-lg">
+                        <span class="text-2xl">🔵</span>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium text-sm">서버 재시작 완료</span>
+                                <span class="text-xs text-muted-foreground">15분 전</span>
+                            </div>
+                            <div class="text-sm text-muted-foreground mt-1">
+                                tomcat-01 서버가 성공적으로 재시작되었습니다.
+                            </div>
+                            <div class="flex items-center space-x-4 mt-2 text-xs">
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded">정보</span>
+                                <span class="text-muted-foreground">서버: tomcat-01</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // System Resource Chart
+        const systemResourceCtx = document.getElementById('systemResourceChart').getContext('2d');
+        new Chart(systemResourceCtx, {
+            type: 'line',
+            data: {
+                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                datasets: [{
+                    label: 'CPU %',
+                    data: [45, 52, 58, 67, 71, 65, 62],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: '메모리 %',
+                    data: [78, 80, 82, 84, 83, 85, 87],
+                    borderColor: 'rgb(239, 68, 68)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: '디스크 %',
+                    data: [42, 43, 44, 45, 45, 46, 45],
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: 2,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                },
+                animation: 'none'
+            }
+        });
+
+        // Network Traffic Chart
+        const networkTrafficCtx = document.getElementById('networkTrafficChart').getContext('2d');
+        new Chart(networkTrafficCtx, {
+            type: 'line',
+            data: {
+                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                datasets: [{
+                    label: '인바운드 (MB/s)',
+                    data: [45, 52, 67, 89, 124, 98, 76],
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: '아웃바운드 (MB/s)',
+                    data: [38, 44, 59, 78, 98, 82, 65],
+                    borderColor: 'rgb(245, 158, 11)',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: 2,
+                animation: 'none'
+            }
+        });
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            updateMetrics();
+        }, 30000);
+
+        function updateMetrics() {
+            // Simulate real-time updates
+            document.getElementById('cpuUsage').textContent = (Math.random() * 30 + 50).toFixed(1) + '%';
+            document.getElementById('memoryUsage').textContent = (Math.random() * 15 + 75).toFixed(1) + '%';
+            document.getElementById('diskUsage').textContent = (Math.random() * 10 + 40).toFixed(1) + '%';
+            document.getElementById('networkIO').textContent = Math.floor(Math.random() * 50 + 100) + ' MB/s';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS EPM | 웹 모니터링</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        
+        /* Dropdown 메뉴 완전 제어 - 모든 Tailwind 클래스 오버라이드 */
+        .relative.group div.absolute {
+          opacity: 0 !important;
+          visibility: hidden !important;
+          transform: translateY(-10px) !important;
+          transition: all 0.2s ease-in-out !important;
+          z-index: 9999 !important;
+          pointer-events: none !important;
+        }
+        .relative.group:hover div.absolute {
+          opacity: 1 !important;
+          visibility: visible !important;
+          transform: translateY(0) !important;
+          z-index: 9999 !important;
+          pointer-events: auto !important;
+        }
+        
+        /* 추가 강제 오버라이드 - Tailwind 클래스별 */
+        .group-hover\:opacity-100 { opacity: 1 !important; }
+        .group-hover\:visible { visibility: visible !important; }
+        .opacity-0 { opacity: 0 !important; }
+        .invisible { visibility: hidden !important; }
+        
+        /* 드롭다운 항목들 모두 강제 표시 */
+        .relative.group:hover .absolute a {
+          opacity: 1 !important;
+          visibility: visible !important;
+          display: block !important;
+        }
+        
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --border: 214.3 31.8% 91.4%;
+            --radius: 0.5rem;
+        }
+
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 222.2 84% 4.9%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 222.2 84% 4.9%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --border: 217.2 32.6% 17.5%;
+        }
+
+        .bg-background { background-color: hsl(var(--background)); }
+        .text-foreground { color: hsl(var(--foreground)); }
+        .bg-card { background-color: hsl(var(--card)); }
+        .text-card-foreground { color: hsl(var(--card-foreground)); }
+        .bg-primary { background-color: hsl(var(--primary)); }
+        .text-primary-foreground { color: hsl(var(--primary-foreground)); }
+        .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+        .border-border { border-color: hsl(var(--border)); }
+        
+        .metric-card {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 256px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground">
+  <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+                </div>
+                <div class="ml-10 flex items-center space-x-8">
+                    <!-- 메인 대시보드 -->
+                    <a href="/" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 text-sm font-medium">📊 메인</a>
+                    
+                    <!-- APM 모니터링 드롭다운 -->
+                    <div class="relative group">
+                        <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                            ⚡ APM 모니터링 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/j2ee-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">☕ J2EE 모니터링</a>
+                            <a href="/was-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🏗️ WAS 모니터링</a>
+                            <a href="/exception-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🚨 예외 추적</a>
+                            <a href="/topology-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🗺️ 서비스 토폴로지</a>
+                            <a href="/alert-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🔔 알림 관리</a>
+                        </div>
+                    </div>
+
+                    <!-- 인프라 모니터링 드롭다운 (현재 활성) -->
+                    <div class="relative group">
+                        <button class="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                            🖥️ 인프라 모니터링 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/app-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📱 애플리케이션 모니터링</a>
+                            <a href="/system-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">⚙️ 시스템 모니터링</a>
+                            <a href="/db-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🗃️ 데이터베이스 모니터링</a>
+                            <a href="/web-monitoring.html" class="block px-4 py-2 text-sm text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50">🌐 웹 성능 모니터링</a>
+                        </div>
+                    </div>
+
+                    <!-- 관찰성 드롭다운 -->
+                    <div class="relative group">
+                        <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                            🔍 관찰성 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/logs-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📋 로그 대시보드</a>
+                            <a href="/metrics-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📊 메트릭 대시보드</a>
+                            <a href="/traces-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🔗 트레이스 대시보드</a>
+                        </div>
+                    </div>
+
+                    <!-- 세션 분석 드롭다운 -->
+                    <div class="relative group">
+                        <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                            👥 세션 분석 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/session-analysis.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📈 세션 분석</a>
+                            <a href="/session-telemetry-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🛰️ 세션 텔레메트리</a>
+                            <a href="/session-replay.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🎬 세션 리플레이</a>
+                        </div>
+                    </div>
+
+                    <!-- 시스템 관리 드롭다운 -->
+                    <div class="relative group">
+                        <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                            🛠️ 시스템 관리 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/services-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">⚙️ 서비스 관리</a>
+                            <a href="/deployment-manager.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🚀 배포 관리</a>
+                            <a href="/ontology.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🧠 온톨로지 시스템</a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="darkModeToggle" class="p-2 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                    <span class="dark:hidden">🌙</span>
+                    <span class="hidden dark:inline">☀️</span>
+                </button>
+                <div id="systemStatus" class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="text-sm text-gray-600 dark:text-gray-300">시스템 정상</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
+    <div class="container mx-auto flex h-14 items-center px-4">
+      <div class="mr-4 flex items-center space-x-2">
+        <span class="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">웹 성능 모니터링</span>
+      </div>
+                </button>
+                <button onclick="window.location.href = '/session-replay.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+                    세션 리플레이
+                </button>
+            </nav>
+            
+            <div class="flex items-center space-x-4 ml-auto">
+                <select id="timeRange" class="text-sm border border-border rounded-md px-3 py-1 bg-background">
+                    <option value="5m">최근 5분</option>
+                    <option value="1h" selected>최근 1시간</option>
+                    <option value="24h">최근 24시간</option>
+                    <option value="7d">최근 7일</option>
+                </select>
+                <button class="bg-primary text-primary-foreground px-3 py-1 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors">
+                    새로고침
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-6 space-y-6">
+        <!-- Web Performance Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-card p-6 rounded-lg border border-border metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-muted-foreground">페이지 뷰</p>
+                        <p class="text-2xl font-bold text-card-foreground" id="pageViews">42,736</p>
+                    </div>
+                    <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">👁️</span>
+                    </div>
+                </div>
+                <p class="text-xs text-green-600 mt-2">↗ +12.5% vs 어제</p>
+            </div>
+
+            <div class="bg-card p-6 rounded-lg border border-border metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-muted-foreground">고유 방문자</p>
+                        <p class="text-2xl font-bold text-card-foreground" id="uniqueVisitors">8,347</p>
+                    </div>
+                    <div class="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">👥</span>
+                    </div>
+                </div>
+                <p class="text-xs text-green-600 mt-2">↗ +8.3% vs 어제</p>
+            </div>
+
+            <div class="bg-card p-6 rounded-lg border border-border metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-muted-foreground">평균 로드 시간</p>
+                        <p class="text-2xl font-bold text-card-foreground" id="avgLoadTime">1.24s</p>
+                    </div>
+                    <div class="h-12 w-12 bg-orange-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">⚡</span>
+                    </div>
+                </div>
+                <p class="text-xs text-red-600 mt-2">↗ +0.1s vs 어제</p>
+            </div>
+
+            <div class="bg-card p-6 rounded-lg border border-border metric-card">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-muted-foreground">바운스 율</p>
+                        <p class="text-2xl font-bold text-card-foreground" id="bounceRate">32.4%</p>
+                    </div>
+                    <div class="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
+                        <span class="text-2xl">↩️</span>
+                    </div>
+                </div>
+                <p class="text-xs text-green-600 mt-2">↘ -2.1% vs 어제</p>
+            </div>
+        </div>
+
+        <!-- Performance Charts -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <h3 class="text-lg font-semibold mb-4 text-card-foreground">페이지 로딩 성능</h3>
+                <div class="chart-container">
+                    <canvas id="loadingPerformanceChart"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-card p-6 rounded-lg border border-border">
+                <h3 class="text-lg font-semibold mb-4 text-card-foreground">트래픽 분석</h3>
+                <div class="chart-container">
+                    <canvas id="trafficAnalysisChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real User Monitoring -->
+        <div class="bg-card rounded-lg border border-border">
+            <div class="p-6 border-b border-border">
+                <h3 class="text-lg font-semibold text-card-foreground">실사용자 모니터링 (RUM)</h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-card-foreground">Core Web Vitals</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-muted-foreground">LCP (Largest Contentful Paint)</span>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-16 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 75%"></div>
+                                    </div>
+                                    <span class="text-sm font-medium">1.8s</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-muted-foreground">FID (First Input Delay)</span>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-16 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 90%"></div>
+                                    </div>
+                                    <span class="text-sm font-medium">45ms</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-muted-foreground">CLS (Cumulative Layout Shift)</span>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-16 bg-gray-200 rounded-full h-2">
+                                        <div class="bg-yellow-500 h-2 rounded-full" style="width: 65%"></div>
+                                    </div>
+                                    <span class="text-sm font-medium">0.12</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-card-foreground">브라우저 분석</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-muted-foreground">Chrome</span>
+                                <span class="text-sm font-medium">68.2%</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-muted-foreground">Safari</span>
+                                <span class="text-sm font-medium">18.4%</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-muted-foreground">Edge</span>
+                                <span class="text-sm font-medium">8.9%</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-muted-foreground">Firefox</span>
+                                <span class="text-sm font-medium">4.5%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-card-foreground">디바이스 분석</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-muted-foreground">Desktop</span>
+                                <span class="text-sm font-medium">52.3%</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-muted-foreground">Mobile</span>
+                                <span class="text-sm font-medium">38.7%</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-muted-foreground">Tablet</span>
+                                <span class="text-sm font-medium">9.0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Pages Performance -->
+        <div class="bg-card rounded-lg border border-border">
+            <div class="p-6 border-b border-border">
+                <h3 class="text-lg font-semibold text-card-foreground">페이지별 성능 분석</h3>
+            </div>
+            <div class="p-6">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-border">
+                                <th class="text-left py-3 px-4 font-medium text-muted-foreground">페이지</th>
+                                <th class="text-left py-3 px-4 font-medium text-muted-foreground">방문수</th>
+                                <th class="text-left py-3 px-4 font-medium text-muted-foreground">평균 로드시간</th>
+                                <th class="text-left py-3 px-4 font-medium text-muted-foreground">바운스율</th>
+                                <th class="text-left py-3 px-4 font-medium text-muted-foreground">상태</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-border">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-lg">🏠</span>
+                                        <div>
+                                            <div class="font-medium">/</div>
+                                            <div class="text-xs text-muted-foreground">홈페이지</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">12,547</td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">0.89s</span>
+                                </td>
+                                <td class="py-3 px-4">28.3%</td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">양호</span>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-border">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-lg">📊</span>
+                                        <div>
+                                            <div class="font-medium">/j2ee-dashboard.html</div>
+                                            <div class="text-xs text-muted-foreground">J2EE 대시보드</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">8,932</td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs">1.45s</span>
+                                </td>
+                                <td class="py-3 px-4">22.1%</td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs">주의</span>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-border">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-lg">🚨</span>
+                                        <div>
+                                            <div class="font-medium">/exception-dashboard.html</div>
+                                            <div class="text-xs text-muted-foreground">예외 추적 대시보드</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">5,674</td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">1.12s</span>
+                                </td>
+                                <td class="py-3 px-4">31.8%</td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">양호</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center space-x-2">
+                                        <span class="text-lg">🗺️</span>
+                                        <div>
+                                            <div class="font-medium">/topology-dashboard.html</div>
+                                            <div class="text-xs text-muted-foreground">서비스 토폴로지</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">3,421</td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs">2.34s</span>
+                                </td>
+                                <td class="py-3 px-4">45.2%</td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs">개선필요</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- JavaScript Errors -->
+        <div class="bg-card rounded-lg border border-border">
+            <div class="p-6 border-b border-border">
+                <h3 class="text-lg font-semibold text-card-foreground">JavaScript 오류 분석</h3>
+            </div>
+            <div class="p-6">
+                <div class="space-y-4">
+                    <div class="flex items-start space-x-4 p-4 bg-red-50 rounded-lg">
+                        <span class="text-2xl">🔴</span>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium text-sm">TypeError: Cannot read property 'length' of undefined</span>
+                                <span class="text-xs text-muted-foreground">발생 횟수: 23</span>
+                            </div>
+                            <div class="text-sm text-muted-foreground mt-1">
+                                /j2ee-dashboard.html:145:12
+                            </div>
+                            <div class="flex items-center space-x-4 mt-2 text-xs">
+                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded">심각</span>
+                                <span class="text-muted-foreground">Chrome 91.0.4472.124</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-4 p-4 bg-yellow-50 rounded-lg">
+                        <span class="text-2xl">🟡</span>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <span class="font-medium text-sm">ReferenceError: Chart is not defined</span>
+                                <span class="text-xs text-muted-foreground">발생 횟수: 8</span>
+                            </div>
+                            <div class="text-sm text-muted-foreground mt-1">
+                                /metrics-dashboard.html:67:8
+                            </div>
+                            <div class="flex items-center space-x-4 mt-2 text-xs">
+                                <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">경고</span>
+                                <span class="text-muted-foreground">Firefox 89.0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Loading Performance Chart
+        const loadingCtx = document.getElementById('loadingPerformanceChart').getContext('2d');
+        new Chart(loadingCtx, {
+            type: 'line',
+            data: {
+                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                datasets: [{
+                    label: 'TTFB (Time to First Byte)',
+                    data: [120, 98, 105, 115, 108, 122, 134],
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'DOM Content Loaded',
+                    data: [680, 590, 645, 720, 635, 698, 756],
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'Page Load Complete',
+                    data: [1240, 1180, 1190, 1350, 1220, 1280, 1410],
+                    borderColor: 'rgb(245, 158, 11)',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: 2,
+                animation: 'none'
+            }
+        });
+
+        // Traffic Analysis Chart
+        const trafficCtx = document.getElementById('trafficAnalysisChart').getContext('2d');
+        new Chart(trafficCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Direct', 'Search', 'Social', 'Referral', 'Email'],
+                datasets: [{
+                    data: [35, 28, 15, 12, 10],
+                    backgroundColor: [
+                        'rgb(59, 130, 246)',
+                        'rgb(16, 185, 129)',
+                        'rgb(245, 158, 11)',
+                        'rgb(239, 68, 68)',
+                        'rgb(139, 92, 246)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                aspectRatio: 1,
+                animation: 'none'
+            }
+        });
+
+        // Auto-refresh every 30 seconds
+        setInterval(() => {
+            updateMetrics();
+        }, 30000);
+
+        function updateMetrics() {
+            // Simulate real-time updates
+            document.getElementById('pageViews').textContent = (Math.floor(Math.random() * 5000) + 40000).toLocaleString();
+            document.getElementById('uniqueVisitors').textContent = (Math.floor(Math.random() * 1000) + 8000).toLocaleString();
+            document.getElementById('avgLoadTime').textContent = (Math.random() * 0.5 + 1.0).toFixed(2) + 's';
+            document.getElementById('bounceRate').textContent = (Math.random() * 10 + 30).toFixed(1) + '%';
+        }
+    </script>
+</body>
+</html>

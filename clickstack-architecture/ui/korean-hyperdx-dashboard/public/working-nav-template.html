@@ -1,0 +1,114 @@
+<!-- AIRIS EPM 정상 작동 네비게이션 템플릿 (services-management.html 기반) -->
+<!-- 사용법: ACTIVE_GROUP과 ACTIVE_ITEM을 해당 페이지에 맞게 변경 -->
+
+<nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">🚀 AIRIS EPM</h1>
+                </div>
+                <div class="ml-10 flex items-center space-x-8">
+                    <!-- 메인 대시보드 -->
+                    <a href="/" class="MAIN_CLASS px-3 py-2 text-sm font-medium">📊 메인</a>
+                    
+                    <!-- APM 모니터링 드롭다운 -->
+                    <div class="relative group">
+                        <button class="APM_BUTTON_CLASS transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium APM_BUTTON_EXTRA">
+                            ⚡ APM 모니터링 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/j2ee-dashboard.html" class="APM_J2EE_CLASS">☕ J2EE 모니터링</a>
+                            <a href="/was-dashboard.html" class="APM_WAS_CLASS">🏗️ WAS 모니터링</a>
+                            <a href="/exception-dashboard.html" class="APM_EXCEPTION_CLASS">🚨 예외 추적</a>
+                            <a href="/topology-dashboard.html" class="APM_TOPOLOGY_CLASS">🗺️ 서비스 토폴로지</a>
+                            <a href="/alert-dashboard.html" class="APM_ALERT_CLASS">🔔 알림 관리</a>
+                        </div>
+                    </div>
+
+                    <!-- 인프라 모니터링 드롭다운 -->
+                    <div class="relative group">
+                        <button class="INFRA_BUTTON_CLASS transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium INFRA_BUTTON_EXTRA">
+                            🖥️ 인프라 모니터링 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/app-monitoring.html" class="INFRA_APP_CLASS">📱 애플리케이션 모니터링</a>
+                            <a href="/system-monitoring.html" class="INFRA_SYSTEM_CLASS">⚙️ 시스템 모니터링</a>
+                            <a href="/db-monitoring.html" class="INFRA_DB_CLASS">🗃️ 데이터베이스 모니터링</a>
+                            <a href="/web-monitoring.html" class="INFRA_WEB_CLASS">🌐 웹 성능 모니터링</a>
+                        </div>
+                    </div>
+
+                    <!-- 관찰성 드롭다운 -->
+                    <div class="relative group">
+                        <button class="OBS_BUTTON_CLASS transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium OBS_BUTTON_EXTRA">
+                            🔍 관찰성 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/logs-dashboard.html" class="OBS_LOGS_CLASS">📋 로그 대시보드</a>
+                            <a href="/metrics-dashboard.html" class="OBS_METRICS_CLASS">📊 메트릭 대시보드</a>
+                            <a href="/traces-dashboard.html" class="OBS_TRACES_CLASS">🔗 트레이스 대시보드</a>
+                        </div>
+                    </div>
+
+                    <!-- 세션 분석 드롭다운 -->
+                    <div class="relative group">
+                        <button class="SESSION_BUTTON_CLASS transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium SESSION_BUTTON_EXTRA">
+                            👥 세션 분석 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/session-analysis.html" class="SESSION_ANALYSIS_CLASS">📈 세션 분석</a>
+                            <a href="/session-telemetry-dashboard.html" class="SESSION_TELEMETRY_CLASS">🛰️ 세션 텔레메트리</a>
+                            <a href="/session-replay.html" class="SESSION_REPLAY_CLASS">🎬 세션 리플레이</a>
+                        </div>
+                    </div>
+
+                    <!-- 시스템 관리 드롭다운 -->
+                    <div class="relative group">
+                        <button class="MGMT_BUTTON_CLASS transition-colors border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium MGMT_BUTTON_EXTRA">
+                            🛠️ 시스템 관리 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/services-management.html" class="MGMT_SERVICES_CLASS">⚙️ 서비스 관리</a>
+                            <a href="/deployment-manager.html" class="MGMT_DEPLOY_CLASS">🚀 배포 관리</a>
+                            <a href="/ontology.html" class="MGMT_ONTOLOGY_CLASS">🧠 온톨로지 시스템</a>
+                        </div>
+                    </div>
+
+                    <!-- 포털 링크 -->
+                    <a href="/portal.html" class="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 px-3 py-2 text-sm font-medium">🏠 포털</a>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="darkModeToggle" class="p-2 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                    <span class="dark:hidden">🌙</span>
+                    <span class="hidden dark:inline">☀️</span>
+                </button>
+                <div id="systemStatus" class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="text-sm text-gray-600 dark:text-gray-300">시스템 정상</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- 
+CSS 클래스 치환 규칙:
+
+기본 스타일:
+- MAIN_CLASS: "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+- APM_BUTTON_CLASS, INFRA_BUTTON_CLASS, OBS_BUTTON_CLASS, SESSION_BUTTON_CLASS: "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+- MGMT_BUTTON_CLASS: "text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+
+활성화 스타일 (현재 페이지가 속한 그룹):
+- 활성 버튼: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+- 활성 버튼 추가: "rounded-md"
+- 활성 메뉴 항목: "block px-4 py-2 text-sm text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50"
+
+일반 메뉴 항목:
+- "block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white"
+
+메인 페이지 활성화:
+- MAIN_CLASS: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 rounded-md"
+-->

@@ -3,14 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AIRIS APM | J2EE 모니터링 대시보드</title>
+  <title>AIRIS EPM | J2EE 모니터링 대시보드</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <link href="./css/tailwind.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
     * {
       font-family: 'Inter', sans-serif;
+    }
+    
+    /* Dropdown 메뉴 완전 제어 - 모든 Tailwind 클래스 오버라이드 */
+    .relative.group div.absolute {
+      opacity: 0 !important;
+      visibility: hidden !important;
+      transform: translateY(-10px) !important;
+      transition: all 0.2s ease-in-out !important;
+      z-index: 9999 !important;
+      pointer-events: none !important;
+    }
+    .relative.group:hover div.absolute {
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: translateY(0) !important;
+      z-index: 9999 !important;
+      pointer-events: auto !important;
+    }
+    
+    /* 추가 강제 오버라이드 - Tailwind 클래스별 */
+    .group-hover\\:opacity-100 { opacity: 1 !important; }
+    .group-hover\\:visible { visibility: visible !important; }
+    .opacity-0 { opacity: 0 !important; }
+    .invisible { visibility: hidden !important; }
+    
+    /* 드롭다운 메뉴 배경색 강제 적용 */
+    .relative.group .absolute {
+      background-color: white !important;
+    }
+    .dark .relative.group .absolute {
+      background-color: rgb(31, 41, 55) !important;
+    }
+    
+    /* 드롭다운 항목들 모두 강제 표시 */
+    .relative.group:hover .absolute a {
+      opacity: 1 !important;
+      visibility: visible !important;
+      display: block !important;
     }
     
     /* shadcn/ui CSS Variables */
@@ -141,92 +179,122 @@
 </head>
 <body class="bg-background text-foreground">
   <div class="min-h-screen bg-background text-foreground">
-    <!-- Header -->
-    <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div class="container mx-auto flex h-14 items-center px-4">
-        <div class="mr-4 flex items-center space-x-2">
-          <span class="font-bold text-xl">AIRIS APM</span>
-          <span class="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">
-            J2EE
-          </span>
-        </div>
-        
-        <!-- Navigation -->
-        <nav class="flex items-center space-x-6 text-sm">
-          <button onclick="window.location.href = '/'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-            통합 대시보드
-          </button>
-          <span class="font-medium text-foreground/80 hover:text-foreground transition-colors">
-            J2EE 모니터링
-          </span>
-          <button onclick="window.location.href = '/was-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-            WAS 모니터링
-          </button>
-          <button onclick="window.location.href = '/exception-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-            예외 추적
-          </button>
-          <button onclick="window.location.href = '/topology-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-            서비스 토폴로지
-          </button>
-          <button onclick="window.location.href = '/alert-dashboard.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-            알림 관리
-          </button>
-          <button onclick="window.location.href = '/ontology.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-            온톨로지
-          </button>
-        </nav>
+  <!-- Navigation Bar (services-management.html 스타일) -->
+  <nav class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+                </div>
+                <div class="ml-10 flex items-center space-x-8">
+                    <!-- 메인 대시보드 -->
+                    <a href="/" class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white px-3 py-2 text-sm font-medium">📊 메인</a>
+                    
+                    <!-- APM 모니터링 드롭다운 (현재 활성) -->
+                    <div class="relative group">
+                        <button class="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 transition-colors border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium rounded-md">
+                            ⚡ APM 모니터링 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/j2ee-dashboard.html" class="block px-4 py-2 text-sm text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/50">☕ J2EE 모니터링</a>
+                            <a href="/was-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🏗️ WAS 모니터링</a>
+                            <a href="/exception-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🚨 예외 추적</a>
+                            <a href="/topology-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🗺️ 서비스 토폴로지</a>
+                            <a href="/alert-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🔔 알림 관리</a>
+                        </div>
+                    </div>
 
-        <!-- Right side actions -->
-        <div class="ml-auto flex items-center space-x-4">
-          <select 
-            id="timeRange"
-            class="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-          >
-            <option value="15m">15분</option>
-            <option value="1h" selected>1시간</option>
-            <option value="6h">6시간</option>
-            <option value="24h">24시간</option>
-            <option value="7d">7일</option>
-          </select>
-          
+                    <!-- 인프라 모니터링 드롭다운 -->
+                    <div class="relative group">
+                        <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                            🖥️ 인프라 모니터링 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/app-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📱 애플리케이션 모니터링</a>
+                            <a href="/system-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">⚙️ 시스템 모니터링</a>
+                            <a href="/db-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🗃️ 데이터베이스 모니터링</a>
+                            <a href="/web-monitoring.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🌐 웹 성능 모니터링</a>
+                        </div>
+                    </div>
+
+                    <!-- 관찰성 드롭다운 -->
+                    <div class="relative group">
+                        <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                            🔍 관찰성 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/logs-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📋 로그 대시보드</a>
+                            <a href="/metrics-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📊 메트릭 대시보드</a>
+                            <a href="/traces-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🔗 트레이스 대시보드</a>
+                        </div>
+                    </div>
+
+                    <!-- 세션 분석 드롭다운 -->
+                    <div class="relative group">
+                        <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                            👥 세션 분석 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/session-analysis.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">📈 세션 분석</a>
+                            <a href="/session-telemetry-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🛰️ 세션 텔레메트리</a>
+                            <a href="/session-replay.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🎬 세션 리플레이</a>
+                        </div>
+                    </div>
+
+                    <!-- 시스템 관리 드롭다운 -->
+                    <div class="relative group">
+                        <button class="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white transition-colors bg-transparent border-none cursor-pointer flex items-center px-3 py-2 text-sm font-medium">
+                            🛠️ 시스템 관리 ▾
+                        </button>
+                        <div class="absolute top-full left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/services-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">⚙️ 서비스 관리</a>
+                            <a href="/deployment-manager.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🚀 배포 관리</a>
+                            <a href="/ontology.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white">🧠 온톨로지 시스템</a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="darkModeToggle" class="p-2 rounded-md text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                    <span class="dark:hidden">🌙</span>
+                    <span class="hidden dark:inline">☀️</span>
+                </button>
+                <div id="systemStatus" class="flex items-center space-x-2">
+                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="text-sm text-gray-600 dark:text-gray-300">시스템 정상</span>
+                </div>
+            </div>
+        </div>
+    </div>
+  </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto py-4 space-y-6 px-4">
+      <!-- Page Title -->
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-semibold flex items-center space-x-2">
+            <span>☕</span>
+            <span>J2EE 컴포넌트 모니터링</span>
+          </h1>
+          <p class="text-sm text-muted-foreground mt-1">Servlet, JSP, EJB 실시간 성능 및 상태 추적</p>
+        </div>
+        <div class="flex items-center space-x-2">
           <button
             id="refreshBtn"
             class="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90"
           >
             새로고침
           </button>
-          
-          <button
-            id="themeToggle"
-            class="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 w-9 border border-input bg-background hover:bg-accent hover:text-accent-foreground"
-          >
-            🌙
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <!-- Page Header -->
-    <div class="border-b">
-      <div class="container mx-auto flex h-16 items-center px-4">
-        <div>
-          <h1 class="text-2xl font-semibold flex items-center space-x-2">
-            <span>☕</span>
-            <span>J2EE 컴포넌트 모니터링</span>
-          </h1>
-          <p class="text-sm text-muted-foreground">Servlet, JSP, EJB 실시간 성능 및 상태 추적</p>
-        </div>
-        <div class="ml-auto flex items-center space-x-2">
           <span class="inline-flex items-center rounded-md bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-600 dark:text-green-400">
             <span class="mr-1.5 h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
             J2EE 서버 정상
           </span>
         </div>
       </div>
-    </div>
 
-    <!-- Main Content -->
-    <main class="container mx-auto py-6 space-y-6 px-4">
       <!-- Overview Cards -->
       <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <div class="rounded-lg border bg-card p-6">
@@ -517,8 +585,8 @@
 
     // Initialize the dashboard
     function initDashboard() {
-      // Set up theme toggle
-      document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+      // Set up theme toggle (using darkModeToggle from the new navigation)
+      document.getElementById('darkModeToggle').addEventListener('click', toggleTheme);
       
       // Set up refresh button
       document.getElementById('refreshBtn').addEventListener('click', refreshData);
@@ -533,14 +601,17 @@
     // Theme toggle function
     function toggleTheme() {
       isDark = !isDark;
-      const themeToggle = document.getElementById('themeToggle');
+      const darkIcon = document.querySelector('#darkModeToggle .dark\\:hidden');
+      const lightIcon = document.querySelector('#darkModeToggle .hidden.dark\\:inline');
       
       if (isDark) {
         document.documentElement.classList.add('dark');
-        themeToggle.textContent = '🌞';
+        if (darkIcon) darkIcon.style.display = 'none';
+        if (lightIcon) lightIcon.style.display = 'inline';
       } else {
         document.documentElement.classList.remove('dark');
-        themeToggle.textContent = '🌙';
+        if (darkIcon) darkIcon.style.display = 'inline';
+        if (lightIcon) lightIcon.style.display = 'none';
       }
     }
 

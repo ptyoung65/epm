@@ -1,5 +1,8 @@
 FROM nginx:alpine
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
 # Copy HTML files and CSS
 COPY public/ /usr/share/nginx/html/
 COPY nginx.conf /etc/nginx/conf.d/default.conf

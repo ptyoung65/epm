@@ -2,13 +2,15 @@ FROM node:20-alpine
 
 WORKDIR /app
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
 # Install dependencies
 COPY package*.json ./
 RUN npm install --production
 
 # Copy source code
 COPY src/ ./src/
-COPY . .
 
 # Create data directory
 RUN mkdir -p /app/data

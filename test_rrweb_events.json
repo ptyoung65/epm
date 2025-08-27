@@ -1,0 +1,40 @@
+{
+  "events": [
+    {
+      "type": 2,
+      "data": {
+        "href": "http://localhost:3001/",
+        "width": 1920,
+        "height": 1080
+      },
+      "timestamp": 1724610001000
+    },
+    {
+      "type": 3,
+      "data": {
+        "source": 2,
+        "type": 1,
+        "x": 500,
+        "y": 300
+      },
+      "timestamp": 1724610002000
+    },
+    {
+      "type": 3,
+      "data": {
+        "source": 5,
+        "text": "test input"
+      },
+      "timestamp": 1724610003000
+    },
+    {
+      "type": 3,
+      "data": {
+        "source": 3,
+        "x": 0,
+        "y": 100
+      },
+      "timestamp": 1724610004000
+    }
+  ]
+}

@@ -30,6 +30,7 @@ class SessionReplayService extends EventEmitter {
     
     this.activeSessions = new Map();
     this.sessionBuffers = new Map();
+    this.sessions = new Map(); // 세션 데이터 저장용
     
     this.metrics = {
       totalSessions: 0,
@@ -43,21 +44,27 @@ class SessionReplayService extends EventEmitter {
   }
 
   /**
-   * Initialize with required services
+   * Initialize with optional services
    */
-  async initialize(services) {
+  async initialize(services = {}) {
     this.clickhouseService = services.clickhouse;
     this.redisService = services.redis;
     this.kafkaService = services.kafka;
 
+    // ClickHouse is optional - service can work with local storage only
     if (!this.clickhouseService) {
-      throw new Error('ClickHouse 서비스가 필요합니다');
+      logger.warn('ClickHouse 서비스가 없습니다 - 로컬 저장소만 사용됩니다', {
+        service: 'session-replay'
+      });
     }
 
     logger.info('세션 리플레이 서비스 초기화됨', {
       service: 'session-replay',
       samplingRate: this.config.samplingRate,
-      maskInputs: this.config.maskAllInputs
+      maskInputs: this.config.maskAllInputs,
+      hasClickHouse: !!this.clickhouseService,
+      hasRedis: !!this.redisService,
+      hasKafka: !!this.kafkaService
     });
   }
 

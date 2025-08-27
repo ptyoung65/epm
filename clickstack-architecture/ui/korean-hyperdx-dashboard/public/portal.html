@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS EPM 통합 포털 - 모든 대시보드 접속</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- shadcn/ui CSS Variables -->
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 221.2 83.2% 53.3%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 221.2 83.2% 53.3%;
+            --radius: 0.5rem;
+        }
+        
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 217.2 91.2% 59.8%;
+            --primary-foreground: 222.2 84% 4.9%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 224.3 76.3% 94.1%;
+        }
+        
+        * {
+            border-color: hsl(var(--border));
+        }
+        
+        body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+            font-feature-settings: "rlig" 1, "calt" 1;
+        }
+        
+        .card {
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+        
+        .card-hover {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        
+        .card-hover:hover {
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transform: translateY(-2px);
+            border-color: hsl(var(--primary));
+        }
+        
+        .btn-primary {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            border: none;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+        
+        .group-header {
+            background: linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--secondary)));
+            border-left: 4px solid hsl(var(--primary));
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #10b981;
+            display: inline-block;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .grid-auto-fit {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-background">
+    <!-- Header -->
+    <header class="bg-card border-b border-border">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                        <span class="text-primary-foreground font-bold text-lg">A</span>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-foreground">AIRIS EPM 통합 포털</h1>
+                        <p class="text-muted-foreground">엔터프라이즈 성능 모니터링 시스템</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center text-sm text-muted-foreground">
+                        <span class="status-indicator"></span>
+                        시스템 정상
+                    </div>
+                    <div class="text-sm text-muted-foreground">
+                        총 <strong>19개</strong> 대시보드
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Quick Access -->
+        <section class="mb-8">
+            <div class="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold text-foreground mb-4">🚀 빠른 접속</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <button onclick="window.open('/index.html', '_blank')" class="btn-primary text-center">
+                        📊 메인 대시보드
+                    </button>
+                    <button onclick="window.open('/j2ee-dashboard.html', '_blank')" class="btn-primary text-center">
+                        ☕ J2EE 모니터링
+                    </button>
+                    <button onclick="window.open('/app-monitoring.html', '_blank')" class="btn-primary text-center">
+                        📱 앱 모니터링
+                    </button>
+                    <button onclick="window.open('/ontology.html', '_blank')" class="btn-primary text-center">
+                        🧠 온톨로지
+                    </button>
+                    <button onclick="window.open('/deployment-manager.html', '_blank')" class="btn-primary text-center">
+                        🚀 배포 관리
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dashboard Groups -->
+        <div class="space-y-8">
+            <!-- 1. 핵심 APM 모니터링 -->
+            <section>
+                <div class="group-header rounded-lg p-4 mb-4">
+                    <h2 class="text-xl font-semibold text-foreground flex items-center">
+                        ⚡ 핵심 APM 모니터링
+                        <span class="ml-2 text-sm bg-primary text-primary-foreground px-2 py-1 rounded-full">6개</span>
+                    </h2>
+                    <p class="text-muted-foreground mt-1">Java 기반 애플리케이션 성능 모니터링 및 장애 관리</p>
+                </div>
+                <div class="grid grid-auto-fit gap-4">
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/index.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">📊 메인 대시보드</h3>
+                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">실시간</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">전체 시스템 상태 통합 모니터링</p>
+                    </div>
+                    
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/j2ee-dashboard.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">☕ J2EE 모니터링</h3>
+                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Servlet/JSP/EJB</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">J2EE 컴포넌트별 실시간 성능 추적</p>
+                    </div>
+                    
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/was-dashboard.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">🏗️ WAS 모니터링</h3>
+                            <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">JVM/GC</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">Tomcat, WebLogic, WebSphere WAS 모니터링</p>
+                    </div>
+                    
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/exception-dashboard.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">🚨 예외 추적</h3>
+                            <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">실시간 감지</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">Exception 분류 및 Stack Trace 분석</p>
+                    </div>
+                    
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/topology-dashboard.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">🗺️ 서비스 토폴로지</h3>
+                            <span class="text-xs bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full">의존성 맵</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">서비스 간 의존성 및 Critical Path 분석</p>
+                    </div>
+                    
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/alert-dashboard.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">🔔 알림 관리</h3>
+                            <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">다채널</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">알림 규칙 엔진 및 에스컬레이션</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. 인프라 & 시스템 모니터링 -->
+            <section>
+                <div class="group-header rounded-lg p-4 mb-4">
+                    <h2 class="text-xl font-semibold text-foreground flex items-center">
+                        🖥️ 인프라 & 시스템 모니터링
+                        <span class="ml-2 text-sm bg-primary text-primary-foreground px-2 py-1 rounded-full">4개</span>
+                    </h2>
+                    <p class="text-muted-foreground mt-1">서버, 데이터베이스, 네트워크 인프라 성능 모니터링</p>
+                </div>
+                <div class="grid grid-auto-fit gap-4">
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/app-monitoring.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">📱 애플리케이션 모니터링</h3>
+                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">분산 추적</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">마이크로서비스 성능 및 SLA 모니터링</p>
+                    </div>
+                    
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/system-monitoring.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">⚙️ 시스템 모니터링</h3>
+                            <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">리소스</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">CPU, 메모리, 디스크, 네트워크 상태</p>
+                    </div>
+                    
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/db-monitoring.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">🗃️ 데이터베이스 모니터링</h3>
+                            <span class="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full">다중 DB</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">PostgreSQL, ClickHouse, MongoDB, Redis</p>
+                    </div>
+                    
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/web-monitoring.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">🌐 웹 성능 모니터링</h3>
+                            <span class="text-xs bg-teal-100 text-teal-800 px-2 py-1 rounded-full">Core Web Vitals</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">브라우저 성능 및 사용자 경험 분석</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. 관찰성 & 텔레메트리 -->
+            <section>
+                <div class="group-header rounded-lg p-4 mb-4">
+                    <h2 class="text-xl font-semibold text-foreground flex items-center">
+                        🔍 관찰성 & 텔레메트리
+                        <span class="ml-2 text-sm bg-primary text-primary-foreground px-2 py-1 rounded-full">3개</span>
+                    </h2>
+                    <p class="text-muted-foreground mt-1">로그, 메트릭, 트레이스 통합 분석 및 관찰성</p>
+                </div>
+                <div class="grid grid-auto-fit gap-4">
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/logs-dashboard.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">📋 로그 대시보드</h3>
+                            <span class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded-full">실시간 수집</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">중앙집중식 로그 수집 및 분석</p>
+                    </div>
+                    
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/metrics-dashboard.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">📊 메트릭 대시보드</h3>
+                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">시계열</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">성능 지표 및 비즈니스 메트릭</p>
+                    </div>
+                    
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/traces-dashboard.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">🔗 트레이스 대시보드</h3>
+                            <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">분산 추적</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">요청 흐름 추적 및 성능 분석</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. 세션 & 사용자 분석 -->
+            <section>
+                <div class="group-header rounded-lg p-4 mb-4">
+                    <h2 class="text-xl font-semibold text-foreground flex items-center">
+                        👥 세션 & 사용자 분석
+                        <span class="ml-2 text-sm bg-primary text-primary-foreground px-2 py-1 rounded-full">3개</span>
+                    </h2>
+                    <p class="text-muted-foreground mt-1">사용자 세션 추적, 리플레이 및 행동 분석</p>
+                </div>
+                <div class="grid grid-auto-fit gap-4">
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/session-analysis.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">📈 세션 분석</h3>
+                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">사용자 행동</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">사용자 세션 패턴 및 행동 분석</p>
+                    </div>
+                    
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/session-telemetry-dashboard.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">🛰️ 세션 텔레메트리</h3>
+                            <span class="text-xs bg-cyan-100 text-cyan-800 px-2 py-1 rounded-full">실시간</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">세션 데이터 텔레메트리 모니터링</p>
+                    </div>
+                    
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/session-replay.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">🎬 세션 리플레이</h3>
+                            <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">rrweb 기반</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">사용자 상호작용 완전 재생</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. 시스템 관리 & 운영 -->
+            <section>
+                <div class="group-header rounded-lg p-4 mb-4">
+                    <h2 class="text-xl font-semibold text-foreground flex items-center">
+                        🛠️ 시스템 관리 & 운영
+                        <span class="ml-2 text-sm bg-primary text-primary-foreground px-2 py-1 rounded-full">3개</span>
+                    </h2>
+                    <p class="text-muted-foreground mt-1">서비스 관리, 배포 자동화 및 지식 시스템</p>
+                </div>
+                <div class="grid grid-auto-fit gap-4">
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/services-management.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">⚙️ 서비스 관리</h3>
+                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">마이크로서비스</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">서비스 상태 관리 및 설정</p>
+                    </div>
+                    
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/deployment-manager.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">🚀 배포 관리</h3>
+                            <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">자동화</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">컨테이너 배포 자동화 및 로그</p>
+                    </div>
+                    
+                    <div class="card rounded-lg p-4 card-hover" onclick="window.open('/ontology.html', '_blank')">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-semibold text-foreground">🧠 온톨로지 시스템</h3>
+                            <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">지식 그래프</span>
+                        </div>
+                        <p class="text-sm text-muted-foreground">관찰성 지식 체계 및 추출 지식</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-8 border-t border-border">
+            <div class="text-center">
+                <p class="text-muted-foreground text-sm">
+                    AIRIS EPM (Enterprise Performance Monitoring) v2.0 
+                    <span class="mx-2">•</span>
+                    총 <strong>19개</strong> 전문 대시보드
+                    <span class="mx-2">•</span>
+                    실시간 모니터링 시스템
+                </p>
+                <p class="text-muted-foreground text-xs mt-2">
+                    Java/J2EE 전문 APM • 다중 WAS 지원 • 분산 추적 • 세션 리플레이 • AI 기반 이상탐지
+                </p>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        // 페이지 로드 시 시스템 상태 확인
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('AIRIS EPM 통합 포털 로드 완료');
+            
+            // 모든 카드에 접근성 개선
+            const cards = document.querySelectorAll('.card-hover');
+            cards.forEach(card => {
+                card.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        card.click();
+                    }
+                });
+                card.setAttribute('tabindex', '0');
+                card.setAttribute('role', 'button');
+            });
+        });
+
+        // 키보드 단축키
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        window.open('/index.html', '_blank');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        window.open('/j2ee-dashboard.html', '_blank');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        window.open('/app-monitoring.html', '_blank');
+                        break;
+                    case '4':
+                        e.preventDefault();
+                        window.open('/ontology.html', '_blank');
+                        break;
+                    case '5':
+                        e.preventDefault();
+                        window.open('/deployment-manager.html', '_blank');
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

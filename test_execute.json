@@ -1,0 +1,6 @@
+{
+  "script": "const { chromium } = require('playwright'); async function replaySession() { console.log('테스트 실행!'); } replaySession();",
+  "options": {
+    "timeout": 30000
+  }
+}

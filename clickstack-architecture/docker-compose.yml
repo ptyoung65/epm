@@ -137,15 +137,25 @@ services:
       REDIS_PASSWORD: airis_redis_2024
       BATCH_SIZE: 1000
       FLUSH_INTERVAL: 5000
+      SERVICE_NAME: data-ingestion
     depends_on:
-      - clickhouse
-      - kafka
-      - redis
+      clickhouse:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - airis_network
     volumes:
       - ./services/data-ingestion/src:/app/src
       - ./services/data-ingestion/logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
 
   # Analytics Processing Service
   analytics-engine:
@@ -162,14 +172,23 @@ services:
       CLICKHOUSE_PASSWORD: airis_secure_2024
       KAFKA_BROKERS: kafka:9092
       ML_MODEL_PATH: /app/models
+      SERVICE_NAME: analytics-engine
     depends_on:
-      - clickhouse
-      - kafka
+      clickhouse:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     networks:
       - airis_network
     volumes:
       - ./services/analytics-engine/src:/app/src
       - ./services/analytics-engine/models:/app/models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
 
   # OpenTelemetry Collector
   otel-collector:
@@ -332,14 +351,16 @@ services:
     environment:
       - NODE_ENV=production
     depends_on:
-      - api-gateway
+      api-gateway:
+        condition: service_healthy
     networks:
       - airis_network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
       interval: 30s
       timeout: 10s
-      retries: 3
+      start_period: 30s
+      retries: 5
 
   # NGINX Reverse Proxy
   # nginx:

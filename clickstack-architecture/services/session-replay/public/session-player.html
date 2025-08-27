@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS 세션 리플레이 플레이어</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/rrweb-player@latest/dist/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #7c3aed;
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .session-info {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .player-container {
+            width: 100%;
+            margin: 30px auto;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        #player {
+            width: 100%;
+            height: 600px;
+        }
+
+        .status-message {
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .status-loading {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            color: #78350f;
+        }
+
+        .status-error {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+
+        .status-success {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            color: #166534;
+        }
+
+        .event-stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: #f3f4f6;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #8b5cf6;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 5px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #8b5cf6;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .session-input {
+            display: flex;
+            gap: 10px;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        .session-input input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .session-input input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 AIRIS 세션 리플레이 플레이어</h1>
+        <p class="subtitle">녹화된 사용자 세션을 재생합니다</p>
+
+        <div class="session-input">
+            <input type="text" id="sessionIdInput" placeholder="세션 ID를 입력하세요 (예: session_1234567890_abc123)">
+            <button id="loadBtn" class="btn-primary">세션 로드</button>
+        </div>
+
+        <div class="controls">
+            <button id="playBtn" class="btn-success" disabled>▶️ 재생</button>
+            <button id="pauseBtn" class="btn-warning" disabled>⏸️ 일시정지</button>
+            <button id="speedBtn" class="btn-primary" disabled>⚡ 2x 속도</button>
+            <button id="fullscreenBtn" class="btn-primary" disabled>🔳 전체화면</button>
+            <button id="mockBtn" class="btn-warning">🎭 목업 데이터 재생</button>
+        </div>
+
+        <div id="statusMessage" class="status-message status-loading" style="display: none;">
+            <span class="loading-spinner"></span> 세션 데이터 로딩 중...
+        </div>
+
+        <div class="session-info" id="sessionInfo" style="display: none;">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">세션 ID</div>
+                    <div class="info-value" id="sessionId">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">녹화 시간</div>
+                    <div class="info-value" id="recordTime">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">이벤트 수</div>
+                    <div class="info-value" id="eventCount">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">페이지 수</div>
+                    <div class="info-value" id="pageCount">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="player-container" id="playerContainer" style="display: none;">
+            <div id="player"></div>
+        </div>
+
+        <div class="event-stats" id="eventStats" style="display: none;">
+            <div class="stat-item">
+                <div class="stat-value" id="mouseEvents">0</div>
+                <div class="stat-label">마우스 이벤트</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="clickEvents">0</div>
+                <div class="stat-label">클릭 이벤트</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="inputEvents">0</div>
+                <div class="stat-label">입력 이벤트</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="scrollEvents">0</div>
+                <div class="stat-label">스크롤 이벤트</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- rrweb-player 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/rrweb-player@latest/dist/index.js"></script>
+    
+    <script>
+        let currentPlayer = null;
+        let currentSpeed = 1;
+
+        // URL 파라미터에서 세션 ID 가져오기
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionIdFromUrl = urlParams.get('sessionId');
+        
+        if (sessionIdFromUrl) {
+            document.getElementById('sessionIdInput').value = sessionIdFromUrl;
+            loadSession(sessionIdFromUrl);
+        }
+
+        // 세션 로드 버튼
+        document.getElementById('loadBtn').addEventListener('click', () => {
+            const sessionId = document.getElementById('sessionIdInput').value.trim();
+            if (sessionId) {
+                loadSession(sessionId);
+            } else {
+                alert('세션 ID를 입력해주세요!');
+            }
+        });
+
+        // Enter 키로 로드
+        document.getElementById('sessionIdInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('loadBtn').click();
+            }
+        });
+
+        // 세션 로드 함수
+        async function loadSession(sessionId) {
+            showStatus('loading', '세션 데이터 로딩 중...');
+            
+            try {
+                // API 호출하여 세션 데이터 가져오기
+                const response = await fetch(`http://localhost:3003/api/sessions/${sessionId}/events`);
+                
+                if (!response.ok) {
+                    throw new Error('세션을 찾을 수 없습니다');
+                }
+                
+                const data = await response.json();
+                
+                if (data.events && data.events.length > 0) {
+                    displaySession(data);
+                    showStatus('success', `✅ ${data.events.length}개 이벤트 로드 완료`);
+                } else {
+                    throw new Error('이벤트 데이터가 없습니다');
+                }
+                
+            } catch (error) {
+                console.error('세션 로드 실패:', error);
+                showStatus('error', `❌ ${error.message}`);
+                
+                // 로컬 스토리지 확인
+                checkLocalStorage(sessionId);
+            }
+        }
+
+        // 로컬 스토리지 확인
+        function checkLocalStorage(sessionId) {
+            const storedData = localStorage.getItem(`session_${sessionId}`);
+            if (storedData) {
+                try {
+                    const data = JSON.parse(storedData);
+                    displaySession(data);
+                    showStatus('success', '✅ 로컬 스토리지에서 세션 로드');
+                } catch (e) {
+                    console.error('로컬 데이터 파싱 실패:', e);
+                }
+            }
+        }
+
+        // 세션 표시
+        function displaySession(data) {
+            // 세션 정보 표시
+            document.getElementById('sessionInfo').style.display = 'block';
+            document.getElementById('sessionId').textContent = data.sessionId || '-';
+            document.getElementById('recordTime').textContent = formatDuration(data.duration || 0);
+            document.getElementById('eventCount').textContent = data.events.length;
+            document.getElementById('pageCount').textContent = data.pageViews ? data.pageViews.length : '1';
+            
+            // 이벤트 통계 계산
+            calculateEventStats(data.events);
+            
+            // 플레이어 생성
+            createPlayer(data.events);
+            
+            // 컨트롤 활성화
+            enableControls();
+        }
+
+        // 플레이어 생성
+        function createPlayer(events) {
+            // 기존 플레이어 제거
+            if (currentPlayer) {
+                currentPlayer.destroy();
+            }
+            
+            const playerContainer = document.getElementById('playerContainer');
+            playerContainer.style.display = 'block';
+            
+            // rrweb-player 생성
+            currentPlayer = new rrwebPlayer({
+                target: document.getElementById('player'),
+                props: {
+                    events: events,
+                    width: 1024,
+                    height: 576,
+                    autoPlay: false,
+                    speedOption: [1, 2, 4, 8],
+                    showDebug: false,
+                    showController: true
+                }
+            });
+        }
+
+        // 이벤트 통계 계산
+        function calculateEventStats(events) {
+            let stats = {
+                mouse: 0,
+                click: 0,
+                input: 0,
+                scroll: 0
+            };
+            
+            events.forEach(event => {
+                if (event.type === 3) { // IncrementalSnapshot
+                    if (event.data.source === 2) stats.mouse++;
+                    if (event.data.source === 1) stats.click++;
+                    if (event.data.source === 5) stats.input++;
+                    if (event.data.source === 3) stats.scroll++;
+                }
+            });
+            
+            document.getElementById('mouseEvents').textContent = stats.mouse;
+            document.getElementById('clickEvents').textContent = stats.click;
+            document.getElementById('inputEvents').textContent = stats.input;
+            document.getElementById('scrollEvents').textContent = stats.scroll;
+            document.getElementById('eventStats').style.display = 'flex';
+        }
+
+        // 컨트롤 활성화
+        function enableControls() {
+            document.getElementById('playBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = false;
+            document.getElementById('speedBtn').disabled = false;
+            document.getElementById('fullscreenBtn').disabled = false;
+        }
+
+        // 재생 컨트롤
+        document.getElementById('playBtn').addEventListener('click', () => {
+            if (currentPlayer) {
+                currentPlayer.play();
+            }
+        });
+
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            if (currentPlayer) {
+                currentPlayer.pause();
+            }
+        });
+
+        document.getElementById('speedBtn').addEventListener('click', () => {
+            if (currentPlayer) {
+                const speeds = [1, 2, 4, 8];
+                const currentIndex = speeds.indexOf(currentSpeed);
+                const nextIndex = (currentIndex + 1) % speeds.length;
+                currentSpeed = speeds[nextIndex];
+                
+                currentPlayer.setSpeed(currentSpeed);
+                document.getElementById('speedBtn').textContent = `⚡ ${currentSpeed}x 속도`;
+            }
+        });
+
+        document.getElementById('fullscreenBtn').addEventListener('click', () => {
+            const playerElement = document.getElementById('player');
+            if (playerElement.requestFullscreen) {
+                playerElement.requestFullscreen();
+            } else if (playerElement.webkitRequestFullscreen) {
+                playerElement.webkitRequestFullscreen();
+            } else if (playerElement.msRequestFullscreen) {
+                playerElement.msRequestFullscreen();
+            }
+        });
+
+        // 목업 데이터 재생
+        document.getElementById('mockBtn').addEventListener('click', () => {
+            loadMockData();
+        });
+
+        // 목업 데이터 생성
+        function loadMockData() {
+            const mockEvents = generateMockEvents();
+            const mockData = {
+                sessionId: 'mock_session_' + Date.now(),
+                events: mockEvents,
+                duration: 30000,
+                pageViews: ['/demo-page-1.html', '/demo-page-2.html', '/demo-page-3.html']
+            };
+            
+            displaySession(mockData);
+            showStatus('success', '✅ 목업 데이터 로드 완료');
+        }
+
+        // 목업 이벤트 생성
+        function generateMockEvents() {
+            // 간단한 목업 이벤트 생성
+            const events = [];
+            const timestamp = Date.now();
+            
+            // 메타 이벤트
+            events.push({
+                type: 4,
+                data: { href: 'http://localhost:3003/demo-page-1.html', width: 1920, height: 1080 },
+                timestamp: timestamp
+            });
+            
+            // DOM 스냅샷
+            events.push({
+                type: 2,
+                data: {
+                    node: {
+                        type: 0,
+                        childNodes: [{
+                            type: 1,
+                            tagName: 'html',
+                            attributes: { lang: 'ko' },
+                            childNodes: [
+                                {
+                                    type: 1,
+                                    tagName: 'head',
+                                    childNodes: [{
+                                        type: 1,
+                                        tagName: 'title',
+                                        childNodes: [{
+                                            type: 3,
+                                            textContent: 'AIRIS 세션 리플레이 데모'
+                                        }]
+                                    }]
+                                },
+                                {
+                                    type: 1,
+                                    tagName: 'body',
+                                    attributes: { style: 'background: #f0f0f0; padding: 20px;' },
+                                    childNodes: [{
+                                        type: 1,
+                                        tagName: 'div',
+                                        attributes: { style: 'background: white; padding: 30px; border-radius: 8px; max-width: 800px; margin: 0 auto;' },
+                                        childNodes: [
+                                            {
+                                                type: 1,
+                                                tagName: 'h1',
+                                                attributes: { style: 'color: #333; margin-bottom: 20px;' },
+                                                childNodes: [{
+                                                    type: 3,
+                                                    textContent: '🎬 세션 리플레이 목업 데이터'
+                                                }]
+                                            },
+                                            {
+                                                type: 1,
+                                                tagName: 'p',
+                                                attributes: { style: 'color: #666; line-height: 1.6;' },
+                                                childNodes: [{
+                                                    type: 3,
+                                                    textContent: '이것은 테스트용 목업 세션입니다. 실제 세션을 녹화하려면 데모 페이지를 방문하여 "기록 시작" 버튼을 클릭하세요.'
+                                                }]
+                                            },
+                                            {
+                                                type: 1,
+                                                tagName: 'button',
+                                                attributes: { 
+                                                    id: 'testBtn',
+                                                    style: 'background: #8b5cf6; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; margin-top: 20px;'
+                                                },
+                                                childNodes: [{
+                                                    type: 3,
+                                                    textContent: '클릭 테스트'
+                                                }]
+                                            }
+                                        ]
+                                    }]
+                                }
+                            ]
+                        }]
+                    },
+                    initialOffset: { left: 0, top: 0 }
+                },
+                timestamp: timestamp + 100
+            });
+            
+            // 마우스 이동 이벤트들
+            for (let i = 0; i < 10; i++) {
+                events.push({
+                    type: 3,
+                    data: {
+                        source: 2,
+                        type: 0,
+                        x: 100 + i * 50,
+                        y: 100 + i * 30
+                    },
+                    timestamp: timestamp + 1000 + i * 500
+                });
+            }
+            
+            // 클릭 이벤트
+            events.push({
+                type: 3,
+                data: {
+                    source: 1,
+                    type: 2,
+                    x: 400,
+                    y: 300
+                },
+                timestamp: timestamp + 6000
+            });
+            
+            return events;
+        }
+
+        // 상태 메시지 표시
+        function showStatus(type, message) {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.className = `status-message status-${type}`;
+            statusElement.innerHTML = type === 'loading' 
+                ? `<span class="loading-spinner"></span> ${message}`
+                : message;
+            statusElement.style.display = 'block';
+            
+            if (type !== 'loading') {
+                setTimeout(() => {
+                    statusElement.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // 시간 포맷
+        function formatDuration(ms) {
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes}분 ${remainingSeconds}초`;
+        }
+    </script>
+</body>
+</html>

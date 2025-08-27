@@ -1,4 +1,4 @@
-const { ClickHouseClient } = require('@clickhouse/client');
+const { createClient } = require('@clickhouse/client');
 const logger = require('../utils/logger');
 
 class ClickHouseService {
@@ -6,8 +6,8 @@ class ClickHouseService {
     const host = process.env.CLICKHOUSE_HOST || 'clickhouse';
     const port = process.env.CLICKHOUSE_PORT || '8123';
     
-    this.client = new ClickHouseClient({
-      url: `http://${host}:${port}`,
+    this.client = createClient({
+      host: `http://${host}:${port}`,
       database: process.env.CLICKHOUSE_DATABASE || 'airis_mon',
       username: process.env.CLICKHOUSE_USER || 'admin',
       password: process.env.CLICKHOUSE_PASSWORD || 'airis_secure_2024',

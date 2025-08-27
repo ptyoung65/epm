@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS 세션 리플레이 데모 - 페이지 1</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-start {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-start:hover {
+            background: #059669;
+        }
+
+        .btn-stop {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-stop:hover {
+            background: #dc2626;
+        }
+
+        .btn-test {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-test:hover {
+            background: #2563eb;
+        }
+
+        .btn-next {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .btn-next:hover {
+            background: #7c3aed;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status {
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .status.recording {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            color: #166534;
+        }
+
+        .status.stopped {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+
+        .form-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .interaction-area {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+
+        .draggable {
+            display: inline-block;
+            padding: 15px 30px;
+            background: #fbbf24;
+            color: #78350f;
+            border-radius: 8px;
+            cursor: move;
+            font-weight: 600;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+
+        .draggable:active {
+            transform: scale(0.95);
+        }
+
+        .drop-zone {
+            min-height: 100px;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+            color: #9ca3af;
+        }
+
+        .drop-zone.over {
+            background: #ede9fe;
+            border-color: #8b5cf6;
+        }
+
+        .session-info {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            font-size: 12px;
+            max-width: 300px;
+        }
+
+        .session-info h3 {
+            font-size: 14px;
+            margin-bottom: 10px;
+            color: #374151;
+        }
+
+        .session-info p {
+            margin: 5px 0;
+            color: #6b7280;
+        }
+
+        .pulse {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            margin-right: 5px;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 AIRIS 세션 리플레이 데모</h1>
+        <p class="subtitle">페이지 1: 메인 상호작용 테스트</p>
+
+        <div id="status" class="status stopped">
+            ⏹️ 녹화 대기 중...
+        </div>
+
+        <div class="controls">
+            <button id="testBtn" class="btn-test">🧪 테스트</button>
+            <button id="startBtn" class="btn-start">🔴 기록 시작</button>
+            <button id="stopBtn" class="btn-stop" disabled>⏹️ 기록 중지</button>
+            <button id="nextBtn" class="btn-next">📄 페이지 2로 이동</button>
+        </div>
+
+        <div class="form-section">
+            <h2>📝 사용자 입력 폼</h2>
+            <div class="form-group">
+                <label for="name">이름</label>
+                <input type="text" id="name" placeholder="이름을 입력하세요">
+            </div>
+            <div class="form-group">
+                <label for="email">이메일</label>
+                <input type="email" id="email" placeholder="email@example.com">
+            </div>
+            <div class="form-group">
+                <label for="message">메시지</label>
+                <textarea id="message" rows="4" placeholder="메시지를 입력하세요..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="category">카테고리</label>
+                <select id="category">
+                    <option value="">선택하세요</option>
+                    <option value="general">일반 문의</option>
+                    <option value="technical">기술 지원</option>
+                    <option value="billing">결제 관련</option>
+                    <option value="other">기타</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="interaction-area">
+            <h2>🎯 상호작용 테스트 영역</h2>
+            <div class="draggable" draggable="true">드래그 가능 요소 1</div>
+            <div class="draggable" draggable="true">드래그 가능 요소 2</div>
+            <div class="draggable" draggable="true">드래그 가능 요소 3</div>
+            
+            <div class="drop-zone" id="dropZone">
+                여기에 요소를 드롭하세요
+            </div>
+        </div>
+
+        <div class="controls" style="margin-top: 30px;">
+            <button id="randomBtn" class="btn-test">🎲 랜덤 액션</button>
+            <button id="errorBtn" class="btn-test" style="background: #f59e0b;">⚠️ 에러 시뮬레이션</button>
+        </div>
+    </div>
+
+    <div class="session-info" id="sessionInfo" style="display: none;">
+        <h3><span class="pulse"></span>녹화 중</h3>
+        <p>세션 ID: <span id="sessionId">-</span></p>
+        <p>녹화 시간: <span id="duration">0</span>초</p>
+        <p>이벤트 수: <span id="eventCount">0</span></p>
+    </div>
+
+    <!-- rrweb 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js"></script>
+    <!-- AIRIS 세션 추적 라이브러리 -->
+    <script src="/airis-session-tracker.js"></script>
+    
+    <script>
+        // AIRIS Session Tracker 초기화
+        const tracker = new AIRISSessionTracker({
+            apiEndpoint: 'http://localhost:3003',
+            sendBatchSize: 20,
+            sendInterval: 3000
+        });
+
+        // DOM 요소들
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const testBtn = document.getElementById('testBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const randomBtn = document.getElementById('randomBtn');
+        const errorBtn = document.getElementById('errorBtn');
+        const status = document.getElementById('status');
+        const sessionInfo = document.getElementById('sessionInfo');
+        const sessionId = document.getElementById('sessionId');
+        const duration = document.getElementById('duration');
+        const eventCount = document.getElementById('eventCount');
+
+        let startTime = null;
+        let durationTimer = null;
+
+        // 테스트 버튼 - 이벤트 리스너 동작 테스트
+        testBtn.addEventListener('click', () => {
+            alert('✅ 이벤트 리스너가 정상적으로 동작합니다!');
+            console.log('테스트 버튼 클릭됨');
+        });
+
+        // 녹화 시작
+        startBtn.addEventListener('click', () => {
+            tracker.startRecording();
+            startTime = Date.now();
+            
+            // UI 업데이트
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            status.className = 'status recording';
+            status.innerHTML = '🔴 녹화 중... (모든 상호작용이 기록됩니다)';
+            
+            sessionInfo.style.display = 'block';
+            sessionId.textContent = tracker.getSessionId().substring(0, 20) + '...';
+            
+            // 녹화 시간 업데이트
+            durationTimer = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                duration.textContent = elapsed;
+                eventCount.textContent = tracker.eventBuffer.length;
+            }, 1000);
+        });
+
+        // 녹화 중지
+        stopBtn.addEventListener('click', () => {
+            tracker.stopRecording();
+            
+            // UI 업데이트
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            status.className = 'status stopped';
+            status.innerHTML = '⏹️ 녹화 중지됨';
+            
+            sessionInfo.style.display = 'none';
+            
+            if (durationTimer) {
+                clearInterval(durationTimer);
+                durationTimer = null;
+            }
+        });
+
+        // 다음 페이지로 이동
+        nextBtn.addEventListener('click', () => {
+            // 녹화 중이면 이벤트가 자동으로 전송됨
+            window.location.href = '/demo-page-2.html';
+        });
+
+        // 랜덤 액션 생성
+        randomBtn.addEventListener('click', () => {
+            const actions = [
+                () => {
+                    document.getElementById('name').value = `사용자${Math.floor(Math.random() * 1000)}`;
+                },
+                () => {
+                    document.getElementById('email').value = `user${Math.floor(Math.random() * 1000)}@example.com`;
+                },
+                () => {
+                    document.getElementById('message').value = `테스트 메시지 ${new Date().toLocaleTimeString()}`;
+                },
+                () => {
+                    const options = ['general', 'technical', 'billing', 'other'];
+                    document.getElementById('category').value = options[Math.floor(Math.random() * options.length)];
+                },
+                () => {
+                    const colors = ['#f0f0f0', '#ffe4e1', '#e6f3ff', '#e1ffe1'];
+                    document.body.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                }
+            ];
+            
+            const randomAction = actions[Math.floor(Math.random() * actions.length)];
+            randomAction();
+            console.log('랜덤 액션 실행됨');
+        });
+
+        // 에러 시뮬레이션
+        errorBtn.addEventListener('click', () => {
+            console.error('의도적인 에러 발생:', new Error('테스트 에러'));
+            alert('⚠️ 에러가 콘솔에 기록되었습니다!');
+        });
+
+        // 드래그 앤 드롭 기능
+        const draggables = document.querySelectorAll('.draggable');
+        const dropZone = document.getElementById('dropZone');
+
+        draggables.forEach(draggable => {
+            draggable.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text', e.target.textContent);
+                e.target.style.opacity = '0.5';
+            });
+
+            draggable.addEventListener('dragend', (e) => {
+                e.target.style.opacity = '1';
+            });
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const data = e.dataTransfer.getData('text');
+            dropZone.innerHTML = `✅ "${data}"가 드롭되었습니다!`;
+            dropZone.classList.remove('over');
+            
+            setTimeout(() => {
+                dropZone.innerHTML = '여기에 요소를 드롭하세요';
+            }, 2000);
+        });
+
+        // 페이지 로드 시 자동으로 이전 세션 확인
+        window.addEventListener('load', () => {
+            const savedSessionId = sessionStorage.getItem('airis_session_id');
+            if (savedSessionId) {
+                console.log('이전 세션 발견:', savedSessionId);
+            }
+        });
+    </script>
+</body>
+</html>
