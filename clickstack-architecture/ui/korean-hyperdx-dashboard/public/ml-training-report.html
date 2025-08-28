@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML 모델 학습 보고서 - AIRIS EPM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <style>
+        /* shadcn/ui CSS Variables */
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96.1%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96.1%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96.1%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 222.2 84% 4.9%;
+        }
+
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 84% 4.9%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 212.7 26.8% 83.9%;
+        }
+        
+        /* Chart Container Fixed Height */
+        .ml-chart-container {
+            width: 100% !important;
+            height: 256px !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+        
+        .ml-chart-container.h-32 {
+            height: 8rem !important;
+        }
+        
+        .ml-chart-container.h-48 {
+            height: 12rem !important;
+        }
+        
+        .ml-chart-container.h-64 {
+            height: 16rem !important;
+        }
+        
+        .ml-chart-container canvas {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* Print Styles */
+        @media print {
+            .no-print { display: none !important; }
+            .print-break { page-break-before: always; }
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground">
+    <!-- Header Navigation -->
+    <header class="border-b bg-card no-print">
+        <div class="container mx-auto px-4 py-4">
+            <nav class="flex items-center justify-between">
+                <div class="flex items-center space-x-8">
+                    <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
+                        🚀 AIRIS EPM
+                    </a>
+                    <div class="flex space-x-6 text-sm">
+                        <button onclick="window.location.href='/'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+                            대시보드
+                        </button>
+                        <button onclick="window.location.href='/aiops-management.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+                            AIOPS 관리
+                        </button>
+                        <button class="text-primary font-semibold bg-transparent border-none cursor-pointer">
+                            학습 보고서
+                        </button>
+                    </div>
+                </div>
+                <div class="text-sm text-muted-foreground">
+                    <span id="currentTime"></span>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Report Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2" id="reportTitle">📊 ML 모델 학습 보고서</h1>
+                    <p class="text-muted-foreground" id="reportSubtitle">모델 학습 결과 및 성능 분석 리포트</p>
+                </div>
+                <div class="flex space-x-4 no-print">
+                    <button onclick="window.print()" class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+                        🖨️ 인쇄/PDF
+                    </button>
+                    <button onclick="exportReport()" class="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors">
+                        📥 내보내기
+                    </button>
+                    <button onclick="goBackToTraining()" class="px-4 py-2 bg-accent text-accent-foreground rounded-md hover:bg-accent/90 transition-colors">
+                        ↩️ 학습 페이지로
+                    </button>
+                </div>
+            </div>
+
+            <!-- Report Metadata -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-card rounded-lg border p-4">
+                    <p class="text-sm text-muted-foreground mb-1">모델 타입</p>
+                    <p class="text-lg font-semibold" id="modelType">Autoencoder</p>
+                </div>
+                <div class="bg-card rounded-lg border p-4">
+                    <p class="text-sm text-muted-foreground mb-1">학습 완료일</p>
+                    <p class="text-lg font-semibold" id="trainingDate">2024-01-15 14:32:15</p>
+                </div>
+                <div class="bg-card rounded-lg border p-4">
+                    <p class="text-sm text-muted-foreground mb-1">학습 시간</p>
+                    <p class="text-lg font-semibold" id="trainingDuration">42분 18초</p>
+                </div>
+                <div class="bg-card rounded-lg border p-4">
+                    <p class="text-sm text-muted-foreground mb-1">최종 정확도</p>
+                    <p class="text-lg font-semibold text-green-600" id="finalAccuracy">96.8%</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Executive Summary -->
+        <div class="bg-card rounded-lg border p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">📋 실행 요약 (Executive Summary)</h2>
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <h3 class="font-medium text-sm text-muted-foreground mb-2">학습 결과</h3>
+                        <ul class="space-y-1 text-sm" id="trainingSummary">
+                            <li>✅ 학습 성공적으로 완료</li>
+                            <li>🎯 목표 정확도 95% 달성</li>
+                            <li>📈 검증 손실 0.0234 달성</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-sm text-muted-foreground mb-2">성능 지표</h3>
+                        <ul class="space-y-1 text-sm" id="performanceMetrics">
+                            <li>정밀도 (Precision): 94.2%</li>
+                            <li>재현율 (Recall): 91.8%</li>
+                            <li>F1-Score: 93.0%</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-sm text-muted-foreground mb-2">권장사항</h3>
+                        <ul class="space-y-1 text-sm" id="recommendations">
+                            <li>🚀 프로덕션 배포 준비 완료</li>
+                            <li>📊 정기 재학습 권장 (월 1회)</li>
+                            <li>⚡ 실시간 모니터링 설정 필요</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Configuration -->
+        <div class="bg-card rounded-lg border p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">⚙️ 모델 설정</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-medium mb-3">하이퍼파라미터</h3>
+                    <div class="space-y-2 text-sm" id="hyperparameters">
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">학습률 (Learning Rate):</span>
+                            <span class="font-mono">0.001</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">배치 크기 (Batch Size):</span>
+                            <span class="font-mono">32</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">에포크 수 (Epochs):</span>
+                            <span class="font-mono">100</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">Dropout Rate:</span>
+                            <span class="font-mono">0.2</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">Validation Split:</span>
+                            <span class="font-mono">0.2</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-medium mb-3">모델 아키텍처</h3>
+                    <div class="space-y-2 text-sm" id="architecture">
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">입력 차원:</span>
+                            <span class="font-mono">100</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">은닉층:</span>
+                            <span class="font-mono">64 → 32 → 16</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">출력 차원:</span>
+                            <span class="font-mono">100</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">활성화 함수:</span>
+                            <span class="font-mono">ReLU, Sigmoid</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">최적화기:</span>
+                            <span class="font-mono">Adam</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Training Progress Charts -->
+        <div class="bg-card rounded-lg border p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">📈 학습 진행 차트</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-medium mb-3">손실 함수 추이</h3>
+                    <div class="ml-chart-container">
+                        <canvas id="lossChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-medium mb-3">정확도 추이</h3>
+                    <div class="ml-chart-container">
+                        <canvas id="accuracyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Performance Analysis -->
+        <div class="bg-card rounded-lg border p-6 mb-8 print-break">
+            <h2 class="text-xl font-semibold mb-4">🎯 성능 분석</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-medium mb-3">이상 탐지 성능</h3>
+                    <div class="ml-chart-container h-64">
+                        <canvas id="anomalyChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-medium mb-3">재구성 오류 분포</h3>
+                    <div class="ml-chart-container h-64">
+                        <canvas id="reconstructionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Performance Metrics Table -->
+            <div class="mt-6">
+                <h3 class="font-medium mb-3">상세 성능 지표</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b">
+                                <th class="text-left py-2 px-4">지표</th>
+                                <th class="text-left py-2 px-4">훈련 세트</th>
+                                <th class="text-left py-2 px-4">검증 세트</th>
+                                <th class="text-left py-2 px-4">테스트 세트</th>
+                                <th class="text-left py-2 px-4">목표값</th>
+                            </tr>
+                        </thead>
+                        <tbody id="metricsTable">
+                            <tr class="border-b">
+                                <td class="py-2 px-4">정확도 (Accuracy)</td>
+                                <td class="py-2 px-4 font-mono">98.2%</td>
+                                <td class="py-2 px-4 font-mono">96.8%</td>
+                                <td class="py-2 px-4 font-mono">95.4%</td>
+                                <td class="py-2 px-4 text-muted-foreground">95.0%</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-2 px-4">정밀도 (Precision)</td>
+                                <td class="py-2 px-4 font-mono">97.8%</td>
+                                <td class="py-2 px-4 font-mono">94.2%</td>
+                                <td class="py-2 px-4 font-mono">93.1%</td>
+                                <td class="py-2 px-4 text-muted-foreground">90.0%</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-2 px-4">재현율 (Recall)</td>
+                                <td class="py-2 px-4 font-mono">96.4%</td>
+                                <td class="py-2 px-4 font-mono">91.8%</td>
+                                <td class="py-2 px-4 font-mono">90.7%</td>
+                                <td class="py-2 px-4 text-muted-foreground">85.0%</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-2 px-4">F1-Score</td>
+                                <td class="py-2 px-4 font-mono">97.1%</td>
+                                <td class="py-2 px-4 font-mono">93.0%</td>
+                                <td class="py-2 px-4 font-mono">91.9%</td>
+                                <td class="py-2 px-4 text-muted-foreground">87.5%</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 px-4">재구성 오류 (MSE)</td>
+                                <td class="py-2 px-4 font-mono">0.0187</td>
+                                <td class="py-2 px-4 font-mono">0.0234</td>
+                                <td class="py-2 px-4 font-mono">0.0267</td>
+                                <td class="py-2 px-4 text-muted-foreground">< 0.05</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Business Impact Analysis -->
+        <div class="bg-card rounded-lg border p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">💼 비즈니스 임팩트 분석</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+                    <div class="flex items-center mb-2">
+                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">✓</div>
+                        <h3 class="font-medium">예상 효과</h3>
+                    </div>
+                    <ul class="space-y-1 text-sm ml-11" id="expectedBenefits">
+                        <li>• 장애 조기 감지: 평균 15분 단축</li>
+                        <li>• 시스템 가동률: 99.9% → 99.95%</li>
+                        <li>• 운영 비용 절감: 월 $2,500</li>
+                        <li>• 고객 만족도 향상 예상</li>
+                    </ul>
+                </div>
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                    <div class="flex items-center mb-2">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">📊</div>
+                        <h3 class="font-medium">ROI 분석</h3>
+                    </div>
+                    <ul class="space-y-1 text-sm ml-11" id="roiAnalysis">
+                        <li>• 개발 비용: $15,000</li>
+                        <li>• 월간 절감: $2,500</li>
+                        <li>• ROI 회수 기간: 6개월</li>
+                        <li>• 연간 예상 절감: $30,000</li>
+                    </ul>
+                </div>
+                <div class="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4">
+                    <div class="flex items-center mb-2">
+                        <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-sm font-bold mr-3">⚠️</div>
+                        <h3 class="font-medium">리스크 요소</h3>
+                    </div>
+                    <ul class="space-y-1 text-sm ml-11" id="riskFactors">
+                        <li>• 데이터 품질 의존성 높음</li>
+                        <li>• 정기 재학습 필요</li>
+                        <li>• 운영팀 교육 필요</li>
+                        <li>• 초기 오탐율 가능성</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommendations and Next Steps -->
+        <div class="bg-card rounded-lg border p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">📋 권장사항 및 다음 단계</h2>
+            <div class="space-y-6">
+                <div>
+                    <h3 class="font-medium mb-3 text-green-600">🚀 즉시 실행 권장</h3>
+                    <ul class="space-y-2 text-sm ml-4" id="immediateActions">
+                        <li>• 프로덕션 환경 배포 준비</li>
+                        <li>• 실시간 모니터링 대시보드 설정</li>
+                        <li>• 알림 임계값 설정 (재구성 오류 > 0.05)</li>
+                        <li>• 운영팀 교육 및 매뉴얼 작성</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-medium mb-3 text-blue-600">📅 단기 계획 (1-3개월)</h3>
+                    <ul class="space-y-2 text-sm ml-4" id="shortTermPlans">
+                        <li>• A/B 테스트를 통한 성능 검증</li>
+                        <li>• 사용자 피드백 수집 및 분석</li>
+                        <li>• 모델 성능 지표 정기 리뷰</li>
+                        <li>• 추가 데이터 수집 및 학습 데이터 확장</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-medium mb-3 text-purple-600">🔮 장기 전략 (3-12개월)</h3>
+                    <ul class="space-y-2 text-sm ml-4" id="longTermStrategy">
+                        <li>• 다중 모델 앙상블 구축</li>
+                        <li>• 자동 재학습 파이프라인 구축</li>
+                        <li>• 설명 가능한 AI 기능 추가</li>
+                        <li>• 다른 시스템으로 확장 적용</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Technical Appendix -->
+        <div class="bg-card rounded-lg border p-6 print-break">
+            <h2 class="text-xl font-semibold mb-4">📖 기술 부록</h2>
+            
+            <!-- Data Information -->
+            <div class="mb-6">
+                <h3 class="font-medium mb-3">데이터셋 정보</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                        <span class="text-muted-foreground">총 샘플 수:</span>
+                        <p class="font-mono" id="totalSamples">12,000</p>
+                    </div>
+                    <div>
+                        <span class="text-muted-foreground">훈련 세트:</span>
+                        <p class="font-mono" id="trainSamples">8,400 (70%)</p>
+                    </div>
+                    <div>
+                        <span class="text-muted-foreground">검증 세트:</span>
+                        <p class="font-mono" id="valSamples">2,400 (20%)</p>
+                    </div>
+                    <div>
+                        <span class="text-muted-foreground">테스트 세트:</span>
+                        <p class="font-mono" id="testSamples">1,200 (10%)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Training Environment -->
+            <div class="mb-6">
+                <h3 class="font-medium mb-3">학습 환경</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                        <span class="text-muted-foreground">Python 버전:</span>
+                        <p class="font-mono">3.9.7</p>
+                    </div>
+                    <div>
+                        <span class="text-muted-foreground">TensorFlow:</span>
+                        <p class="font-mono">2.14.0</p>
+                    </div>
+                    <div>
+                        <span class="text-muted-foreground">GPU:</span>
+                        <p class="font-mono">NVIDIA Tesla V100</p>
+                    </div>
+                    <div>
+                        <span class="text-muted-foreground">메모리 사용량:</span>
+                        <p class="font-mono">4.2GB</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Checkpoints -->
+            <div>
+                <h3 class="font-medium mb-3">모델 체크포인트</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b">
+                                <th class="text-left py-2">에포크</th>
+                                <th class="text-left py-2">훈련 손실</th>
+                                <th class="text-left py-2">검증 손실</th>
+                                <th class="text-left py-2">체크포인트</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="py-2 font-mono">25</td>
+                                <td class="py-2 font-mono">0.0432</td>
+                                <td class="py-2 font-mono">0.0456</td>
+                                <td class="py-2">checkpoint_025.h5</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-2 font-mono">50</td>
+                                <td class="py-2 font-mono">0.0287</td>
+                                <td class="py-2 font-mono">0.0298</td>
+                                <td class="py-2">checkpoint_050.h5</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="py-2 font-mono">75</td>
+                                <td class="py-2 font-mono">0.0201</td>
+                                <td class="py-2 font-mono">0.0245</td>
+                                <td class="py-2">checkpoint_075.h5</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 font-mono">100</td>
+                                <td class="py-2 font-mono">0.0187</td>
+                                <td class="py-2 font-mono">0.0234</td>
+                                <td class="py-2 font-bold text-green-600">final_model.h5 ⭐</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-sm text-muted-foreground py-8 border-t">
+            <p>© 2024 AIRIS EPM - ML Model Training Report | Generated on <span id="reportGeneratedTime"></span></p>
+            <p class="mt-1">이 보고서는 AIRIS EPM 시스템에서 자동 생성되었습니다.</p>
+        </div>
+    </main>
+
+    <script>
+        let modelType = 'autoencoder';
+        let charts = {};
+
+        // Initialize page based on URL parameters
+        function initializePage() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const model = urlParams.get('model');
+            
+            if (model) {
+                modelType = model.toLowerCase();
+                updateModelContent(modelType);
+            }
+            
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+            
+            generateMockData();
+            createCharts();
+            
+            // Set report generation time
+            document.getElementById('reportGeneratedTime').textContent = new Date().toLocaleString('ko-KR');
+        }
+
+        function updateCurrentTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('currentTime').textContent = timeString;
+        }
+
+        function updateModelContent(model) {
+            const modelConfigs = {
+                autoencoder: {
+                    title: '🔬 Autoencoder 이상탐지 모델 학습 보고서',
+                    subtitle: '딥러닝 기반 비정상 패턴 감지 모델의 성능 분석 리포트',
+                    type: 'Autoencoder',
+                    accuracy: '96.8%',
+                    duration: '42분 18초',
+                    backLink: '/ml-training-autoencoder.html'
+                },
+                lstm: {
+                    title: '📈 LSTM 장애 예측 모델 학습 보고서',
+                    subtitle: '시계열 분석을 통한 시스템 장애 예측 모델의 성능 분석 리포트',
+                    type: 'LSTM',
+                    accuracy: '94.2%',
+                    duration: '38분 45초',
+                    backLink: '/ml-training-lstm.html'
+                },
+                rca: {
+                    title: '🔍 RCA 근본원인 분석 모델 학습 보고서',
+                    subtitle: '머신러닝 기반 근본원인 자동 분석 모델의 성능 분석 리포트',
+                    type: 'RCA Analysis',
+                    accuracy: '91.5%',
+                    duration: '55분 12초',
+                    backLink: '/ml-training-rca.html'
+                },
+                clustering: {
+                    title: '🎯 클러스터링 패턴 분석 모델 학습 보고서',
+                    subtitle: '비지도 학습을 통한 패턴 클러스터링 모델의 성능 분석 리포트',
+                    type: 'Clustering',
+                    accuracy: '89.7%',
+                    duration: '29분 33초',
+                    backLink: '/ml-training-clustering.html'
+                }
+            };
+
+            const config = modelConfigs[model] || modelConfigs.autoencoder;
+            
+            document.getElementById('reportTitle').textContent = config.title;
+            document.getElementById('reportSubtitle').textContent = config.subtitle;
+            document.getElementById('modelType').textContent = config.type;
+            document.getElementById('finalAccuracy').textContent = config.accuracy;
+            document.getElementById('trainingDuration').textContent = config.duration;
+            
+            // Store back link for navigation
+            window.modelBackLink = config.backLink;
+        }
+
+        function generateMockData() {
+            // Generate training loss data
+            const epochs = Array.from({length: 100}, (_, i) => i + 1);
+            const trainingLoss = epochs.map(epoch => {
+                const base = 0.5 * Math.exp(-epoch * 0.05);
+                const noise = (Math.random() - 0.5) * 0.01;
+                return Math.max(0.01, base + noise);
+            });
+            
+            const validationLoss = epochs.map(epoch => {
+                const base = 0.6 * Math.exp(-epoch * 0.04);
+                const noise = (Math.random() - 0.5) * 0.015;
+                return Math.max(0.015, base + noise);
+            });
+
+            // Generate accuracy data
+            const trainingAccuracy = epochs.map(epoch => {
+                const base = 1 - 0.5 * Math.exp(-epoch * 0.05);
+                const noise = (Math.random() - 0.5) * 0.01;
+                return Math.min(1, Math.max(0.5, base + noise)) * 100;
+            });
+            
+            const validationAccuracy = epochs.map(epoch => {
+                const base = 1 - 0.6 * Math.exp(-epoch * 0.04);
+                const noise = (Math.random() - 0.5) * 0.015;
+                return Math.min(1, Math.max(0.4, base + noise)) * 100;
+            });
+
+            // Store data globally
+            window.reportData = {
+                epochs,
+                trainingLoss,
+                validationLoss,
+                trainingAccuracy,
+                validationAccuracy
+            };
+        }
+
+        function createCharts() {
+            createLossChart();
+            createAccuracyChart();
+            createAnomalyChart();
+            createReconstructionChart();
+        }
+
+        function createLossChart() {
+            const ctx = document.getElementById('lossChart').getContext('2d');
+            charts.lossChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: window.reportData.epochs,
+                    datasets: [{
+                        label: '훈련 손실',
+                        data: window.reportData.trainingLoss,
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: false
+                    }, {
+                        label: '검증 손실',
+                        data: window.reportData.validationLoss,
+                        borderColor: 'rgb(239, 68, 68)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 0 },
+                    plugins: {
+                        legend: { display: true },
+                        title: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            title: { 
+                                display: true, 
+                                text: 'Epoch' 
+                            }
+                        },
+                        y: { 
+                            title: { 
+                                display: true, 
+                                text: 'Loss' 
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function createAccuracyChart() {
+            const ctx = document.getElementById('accuracyChart').getContext('2d');
+            charts.accuracyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: window.reportData.epochs,
+                    datasets: [{
+                        label: '훈련 정확도',
+                        data: window.reportData.trainingAccuracy,
+                        borderColor: 'rgb(34, 197, 94)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        tension: 0.4,
+                        fill: false
+                    }, {
+                        label: '검증 정확도',
+                        data: window.reportData.validationAccuracy,
+                        borderColor: 'rgb(168, 85, 247)',
+                        backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                        tension: 0.4,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 0 },
+                    plugins: {
+                        legend: { display: true }
+                    },
+                    scales: {
+                        x: { 
+                            title: { 
+                                display: true, 
+                                text: 'Epoch' 
+                            }
+                        },
+                        y: { 
+                            title: { 
+                                display: true, 
+                                text: 'Accuracy (%)' 
+                            },
+                            min: 0,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        function createAnomalyChart() {
+            const ctx = document.getElementById('anomalyChart').getContext('2d');
+            
+            // Generate confusion matrix style data
+            const data = {
+                labels: ['정상', '이상'],
+                datasets: [{
+                    label: '실제',
+                    data: [1147, 53],  // True: 1147 normal, 53 anomalies
+                    backgroundColor: ['rgba(34, 197, 94, 0.8)', 'rgba(239, 68, 68, 0.8)']
+                }]
+            };
+
+            charts.anomalyChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 0 },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: '테스트 세트 분포 (총 1,200개)'
+                        }
+                    }
+                }
+            });
+        }
+
+        function createReconstructionChart() {
+            const ctx = document.getElementById('reconstructionChart').getContext('2d');
+            
+            // Generate reconstruction error distribution
+            const labels = ['0-0.01', '0.01-0.02', '0.02-0.03', '0.03-0.04', '0.04-0.05', 
+                           '0.05-0.06', '0.06-0.07', '0.07-0.08', '0.08-0.09', '0.09+'];
+            const normalData = [420, 380, 290, 45, 12, 3, 2, 1, 1, 0]; // Normal samples
+            const anomalyData = [0, 1, 2, 5, 8, 12, 15, 6, 3, 1];      // Anomaly samples
+
+            charts.reconstructionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '정상 샘플',
+                        data: normalData,
+                        backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                        borderColor: 'rgb(34, 197, 94)',
+                        borderWidth: 1
+                    }, {
+                        label: '이상 샘플',
+                        data: anomalyData,
+                        backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                        borderColor: 'rgb(239, 68, 68)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 0 },
+                    plugins: {
+                        legend: { 
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            title: { 
+                                display: true, 
+                                text: '재구성 오류 범위' 
+                            }
+                        },
+                        y: { 
+                            title: { 
+                                display: true, 
+                                text: '샘플 수' 
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function exportReport() {
+            // Create export data
+            const exportData = {
+                modelType: modelType,
+                generatedAt: new Date().toISOString(),
+                trainingResults: window.reportData,
+                metadata: {
+                    accuracy: document.getElementById('finalAccuracy').textContent,
+                    duration: document.getElementById('trainingDuration').textContent,
+                    trainingDate: document.getElementById('trainingDate').textContent
+                }
+            };
+
+            // Create and download JSON file
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `ml-training-report-${modelType}-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            URL.revokeObjectURL(url);
+            
+            // Show success message
+            showNotification('📥 보고서가 성공적으로 내보내기되었습니다!', 'success');
+        }
+
+        function goBackToTraining() {
+            if (window.modelBackLink) {
+                window.location.href = window.modelBackLink;
+            } else {
+                window.location.href = '/ml-training-autoencoder.html';
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-md text-white font-medium shadow-lg transition-all duration-300 transform translate-x-full`;
+            
+            if (type === 'success') {
+                notification.className += ' bg-green-500';
+            } else if (type === 'error') {
+                notification.className += ' bg-red-500';
+            } else {
+                notification.className += ' bg-blue-500';
+            }
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            // Animate out and remove
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Initialize page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializePage);
+
+        // Handle print media
+        window.addEventListener('beforeprint', function() {
+            // Adjust charts for print if needed
+            Object.values(charts).forEach(chart => {
+                chart.resize();
+            });
+        });
+    </script>
+</body>
+</html>

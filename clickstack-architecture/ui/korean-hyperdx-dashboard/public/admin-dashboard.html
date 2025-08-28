@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full bg-gray-50 dark:bg-gray-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS EPM - 통합 관리자 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- shadcn/ui CSS variables -->
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 221.2 83.2% 53.3%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 221.2 83.2% 53.3%;
+            --radius: 0.5rem;
+        }
+        
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 217.2 91.2% 59.8%;
+            --primary-foreground: 222.2 84% 4.9%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 224.3 76.3% 94.1%;
+        }
+    </style>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: 'hsl(var(--border))',
+                        input: 'hsl(var(--input))',
+                        ring: 'hsl(var(--ring))',
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        primary: {
+                            DEFAULT: 'hsl(var(--primary))',
+                            foreground: 'hsl(var(--primary-foreground))'
+                        },
+                        secondary: {
+                            DEFAULT: 'hsl(var(--secondary))',
+                            foreground: 'hsl(var(--secondary-foreground))'
+                        },
+                        destructive: {
+                            DEFAULT: 'hsl(var(--destructive))',
+                            foreground: 'hsl(var(--destructive-foreground))'
+                        },
+                        muted: {
+                            DEFAULT: 'hsl(var(--muted))',
+                            foreground: 'hsl(var(--muted-foreground))'
+                        },
+                        accent: {
+                            DEFAULT: 'hsl(var(--accent))',
+                            foreground: 'hsl(var(--accent-foreground))'
+                        },
+                        popover: {
+                            DEFAULT: 'hsl(var(--popover))',
+                            foreground: 'hsl(var(--popover-foreground))'
+                        },
+                        card: {
+                            DEFAULT: 'hsl(var(--card))',
+                            foreground: 'hsl(var(--card-foreground))'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-full bg-background text-foreground">
+    <div class="min-h-full">
+        <!-- Navigation -->
+        <nav class="bg-card border-b border-border">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <a href="/portal.html" class="text-xl font-bold text-foreground hover:text-primary transition-colors cursor-pointer">
+                                🚀 AIRIS EPM
+                            </a>
+                        </div>
+                        <div class="hidden md:block">
+                            <div class="ml-10 flex items-baseline space-x-4">
+                                <!-- 드롭다운 메뉴들 -->
+                                <div class="relative group">
+                                    <button class="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center">
+                                        📊 APM 모니터링 <i class="fas fa-chevron-down ml-1"></i>
+                                    </button>
+                                    <div class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-card border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                        <div class="py-1">
+                                            <a href="/j2ee-dashboard.html" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground">☕ J2EE 모니터링</a>
+                                            <a href="/was-dashboard.html" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground">🏗️ WAS 모니터링</a>
+                                            <a href="/exception-dashboard.html" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground">🚨 예외 추적</a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="relative group">
+                                    <button class="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center">
+                                        🧠 AI & ML <i class="fas fa-chevron-down ml-1"></i>
+                                    </button>
+                                    <div class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-card border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                        <div class="py-1">
+                                            <a href="/aiops-management.html" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground">🤖 AIOps 관리</a>
+                                            <a href="/ml-training-report.html" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground">📊 ML 훈련 리포트</a>
+                                            <a href="/clustering-insights.html" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground">💡 클러스터링 인사이트</a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="relative group">
+                                    <button class="bg-primary text-primary-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center">
+                                        ⚙️ 관리 <i class="fas fa-chevron-down ml-1"></i>
+                                    </button>
+                                    <div class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-card border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                        <div class="py-1">
+                                            <a href="/admin-dashboard.html" class="block px-4 py-2 text-sm bg-accent text-accent-foreground">🎛️ 관리자 대시보드</a>
+                                            <a href="/session-management.html" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground">👤 세션 관리</a>
+                                            <a href="/deployment-manager.html" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground">🚀 배포 관리</a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="relative group">
+                                    <button class="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium flex items-center">
+                                        🔍 분석 <i class="fas fa-chevron-down ml-1"></i>
+                                    </button>
+                                    <div class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-card border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                        <div class="py-1">
+                                            <a href="/topology-dashboard.html" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground">🗺️ 서비스 토폴로지</a>
+                                            <a href="/alert-dashboard.html" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground">🔔 알림 관리</a>
+                                            <a href="/ontology.html" class="block px-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground">🧠 온톨로지 시스템</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button id="themeToggle" class="text-muted-foreground hover:text-foreground p-2">
+                            <i class="fas fa-moon dark:hidden"></i>
+                            <i class="fas fa-sun hidden dark:inline"></i>
+                        </button>
+                        <button id="refreshBtn" class="bg-primary text-primary-foreground px-3 py-2 rounded-md text-sm hover:bg-primary/90">
+                            <i class="fas fa-sync-alt mr-2"></i>새로고침
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <!-- Page Header -->
+            <div class="px-4 py-4 sm:px-0">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-3xl font-bold text-foreground">🎛️ 통합 관리자 대시보드</h1>
+                    <div class="text-sm text-muted-foreground">
+                        마지막 업데이트: <span id="lastUpdate"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Overview Cards -->
+            <div class="px-4 py-4 sm:px-0">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- System Status -->
+                    <div class="bg-card rounded-lg border border-border p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-server text-green-600 dark:text-green-400"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <p class="text-sm font-medium text-muted-foreground">시스템 상태</p>
+                                <p class="text-2xl font-semibold text-green-600 dark:text-green-400">정상</p>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-xs text-muted-foreground">
+                                <span class="text-green-600 dark:text-green-400">13/15</span> 서비스 실행 중
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Active Users -->
+                    <div class="bg-card rounded-lg border border-border p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-users text-blue-600 dark:text-blue-400"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <p class="text-sm font-medium text-muted-foreground">활성 사용자</p>
+                                <p class="text-2xl font-semibold text-foreground" id="activeUsers">247</p>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-xs text-muted-foreground">
+                                <span class="text-green-600 dark:text-green-400">+12%</span> 지난 시간 대비
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Alerts -->
+                    <div class="bg-card rounded-lg border border-border p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <p class="text-sm font-medium text-muted-foreground">활성 알림</p>
+                                <p class="text-2xl font-semibold text-foreground" id="activeAlerts">3</p>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-xs text-muted-foreground">
+                                <span class="text-red-600 dark:text-red-400">2 Critical</span>, 1 Warning
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- System Performance -->
+                    <div class="bg-card rounded-lg border border-border p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-tachometer-alt text-purple-600 dark:text-purple-400"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <p class="text-sm font-medium text-muted-foreground">시스템 성능</p>
+                                <p class="text-2xl font-semibold text-foreground" id="systemPerf">94%</p>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-xs text-muted-foreground">
+                                평균 응답시간: <span class="text-green-600 dark:text-green-400">145ms</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Management Sections -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <!-- System Management -->
+                    <div class="bg-card rounded-lg border border-border">
+                        <div class="px-6 py-4 border-b border-border">
+                            <h2 class="text-xl font-semibold text-foreground flex items-center">
+                                <i class="fas fa-cogs mr-2 text-blue-600"></i>
+                                시스템 관리
+                            </h2>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <button class="management-btn" data-page="external-systems-config">
+                                    <i class="fas fa-plug text-green-600"></i>
+                                    <div>
+                                        <p class="font-medium">외부 시스템 연결</p>
+                                        <p class="text-xs text-muted-foreground">ITSM, ERP, BI 도구 설정</p>
+                                    </div>
+                                </button>
+                                
+                                <button class="management-btn" data-page="users-roles">
+                                    <i class="fas fa-user-shield text-blue-600"></i>
+                                    <div>
+                                        <p class="font-medium">사용자 & 권한</p>
+                                        <p class="text-xs text-muted-foreground">역할 및 접근 권한 관리</p>
+                                    </div>
+                                </button>
+                                
+                                <button class="management-btn" data-page="system-settings">
+                                    <i class="fas fa-sliders-h text-purple-600"></i>
+                                    <div>
+                                        <p class="font-medium">시스템 설정</p>
+                                        <p class="text-xs text-muted-foreground">환경 변수 및 구성 관리</p>
+                                    </div>
+                                </button>
+                                
+                                <button class="management-btn" data-page="backup-restore">
+                                    <i class="fas fa-database text-orange-600"></i>
+                                    <div>
+                                        <p class="font-medium">백업 & 복원</p>
+                                        <p class="text-xs text-muted-foreground">데이터 백업 및 복원 관리</p>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security & Monitoring -->
+                    <div class="bg-card rounded-lg border border-border">
+                        <div class="px-6 py-4 border-b border-border">
+                            <h2 class="text-xl font-semibold text-foreground flex items-center">
+                                <i class="fas fa-shield-alt mr-2 text-green-600"></i>
+                                보안 & 모니터링
+                            </h2>
+                        </div>
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <button class="management-btn" data-page="api-tokens">
+                                    <i class="fas fa-key text-yellow-600"></i>
+                                    <div>
+                                        <p class="font-medium">API 키 & 토큰</p>
+                                        <p class="text-xs text-muted-foreground">API 접근 권한 관리</p>
+                                    </div>
+                                </button>
+                                
+                                <button class="management-btn" data-page="audit-logs">
+                                    <i class="fas fa-clipboard-list text-indigo-600"></i>
+                                    <div>
+                                        <p class="font-medium">감사 로그</p>
+                                        <p class="text-xs text-muted-foreground">시스템 활동 추적</p>
+                                    </div>
+                                </button>
+                                
+                                <button class="management-btn" data-page="alert-rules">
+                                    <i class="fas fa-bell text-red-600"></i>
+                                    <div>
+                                        <p class="font-medium">알림 규칙</p>
+                                        <p class="text-xs text-muted-foreground">알림 템플릿 및 규칙</p>
+                                    </div>
+                                </button>
+                                
+                                <button class="management-btn" data-page="performance-metrics">
+                                    <i class="fas fa-chart-line text-teal-600"></i>
+                                    <div>
+                                        <p class="font-medium">성능 메트릭</p>
+                                        <p class="text-xs text-muted-foreground">임계값 및 메트릭 관리</p>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-card rounded-lg border border-border mb-8">
+                    <div class="px-6 py-4 border-b border-border">
+                        <h2 class="text-xl font-semibold text-foreground flex items-center">
+                            <i class="fas fa-bolt mr-2 text-yellow-600"></i>
+                            빠른 작업
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                            <button class="quick-action-btn" onclick="restartServices()">
+                                <i class="fas fa-redo text-blue-600"></i>
+                                <span>서비스 재시작</span>
+                            </button>
+                            
+                            <button class="quick-action-btn" onclick="clearCache()">
+                                <i class="fas fa-broom text-green-600"></i>
+                                <span>캐시 정리</span>
+                            </button>
+                            
+                            <button class="quick-action-btn" onclick="exportLogs()">
+                                <i class="fas fa-download text-purple-600"></i>
+                                <span>로그 내보내기</span>
+                            </button>
+                            
+                            <button class="quick-action-btn" onclick="runHealthCheck()">
+                                <i class="fas fa-stethoscope text-red-600"></i>
+                                <span>헬스체크</span>
+                            </button>
+                            
+                            <button class="quick-action-btn" onclick="syncExternalSystems()">
+                                <i class="fas fa-sync text-orange-600"></i>
+                                <span>외부 동기화</span>
+                            </button>
+                            
+                            <button class="quick-action-btn" onclick="generateReport()">
+                                <i class="fas fa-file-alt text-teal-600"></i>
+                                <span>리포트 생성</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Status -->
+                <div class="bg-card rounded-lg border border-border">
+                    <div class="px-6 py-4 border-b border-border">
+                        <h2 class="text-xl font-semibold text-foreground flex items-center">
+                            <i class="fas fa-heartbeat mr-2 text-red-600"></i>
+                            서비스 상태 모니터링
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-4" id="serviceStatus">
+                            <!-- Services will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <style>
+        .management-btn {
+            @apply w-full flex items-center space-x-3 p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/50 transition-all duration-200 text-left cursor-pointer;
+        }
+        
+        .quick-action-btn {
+            @apply flex flex-col items-center space-y-2 p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/50 transition-all duration-200 cursor-pointer;
+        }
+        
+        .service-status {
+            @apply flex items-center justify-between p-3 rounded-lg border border-border;
+        }
+        
+        .status-online {
+            @apply bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800;
+        }
+        
+        .status-offline {
+            @apply bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800;
+        }
+        
+        .status-warning {
+            @apply bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800;
+        }
+    </style>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        // Check for saved theme preference or default to light
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        html.classList.toggle('dark', currentTheme === 'dark');
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const newTheme = html.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+        });
+
+        // Update timestamps
+        function updateTimestamp() {
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleString('ko-KR');
+        }
+
+        // Initialize page
+        function initializePage() {
+            updateTimestamp();
+            loadServiceStatus();
+            loadSystemMetrics();
+        }
+
+        // Load service status
+        function loadServiceStatus() {
+            const services = [
+                { name: 'API Gateway', port: '3000', status: 'online' },
+                { name: 'Data Quality', port: '3001', status: 'online' },
+                { name: 'UI Dashboard', port: '3002', status: 'online' },
+                { name: 'Analytics Engine', port: '3003', status: 'online' },
+                { name: 'Session Replay', port: '3004', status: 'online' },
+                { name: 'AIOps Engine', port: '3005', status: 'online' },
+                { name: 'Event Delta Analyzer', port: '3006', status: 'online' },
+                { name: 'NLP Search', port: '3007', status: 'online' },
+                { name: 'J2EE Monitor', port: '3008', status: 'online' },
+                { name: 'WAS Monitor', port: '3009', status: 'online' },
+                { name: 'Exception Tracker', port: '3010', status: 'online' },
+                { name: 'Alert Notification', port: '3011', status: 'online' },
+                { name: 'Service Topology', port: '3012', status: 'online' },
+                { name: 'External Systems Gateway', port: '3013', status: 'online' },
+                { name: 'Admin Management', port: '3014', status: 'warning' }
+            ];
+
+            const container = document.getElementById('serviceStatus');
+            container.innerHTML = services.map(service => `
+                <div class="service-status status-${service.status}">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-3 h-3 rounded-full ${service.status === 'online' ? 'bg-green-500' : service.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500'}"></div>
+                        <div>
+                            <p class="font-medium text-foreground">${service.name}</p>
+                            <p class="text-sm text-muted-foreground">포트: ${service.port}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs px-2 py-1 rounded-full ${service.status === 'online' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : service.status === 'warning' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200' : 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'}">
+                            ${service.status === 'online' ? '정상' : service.status === 'warning' ? '경고' : '오프라인'}
+                        </span>
+                        <button class="text-muted-foreground hover:text-foreground">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load system metrics
+        function loadSystemMetrics() {
+            // Simulate real-time updates
+            setInterval(() => {
+                document.getElementById('activeUsers').textContent = Math.floor(Math.random() * 100) + 200;
+                document.getElementById('activeAlerts').textContent = Math.floor(Math.random() * 10);
+                document.getElementById('systemPerf').textContent = (Math.random() * 10 + 85).toFixed(0) + '%';
+            }, 5000);
+        }
+
+        // Management button handlers
+        document.querySelectorAll('.management-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const page = btn.dataset.page;
+                switch(page) {
+                    case 'external-systems-config':
+                        window.location.href = '/external-systems-config.html';
+                        break;
+                    case 'users-roles':
+                        window.location.href = '/users-roles.html';
+                        break;
+                    case 'system-settings':
+                        window.location.href = '/system-settings.html';
+                        break;
+                    case 'backup-restore':
+                        window.location.href = '/backup-restore.html';
+                        break;
+                    case 'api-tokens':
+                        window.location.href = '/api-tokens.html';
+                        break;
+                    case 'audit-logs':
+                        window.location.href = '/audit-logs.html';
+                        break;
+                    case 'alert-rules':
+                        window.location.href = '/alert-rules.html';
+                        break;
+                    case 'performance-metrics':
+                        window.location.href = '/performance-metrics.html';
+                        break;
+                }
+            });
+        });
+
+        // Quick action functions
+        function restartServices() {
+            if (confirm('모든 서비스를 재시작하시겠습니까?')) {
+                alert('서비스 재시작 중... (시뮬레이션)');
+            }
+        }
+
+        function clearCache() {
+            if (confirm('모든 캐시를 정리하시겠습니까?')) {
+                alert('캐시 정리 완료 (시뮬레이션)');
+            }
+        }
+
+        function exportLogs() {
+            alert('로그 내보내기 시작 (시뮬레이션)');
+        }
+
+        function runHealthCheck() {
+            alert('전체 시스템 헬스체크 실행 중... (시뮬레이션)');
+        }
+
+        function syncExternalSystems() {
+            alert('외부 시스템 동기화 시작 (시뮬레이션)');
+        }
+
+        function generateReport() {
+            alert('시스템 리포트 생성 중... (시뮬레이션)');
+        }
+
+        // Refresh button
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            initializePage();
+        });
+
+        // Initialize the page
+        initializePage();
+    </script>
+</body>
+</html>

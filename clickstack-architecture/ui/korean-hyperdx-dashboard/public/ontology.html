@@ -152,6 +152,33 @@
             background: hsl(var(--primary));
             color: hsl(var(--primary-foreground));
         }
+        
+        /* Dropdown Styles */
+        .nav-dropdown:hover .dropdown-content {
+            display: block;
+        }
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 200px;
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: calc(var(--radius));
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        
+        .dropdown-content a {
+            text-decoration: none;
+        }
+        
+        .dropdown-content a:hover {
+            background-color: hsl(var(--accent));
+            color: hsl(var(--accent-foreground));
+        }
 
         .filter-button:hover {
             background: hsl(var(--accent));
@@ -285,41 +312,65 @@
     <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div class="container mx-auto flex h-14 items-center px-4">
             <div class="mr-4 flex items-center space-x-2">
-                <h1 class="font-bold text-xl text-foreground">AIRIS APM</h1>
+                <a href="/portal.html" class="font-bold text-xl hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
                 <span class="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">
-                    v2.0 shadcn/ui
+                    온톨로지
                 </span>
             </div>
             
             <!-- Navigation -->
             <nav class="flex items-center space-x-6 text-sm">
-                <button onclick="window.location.href = '/'" 
-                        class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-                    통합 대시보드
-                </button>
-                <button onclick="window.location.href = '/j2ee-dashboard.html'" 
-                        class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-                    J2EE 모니터링
-                </button>
-                <button onclick="window.location.href = '/was-dashboard.html'" 
-                        class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-                    WAS 모니터링
-                </button>
-                <button onclick="window.location.href = '/exception-dashboard.html'" 
-                        class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-                    예외 추적
-                </button>
-                <button onclick="window.location.href = '/topology-dashboard.html'" 
-                        class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-                    서비스 토폴로지
-                </button>
-                <button onclick="window.location.href = '/alert-dashboard.html'" 
-                        class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-                    알림 관리
-                </button>
-                <span class="font-medium text-foreground/80 hover:text-foreground transition-colors">
-                    온톨로지
-                </span>
+                <a href="/" class="text-foreground/60 hover:text-foreground/80 transition-colors">📊 통합 대시보드</a>
+                
+                <!-- APM 모니터링 드롭다운 -->
+                <div class="nav-dropdown relative">
+                  <button class="flex items-center text-foreground/60 hover:text-foreground/80 px-3 py-2 rounded-md">
+                    📈 APM 모니터링
+                    <svg class="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <div class="dropdown-content">
+                    <a href="/j2ee-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">☕ J2EE 모니터링</a>
+                    <a href="/was-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🏗️ WAS 모니터링</a>
+                    <a href="/exception-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🚨 예외 추적</a>
+                    <a href="/topology-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🗺️ 서비스 토폴로지</a>
+                    <a href="/alert-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔔 알림 관리</a>
+                  </div>
+                </div>
+                
+                <!-- 지식 & 온톨로지 드롭다운 -->
+                <div class="nav-dropdown relative">
+                  <button class="flex items-center text-foreground/60 hover:text-foreground/80 px-3 py-2 rounded-md">
+                    🧠 지식 & 온톨로지
+                    <svg class="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <div class="dropdown-content">
+                    <span class="block px-4 py-2 bg-accent text-accent-foreground">🧠 온톨로지</span>
+                  </div>
+                </div>
+                
+                <!-- 관리자 메뉴 드롭다운 -->
+                <div class="nav-dropdown relative">
+                  <button class="flex items-center text-foreground/60 hover:text-foreground/80 px-3 py-2 rounded-md">
+                    👤 관리자 메뉴
+                    <svg class="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <div class="dropdown-content">
+                    <a href="/admin-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">👤 관리자 대시보드</a>
+                    <a href="/users-roles.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">👥 사용자/역할 관리</a>
+                    <a href="/system-settings.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔧 시스템 설정</a>
+                    <a href="/api-tokens.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔑 API 토큰 관리</a>
+                    <a href="/backup-restore.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">💾 백업/복원</a>
+                    <a href="/audit-logs.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">📋 감사 로그</a>
+                    <a href="/alert-rules.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔔 알림 규칙</a>
+                    <a href="/performance-metrics.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">📈 성능 메트릭</a>
+                  </div>
+                </div>
             </nav>
 
             <!-- Right side actions -->

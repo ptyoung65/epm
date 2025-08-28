@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full bg-gray-50 dark:bg-gray-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS EPM - 시스템 설정 및 환경변수 관리</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- shadcn/ui CSS -->
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --primary: 221.2 83.2% 53.3%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 221.2 83.2% 53.3%;
+            --radius: 0.5rem;
+        }
+        
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --primary: 217.2 91.2% 59.8%;
+            --primary-foreground: 222.2 84% 4.9%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 224.3 76.3% 94.1%;
+        }
+
+        .form-input {
+            @apply w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
+        }
+        
+        .form-label {
+            @apply block text-sm font-medium text-foreground mb-2;
+        }
+        
+        .setting-card {
+            @apply bg-card border border-border rounded-lg p-6;
+        }
+        
+        .env-var-row {
+            @apply flex items-center space-x-4 p-3 border-b border-border;
+        }
+        
+        .status-badge {
+            @apply px-2 py-1 rounded-full text-xs font-medium;
+        }
+        
+        .status-active {
+            @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+        }
+        
+        .status-inactive {
+            @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+        }
+        
+        .status-warning {
+            @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200;
+        }
+    </style>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: 'hsl(var(--border))',
+                        input: 'hsl(var(--input))',
+                        ring: 'hsl(var(--ring))',
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        primary: {
+                            DEFAULT: 'hsl(var(--primary))',
+                            foreground: 'hsl(var(--primary-foreground))'
+                        },
+                        secondary: {
+                            DEFAULT: 'hsl(var(--secondary))',
+                            foreground: 'hsl(var(--secondary-foreground))'
+                        },
+                        card: {
+                            DEFAULT: 'hsl(var(--card))',
+                            foreground: 'hsl(var(--card-foreground))'
+                        },
+                        muted: {
+                            DEFAULT: 'hsl(var(--muted))',
+                            foreground: 'hsl(var(--muted-foreground))'
+                        },
+                        accent: {
+                            DEFAULT: 'hsl(var(--accent))',
+                            foreground: 'hsl(var(--accent-foreground))'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-full bg-background text-foreground">
+    <div class="min-h-full">
+        <!-- Navigation -->
+        <nav class="bg-card border-b border-border">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <a href="/portal.html" class="text-xl font-bold text-foreground hover:text-primary transition-colors cursor-pointer">
+                                🚀 AIRIS EPM
+                            </a>
+                        </div>
+                        <div class="ml-10">
+                            <div class="flex items-baseline space-x-4">
+                                <a href="/admin-dashboard.html" class="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium">
+                                    ← 관리자 대시보드로 돌아가기
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button id="themeToggle" class="text-muted-foreground hover:text-foreground p-2">
+                            <i class="fas fa-moon dark:hidden"></i>
+                            <i class="fas fa-sun hidden dark:inline"></i>
+                        </button>
+                        <button id="saveAllBtn" class="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm hover:bg-primary/90">
+                            <i class="fas fa-save mr-2"></i>모든 설정 저장
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <!-- Page Header -->
+            <div class="px-4 py-4 sm:px-0">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-3xl font-bold text-foreground">⚙️ 시스템 설정 및 환경변수 관리</h1>
+                </div>
+            </div>
+
+            <!-- System Configuration -->
+            <div class="px-4 py-4 sm:px-0 space-y-8">
+                <!-- General Settings -->
+                <div class="setting-card">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-foreground flex items-center">
+                            <i class="fas fa-cogs mr-2 text-blue-600"></i>
+                            일반 설정
+                        </h2>
+                        <span class="status-badge status-active">활성</span>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <label class="form-label">시스템 이름</label>
+                            <input type="text" class="form-input" value="AIRIS EPM" id="systemName">
+                        </div>
+                        <div>
+                            <label class="form-label">시스템 버전</label>
+                            <input type="text" class="form-input" value="2.0.1" readonly>
+                        </div>
+                        <div>
+                            <label class="form-label">기본 언어</label>
+                            <select class="form-input" id="defaultLanguage">
+                                <option value="ko">한국어</option>
+                                <option value="en">English</option>
+                                <option value="ja">日本語</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">시간대</label>
+                            <select class="form-input" id="timezone">
+                                <option value="Asia/Seoul" selected>Asia/Seoul (UTC+9)</option>
+                                <option value="UTC">UTC (UTC+0)</option>
+                                <option value="America/New_York">America/New_York (UTC-5)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">로그 레벨</label>
+                            <select class="form-input" id="logLevel">
+                                <option value="debug">Debug</option>
+                                <option value="info" selected>Info</option>
+                                <option value="warn">Warning</option>
+                                <option value="error">Error</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">세션 타임아웃 (분)</label>
+                            <input type="number" class="form-input" value="60" id="sessionTimeout" min="5" max="1440">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Database Configuration -->
+                <div class="setting-card">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-foreground flex items-center">
+                            <i class="fas fa-database mr-2 text-green-600"></i>
+                            데이터베이스 설정
+                        </h2>
+                        <div class="flex space-x-2">
+                            <span class="status-badge status-active">연결됨</span>
+                            <button class="text-blue-600 hover:text-blue-800" onclick="testDatabaseConnection()">
+                                <i class="fas fa-plug"></i> 연결 테스트
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <h3 class="font-medium text-foreground">ClickHouse (시계열 데이터)</h3>
+                            <div>
+                                <label class="form-label">호스트</label>
+                                <input type="text" class="form-input" value="localhost" id="clickhouseHost">
+                            </div>
+                            <div>
+                                <label class="form-label">포트</label>
+                                <input type="number" class="form-input" value="8123" id="clickhousePort">
+                            </div>
+                            <div>
+                                <label class="form-label">데이터베이스</label>
+                                <input type="text" class="form-input" value="airis_epm" id="clickhouseDb">
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <h3 class="font-medium text-foreground">PostgreSQL (관계형 데이터)</h3>
+                            <div>
+                                <label class="form-label">호스트</label>
+                                <input type="text" class="form-input" value="localhost" id="postgresHost">
+                            </div>
+                            <div>
+                                <label class="form-label">포트</label>
+                                <input type="number" class="form-input" value="5432" id="postgresPort">
+                            </div>
+                            <div>
+                                <label class="form-label">데이터베이스</label>
+                                <input type="text" class="form-input" value="airis_epm" id="postgresDb">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cache Configuration -->
+                <div class="setting-card">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-foreground flex items-center">
+                            <i class="fas fa-memory mr-2 text-red-600"></i>
+                            캐시 설정
+                        </h2>
+                        <span class="status-badge status-active">Redis 활성</span>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label class="form-label">Redis 호스트</label>
+                            <input type="text" class="form-input" value="localhost" id="redisHost">
+                        </div>
+                        <div>
+                            <label class="form-label">Redis 포트</label>
+                            <input type="number" class="form-input" value="6379" id="redisPort">
+                        </div>
+                        <div>
+                            <label class="form-label">캐시 TTL (초)</label>
+                            <input type="number" class="form-input" value="300" id="cacheTtl" min="60" max="3600">
+                        </div>
+                        <div>
+                            <label class="form-label">최대 메모리 (MB)</label>
+                            <input type="number" class="form-input" value="512" id="maxMemory" min="128">
+                        </div>
+                        <div>
+                            <label class="form-label">만료 정책</label>
+                            <select class="form-input" id="evictionPolicy">
+                                <option value="allkeys-lru" selected>allkeys-lru</option>
+                                <option value="allkeys-lfu">allkeys-lfu</option>
+                                <option value="volatile-lru">volatile-lru</option>
+                                <option value="volatile-ttl">volatile-ttl</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Environment Variables -->
+                <div class="setting-card">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-foreground flex items-center">
+                            <i class="fas fa-list-ul mr-2 text-purple-600"></i>
+                            환경 변수 관리
+                        </h2>
+                        <div class="space-x-2">
+                            <button id="addEnvVarBtn" class="bg-primary text-primary-foreground px-3 py-1 rounded text-sm">
+                                <i class="fas fa-plus mr-1"></i>추가
+                            </button>
+                            <button id="importEnvBtn" class="bg-secondary text-secondary-foreground px-3 py-1 rounded text-sm">
+                                <i class="fas fa-upload mr-1"></i>가져오기
+                            </button>
+                            <button id="exportEnvBtn" class="bg-secondary text-secondary-foreground px-3 py-1 rounded text-sm">
+                                <i class="fas fa-download mr-1"></i>내보내기
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Environment Variables Filter -->
+                    <div class="mb-4 flex space-x-4">
+                        <input type="text" id="envSearchInput" placeholder="환경 변수 검색..." class="form-input w-64">
+                        <select id="envCategoryFilter" class="form-input w-48">
+                            <option value="">전체 카테고리</option>
+                            <option value="database">데이터베이스</option>
+                            <option value="auth">인증</option>
+                            <option value="external">외부 시스템</option>
+                            <option value="monitoring">모니터링</option>
+                            <option value="security">보안</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Environment Variables List -->
+                    <div class="space-y-2" id="envVarsList">
+                        <!-- Environment variables will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Performance Tuning -->
+                <div class="setting-card">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-foreground flex items-center">
+                            <i class="fas fa-tachometer-alt mr-2 text-orange-600"></i>
+                            성능 튜닝
+                        </h2>
+                        <span class="status-badge status-active">최적화됨</span>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div>
+                            <label class="form-label">워커 프로세스 수</label>
+                            <input type="number" class="form-input" value="4" id="workerProcesses" min="1" max="16">
+                        </div>
+                        <div>
+                            <label class="form-label">최대 연결 수</label>
+                            <input type="number" class="form-input" value="1000" id="maxConnections" min="100" max="10000">
+                        </div>
+                        <div>
+                            <label class="form-label">요청 타임아웃 (초)</label>
+                            <input type="number" class="form-input" value="30" id="requestTimeout" min="5" max="300">
+                        </div>
+                        <div>
+                            <label class="form-label">메모리 제한 (MB)</label>
+                            <input type="number" class="form-input" value="2048" id="memoryLimit" min="512">
+                        </div>
+                        <div>
+                            <label class="form-label">압축 활성화</label>
+                            <select class="form-input" id="compressionEnabled">
+                                <option value="true" selected>활성화</option>
+                                <option value="false">비활성화</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">압축 레벨</label>
+                            <select class="form-input" id="compressionLevel">
+                                <option value="1">1 (빠름)</option>
+                                <option value="6" selected>6 (균형)</option>
+                                <option value="9">9 (최고 압축)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Settings -->
+                <div class="setting-card">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-foreground flex items-center">
+                            <i class="fas fa-shield-alt mr-2 text-teal-600"></i>
+                            보안 설정
+                        </h2>
+                        <span class="status-badge status-active">보안됨</span>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <label class="form-label">JWT 토큰 만료 시간 (시간)</label>
+                            <input type="number" class="form-input" value="24" id="jwtExpiry" min="1" max="168">
+                        </div>
+                        <div>
+                            <label class="form-label">비밀번호 최소 길이</label>
+                            <input type="number" class="form-input" value="8" id="minPasswordLength" min="6" max="32">
+                        </div>
+                        <div>
+                            <label class="form-label">로그인 시도 제한</label>
+                            <input type="number" class="form-input" value="5" id="maxLoginAttempts" min="3" max="10">
+                        </div>
+                        <div>
+                            <label class="form-label">계정 잠금 시간 (분)</label>
+                            <input type="number" class="form-input" value="15" id="lockoutDuration" min="5" max="60">
+                        </div>
+                        <div>
+                            <label class="form-label">2FA 필수 여부</label>
+                            <select class="form-input" id="require2FA">
+                                <option value="false">선택사항</option>
+                                <option value="admin">관리자만</option>
+                                <option value="true">모든 사용자</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label">IP 화이트리스트 활성화</label>
+                            <select class="form-input" id="ipWhitelistEnabled">
+                                <option value="false" selected>비활성화</option>
+                                <option value="true">활성화</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Environment Variable Modal -->
+    <div id="addEnvModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-card rounded-lg border border-border p-6 w-full max-w-md">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-foreground">환경 변수 추가</h3>
+                <button id="closeAddEnvModal" class="text-muted-foreground hover:text-foreground">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="form-label">변수명</label>
+                    <input type="text" id="newEnvKey" class="form-input" placeholder="ENV_VARIABLE_NAME">
+                </div>
+                <div>
+                    <label class="form-label">값</label>
+                    <input type="text" id="newEnvValue" class="form-input" placeholder="값 입력">
+                </div>
+                <div>
+                    <label class="form-label">카테고리</label>
+                    <select id="newEnvCategory" class="form-input">
+                        <option value="database">데이터베이스</option>
+                        <option value="auth">인증</option>
+                        <option value="external">외부 시스템</option>
+                        <option value="monitoring">모니터링</option>
+                        <option value="security">보안</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="form-label">설명</label>
+                    <textarea id="newEnvDescription" class="form-input" placeholder="환경 변수 설명" rows="2"></textarea>
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button id="cancelAddEnv" class="px-4 py-2 border border-border rounded-md text-sm hover:bg-accent">
+                        취소
+                    </button>
+                    <button id="confirmAddEnv" class="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90">
+                        추가
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample environment variables data
+        const envVars = [
+            { key: 'DATABASE_URL', value: 'postgresql://user:pass@localhost:5432/airis_epm', category: 'database', description: 'PostgreSQL 데이터베이스 연결 URL', sensitive: true },
+            { key: 'REDIS_URL', value: 'redis://localhost:6379', category: 'database', description: 'Redis 캐시 서버 URL', sensitive: false },
+            { key: 'JWT_SECRET', value: '••••••••••••••••••••', category: 'auth', description: 'JWT 토큰 서명을 위한 비밀키', sensitive: true },
+            { key: 'SLACK_TOKEN', value: 'xoxb-••••••••••••••••••••', category: 'external', description: 'Slack 알림을 위한 봇 토큰', sensitive: true },
+            { key: 'MONITORING_PORT', value: '3001', category: 'monitoring', description: '모니터링 서비스 포트', sensitive: false },
+            { key: 'LOG_LEVEL', value: 'info', category: 'monitoring', description: '로그 레벨 설정', sensitive: false },
+            { key: 'ENCRYPTION_KEY', value: '••••••••••••••••••••', category: 'security', description: '데이터 암호화 키', sensitive: true },
+            { key: 'API_RATE_LIMIT', value: '100', category: 'security', description: 'API 요청 제한 (분당)', sensitive: false }
+        ];
+
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        html.classList.toggle('dark', currentTheme === 'dark');
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const newTheme = html.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+        });
+
+        // Load environment variables
+        function loadEnvVars() {
+            const container = document.getElementById('envVarsList');
+            const searchTerm = document.getElementById('envSearchInput').value.toLowerCase();
+            const categoryFilter = document.getElementById('envCategoryFilter').value;
+            
+            const filteredVars = envVars.filter(env => {
+                const matchesSearch = env.key.toLowerCase().includes(searchTerm) || 
+                                    env.description.toLowerCase().includes(searchTerm);
+                const matchesCategory = !categoryFilter || env.category === categoryFilter;
+                return matchesSearch && matchesCategory;
+            });
+
+            container.innerHTML = filteredVars.map(env => `
+                <div class="env-var-row">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="font-medium text-foreground">${env.key}</span>
+                            <span class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                ${env.category}
+                            </span>
+                            ${env.sensitive ? '<i class="fas fa-lock text-yellow-600" title="민감한 정보"></i>' : ''}
+                        </div>
+                        <p class="text-sm text-muted-foreground">${env.description}</p>
+                    </div>
+                    <div class="w-64">
+                        <input type="${env.sensitive ? 'password' : 'text'}" 
+                               class="form-input text-sm" 
+                               value="${env.value}"
+                               data-key="${env.key}">
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="text-blue-600 hover:text-blue-800" onclick="editEnvVar('${env.key}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="text-red-600 hover:text-red-800" onclick="deleteEnvVar('${env.key}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Environment variable search and filter
+        document.getElementById('envSearchInput').addEventListener('input', loadEnvVars);
+        document.getElementById('envCategoryFilter').addEventListener('change', loadEnvVars);
+
+        // Modal handlers
+        document.getElementById('addEnvVarBtn').addEventListener('click', () => {
+            document.getElementById('addEnvModal').classList.remove('hidden');
+            document.getElementById('addEnvModal').classList.add('flex');
+        });
+
+        document.getElementById('closeAddEnvModal').addEventListener('click', closeAddEnvModal);
+        document.getElementById('cancelAddEnv').addEventListener('click', closeAddEnvModal);
+
+        function closeAddEnvModal() {
+            document.getElementById('addEnvModal').classList.add('hidden');
+            document.getElementById('addEnvModal').classList.remove('flex');
+            // Clear form
+            document.getElementById('newEnvKey').value = '';
+            document.getElementById('newEnvValue').value = '';
+            document.getElementById('newEnvDescription').value = '';
+        }
+
+        document.getElementById('confirmAddEnv').addEventListener('click', () => {
+            const key = document.getElementById('newEnvKey').value;
+            const value = document.getElementById('newEnvValue').value;
+            const category = document.getElementById('newEnvCategory').value;
+            const description = document.getElementById('newEnvDescription').value;
+            
+            if (key && value) {
+                // Add to envVars array (simulation)
+                envVars.push({
+                    key: key,
+                    value: value,
+                    category: category,
+                    description: description || '설명 없음',
+                    sensitive: false
+                });
+                
+                loadEnvVars();
+                closeAddEnvModal();
+                showNotification('환경 변수가 추가되었습니다.', 'success');
+            } else {
+                showNotification('변수명과 값을 입력해주세요.', 'error');
+            }
+        });
+
+        // Action functions
+        function editEnvVar(key) {
+            const newValue = prompt(`${key} 변수의 새 값을 입력하세요:`);
+            if (newValue !== null) {
+                const envVar = envVars.find(env => env.key === key);
+                if (envVar) {
+                    envVar.value = newValue;
+                    loadEnvVars();
+                    showNotification('환경 변수가 업데이트되었습니다.', 'success');
+                }
+            }
+        }
+
+        function deleteEnvVar(key) {
+            if (confirm(`환경 변수 ${key}를 삭제하시겠습니까?`)) {
+                const index = envVars.findIndex(env => env.key === key);
+                if (index !== -1) {
+                    envVars.splice(index, 1);
+                    loadEnvVars();
+                    showNotification('환경 변수가 삭제되었습니다.', 'success');
+                }
+            }
+        }
+
+        function testDatabaseConnection() {
+            showNotification('데이터베이스 연결을 테스트 중입니다...', 'info');
+            setTimeout(() => {
+                showNotification('모든 데이터베이스 연결이 정상입니다.', 'success');
+            }, 2000);
+        }
+
+        // Import/Export functions
+        document.getElementById('importEnvBtn').addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.env,.txt';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    showNotification('환경 변수 파일을 가져오는 중입니다...', 'info');
+                    setTimeout(() => {
+                        showNotification('환경 변수를 성공적으로 가져왔습니다.', 'success');
+                    }, 1500);
+                }
+            };
+            input.click();
+        });
+
+        document.getElementById('exportEnvBtn').addEventListener('click', () => {
+            const envContent = envVars.map(env => `${env.key}=${env.value}`).join('\n');
+            const blob = new Blob([envContent], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'airis-epm-env-vars.env';
+            a.click();
+            window.URL.revokeObjectURL(url);
+            showNotification('환경 변수를 내보냈습니다.', 'success');
+        });
+
+        // Save all settings
+        document.getElementById('saveAllBtn').addEventListener('click', () => {
+            const btn = document.getElementById('saveAllBtn');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>저장 중...';
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-save mr-2"></i>모든 설정 저장';
+                btn.disabled = false;
+                showNotification('모든 설정이 저장되었습니다.', 'success');
+            }, 2000);
+        });
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Initialize
+        loadEnvVars();
+    </script>
+</body>
+</html>

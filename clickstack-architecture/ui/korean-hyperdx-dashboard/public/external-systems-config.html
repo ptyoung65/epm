@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full bg-gray-50 dark:bg-gray-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS EPM - 외부 시스템 연결 설정</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- shadcn/ui CSS variables -->
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 221.2 83.2% 53.3%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 221.2 83.2% 53.3%;
+            --radius: 0.5rem;
+            --success: 142.1 76.2% 36.3%;
+            --success-foreground: 355.7 100% 97.3%;
+        }
+        
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 217.2 91.2% 59.8%;
+            --primary-foreground: 222.2 84% 4.9%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 224.3 76.3% 94.1%;
+            --success: 142.1 70.6% 45.3%;
+            --success-foreground: 144.9 80.4% 10%;
+        }
+    </style>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: 'hsl(var(--border))',
+                        input: 'hsl(var(--input))',
+                        ring: 'hsl(var(--ring))',
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        primary: {
+                            DEFAULT: 'hsl(var(--primary))',
+                            foreground: 'hsl(var(--primary-foreground))'
+                        },
+                        secondary: {
+                            DEFAULT: 'hsl(var(--secondary))',
+                            foreground: 'hsl(var(--secondary-foreground))'
+                        },
+                        destructive: {
+                            DEFAULT: 'hsl(var(--destructive))',
+                            foreground: 'hsl(var(--destructive-foreground))'
+                        },
+                        muted: {
+                            DEFAULT: 'hsl(var(--muted))',
+                            foreground: 'hsl(var(--muted-foreground))'
+                        },
+                        accent: {
+                            DEFAULT: 'hsl(var(--accent))',
+                            foreground: 'hsl(var(--accent-foreground))'
+                        },
+                        popover: {
+                            DEFAULT: 'hsl(var(--popover))',
+                            foreground: 'hsl(var(--popover-foreground))'
+                        },
+                        card: {
+                            DEFAULT: 'hsl(var(--card))',
+                            foreground: 'hsl(var(--card-foreground))'
+                        },
+                        success: {
+                            DEFAULT: 'hsl(var(--success))',
+                            foreground: 'hsl(var(--success-foreground))'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-full bg-background text-foreground">
+    <div class="min-h-full">
+        <!-- Navigation -->
+        <nav class="bg-card border-b border-border">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <a href="/portal.html" class="text-xl font-bold text-foreground hover:text-primary transition-colors cursor-pointer">
+                                🚀 AIRIS EPM
+                            </a>
+                        </div>
+                        <div class="ml-10">
+                            <div class="flex items-baseline space-x-4">
+                                <a href="/admin-dashboard.html" class="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium">
+                                    ← 관리자 대시보드로 돌아가기
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button id="themeToggle" class="text-muted-foreground hover:text-foreground p-2">
+                            <i class="fas fa-moon dark:hidden"></i>
+                            <i class="fas fa-sun hidden dark:inline"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <!-- Page Header -->
+            <div class="px-4 py-4 sm:px-0">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-3xl font-bold text-foreground">🔗 외부 시스템 연결 설정</h1>
+                    <button id="testAllConnections" class="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm hover:bg-primary/90">
+                        <i class="fas fa-plug mr-2"></i>전체 연결 테스트
+                    </button>
+                </div>
+            </div>
+
+            <!-- ITSM Systems -->
+            <div class="px-4 py-4 sm:px-0">
+                <div class="bg-card rounded-lg border border-border mb-8">
+                    <div class="px-6 py-4 border-b border-border">
+                        <h2 class="text-xl font-semibold text-foreground flex items-center">
+                            <i class="fas fa-ticket-alt mr-2 text-blue-600"></i>
+                            ITSM 시스템
+                        </h2>
+                        <p class="text-sm text-muted-foreground mt-1">IT 서비스 관리 시스템 연동 설정</p>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- ServiceNow -->
+                            <div class="system-card" data-system="servicenow">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-semibold text-foreground flex items-center">
+                                        <img src="data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#62d84e"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.568 17.568c-1.17 1.17-2.754 1.795-4.462 1.795s-3.292-.625-4.462-1.795c-1.17-1.17-1.795-2.754-1.795-4.462s.625-3.292 1.795-4.462c1.17-1.17 2.754-1.795 4.462-1.795s3.292.625 4.462 1.795c1.17 1.17 1.795 2.754 1.795 4.462s-.625 3.292-1.795 4.462z"/></svg>')}" class="w-6 h-6 mr-2" alt="ServiceNow">
+                                        ServiceNow
+                                    </h3>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="status-badge status-disconnected" id="servicenow-status">연결 안됨</span>
+                                        <button class="test-connection-btn" data-system="servicenow">
+                                            <i class="fas fa-plug"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Instance URL</label>
+                                        <input type="url" id="servicenow-instance" class="form-input" placeholder="https://your-instance.service-now.com">
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-foreground mb-2">Username</label>
+                                            <input type="text" id="servicenow-username" class="form-input" placeholder="사용자명">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-foreground mb-2">Password</label>
+                                            <input type="password" id="servicenow-password" class="form-input" placeholder="비밀번호">
+                                        </div>
+                                    </div>
+                                    <button class="save-config-btn" data-system="servicenow">
+                                        <i class="fas fa-save mr-2"></i>설정 저장
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Jira -->
+                            <div class="system-card" data-system="jira">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-semibold text-foreground flex items-center">
+                                        <i class="fab fa-jira mr-2 text-blue-600"></i>
+                                        Jira
+                                    </h3>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="status-badge status-connected" id="jira-status">연결됨</span>
+                                        <button class="test-connection-btn" data-system="jira">
+                                            <i class="fas fa-plug"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Jira Host</label>
+                                        <input type="url" id="jira-host" class="form-input" placeholder="https://your-domain.atlassian.net" value="https://airis-demo.atlassian.net">
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-foreground mb-2">Email</label>
+                                            <input type="email" id="jira-email" class="form-input" placeholder="user@domain.com" value="admin@airis-demo.com">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-foreground mb-2">API Token</label>
+                                            <input type="password" id="jira-token" class="form-input" placeholder="API 토큰" value="••••••••••••">
+                                        </div>
+                                    </div>
+                                    <button class="save-config-btn" data-system="jira">
+                                        <i class="fas fa-save mr-2"></i>설정 저장
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ERP Systems -->
+                <div class="bg-card rounded-lg border border-border mb-8">
+                    <div class="px-6 py-4 border-b border-border">
+                        <h2 class="text-xl font-semibold text-foreground flex items-center">
+                            <i class="fas fa-industry mr-2 text-green-600"></i>
+                            ERP 시스템
+                        </h2>
+                        <p class="text-sm text-muted-foreground mt-1">전사적 자원관리 시스템 연동 설정</p>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <!-- SAP -->
+                            <div class="system-card" data-system="sap">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-semibold text-foreground flex items-center">
+                                        <i class="fas fa-database mr-2 text-blue-800"></i>
+                                        SAP
+                                    </h3>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="status-badge status-warning" id="sap-status">설정 중</span>
+                                        <button class="test-connection-btn" data-system="sap">
+                                            <i class="fas fa-plug"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Base URL</label>
+                                        <input type="url" id="sap-base-url" class="form-input" placeholder="https://sap-server.com/api">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Client ID</label>
+                                        <input type="text" id="sap-client-id" class="form-input" placeholder="클라이언트 ID">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Client Secret</label>
+                                        <input type="password" id="sap-client-secret" class="form-input" placeholder="클라이언트 시크릿">
+                                    </div>
+                                    <button class="save-config-btn" data-system="sap">
+                                        <i class="fas fa-save mr-2"></i>설정 저장
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Oracle -->
+                            <div class="system-card" data-system="oracle">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-semibold text-foreground flex items-center">
+                                        <i class="fas fa-database mr-2 text-red-600"></i>
+                                        Oracle ERP
+                                    </h3>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="status-badge status-disconnected" id="oracle-status">연결 안됨</span>
+                                        <button class="test-connection-btn" data-system="oracle">
+                                            <i class="fas fa-plug"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Base URL</label>
+                                        <input type="url" id="oracle-base-url" class="form-input" placeholder="https://oracle-cloud.com/api">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Username</label>
+                                        <input type="text" id="oracle-username" class="form-input" placeholder="사용자명">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Password</label>
+                                        <input type="password" id="oracle-password" class="form-input" placeholder="비밀번호">
+                                    </div>
+                                    <button class="save-config-btn" data-system="oracle">
+                                        <i class="fas fa-save mr-2"></i>설정 저장
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Microsoft Dynamics -->
+                            <div class="system-card" data-system="dynamics">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-semibold text-foreground flex items-center">
+                                        <i class="fab fa-microsoft mr-2 text-blue-600"></i>
+                                        Dynamics 365
+                                    </h3>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="status-badge status-connected" id="dynamics-status">연결됨</span>
+                                        <button class="test-connection-btn" data-system="dynamics">
+                                            <i class="fas fa-plug"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Instance URL</label>
+                                        <input type="url" id="dynamics-instance-url" class="form-input" placeholder="https://org.crm.dynamics.com" value="https://airis-demo.crm.dynamics.com">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Client ID</label>
+                                        <input type="text" id="dynamics-client-id" class="form-input" placeholder="애플리케이션 ID" value="12345678-1234-1234-1234-123456789012">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Tenant ID</label>
+                                        <input type="text" id="dynamics-tenant-id" class="form-input" placeholder="테넌트 ID" value="87654321-4321-4321-4321-210987654321">
+                                    </div>
+                                    <button class="save-config-btn" data-system="dynamics">
+                                        <i class="fas fa-save mr-2"></i>설정 저장
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BI Tools -->
+                <div class="bg-card rounded-lg border border-border">
+                    <div class="px-6 py-4 border-b border-border">
+                        <h2 class="text-xl font-semibold text-foreground flex items-center">
+                            <i class="fas fa-chart-bar mr-2 text-purple-600"></i>
+                            BI 도구
+                        </h2>
+                        <p class="text-sm text-muted-foreground mt-1">비즈니스 인텔리전스 도구 연동 설정</p>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Tableau -->
+                            <div class="system-card" data-system="tableau">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-semibold text-foreground flex items-center">
+                                        <i class="fas fa-chart-line mr-2 text-orange-600"></i>
+                                        Tableau
+                                    </h3>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="status-badge status-disconnected" id="tableau-status">연결 안됨</span>
+                                        <button class="test-connection-btn" data-system="tableau">
+                                            <i class="fas fa-plug"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Server URL</label>
+                                        <input type="url" id="tableau-server-url" class="form-input" placeholder="https://tableau-server.com">
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-foreground mb-2">Username</label>
+                                            <input type="text" id="tableau-username" class="form-input" placeholder="사용자명">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-foreground mb-2">Password</label>
+                                            <input type="password" id="tableau-password" class="form-input" placeholder="비밀번호">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Site</label>
+                                        <input type="text" id="tableau-site" class="form-input" placeholder="사이트명 (선택사항)">
+                                    </div>
+                                    <button class="save-config-btn" data-system="tableau">
+                                        <i class="fas fa-save mr-2"></i>설정 저장
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Power BI -->
+                            <div class="system-card" data-system="powerbi">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-semibold text-foreground flex items-center">
+                                        <i class="fab fa-microsoft mr-2 text-yellow-600"></i>
+                                        Power BI
+                                    </h3>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="status-badge status-connected" id="powerbi-status">연결됨</span>
+                                        <button class="test-connection-btn" data-system="powerbi">
+                                            <i class="fas fa-plug"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Client ID</label>
+                                        <input type="text" id="powerbi-client-id" class="form-input" placeholder="애플리케이션 ID" value="powerbi-client-demo-id">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Client Secret</label>
+                                        <input type="password" id="powerbi-client-secret" class="form-input" placeholder="클라이언트 시크릿" value="••••••••••••">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-foreground mb-2">Tenant ID</label>
+                                        <input type="text" id="powerbi-tenant-id" class="form-input" placeholder="테넌트 ID" value="powerbi-tenant-demo-id">
+                                    </div>
+                                    <button class="save-config-btn" data-system="powerbi">
+                                        <i class="fas fa-save mr-2"></i>설정 저장
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <style>
+        .system-card {
+            @apply p-6 border border-border rounded-lg bg-card;
+        }
+        
+        .form-input {
+            @apply w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
+        }
+        
+        .status-badge {
+            @apply px-2 py-1 rounded-full text-xs font-medium;
+        }
+        
+        .status-connected {
+            @apply bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200;
+        }
+        
+        .status-disconnected {
+            @apply bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200;
+        }
+        
+        .status-warning {
+            @apply bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200;
+        }
+        
+        .test-connection-btn {
+            @apply p-2 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors;
+        }
+        
+        .save-config-btn {
+            @apply w-full bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm hover:bg-primary/90 transition-colors flex items-center justify-center;
+        }
+    </style>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        html.classList.toggle('dark', currentTheme === 'dark');
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const newTheme = html.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+        });
+
+        // Connection testing
+        document.querySelectorAll('.test-connection-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const system = btn.dataset.system;
+                const statusBadge = document.getElementById(`${system}-status`);
+                
+                // Show testing state
+                statusBadge.textContent = '테스트 중...';
+                statusBadge.className = 'status-badge bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200';
+                
+                // Simulate connection test
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Random result for demo
+                const success = Math.random() > 0.3;
+                if (success) {
+                    statusBadge.textContent = '연결됨';
+                    statusBadge.className = 'status-badge status-connected';
+                    showNotification(`${system.toUpperCase()} 연결 테스트 성공`, 'success');
+                } else {
+                    statusBadge.textContent = '연결 실패';
+                    statusBadge.className = 'status-badge status-disconnected';
+                    showNotification(`${system.toUpperCase()} 연결 테스트 실패`, 'error');
+                }
+            });
+        });
+
+        // Save configuration
+        document.querySelectorAll('.save-config-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const system = btn.dataset.system;
+                
+                // Show saving state
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>저장 중...';
+                btn.disabled = true;
+                
+                // Simulate save
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Reset button
+                btn.innerHTML = '<i class="fas fa-save mr-2"></i>설정 저장';
+                btn.disabled = false;
+                
+                showNotification(`${system.toUpperCase()} 설정이 저장되었습니다.`, 'success');
+            });
+        });
+
+        // Test all connections
+        document.getElementById('testAllConnections').addEventListener('click', async () => {
+            const btn = document.getElementById('testAllConnections');
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>전체 테스트 중...';
+            btn.disabled = true;
+            
+            // Simulate testing all connections
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            
+            btn.innerHTML = '<i class="fas fa-plug mr-2"></i>전체 연결 테스트';
+            btn.disabled = false;
+            
+            showNotification('모든 시스템 연결 테스트가 완료되었습니다.', 'success');
+        });
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

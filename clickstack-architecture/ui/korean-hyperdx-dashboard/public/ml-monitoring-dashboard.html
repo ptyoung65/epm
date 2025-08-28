@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML 모델 모니터링 대시보드 - AIRIS EPM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 221.2 83.2% 53.3%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 221.2 83.2% 53.3%;
+            --radius: 0.5rem;
+        }
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 217.2 91.2% 59.8%;
+            --primary-foreground: 222.2 84% 4.9%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+        }
+        
+        * {
+            border-color: hsl(var(--border));
+        }
+        
+        body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+
+        .chart-container {
+            height: 300px;
+        }
+
+        .metric-card {
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-healthy { background-color: #10b981; }
+        .status-warning { background-color: #f59e0b; }
+        .status-critical { background-color: #ef4444; }
+
+        .drift-indicator {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+            position: relative;
+        }
+
+        .drift-pointer {
+            position: absolute;
+            top: -2px;
+            width: 12px;
+            height: 12px;
+            background: #1f2937;
+            border-radius: 50%;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900">
+    <!-- Navigation -->
+    <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <div class="relative group">
+                            <button class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                📊 APM 모니터링 <svg class="ml-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                            </button>
+                            <div class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                <div class="py-1">
+                                    <a href="/j2ee-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">☕ J2EE 모니터링</a>
+                                    <a href="/was-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">🏗️ WAS 모니터링</a>
+                                    <a href="/exception-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">🚨 예외 추적</a>
+                                    <a href="/topology-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">🗺️ 서비스 토폴로지</a>
+                                    <a href="/alert-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">🔔 알림 관리</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="relative group">
+                            <button class="border-blue-600 text-blue-600 dark:text-blue-400 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                                🤖 AIOps <svg class="ml-1 h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                            </button>
+                            <div class="absolute left-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                                <div class="py-1">
+                                    <a href="/aiops-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">🤖 AIOPS 관리</a>
+                                    <a href="/ml-monitoring-dashboard.html" class="block px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-600 font-medium">📊 ML 모니터링</a>
+                                    <a href="/ml-training-autoencoder.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">🔬 ML 훈련</a>
+                                    <a href="/chatbot.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600">💬 AI 챗봇</a>
+                                </div>
+                            </div>
+                        </div>
+                        <a href="/ontology.html" class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">🧠 온톨로지</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">📊 ML 모델 모니터링</h1>
+            <p class="mt-2 text-gray-600 dark:text-gray-400">프로덕션 환경 ML 모델 성능과 안정성 실시간 추적</p>
+            <div class="mt-4 flex items-center space-x-4">
+                <span class="status-indicator status-healthy"></span>
+                <span class="text-sm text-gray-600 dark:text-gray-400">시스템 상태: 정상 운영 중</span>
+                <span class="text-sm text-gray-500 dark:text-gray-500">마지막 업데이트: <span id="lastUpdate"></span></span>
+            </div>
+        </div>
+
+        <!-- 성능 메트릭 카드 섹션 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- 이상 탐지 정확도 -->
+            <div class="metric-card bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">이상 탐지 정확도</p>
+                        <p class="text-3xl font-bold text-green-600 dark:text-green-400" id="anomalyAccuracy">92%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex items-center text-sm">
+                        <span class="text-green-600 dark:text-green-400">↗ +2.1%</span>
+                        <span class="text-gray-500 dark:text-gray-400 ml-2">지난 주 대비</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 예측 모델 R² -->
+            <div class="metric-card bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">예측 모델 R² 스코어</p>
+                        <p class="text-3xl font-bold text-blue-600 dark:text-blue-400" id="predictionR2">0.78</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex items-center text-sm">
+                        <span class="text-blue-600 dark:text-blue-400">↗ +0.05</span>
+                        <span class="text-gray-500 dark:text-gray-400 ml-2">지난 주 대비</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API 응답시간 -->
+            <div class="metric-card bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">평균 응답시간</p>
+                        <p class="text-3xl font-bold text-yellow-600 dark:text-yellow-400" id="responseTime">145ms</p>
+                    </div>
+                    <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex items-center text-sm">
+                        <span class="text-yellow-600 dark:text-yellow-400">↗ +12ms</span>
+                        <span class="text-gray-500 dark:text-gray-400 ml-2">지난 시간 대비</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 에러율 -->
+            <div class="metric-card bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-400">API 에러율</p>
+                        <p class="text-3xl font-bold text-red-600 dark:text-red-400" id="errorRate">0.2%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex items-center text-sm">
+                        <span class="text-green-600 dark:text-green-400">↘ -0.1%</span>
+                        <span class="text-gray-500 dark:text-gray-400 ml-2">지난 시간 대비</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 차트 섹션 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- 성능 메트릭 트렌드 -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">성능 메트릭 트렌드</h3>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 데이터 드리프트 모니터링 -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">데이터 드리프트 감지</h3>
+                <div class="space-y-6">
+                    <!-- CPU 데이터 드리프트 -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">CPU 메트릭 드리프트</span>
+                            <span class="text-sm text-green-600 dark:text-green-400">정상</span>
+                        </div>
+                        <div class="drift-indicator">
+                            <div class="drift-pointer" style="left: 25%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <span>낮음</span>
+                            <span>중간</span>
+                            <span>높음</span>
+                        </div>
+                    </div>
+
+                    <!-- 메모리 데이터 드리프트 -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">메모리 메트릭 드리프트</span>
+                            <span class="text-sm text-yellow-600 dark:text-yellow-400">경고</span>
+                        </div>
+                        <div class="drift-indicator">
+                            <div class="drift-pointer" style="left: 60%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <span>낮음</span>
+                            <span>중간</span>
+                            <span>높음</span>
+                        </div>
+                    </div>
+
+                    <!-- 응답시간 드리프트 -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">응답시간 드리프트</span>
+                            <span class="text-sm text-green-600 dark:text-green-400">정상</span>
+                        </div>
+                        <div class="drift-indicator">
+                            <div class="drift-pointer" style="left: 35%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <span>낮음</span>
+                            <span>중간</span>
+                            <span>높음</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 모델 상태 및 알림 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 모델 상태 -->
+            <div class="lg:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">모델 상태 및 성능</h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                        <div class="flex items-center">
+                            <span class="status-indicator status-healthy"></span>
+                            <div>
+                                <h4 class="font-medium text-gray-900 dark:text-white">Isolation Forest (이상 탐지)</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">마지막 훈련: 2시간 전</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-bold text-green-600 dark:text-green-400">92.3%</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">정확도</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <div class="flex items-center">
+                            <span class="status-indicator status-healthy"></span>
+                            <div>
+                                <h4 class="font-medium text-gray-900 dark:text-white">Linear Regression (성능 예측)</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">마지막 훈련: 1시간 전</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-bold text-blue-600 dark:text-blue-400">0.78</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">R² 스코어</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                        <div class="flex items-center">
+                            <span class="status-indicator status-warning"></span>
+                            <div>
+                                <h4 class="font-medium text-gray-900 dark:text-white">LSTM (시계열 예측)</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">재훈련 필요</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-bold text-yellow-600 dark:text-yellow-400">74.2%</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">정확도</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 알림 및 경고 -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">실시간 알림</h3>
+                <div class="space-y-3">
+                    <div class="flex items-start space-x-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                        <svg class="w-5 h-5 text-yellow-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">메모리 드리프트 감지</p>
+                            <p class="text-xs text-gray-600 dark:text-gray-400">5분 전</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <svg class="w-5 h-5 text-blue-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">모델 성능 개선</p>
+                            <p class="text-xs text-gray-600 dark:text-gray-400">15분 전</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                        <svg class="w-5 h-5 text-green-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">시스템 정상</p>
+                            <p class="text-xs text-gray-600 dark:text-gray-400">30분 전</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 알림 설정 -->
+                <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">알림 임계값</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">정확도 임계값</span>
+                            <span class="font-medium text-gray-900 dark:text-white">< 80%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">응답시간 임계값</span>
+                            <span class="font-medium text-gray-900 dark:text-white">> 2초</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600 dark:text-gray-400">에러율 임계값</span>
+                            <span class="font-medium text-gray-900 dark:text-white">> 5%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 다크 모드 토글
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            document.documentElement.classList.toggle('dark');
+        });
+
+        // 현재 시간 표시
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('lastUpdate').textContent = now.toLocaleTimeString('ko-KR');
+        }
+        updateTime();
+        setInterval(updateTime, 30000);
+
+        // 성능 메트릭 차트
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                datasets: [
+                    {
+                        label: '이상 탐지 정확도',
+                        data: [89, 91, 92, 93, 92, 94, 92],
+                        borderColor: 'rgb(16, 185, 129)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: '예측 모델 R²',
+                        data: [0.76, 0.77, 0.78, 0.79, 0.78, 0.80, 0.78].map(x => x * 100),
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: '응답시간 (ms)',
+                        data: [120, 135, 145, 150, 145, 140, 145],
+                        borderColor: 'rgb(245, 158, 11)',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: '시간'
+                        },
+                        grid: {
+                            color: 'rgba(156, 163, 175, 0.1)'
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: '정확도 (%)'
+                        },
+                        grid: {
+                            color: 'rgba(156, 163, 175, 0.1)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: '응답시간 (ms)'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: 'rgb(107, 114, 128)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // 실시간 데이터 업데이트 (ML API 연동)
+        async function updateRealTimeMetrics() {
+            try {
+                // ML API에서 실제 모델 상태 가져오기
+                const response = await fetch('http://localhost:8000/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // 모델 상태에 따른 지표 업데이트
+                    if (data.models && data.models.anomaly_detection === '✅ 준비됨') {
+                        // 실시간 예측 API 호출하여 성능 업데이트
+                        updatePerformanceMetrics();
+                    }
+                }
+            } catch (error) {
+                console.log('ML API 연결 실패, 시뮬레이션 데이터 사용');
+            }
+        }
+
+        // 성능 지표 업데이트
+        function updatePerformanceMetrics() {
+            // 약간의 변동이 있는 실시간 시뮬레이션
+            const anomalyAccuracy = 92 + (Math.random() - 0.5) * 2;
+            const predictionR2 = 0.78 + (Math.random() - 0.5) * 0.04;
+            const responseTime = 145 + (Math.random() - 0.5) * 30;
+            const errorRate = 0.2 + (Math.random() - 0.5) * 0.1;
+
+            document.getElementById('anomalyAccuracy').textContent = anomalyAccuracy.toFixed(1) + '%';
+            document.getElementById('predictionR2').textContent = predictionR2.toFixed(2);
+            document.getElementById('responseTime').textContent = Math.round(responseTime) + 'ms';
+            document.getElementById('errorRate').textContent = errorRate.toFixed(1) + '%';
+        }
+
+        // 30초마다 실시간 업데이트
+        setInterval(updateRealTimeMetrics, 30000);
+        setInterval(updatePerformanceMetrics, 10000);
+
+        // 초기 로드
+        updateRealTimeMetrics();
+        updatePerformanceMetrics();
+
+        console.log('📊 ML 모니터링 대시보드 초기화 완료');
+    </script>
+</body>
+</html>

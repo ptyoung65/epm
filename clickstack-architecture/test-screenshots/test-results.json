@@ -1,0 +1,455 @@
+[
+  {
+    "page": "Autoencoder",
+    "chartContainers": 2,
+    "heightStable": true,
+    "trainButtonExists": true,
+    "initialChartData": [
+      {
+        "index": 0,
+        "width": 0,
+        "height": 0,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "ml-chart-container"
+      },
+      {
+        "index": 1,
+        "width": 0,
+        "height": 0,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "ml-chart-container"
+      }
+    ],
+    "trainingChartData": [
+      {
+        "index": 0,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "ml-chart-container"
+      },
+      {
+        "index": 1,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "ml-chart-container"
+      }
+    ],
+    "finalChartData": [
+      {
+        "index": 0,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "ml-chart-container"
+      },
+      {
+        "index": 1,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "ml-chart-container"
+      }
+    ]
+  },
+  {
+    "page": "LSTM",
+    "chartContainers": 5,
+    "heightStable": true,
+    "trainButtonExists": true,
+    "initialChartData": [
+      {
+        "index": 0,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-48 ml-chart-container"
+      },
+      {
+        "index": 1,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-48 ml-chart-container"
+      },
+      {
+        "index": 2,
+        "width": 0,
+        "height": 0,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "h-64 ml-chart-container"
+      },
+      {
+        "index": 3,
+        "width": 0,
+        "height": 0,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "h-64 ml-chart-container"
+      },
+      {
+        "index": 4,
+        "width": 300,
+        "height": 150,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "h-48 ml-chart-container"
+      }
+    ],
+    "trainingChartData": [
+      {
+        "index": 0,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-48 ml-chart-container"
+      },
+      {
+        "index": 1,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-48 ml-chart-container"
+      },
+      {
+        "index": 2,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-64 ml-chart-container"
+      },
+      {
+        "index": 3,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-64 ml-chart-container"
+      },
+      {
+        "index": 4,
+        "width": 300,
+        "height": 150,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "h-48 ml-chart-container"
+      }
+    ],
+    "finalChartData": [
+      {
+        "index": 0,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-48 ml-chart-container"
+      },
+      {
+        "index": 1,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-48 ml-chart-container"
+      },
+      {
+        "index": 2,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-64 ml-chart-container"
+      },
+      {
+        "index": 3,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-64 ml-chart-container"
+      },
+      {
+        "index": 4,
+        "width": 300,
+        "height": 150,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "h-48 ml-chart-container"
+      }
+    ]
+  },
+  {
+    "page": "RCA",
+    "chartContainers": 5,
+    "heightStable": true,
+    "trainButtonExists": true,
+    "initialChartData": [
+      {
+        "index": 0,
+        "width": 562,
+        "height": 128,
+        "clientWidth": 562,
+        "clientHeight": 128,
+        "containerHeight": 128,
+        "containerClass": "h-32 ml-chart-container"
+      },
+      {
+        "index": 1,
+        "width": 0,
+        "height": 0,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "h-64 ml-chart-container"
+      },
+      {
+        "index": 2,
+        "width": 0,
+        "height": 0,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "h-64 ml-chart-container"
+      },
+      {
+        "index": 3,
+        "width": 300,
+        "height": 150,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "h-48 ml-chart-container"
+      },
+      {
+        "index": 4,
+        "width": 300,
+        "height": 150,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "h-48 ml-chart-container"
+      }
+    ],
+    "trainingChartData": [
+      {
+        "index": 0,
+        "width": 562,
+        "height": 128,
+        "clientWidth": 562,
+        "clientHeight": 128,
+        "containerHeight": 128,
+        "containerClass": "h-32 ml-chart-container"
+      },
+      {
+        "index": 1,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-64 ml-chart-container"
+      },
+      {
+        "index": 2,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-64 ml-chart-container"
+      },
+      {
+        "index": 3,
+        "width": 300,
+        "height": 150,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "h-48 ml-chart-container"
+      },
+      {
+        "index": 4,
+        "width": 300,
+        "height": 150,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "h-48 ml-chart-container"
+      }
+    ],
+    "finalChartData": [
+      {
+        "index": 0,
+        "width": 562,
+        "height": 128,
+        "clientWidth": 562,
+        "clientHeight": 128,
+        "containerHeight": 128,
+        "containerClass": "h-32 ml-chart-container"
+      },
+      {
+        "index": 1,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-64 ml-chart-container"
+      },
+      {
+        "index": 2,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-64 ml-chart-container"
+      },
+      {
+        "index": 3,
+        "width": 300,
+        "height": 150,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "h-48 ml-chart-container"
+      },
+      {
+        "index": 4,
+        "width": 300,
+        "height": 150,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "h-48 ml-chart-container"
+      }
+    ]
+  },
+  {
+    "page": "Clustering",
+    "chartContainers": 3,
+    "heightStable": true,
+    "trainButtonExists": true,
+    "initialChartData": [
+      {
+        "index": 0,
+        "width": 562,
+        "height": 192,
+        "clientWidth": 562,
+        "clientHeight": 192,
+        "containerHeight": 192,
+        "containerClass": "h-48 mb-4 ml-chart-container"
+      },
+      {
+        "index": 1,
+        "width": 0,
+        "height": 0,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "h-64 ml-chart-container"
+      },
+      {
+        "index": 2,
+        "width": 0,
+        "height": 0,
+        "clientWidth": 0,
+        "clientHeight": 0,
+        "containerHeight": 0,
+        "containerClass": "h-64 ml-chart-container"
+      }
+    ],
+    "trainingChartData": [
+      {
+        "index": 0,
+        "width": 562,
+        "height": 192,
+        "clientWidth": 562,
+        "clientHeight": 192,
+        "containerHeight": 192,
+        "containerClass": "h-48 mb-4 ml-chart-container"
+      },
+      {
+        "index": 1,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-64 ml-chart-container"
+      },
+      {
+        "index": 2,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-64 ml-chart-container"
+      }
+    ],
+    "finalChartData": [
+      {
+        "index": 0,
+        "width": 562,
+        "height": 192,
+        "clientWidth": 562,
+        "clientHeight": 192,
+        "containerHeight": 192,
+        "containerClass": "h-48 mb-4 ml-chart-container"
+      },
+      {
+        "index": 1,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-64 ml-chart-container"
+      },
+      {
+        "index": 2,
+        "width": 587,
+        "height": 256,
+        "clientWidth": 587,
+        "clientHeight": 256,
+        "containerHeight": 256,
+        "containerClass": "h-64 ml-chart-container"
+      }
+    ]
+  }
+]

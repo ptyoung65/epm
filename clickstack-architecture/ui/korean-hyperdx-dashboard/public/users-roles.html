@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full bg-gray-50 dark:bg-gray-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS EPM - 사용자 권한 및 역할 관리</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- shadcn/ui CSS variables -->
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 221.2 83.2% 53.3%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 221.2 83.2% 53.3%;
+            --radius: 0.5rem;
+        }
+        
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 217.2 91.2% 59.8%;
+            --primary-foreground: 222.2 84% 4.9%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 224.3 76.3% 94.1%;
+        }
+    </style>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: 'hsl(var(--border))',
+                        input: 'hsl(var(--input))',
+                        ring: 'hsl(var(--ring))',
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        primary: {
+                            DEFAULT: 'hsl(var(--primary))',
+                            foreground: 'hsl(var(--primary-foreground))'
+                        },
+                        secondary: {
+                            DEFAULT: 'hsl(var(--secondary))',
+                            foreground: 'hsl(var(--secondary-foreground))'
+                        },
+                        destructive: {
+                            DEFAULT: 'hsl(var(--destructive))',
+                            foreground: 'hsl(var(--destructive-foreground))'
+                        },
+                        muted: {
+                            DEFAULT: 'hsl(var(--muted))',
+                            foreground: 'hsl(var(--muted-foreground))'
+                        },
+                        accent: {
+                            DEFAULT: 'hsl(var(--accent))',
+                            foreground: 'hsl(var(--accent-foreground))'
+                        },
+                        popover: {
+                            DEFAULT: 'hsl(var(--popover))',
+                            foreground: 'hsl(var(--popover-foreground))'
+                        },
+                        card: {
+                            DEFAULT: 'hsl(var(--card))',
+                            foreground: 'hsl(var(--card-foreground))'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-full bg-background text-foreground">
+    <div class="min-h-full">
+        <!-- Navigation -->
+        <nav class="bg-card border-b border-border">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <a href="/portal.html" class="text-xl font-bold text-foreground hover:text-primary transition-colors cursor-pointer">
+                                🚀 AIRIS EPM
+                            </a>
+                        </div>
+                        <div class="ml-10">
+                            <div class="flex items-baseline space-x-4">
+                                <a href="/admin-dashboard.html" class="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium">
+                                    ← 관리자 대시보드로 돌아가기
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button id="themeToggle" class="text-muted-foreground hover:text-foreground p-2">
+                            <i class="fas fa-moon dark:hidden"></i>
+                            <i class="fas fa-sun hidden dark:inline"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <!-- Page Header -->
+            <div class="px-4 py-4 sm:px-0">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-3xl font-bold text-foreground">👤 사용자 권한 및 역할 관리</h1>
+                    <div class="space-x-4">
+                        <button id="addUserBtn" class="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm hover:bg-primary/90">
+                            <i class="fas fa-user-plus mr-2"></i>사용자 추가
+                        </button>
+                        <button id="addRoleBtn" class="bg-secondary text-secondary-foreground px-4 py-2 rounded-md text-sm hover:bg-secondary/90">
+                            <i class="fas fa-shield-alt mr-2"></i>역할 추가
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="px-4 py-4 sm:px-0">
+                <div class="border-b border-border">
+                    <nav class="-mb-px flex space-x-8">
+                        <button class="tab-button active" data-tab="users">
+                            <i class="fas fa-users mr-2"></i>사용자 관리
+                        </button>
+                        <button class="tab-button" data-tab="roles">
+                            <i class="fas fa-shield-alt mr-2"></i>역할 관리
+                        </button>
+                        <button class="tab-button" data-tab="permissions">
+                            <i class="fas fa-key mr-2"></i>권한 매트릭스
+                        </button>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="users-tab" class="tab-content active px-4 py-4 sm:px-0">
+                <!-- User Statistics -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-card rounded-lg border border-border p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-users text-blue-600 dark:text-blue-400"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <p class="text-sm font-medium text-muted-foreground">총 사용자</p>
+                                <p class="text-2xl font-semibold text-foreground">247</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-card rounded-lg border border-border p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-user-check text-green-600 dark:text-green-400"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <p class="text-sm font-medium text-muted-foreground">활성 사용자</p>
+                                <p class="text-2xl font-semibold text-green-600 dark:text-green-400">198</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-card rounded-lg border border-border p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-user-clock text-yellow-600 dark:text-yellow-400"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <p class="text-sm font-medium text-muted-foreground">대기 중</p>
+                                <p class="text-2xl font-semibold text-yellow-600 dark:text-yellow-400">12</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-card rounded-lg border border-border p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-user-times text-red-600 dark:text-red-400"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <p class="text-sm font-medium text-muted-foreground">비활성화</p>
+                                <p class="text-2xl font-semibold text-red-600 dark:text-red-400">37</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Management -->
+                <div class="bg-card rounded-lg border border-border">
+                    <div class="px-6 py-4 border-b border-border">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-xl font-semibold text-foreground">사용자 목록</h2>
+                            <div class="flex items-center space-x-4">
+                                <input type="text" id="userSearch" placeholder="사용자 검색..." class="px-3 py-2 border border-input rounded-md text-sm w-64">
+                                <select id="roleFilter" class="px-3 py-2 border border-input rounded-md text-sm">
+                                    <option value="">모든 역할</option>
+                                    <option value="admin">관리자</option>
+                                    <option value="operator">운영자</option>
+                                    <option value="viewer">뷰어</option>
+                                    <option value="analyst">분석가</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="border-b border-border">
+                                        <th class="text-left py-3 px-4 font-medium text-muted-foreground">사용자</th>
+                                        <th class="text-left py-3 px-4 font-medium text-muted-foreground">이메일</th>
+                                        <th class="text-left py-3 px-4 font-medium text-muted-foreground">역할</th>
+                                        <th class="text-left py-3 px-4 font-medium text-muted-foreground">상태</th>
+                                        <th class="text-left py-3 px-4 font-medium text-muted-foreground">마지막 로그인</th>
+                                        <th class="text-left py-3 px-4 font-medium text-muted-foreground">작업</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTable">
+                                    <!-- Users will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Roles Tab -->
+            <div id="roles-tab" class="tab-content px-4 py-4 sm:px-0">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Role Management -->
+                    <div class="bg-card rounded-lg border border-border">
+                        <div class="px-6 py-4 border-b border-border">
+                            <h2 class="text-xl font-semibold text-foreground">시스템 역할</h2>
+                        </div>
+                        <div class="p-6">
+                            <div class="space-y-4" id="rolesList">
+                                <!-- Roles will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Role Details -->
+                    <div class="bg-card rounded-lg border border-border">
+                        <div class="px-6 py-4 border-b border-border">
+                            <h2 class="text-xl font-semibold text-foreground">역할 세부정보</h2>
+                        </div>
+                        <div class="p-6">
+                            <div id="roleDetails">
+                                <p class="text-muted-foreground text-center py-8">역할을 선택하여 세부정보를 확인하세요.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Permissions Tab -->
+            <div id="permissions-tab" class="tab-content px-4 py-4 sm:px-0">
+                <div class="bg-card rounded-lg border border-border">
+                    <div class="px-6 py-4 border-b border-border">
+                        <h2 class="text-xl font-semibold text-foreground">권한 매트릭스</h2>
+                        <p class="text-sm text-muted-foreground mt-1">역할별 시스템 권한 현황</p>
+                    </div>
+                    <div class="p-6">
+                        <div class="overflow-x-auto">
+                            <table class="w-full" id="permissionsMatrix">
+                                <thead>
+                                    <tr class="border-b border-border">
+                                        <th class="text-left py-3 px-4 font-medium text-muted-foreground">기능/모듈</th>
+                                        <th class="text-center py-3 px-4 font-medium text-muted-foreground">관리자</th>
+                                        <th class="text-center py-3 px-4 font-medium text-muted-foreground">운영자</th>
+                                        <th class="text-center py-3 px-4 font-medium text-muted-foreground">분석가</th>
+                                        <th class="text-center py-3 px-4 font-medium text-muted-foreground">뷰어</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Permissions matrix will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-card rounded-lg border border-border p-6 w-full max-w-md">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-foreground">새 사용자 추가</h3>
+                <button id="closeAddUserModal" class="text-muted-foreground hover:text-foreground">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-foreground mb-2">이름</label>
+                    <input type="text" id="newUserName" class="form-input" placeholder="사용자 이름">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-foreground mb-2">이메일</label>
+                    <input type="email" id="newUserEmail" class="form-input" placeholder="user@example.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-foreground mb-2">역할</label>
+                    <select id="newUserRole" class="form-input">
+                        <option value="viewer">뷰어</option>
+                        <option value="analyst">분석가</option>
+                        <option value="operator">운영자</option>
+                        <option value="admin">관리자</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button id="cancelAddUser" class="px-4 py-2 border border-border rounded-md text-sm hover:bg-accent">
+                        취소
+                    </button>
+                    <button id="confirmAddUser" class="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90">
+                        추가
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .form-input {
+            @apply w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
+        }
+        
+        .tab-button {
+            @apply py-4 px-1 border-b-2 border-transparent text-sm font-medium text-muted-foreground hover:text-foreground hover:border-border transition-colors;
+        }
+        
+        .tab-button.active {
+            @apply border-primary text-primary;
+        }
+        
+        .tab-content {
+            @apply hidden;
+        }
+        
+        .tab-content.active {
+            @apply block;
+        }
+        
+        .role-card {
+            @apply p-4 border border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors;
+        }
+        
+        .role-card.selected {
+            @apply border-primary bg-primary/5;
+        }
+        
+        .user-row {
+            @apply border-b border-border hover:bg-accent/50;
+        }
+        
+        .status-active {
+            @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200;
+        }
+        
+        .status-pending {
+            @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200;
+        }
+        
+        .status-inactive {
+            @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200;
+        }
+        
+        .permission-check {
+            @apply w-5 h-5 text-green-500;
+        }
+        
+        .permission-cross {
+            @apply w-5 h-5 text-red-500;
+        }
+    </style>
+
+    <script>
+        // Sample data
+        const users = [
+            { id: 1, name: '김관리', email: 'admin@airis-epm.com', role: 'admin', status: 'active', lastLogin: '2024-08-28 09:15' },
+            { id: 2, name: '이운영', email: 'operator@airis-epm.com', role: 'operator', status: 'active', lastLogin: '2024-08-28 08:30' },
+            { id: 3, name: '박분석', email: 'analyst@airis-epm.com', role: 'analyst', status: 'active', lastLogin: '2024-08-27 16:45' },
+            { id: 4, name: '최뷰어', email: 'viewer@airis-epm.com', role: 'viewer', status: 'pending', lastLogin: '2024-08-25 14:20' },
+            { id: 5, name: '정개발', email: 'dev@airis-epm.com', role: 'analyst', status: 'inactive', lastLogin: '2024-08-20 10:30' }
+        ];
+
+        const roles = [
+            {
+                id: 'admin',
+                name: '시스템 관리자',
+                description: '모든 시스템 기능에 대한 전체 권한',
+                userCount: 3,
+                permissions: ['전체 관리', '사용자 관리', '시스템 설정', '백업/복원', '감사 로그']
+            },
+            {
+                id: 'operator',
+                name: '시스템 운영자',
+                description: '시스템 모니터링 및 운영 권한',
+                userCount: 15,
+                permissions: ['모니터링', '알림 관리', '서비스 재시작', '로그 조회']
+            },
+            {
+                id: 'analyst',
+                name: '데이터 분석가',
+                description: '데이터 분석 및 리포트 생성 권한',
+                userCount: 42,
+                permissions: ['대시보드 조회', '리포트 생성', '데이터 내보내기', 'ML 모델 실행']
+            },
+            {
+                id: 'viewer',
+                name: '뷰어',
+                description: '읽기 전용 대시보드 접근 권한',
+                userCount: 187,
+                permissions: ['대시보드 조회', '기본 리포트 조회']
+            }
+        ];
+
+        const permissions = [
+            { module: 'J2EE 모니터링', admin: true, operator: true, analyst: true, viewer: true },
+            { module: 'WAS 모니터링', admin: true, operator: true, analyst: true, viewer: true },
+            { module: '예외 추적', admin: true, operator: true, analyst: true, viewer: true },
+            { module: '서비스 토폴로지', admin: true, operator: true, analyst: true, viewer: false },
+            { module: '알림 관리', admin: true, operator: true, analyst: false, viewer: false },
+            { module: 'AIOps 관리', admin: true, operator: true, analyst: true, viewer: false },
+            { module: 'ML 훈련', admin: true, operator: false, analyst: true, viewer: false },
+            { module: '사용자 관리', admin: true, operator: false, analyst: false, viewer: false },
+            { module: '시스템 설정', admin: true, operator: false, analyst: false, viewer: false },
+            { module: '백업/복원', admin: true, operator: false, analyst: false, viewer: false },
+            { module: '감사 로그', admin: true, operator: true, analyst: false, viewer: false },
+            { module: '외부 시스템 연동', admin: true, operator: true, analyst: false, viewer: false }
+        ];
+
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        html.classList.toggle('dark', currentTheme === 'dark');
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const newTheme = html.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+        });
+
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.dataset.tab;
+                
+                // Update buttons
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Update content
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+            });
+        });
+
+        // Load users
+        function loadUsers() {
+            const tbody = document.getElementById('usersTable');
+            tbody.innerHTML = users.map(user => `
+                <tr class="user-row">
+                    <td class="py-3 px-4">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-medium">
+                                ${user.name.charAt(0)}
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-foreground">${user.name}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-4 text-sm text-muted-foreground">${user.email}</td>
+                    <td class="py-3 px-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            ${getRoleName(user.role)}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="status-${user.status}">
+                            ${getStatusName(user.status)}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-sm text-muted-foreground">${user.lastLogin}</td>
+                    <td class="py-3 px-4">
+                        <div class="flex space-x-2">
+                            <button class="text-blue-600 hover:text-blue-800" onclick="editUser(${user.id})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="text-red-600 hover:text-red-800" onclick="deleteUser(${user.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Load roles
+        function loadRoles() {
+            const container = document.getElementById('rolesList');
+            container.innerHTML = roles.map(role => `
+                <div class="role-card" onclick="selectRole('${role.id}')">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-medium text-foreground">${role.name}</h3>
+                            <p class="text-sm text-muted-foreground">${role.description}</p>
+                        </div>
+                        <span class="text-sm text-muted-foreground">${role.userCount}명</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Load permissions matrix
+        function loadPermissionsMatrix() {
+            const tbody = document.querySelector('#permissionsMatrix tbody');
+            tbody.innerHTML = permissions.map(perm => `
+                <tr class="border-b border-border">
+                    <td class="py-3 px-4 font-medium text-foreground">${perm.module}</td>
+                    <td class="py-3 px-4 text-center">
+                        <i class="fas fa-${perm.admin ? 'check permission-check' : 'times permission-cross'}"></i>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <i class="fas fa-${perm.operator ? 'check permission-check' : 'times permission-cross'}"></i>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <i class="fas fa-${perm.analyst ? 'check permission-check' : 'times permission-cross'}"></i>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <i class="fas fa-${perm.viewer ? 'check permission-check' : 'times permission-cross'}"></i>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Helper functions
+        function getRoleName(role) {
+            const roleMap = {
+                'admin': '관리자',
+                'operator': '운영자',
+                'analyst': '분석가',
+                'viewer': '뷰어'
+            };
+            return roleMap[role] || role;
+        }
+
+        function getStatusName(status) {
+            const statusMap = {
+                'active': '활성',
+                'pending': '대기',
+                'inactive': '비활성'
+            };
+            return statusMap[status] || status;
+        }
+
+        // Select role
+        function selectRole(roleId) {
+            // Update selected role
+            document.querySelectorAll('.role-card').forEach(card => card.classList.remove('selected'));
+            event.target.closest('.role-card').classList.add('selected');
+            
+            // Show role details
+            const role = roles.find(r => r.id === roleId);
+            document.getElementById('roleDetails').innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-foreground">${role.name}</h3>
+                        <p class="text-sm text-muted-foreground">${role.description}</p>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-foreground mb-2">권한 목록</h4>
+                        <div class="space-y-2">
+                            ${role.permissions.map(perm => `
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-check text-green-500 w-4"></i>
+                                    <span class="text-sm text-foreground">${perm}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="pt-4 border-t border-border">
+                        <p class="text-sm text-muted-foreground">현재 ${role.userCount}명의 사용자가 이 역할을 가지고 있습니다.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Modal handlers
+        document.getElementById('addUserBtn').addEventListener('click', () => {
+            document.getElementById('addUserModal').classList.remove('hidden');
+            document.getElementById('addUserModal').classList.add('flex');
+        });
+
+        document.getElementById('closeAddUserModal').addEventListener('click', () => {
+            document.getElementById('addUserModal').classList.add('hidden');
+            document.getElementById('addUserModal').classList.remove('flex');
+        });
+
+        document.getElementById('cancelAddUser').addEventListener('click', () => {
+            document.getElementById('addUserModal').classList.add('hidden');
+            document.getElementById('addUserModal').classList.remove('flex');
+        });
+
+        document.getElementById('confirmAddUser').addEventListener('click', () => {
+            // Add user logic here
+            alert('사용자가 추가되었습니다 (시뮬레이션)');
+            document.getElementById('addUserModal').classList.add('hidden');
+            document.getElementById('addUserModal').classList.remove('flex');
+        });
+
+        // User actions
+        function editUser(id) {
+            alert(`사용자 ${id} 편집 (시뮬레이션)`);
+        }
+
+        function deleteUser(id) {
+            if (confirm('이 사용자를 삭제하시겠습니까?')) {
+                alert(`사용자 ${id} 삭제됨 (시뮬레이션)`);
+            }
+        }
+
+        // Initialize
+        loadUsers();
+        loadRoles();
+        loadPermissionsMatrix();
+    </script>
+</body>
+</html>

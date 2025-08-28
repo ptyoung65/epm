@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIRIS 지능형 분석 챗봇</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      font-family: 'Inter', sans-serif;
+    }
+    
+    /* shadcn/ui CSS Variables */
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 222.2 84% 4.9%;
+      --card: 0 0% 100%;
+      --card-foreground: 222.2 84% 4.9%;
+      --popover: 0 0% 100%;
+      --popover-foreground: 222.2 84% 4.9%;
+      --primary: 222.2 47.4% 11.2%;
+      --primary-foreground: 210 40% 98%;
+      --secondary: 210 40% 96%;
+      --secondary-foreground: 222.2 47.4% 11.2%;
+      --muted: 210 40% 96%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --accent: 210 40% 96%;
+      --accent-foreground: 222.2 47.4% 11.2%;
+      --destructive: 0 84.2% 60.2%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 214.3 31.8% 91.4%;
+      --input: 214.3 31.8% 91.4%;
+      --ring: 222.2 84% 4.9%;
+      --radius: 0.5rem;
+    }
+
+    .dark {
+      --background: 222.2 84% 4.9%;
+      --foreground: 210 40% 98%;
+      --card: 222.2 84% 4.9%;
+      --card-foreground: 210 40% 98%;
+      --popover: 222.2 84% 4.9%;
+      --popover-foreground: 210 40% 98%;
+      --primary: 210 40% 98%;
+      --primary-foreground: 222.2 47.4% 11.2%;
+      --secondary: 222.2 84% 4.9%;
+      --secondary-foreground: 210 40% 98%;
+      --muted: 222.2 84% 4.9%;
+      --muted-foreground: 215.4 16.3% 46.9%;
+      --accent: 222.2 84% 4.9%;
+      --accent-foreground: 210 40% 98%;
+      --destructive: 0 62.8% 30.6%;
+      --destructive-foreground: 210 40% 98%;
+      --border: 217.2 32.6% 17.5%;
+      --input: 217.2 32.6% 17.5%;
+      --ring: 212.7 26.8% 83.9%;
+    }
+
+    .bg-background { background-color: hsl(var(--background)); }
+    .text-foreground { color: hsl(var(--foreground)); }
+    .bg-card { background-color: hsl(var(--card)); }
+    .text-card-foreground { color: hsl(var(--card-foreground)); }
+    .bg-primary { background-color: hsl(var(--primary)); }
+    .text-primary-foreground { color: hsl(var(--primary-foreground)); }
+    .text-primary { color: hsl(var(--primary)); }
+    .text-muted-foreground { color: hsl(var(--muted-foreground)); }
+    .border-border { border-color: hsl(var(--border)); }
+    .text-destructive { color: hsl(var(--destructive)); }
+    .bg-muted { background-color: hsl(var(--muted)); }
+    .text-accent-foreground { color: hsl(var(--accent-foreground)); }
+    .bg-accent { background-color: hsl(var(--accent)); }
+    
+    .typing-animation {
+      animation: typing 1.5s infinite;
+    }
+    
+    @keyframes typing {
+      0%, 60%, 100% { opacity: 1; }
+      30% { opacity: 0.4; }
+    }
+  </style>
+</head>
+<body class="bg-background text-foreground">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    <div class="w-80 bg-card border-r border-border flex flex-col">
+      <!-- Header -->
+      <div class="p-4 border-b border-border">
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary-foreground">
+              <path d="M12 8V4H8"></path>
+              <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+              <path d="M2 14h2"></path>
+              <path d="M20 14h2"></path>
+              <path d="M15 13v2"></path>
+              <path d="M9 13v2"></path>
+            </svg>
+          </div>
+          <div>
+            <h1 class="font-semibold text-lg">AIRIS 지능형 분석 봇</h1>
+            <p class="text-sm text-muted-foreground">성능 & 모니터링 전문 AI</p>
+          </div>
+        </div>
+        
+        <!-- Bot Selection -->
+        <div class="space-y-2">
+          <label class="text-sm font-medium text-foreground">활성 봇 선택</label>
+          <select id="botSelect" class="w-full p-2 border border-border rounded-md bg-background text-foreground text-sm">
+            <option value="performance">성능 분석 봇</option>
+            <option value="monitoring">모니터링 봇</option>
+            <option value="troubleshoot">장애 분석 봇</option>
+            <option value="optimization">최적화 봇</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="p-4 space-y-3">
+        <button id="newChatBtn" class="w-full bg-primary text-primary-foreground py-2 px-3 rounded-md hover:bg-primary/90 transition-colors text-sm font-medium">
+          새 대화 시작
+        </button>
+        
+        <div class="flex space-x-2">
+          <button id="historyBtn" class="flex-1 border border-border py-2 px-3 rounded-md hover:bg-accent transition-colors text-sm">
+            대화 기록
+          </button>
+          <button id="settingsBtn" class="flex-1 border border-border py-2 px-3 rounded-md hover:bg-accent transition-colors text-sm">
+            설정
+          </button>
+        </div>
+        
+        <button id="parentPageBtn" class="w-full border border-border py-2 px-3 rounded-md hover:bg-accent transition-colors text-sm" onclick="window.opener?.focus()">
+          원본 페이지로 이동
+        </button>
+      </div>
+
+      <!-- Current Context -->
+      <div class="p-4 border-t border-border">
+        <div class="space-y-2">
+          <h3 class="font-medium text-sm">현재 컨텍스트</h3>
+          <div id="contextInfo" class="text-xs text-muted-foreground space-y-1">
+            <p>📊 페이지: <span id="currentPage">통합 모니터링 대시보드</span></p>
+            <p>🕒 시간: <span id="currentTime">-</span></p>
+            <p>👤 사용자: <span id="currentUser">admin</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="flex-1 flex flex-col">
+      <!-- Chat Header -->
+      <div class="p-4 border-b border-border bg-card">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+              <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            </div>
+            <div>
+              <h2 class="font-medium" id="selectedBotName">성능 분석 봇</h2>
+              <p class="text-sm text-muted-foreground" id="selectedBotDesc">실시간 시스템 성능 분석 및 최적화 권장</p>
+            </div>
+          </div>
+          
+          <div class="flex items-center space-x-2">
+            <button id="refreshContextBtn" class="p-2 hover:bg-accent rounded-md transition-colors" title="컨텍스트 새로고침">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path>
+                <path d="M21 3v5h-5"></path>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path>
+                <path d="M3 21v-5h5"></path>
+              </svg>
+            </button>
+            <button id="exportChatBtn" class="p-2 hover:bg-accent rounded-md transition-colors" title="대화 내용 내보내기">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7,10 12,15 17,10"></polyline>
+                <line x1="12" x2="12" y1="15" y2="3"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Messages Area -->
+      <div id="messagesContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
+        <!-- Welcome Message -->
+        <div class="flex items-start space-x-3">
+          <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary-foreground">
+              <path d="M12 8V4H8"></path>
+              <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+              <path d="M2 14h2"></path>
+              <path d="M20 14h2"></path>
+              <path d="M15 13v2"></path>
+              <path d="M9 13v2"></path>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <div class="bg-muted rounded-lg p-4 max-w-2xl">
+              <p class="text-sm mb-2"><strong>안녕하세요! 👋</strong></p>
+              <p class="text-sm mb-3">저는 AIRIS 지능형 분석 봇입니다. 현재 화면의 성능 이슈나 모니터링 관련 질문을 도와드릴게요.</p>
+              <div class="text-xs text-muted-foreground space-y-1">
+                <p><strong>💡 예시 질문:</strong></p>
+                <ul class="list-disc list-inside space-y-1 ml-2">
+                  <li>"현재 CPU 사용률이 높은 이유는 무엇인가요?"</li>
+                  <li>"메모리 사용량을 어떻게 최적화할 수 있나요?"</li>
+                  <li>"응답 시간을 개선하려면 어떤 조치를 취해야 하나요?"</li>
+                  <li>"장애 예방을 위한 모니터링 권장사항은 무엇인가요?"</li>
+                </ul>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2 mt-2">
+              <span class="text-xs text-muted-foreground">방금 전</span>
+              <span class="text-xs text-primary">성능 분석 봇</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="p-4 border-t border-border bg-card">
+        <div class="space-y-3">
+          <div class="flex items-end space-x-3">
+            <div class="flex-1">
+              <textarea 
+                id="messageInput" 
+                placeholder="성능 이슈나 모니터링에 대해 질문해보세요..." 
+                class="w-full p-3 border border-border rounded-lg resize-none min-h-[80px] max-h-[200px] bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                rows="3"
+              ></textarea>
+            </div>
+            <button 
+              id="sendBtn" 
+              class="bg-primary text-primary-foreground px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="m22 2-7 20-4-9-9-4Z"></path>
+                <path d="M22 2 11 13"></path>
+              </svg>
+              <span>전송</span>
+            </button>
+          </div>
+          
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="flex items-center space-x-2 text-xs text-muted-foreground">
+                <span>컨텍스트:</span>
+                <span class="bg-primary/10 text-primary px-2 py-1 rounded text-xs">통합 모니터링</span>
+              </div>
+              <div id="tokenCount" class="text-xs text-muted-foreground">
+                토큰: 0 / 4000
+              </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+              <div id="typingIndicator" class="flex items-center space-x-1 text-xs text-muted-foreground hidden">
+                <div class="flex space-x-1">
+                  <div class="w-1 h-1 bg-primary rounded-full animate-pulse"></div>
+                  <div class="w-1 h-1 bg-primary rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+                  <div class="w-1 h-1 bg-primary rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+                </div>
+                <span>분석 중...</span>
+              </div>
+              <div id="connectionStatus" class="flex items-center space-x-1 text-xs">
+                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span class="text-muted-foreground">연결됨</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Modal -->
+  <div id="historyModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
+    <div class="flex items-center justify-center p-4 h-full">
+      <div class="bg-background border border-border rounded-lg shadow-lg w-[800px] h-[600px] flex flex-col">
+        <div class="flex items-center justify-between p-4 border-b border-border">
+          <h3 class="font-semibold text-lg">대화 히스토리</h3>
+          <button id="closeHistoryBtn" class="p-2 hover:bg-accent rounded-md transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m18 6-12 12"></path>
+              <path d="m6 6 12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div id="historyContent" class="flex-1 overflow-y-auto p-4">
+          <div class="text-center text-muted-foreground py-12">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-4">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <p>아직 저장된 대화가 없습니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden">
+    <div class="flex items-center justify-center p-4 h-full">
+      <div class="bg-background border border-border rounded-lg shadow-lg w-[600px] flex flex-col">
+        <div class="flex items-center justify-between p-4 border-b border-border">
+          <h3 class="font-semibold text-lg">챗봇 설정</h3>
+          <button id="closeSettingsBtn" class="p-2 hover:bg-accent rounded-md transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m18 6-12 12"></path>
+              <path d="m6 6 12 12"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="p-6 space-y-6">
+          <div>
+            <h4 class="font-medium mb-3">LLM API 설정</h4>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-sm font-medium mb-1">API 제공업체</label>
+                <select id="apiProvider" class="w-full p-2 border border-border rounded-md bg-background">
+                  <option value="openai">OpenAI</option>
+                  <option value="anthropic">Anthropic Claude</option>
+                  <option value="google">Google Gemini</option>
+                  <option value="ollama">Ollama (로컬)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">API 키</label>
+                <input type="password" id="apiKey" class="w-full p-2 border border-border rounded-md bg-background" placeholder="API 키를 입력하세요">
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">모델</label>
+                <input type="text" id="modelName" class="w-full p-2 border border-border rounded-md bg-background" placeholder="gpt-4o-mini">
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h4 class="font-medium mb-3">응답 설정</h4>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-sm font-medium mb-1">최대 토큰 수</label>
+                <input type="number" id="maxTokens" class="w-full p-2 border border-border rounded-md bg-background" value="2000">
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">온도 (창의성)</label>
+                <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.7" class="w-full">
+                <div class="flex justify-between text-xs text-muted-foreground">
+                  <span>정확함</span>
+                  <span>창의적</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex justify-end space-x-3 pt-4">
+            <button id="cancelSettingsBtn" class="px-4 py-2 border border-border rounded-md hover:bg-accent transition-colors">
+              취소
+            </button>
+            <button id="saveSettingsBtn" class="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors">
+              저장
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global variables
+    let currentBot = 'performance';
+    let chatHistory = [];
+    let apiSettings = {
+      provider: 'openai',
+      apiKey: '',
+      model: 'gpt-4o-mini',
+      maxTokens: 2000,
+      temperature: 0.7
+    };
+
+    // Bot configurations
+    const botConfigs = {
+      performance: {
+        name: '성능 분석 봇',
+        description: '실시간 시스템 성능 분석 및 최적화 권장',
+        systemPrompt: '당신은 시스템 성능 분석 전문가입니다. 사용자의 질문에 대해 정확하고 실용적인 성능 최적화 방안을 제시해주세요.'
+      },
+      monitoring: {
+        name: '모니터링 봇',
+        description: '시스템 모니터링 및 알림 설정 전문가',
+        systemPrompt: '당신은 시스템 모니터링 전문가입니다. 모니터링 설정, 알림 규칙, 대시보드 구성에 대한 전문적인 조언을 제공해주세요.'
+      },
+      troubleshoot: {
+        name: '장애 분석 봇',
+        description: '장애 원인 분석 및 해결 방안 제시',
+        systemPrompt: '당신은 시스템 장애 분석 및 문제 해결 전문가입니다. 장애 원인을 분석하고 체계적인 해결 방안을 제시해주세요.'
+      },
+      optimization: {
+        name: '최적화 봇',
+        description: '시스템 최적화 및 효율성 개선 전문가',
+        systemPrompt: '당신은 시스템 최적화 전문가입니다. 성능 향상, 비용 절감, 효율성 개선에 대한 구체적인 방안을 제시해주세요.'
+      }
+    };
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      initializeChatbot();
+      loadSettings();
+      updateCurrentTime();
+      setInterval(updateCurrentTime, 60000);
+    });
+
+    // Load available chatbots from API
+    async function loadAvailableChatbots() {
+      try {
+        const response = await fetch('http://localhost:3013/api/chatbot/configs');
+        if (response.ok) {
+          const chatbots = await response.json();
+          const botSelect = document.getElementById('botSelect');
+          
+          // Clear existing options
+          botSelect.innerHTML = '';
+          
+          // Add chatbots from API
+          chatbots.forEach(bot => {
+            if (bot.is_active) {
+              const option = document.createElement('option');
+              option.value = bot.id;
+              option.textContent = `${bot.name} (${bot.provider})`;
+              option.setAttribute('data-provider', bot.provider);
+              option.setAttribute('data-model', bot.model);
+              botSelect.appendChild(option);
+            }
+          });
+          
+          // If no chatbots available, add fallback options
+          if (botSelect.options.length === 0) {
+            const fallbackOptions = [
+              { value: 'performance', text: '성능 분석 봇 (설정 필요)' },
+              { value: 'monitoring', text: '모니터링 봇 (설정 필요)' },
+              { value: 'troubleshoot', text: '장애 분석 봇 (설정 필요)' },
+              { value: 'optimization', text: '최적화 봇 (설정 필요)' }
+            ];
+            
+            fallbackOptions.forEach(opt => {
+              const option = document.createElement('option');
+              option.value = opt.value;
+              option.textContent = opt.text;
+              botSelect.appendChild(option);
+            });
+          }
+          
+          // Set current bot to first available
+          if (botSelect.options.length > 0) {
+            currentBot = botSelect.options[0].value;
+            updateBotInfo();
+          }
+        } else {
+          console.error('Failed to load chatbot configurations');
+        }
+      } catch (error) {
+        console.error('Error loading chatbots:', error);
+      }
+    }
+
+    function initializeChatbot() {
+      // Load available chatbots from API first
+      loadAvailableChatbots();
+      
+      // Bot selection change
+      document.getElementById('botSelect').addEventListener('change', function(e) {
+        currentBot = e.target.value;
+        updateBotInfo();
+      });
+
+      // Send message
+      document.getElementById('sendBtn').addEventListener('click', sendMessage);
+      document.getElementById('messageInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+
+      // Modal controls
+      document.getElementById('historyBtn').addEventListener('click', () => {
+        document.getElementById('historyModal').classList.remove('hidden');
+        loadChatHistory();
+      });
+      
+      document.getElementById('settingsBtn').addEventListener('click', () => {
+        document.getElementById('settingsModal').classList.remove('hidden');
+      });
+
+      document.getElementById('closeHistoryBtn').addEventListener('click', () => {
+        document.getElementById('historyModal').classList.add('hidden');
+      });
+
+      document.getElementById('closeSettingsBtn').addEventListener('click', () => {
+        document.getElementById('settingsModal').classList.add('hidden');
+      });
+
+      // Settings
+      document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+      document.getElementById('cancelSettingsBtn').addEventListener('click', () => {
+        document.getElementById('settingsModal').classList.add('hidden');
+      });
+
+      // New chat
+      document.getElementById('newChatBtn').addEventListener('click', startNewChat);
+      
+      // Context refresh
+      document.getElementById('refreshContextBtn').addEventListener('click', refreshContext);
+
+      updateBotInfo();
+    }
+
+    function updateBotInfo() {
+      const config = botConfigs[currentBot];
+      document.getElementById('selectedBotName').textContent = config.name;
+      document.getElementById('selectedBotDesc').textContent = config.description;
+    }
+
+    function updateCurrentTime() {
+      document.getElementById('currentTime').textContent = new Date().toLocaleString('ko-KR');
+    }
+
+    function getContextInfo() {
+      try {
+        // Try to get context from parent window
+        if (window.opener && !window.opener.closed) {
+          return {
+            page: window.opener.document.title || '통합 모니터링 대시보드',
+            url: window.opener.location.pathname,
+            elements: extractPageElements(window.opener.document)
+          };
+        }
+      } catch (error) {
+        console.log('Cannot access parent window:', error);
+      }
+      
+      return {
+        page: '통합 모니터링 대시보드',
+        url: '/',
+        elements: 'CPU 사용률, 메모리 사용량, 디스크 사용량, 네트워크 I/O'
+      };
+    }
+
+    function extractPageElements(doc) {
+      try {
+        const elements = [];
+        
+        // Extract key metrics or data
+        const titles = doc.querySelectorAll('h1, h2, h3');
+        titles.forEach(title => {
+          if (title.textContent.trim()) {
+            elements.push(title.textContent.trim());
+          }
+        });
+        
+        return elements.slice(0, 5).join(', ') || 'Dashboard elements';
+      } catch (error) {
+        return 'Dashboard elements';
+      }
+    }
+
+    function generateSystemPrompt(userMessage) {
+      const context = getContextInfo();
+      const botConfig = botConfigs[currentBot];
+      
+      return `${botConfig.systemPrompt}
+
+현재 컨텍스트:
+- 페이지: ${context.page}
+- URL: ${context.url}
+- 주요 요소: ${context.elements}
+- 현재 시간: ${new Date().toLocaleString('ko-KR')}
+
+사용자 질문: ${userMessage}
+
+위 컨텍스트를 참고하여 구체적이고 실용적인 답변을 한국어로 제공해주세요.`;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const message = input.value.trim();
+      
+      if (!message) return;
+
+      // Disable send button
+      const sendBtn = document.getElementById('sendBtn');
+      sendBtn.disabled = true;
+      
+      // Clear input
+      input.value = '';
+      
+      // Add user message
+      addMessage(message, 'user');
+      
+      // Show typing indicator
+      showTypingIndicator();
+      
+      try {
+        // Generate system prompt with context
+        const systemPrompt = generateSystemPrompt(message);
+        
+        // Call LLM API
+        const response = await callLLMAPI(systemPrompt);
+        
+        // Hide typing indicator
+        hideTypingIndicator();
+        
+        // Add bot response
+        addMessage(response, 'bot');
+        
+        // Save to history
+        saveChatToHistory(message, response);
+        
+      } catch (error) {
+        hideTypingIndicator();
+        addMessage('죄송합니다. 응답을 생성하는 중 오류가 발생했습니다. 설정을 확인해주세요.', 'bot', true);
+      }
+      
+      // Re-enable send button
+      sendBtn.disabled = false;
+    }
+
+    async function callLLMAPI(message) {
+      try {
+        // Get current context
+        const contextInfo = getContextInfo();
+        
+        // Get chatbot ID based on current bot selection
+        const chatbotId = getChatbotId(currentBot);
+        
+        const response = await fetch('http://localhost:3013/api/chatbot/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            chatbotId: chatbotId,
+            message: message,
+            sessionId: getSessionId(),
+            userId: 'web-user',
+            contextInfo: {
+              pageUrl: contextInfo.url,
+              pageTitle: contextInfo.page,
+              pageElements: contextInfo.elements,
+              metrics: extractMetricsFromPage(),
+              timestamp: new Date().toISOString()
+            }
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        return data.response;
+        
+      } catch (error) {
+        console.error('API call failed:', error);
+        
+        // Fallback response
+        return `죄송합니다. 현재 AI 서비스에 일시적인 문제가 발생했습니다.
+        
+오류: ${error.message}
+
+다음을 확인해주세요:
+• 챗봇 API 서비스가 실행 중인지 확인 (포트 3013)
+• 네트워크 연결 상태 확인
+• 브라우저 콘솔에서 상세 오류 메시지 확인
+
+잠시 후 다시 시도해주세요.`;
+      }
+    }
+
+    function getChatbotId(botSelection) {
+      // If botSelection is already a numeric ID (from API), return it
+      if (typeof botSelection === 'number' || (typeof botSelection === 'string' && /^\d+$/.test(botSelection))) {
+        return parseInt(botSelection);
+      }
+      
+      // Fallback mapping for legacy bot types
+      const botIdMap = {
+        'performance': 1,
+        'incident': 1,
+        'prediction': 1,
+        'optimization': 1,
+        'monitoring': 1,
+        'troubleshoot': 1
+      };
+      
+      return botIdMap[botSelection] || 1;
+    }
+
+    function getSessionId() {
+      // Generate or get existing session ID
+      let sessionId = sessionStorage.getItem('airis-chat-session-id');
+      if (!sessionId) {
+        sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        sessionStorage.setItem('airis-chat-session-id', sessionId);
+      }
+      return sessionId;
+    }
+
+    function extractMetricsFromPage() {
+      try {
+        // Try to extract metrics from the parent window
+        if (window.opener && !window.opener.closed) {
+          const parentDoc = window.opener.document;
+          const metrics = {};
+          
+          // Look for common metric patterns
+          const metricElements = parentDoc.querySelectorAll('[data-metric], .metric-value, .chart-value');
+          metricElements.forEach(el => {
+            const text = el.textContent.trim();
+            const label = el.getAttribute('data-metric') || el.title || '';
+            
+            if (text && label) {
+              metrics[label] = text;
+            }
+          });
+          
+          return metrics;
+        }
+      } catch (error) {
+        console.log('Cannot extract metrics from parent window:', error);
+      }
+      
+      return {};
+    }
+
+    function addMessage(content, type, isError = false) {
+      const container = document.getElementById('messagesContainer');
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'flex items-start space-x-3';
+      
+      if (type === 'user') {
+        messageDiv.classList.add('flex-row-reverse', 'space-x-reverse');
+      }
+      
+      const timestamp = new Date().toLocaleString('ko-KR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+      
+      messageDiv.innerHTML = `
+        <div class="w-8 h-8 ${type === 'user' ? 'bg-blue-500' : (isError ? 'bg-red-500' : 'bg-primary')} rounded-full flex items-center justify-center flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white">
+            ${type === 'user' 
+              ? '<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle>'
+              : '<path d="M12 8V4H8"></path><rect width="16" height="12" x="4" y="8" rx="2"></rect><path d="M2 14h2"></path><path d="M20 14h2"></path><path d="M15 13v2"></path><path d="M9 13v2"></path>'
+            }
+          </svg>
+        </div>
+        <div class="flex-1 max-w-2xl">
+          <div class="bg-${type === 'user' ? 'blue-500 text-white' : (isError ? 'red-100 dark:bg-red-900' : 'muted')} rounded-lg p-4">
+            <p class="text-sm whitespace-pre-wrap">${content}</p>
+          </div>
+          <div class="flex items-center space-x-2 mt-2 ${type === 'user' ? 'justify-end' : ''}">
+            <span class="text-xs text-muted-foreground">${timestamp}</span>
+            ${type === 'bot' ? `<span class="text-xs text-primary">${botConfigs[currentBot].name}</span>` : ''}
+          </div>
+        </div>
+      `;
+      
+      container.appendChild(messageDiv);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function showTypingIndicator() {
+      document.getElementById('typingIndicator').classList.remove('hidden');
+    }
+
+    function hideTypingIndicator() {
+      document.getElementById('typingIndicator').classList.add('hidden');
+    }
+
+    function saveChatToHistory(question, answer) {
+      const chatItem = {
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        bot: currentBot,
+        question,
+        answer,
+        context: getContextInfo()
+      };
+      
+      chatHistory.push(chatItem);
+      localStorage.setItem('airis_chat_history', JSON.stringify(chatHistory));
+    }
+
+    function loadChatHistory() {
+      const stored = localStorage.getItem('airis_chat_history');
+      if (stored) {
+        chatHistory = JSON.parse(stored);
+      }
+      
+      displayChatHistory();
+    }
+
+    function displayChatHistory() {
+      const container = document.getElementById('historyContent');
+      
+      if (chatHistory.length === 0) {
+        container.innerHTML = `
+          <div class="text-center text-muted-foreground py-12">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-4">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <p>아직 저장된 대화가 없습니다.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = chatHistory.map(item => `
+        <div class="border border-border rounded-lg p-4 mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center space-x-2">
+              <span class="text-sm font-medium">${botConfigs[item.bot].name}</span>
+              <span class="text-xs text-muted-foreground">${new Date(item.timestamp).toLocaleString('ko-KR')}</span>
+            </div>
+            <button onclick="loadHistoryItem(${item.id})" class="text-xs text-primary hover:underline">
+              대화로 불러오기
+            </button>
+          </div>
+          <div class="space-y-2">
+            <div class="bg-blue-50 dark:bg-blue-900/20 p-2 rounded text-sm">
+              <strong>Q:</strong> ${item.question}
+            </div>
+            <div class="bg-muted p-2 rounded text-sm">
+              <strong>A:</strong> ${item.answer.substring(0, 200)}${item.answer.length > 200 ? '...' : ''}
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function startNewChat() {
+      document.getElementById('messagesContainer').innerHTML = `
+        <div class="flex items-start space-x-3">
+          <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary-foreground">
+              <path d="M12 8V4H8"></path>
+              <rect width="16" height="12" x="4" y="8" rx="2"></rect>
+              <path d="M2 14h2"></path>
+              <path d="M20 14h2"></path>
+              <path d="M15 13v2"></path>
+              <path d="M9 13v2"></path>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <div class="bg-muted rounded-lg p-4 max-w-2xl">
+              <p class="text-sm mb-2"><strong>새로운 대화가 시작되었습니다! 👋</strong></p>
+              <p class="text-sm">무엇을 도와드릴까요?</p>
+            </div>
+            <div class="flex items-center space-x-2 mt-2">
+              <span class="text-xs text-muted-foreground">방금 전</span>
+              <span class="text-xs text-primary">${botConfigs[currentBot].name}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function refreshContext() {
+      const contextInfo = getContextInfo();
+      document.getElementById('currentPage').textContent = contextInfo.page;
+      
+      // Show refresh animation
+      const btn = document.getElementById('refreshContextBtn');
+      btn.classList.add('animate-spin');
+      setTimeout(() => btn.classList.remove('animate-spin'), 1000);
+    }
+
+    function loadSettings() {
+      const stored = localStorage.getItem('airis_api_settings');
+      if (stored) {
+        apiSettings = { ...apiSettings, ...JSON.parse(stored) };
+      }
+      updateSettingsUI();
+    }
+
+    function updateSettingsUI() {
+      document.getElementById('apiProvider').value = apiSettings.provider;
+      document.getElementById('apiKey').value = apiSettings.apiKey;
+      document.getElementById('modelName').value = apiSettings.model;
+      document.getElementById('maxTokens').value = apiSettings.maxTokens;
+      document.getElementById('temperature').value = apiSettings.temperature;
+    }
+
+    function saveSettings() {
+      apiSettings = {
+        provider: document.getElementById('apiProvider').value,
+        apiKey: document.getElementById('apiKey').value,
+        model: document.getElementById('modelName').value,
+        maxTokens: parseInt(document.getElementById('maxTokens').value),
+        temperature: parseFloat(document.getElementById('temperature').value)
+      };
+      
+      localStorage.setItem('airis_api_settings', JSON.stringify(apiSettings));
+      document.getElementById('settingsModal').classList.add('hidden');
+      
+      // Show success message
+      addMessage('설정이 저장되었습니다!', 'bot');
+    }
+  </script>
+</body>
+</html>

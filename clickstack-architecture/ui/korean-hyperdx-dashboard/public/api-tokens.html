@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full bg-gray-50 dark:bg-gray-900">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS EPM - API 키 및 토큰 관리</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- shadcn/ui CSS -->
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --primary: 221.2 83.2% 53.3%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 221.2 83.2% 53.3%;
+            --radius: 0.5rem;
+        }
+        
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --primary: 217.2 91.2% 59.8%;
+            --primary-foreground: 222.2 84% 4.9%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 224.3 76.3% 94.1%;
+        }
+
+        .form-input {
+            @apply w-full px-3 py-2 border border-input rounded-md bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent;
+        }
+        
+        .api-token-card {
+            @apply bg-card border border-border rounded-lg p-6;
+        }
+        
+        .status-active { @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200; }
+        .status-expired { @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200; }
+        .status-revoked { @apply bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200; }
+    </style>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        border: 'hsl(var(--border))',
+                        input: 'hsl(var(--input))',
+                        ring: 'hsl(var(--ring))',
+                        background: 'hsl(var(--background))',
+                        foreground: 'hsl(var(--foreground))',
+                        primary: {
+                            DEFAULT: 'hsl(var(--primary))',
+                            foreground: 'hsl(var(--primary-foreground))'
+                        },
+                        card: {
+                            DEFAULT: 'hsl(var(--card))',
+                            foreground: 'hsl(var(--card-foreground))'
+                        },
+                        muted: {
+                            DEFAULT: 'hsl(var(--muted))',
+                            foreground: 'hsl(var(--muted-foreground))'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-full bg-background text-foreground">
+    <div class="min-h-full">
+        <!-- Navigation -->
+        <nav class="bg-card border-b border-border">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <a href="/portal.html" class="text-xl font-bold text-foreground hover:text-primary transition-colors cursor-pointer">
+                                🚀 AIRIS EPM
+                            </a>
+                        </div>
+                        <div class="ml-10">
+                            <div class="flex items-baseline space-x-4">
+                                <a href="/admin-dashboard.html" class="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium">
+                                    ← 관리자 대시보드로 돌아가기
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <button id="themeToggle" class="text-muted-foreground hover:text-foreground p-2">
+                            <i class="fas fa-moon dark:hidden"></i>
+                            <i class="fas fa-sun hidden dark:inline"></i>
+                        </button>
+                        <button id="generateTokenBtn" class="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm hover:bg-primary/90">
+                            <i class="fas fa-plus mr-2"></i>새 토큰 생성
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <!-- Page Header -->
+            <div class="px-4 py-4 sm:px-0">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-3xl font-bold text-foreground">🔑 API 키 및 토큰 관리</h1>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="px-4 py-4 sm:px-0">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-card rounded-lg border border-border p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-key text-blue-600 dark:text-blue-400"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <p class="text-sm font-medium text-muted-foreground">전체 토큰</p>
+                                <p class="text-2xl font-semibold text-foreground">24</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-card rounded-lg border border-border p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-check-circle text-green-600 dark:text-green-400"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <p class="text-sm font-medium text-muted-foreground">활성 토큰</p>
+                                <p class="text-2xl font-semibold text-green-600 dark:text-green-400">18</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-card rounded-lg border border-border p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-yellow-100 dark:bg-yellow-900 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <p class="text-sm font-medium text-muted-foreground">만료 임박</p>
+                                <p class="text-2xl font-semibold text-yellow-600 dark:text-yellow-400">3</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-card rounded-lg border border-border p-6">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-red-100 dark:bg-red-900 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-ban text-red-600 dark:text-red-400"></i>
+                                </div>
+                            </div>
+                            <div class="ml-4 flex-1">
+                                <p class="text-sm font-medium text-muted-foreground">비활성/만료</p>
+                                <p class="text-2xl font-semibold text-red-600 dark:text-red-400">3</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- API Tokens List -->
+                <div class="api-token-card mb-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-foreground flex items-center">
+                            <i class="fas fa-list mr-2 text-blue-600"></i>
+                            API 토큰 목록
+                        </h2>
+                        <div class="flex space-x-4">
+                            <input type="text" id="tokenSearch" placeholder="토큰 검색..." class="form-input w-64">
+                            <select id="statusFilter" class="form-input w-40">
+                                <option value="">모든 상태</option>
+                                <option value="active">활성</option>
+                                <option value="expired">만료</option>
+                                <option value="revoked">취소</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4" id="tokensList">
+                        <!-- Tokens will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Token Permissions -->
+                <div class="api-token-card">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-foreground flex items-center">
+                            <i class="fas fa-shield-alt mr-2 text-green-600"></i>
+                            토큰 권한 관리
+                        </h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-lg font-medium text-foreground mb-4">API 엔드포인트별 권한</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between p-3 border border-border rounded">
+                                    <div>
+                                        <p class="font-medium text-foreground">/api/monitoring/*</p>
+                                        <p class="text-sm text-muted-foreground">모니터링 데이터 조회</p>
+                                    </div>
+                                    <span class="text-green-600">READ</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 border border-border rounded">
+                                    <div>
+                                        <p class="font-medium text-foreground">/api/alerts/*</p>
+                                        <p class="text-sm text-muted-foreground">알림 관리</p>
+                                    </div>
+                                    <span class="text-blue-600">READ/WRITE</span>
+                                </div>
+                                <div class="flex items-center justify-between p-3 border border-border rounded">
+                                    <div>
+                                        <p class="font-medium text-foreground">/api/admin/*</p>
+                                        <p class="text-sm text-muted-foreground">관리자 기능</p>
+                                    </div>
+                                    <span class="text-red-600">ADMIN ONLY</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="text-lg font-medium text-foreground mb-4">토큰 사용 통계</h3>
+                            <div class="space-y-4">
+                                <div class="p-4 bg-muted rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-foreground">일일 API 호출</span>
+                                        <span class="text-sm text-muted-foreground">23,456 / 50,000</span>
+                                    </div>
+                                    <div class="w-full bg-border rounded-full h-2">
+                                        <div class="bg-primary h-2 rounded-full" style="width: 47%"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-4 bg-muted rounded-lg">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium text-foreground">월간 API 호출</span>
+                                        <span class="text-sm text-muted-foreground">456,789 / 1,000,000</span>
+                                    </div>
+                                    <div class="w-full bg-border rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 46%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Generate Token Modal -->
+    <div id="generateTokenModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-card rounded-lg border border-border p-6 w-full max-w-lg">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-foreground">새 API 토큰 생성</h3>
+                <button id="closeGenerateModal" class="text-muted-foreground hover:text-foreground">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-foreground mb-2">토큰 이름</label>
+                    <input type="text" id="newTokenName" class="form-input" placeholder="예: Production API Access">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-foreground mb-2">설명</label>
+                    <textarea id="newTokenDescription" class="form-input" rows="2" placeholder="토큰 사용 목적을 설명하세요"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-foreground mb-2">만료 기간</label>
+                    <select id="newTokenExpiry" class="form-input">
+                        <option value="7">7일</option>
+                        <option value="30">30일</option>
+                        <option value="90" selected>90일</option>
+                        <option value="365">1년</option>
+                        <option value="never">만료되지 않음</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-foreground mb-2">권한 범위</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" class="mr-2" checked>
+                            <span class="text-sm">모니터링 데이터 읽기</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="mr-2">
+                            <span class="text-sm">알림 관리</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="mr-2">
+                            <span class="text-sm">설정 변경</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-4 pt-4">
+                    <button id="cancelGenerate" class="px-4 py-2 border border-border rounded-md text-sm hover:bg-accent">
+                        취소
+                    </button>
+                    <button id="confirmGenerate" class="px-4 py-2 bg-primary text-primary-foreground rounded-md text-sm hover:bg-primary/90">
+                        토큰 생성
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample API tokens data
+        const apiTokens = [
+            {
+                id: 1,
+                name: 'Production API Access',
+                description: '프로덕션 환경 모니터링 데이터 접근',
+                token: 'airis_epm_prod_***************4a8b',
+                status: 'active',
+                createdAt: '2024-07-15',
+                expiresAt: '2024-10-15',
+                lastUsed: '2024-08-28 09:15',
+                permissions: ['monitoring:read', 'alerts:read'],
+                usageCount: 15420
+            },
+            {
+                id: 2,
+                name: 'Development Testing',
+                description: '개발 환경 테스트용 토큰',
+                token: 'airis_epm_dev_***************9c2f',
+                status: 'active',
+                createdAt: '2024-08-01',
+                expiresAt: '2024-11-01',
+                lastUsed: '2024-08-28 08:30',
+                permissions: ['monitoring:read', 'alerts:write'],
+                usageCount: 8234
+            },
+            {
+                id: 3,
+                name: 'External Integration',
+                description: '외부 시스템 연동용',
+                token: 'airis_epm_ext_***************7d1e',
+                status: 'expired',
+                createdAt: '2024-05-20',
+                expiresAt: '2024-08-20',
+                lastUsed: '2024-08-19 16:45',
+                permissions: ['monitoring:read'],
+                usageCount: 42156
+            },
+            {
+                id: 4,
+                name: 'Analytics Dashboard',
+                description: '분석 대시보드용 읽기 전용',
+                token: 'airis_epm_analytics_***********3f9a',
+                status: 'active',
+                createdAt: '2024-08-10',
+                expiresAt: '2024-11-10',
+                lastUsed: '2024-08-28 07:20',
+                permissions: ['monitoring:read'],
+                usageCount: 5821
+            }
+        ];
+
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        html.classList.toggle('dark', currentTheme === 'dark');
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const newTheme = html.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+        });
+
+        // Load tokens
+        function loadTokens() {
+            const container = document.getElementById('tokensList');
+            const searchTerm = document.getElementById('tokenSearch').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            const filteredTokens = apiTokens.filter(token => {
+                const matchesSearch = token.name.toLowerCase().includes(searchTerm) || 
+                                    token.description.toLowerCase().includes(searchTerm);
+                const matchesStatus = !statusFilter || token.status === statusFilter;
+                return matchesSearch && matchesStatus;
+            });
+
+            container.innerHTML = filteredTokens.map(token => `
+                <div class="p-4 border border-border rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="font-medium text-foreground">${token.name}</h3>
+                            <p class="text-sm text-muted-foreground">${token.description}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="px-2 py-1 rounded-full text-xs font-medium status-${token.status}">
+                                ${token.status === 'active' ? '활성' : token.status === 'expired' ? '만료' : '취소'}
+                            </span>
+                            <div class="flex space-x-1">
+                                <button class="text-blue-600 hover:text-blue-800" onclick="viewToken(${token.id})" title="토큰 보기">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="text-green-600 hover:text-green-800" onclick="refreshToken(${token.id})" title="토큰 갱신">
+                                    <i class="fas fa-refresh"></i>
+                                </button>
+                                <button class="text-red-600 hover:text-red-800" onclick="revokeToken(${token.id})" title="토큰 취소">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                        <div>
+                            <span class="text-muted-foreground">토큰:</span>
+                            <p class="font-mono text-foreground">${token.token}</p>
+                        </div>
+                        <div>
+                            <span class="text-muted-foreground">만료일:</span>
+                            <p class="text-foreground">${token.expiresAt}</p>
+                        </div>
+                        <div>
+                            <span class="text-muted-foreground">마지막 사용:</span>
+                            <p class="text-foreground">${token.lastUsed}</p>
+                        </div>
+                        <div>
+                            <span class="text-muted-foreground">사용 횟수:</span>
+                            <p class="text-foreground">${token.usageCount.toLocaleString()}회</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <span class="text-sm text-muted-foreground">권한: </span>
+                        ${token.permissions.map(perm => `
+                            <span class="inline-block px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded mr-1">
+                                ${perm}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Search and filter
+        document.getElementById('tokenSearch').addEventListener('input', loadTokens);
+        document.getElementById('statusFilter').addEventListener('change', loadTokens);
+
+        // Token actions
+        function viewToken(id) {
+            const token = apiTokens.find(t => t.id === id);
+            alert(`토큰: ${token.token.replace(/\*/g, Math.random().toString(36).charAt(2))}`);
+        }
+
+        function refreshToken(id) {
+            if (confirm('토큰을 갱신하시겠습니까? 기존 토큰은 무효화됩니다.')) {
+                showNotification('토큰이 성공적으로 갱신되었습니다.', 'success');
+            }
+        }
+
+        function revokeToken(id) {
+            if (confirm('이 토큰을 취소하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                const token = apiTokens.find(t => t.id === id);
+                token.status = 'revoked';
+                loadTokens();
+                showNotification('토큰이 취소되었습니다.', 'success');
+            }
+        }
+
+        // Generate token modal
+        document.getElementById('generateTokenBtn').addEventListener('click', () => {
+            document.getElementById('generateTokenModal').classList.remove('hidden');
+            document.getElementById('generateTokenModal').classList.add('flex');
+        });
+
+        document.getElementById('closeGenerateModal').addEventListener('click', closeGenerateModal);
+        document.getElementById('cancelGenerate').addEventListener('click', closeGenerateModal);
+
+        function closeGenerateModal() {
+            document.getElementById('generateTokenModal').classList.add('hidden');
+            document.getElementById('generateTokenModal').classList.remove('flex');
+        }
+
+        document.getElementById('confirmGenerate').addEventListener('click', () => {
+            const name = document.getElementById('newTokenName').value;
+            const description = document.getElementById('newTokenDescription').value;
+            
+            if (name) {
+                const newToken = `airis_epm_${Date.now().toString(36)}_${Math.random().toString(36).substr(2, 15)}`;
+                showNotification(`새 토큰이 생성되었습니다: ${newToken}`, 'success');
+                closeGenerateModal();
+                
+                // Add to tokens list (simulation)
+                apiTokens.unshift({
+                    id: Date.now(),
+                    name: name,
+                    description: description || '설명 없음',
+                    token: newToken.replace(/(.{20}).*(.{4})/, '$1***************$2'),
+                    status: 'active',
+                    createdAt: new Date().toISOString().split('T')[0],
+                    expiresAt: new Date(Date.now() + 90*24*60*60*1000).toISOString().split('T')[0],
+                    lastUsed: '사용 안됨',
+                    permissions: ['monitoring:read'],
+                    usageCount: 0
+                });
+                
+                loadTokens();
+            } else {
+                showNotification('토큰 이름을 입력해주세요.', 'error');
+            }
+        });
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // Initialize
+        loadTokens();
+    </script>
+</body>
+</html>

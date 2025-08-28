@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIRIS EPM | MLOPS/AIOPS 과학적 모니터링 및 관제</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="./css/tailwind.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* shadcn/ui CSS Variables */
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 47.4% 11.2%;
+            --border: 214.3 31.8% 91.4%;
+            --radius: 0.5rem;
+            --destructive: 0 84.2% 60.2%;
+            --success: 142 76% 45%;
+            --warning: 38 92% 50%;
+            --info: 221 83% 53%;
+        }
+
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 222.2 84% 4.9%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 222.2 84% 4.9%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 222.2 84% 4.9%;
+            --accent-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #3730a3 100%);
+            min-height: 100vh;
+        }
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            backdrop-filter: blur(15px);
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Network Topology Styles */
+        .topology-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .topology-node {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .topology-node:hover {
+            stroke-width: 3px;
+            filter: brightness(1.2);
+        }
+
+        .topology-link {
+            stroke-opacity: 0.6;
+            stroke-width: 2px;
+        }
+
+        /* Alert Panel Styles */
+        .alert-item {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            backdrop-filter: blur(5px);
+        }
+
+        .alert-critical { border-left: 4px solid #ef4444; }
+        .alert-warning { border-left: 4px solid #f59e0b; }
+        .alert-info { border-left: 4px solid #3b82f6; }
+
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        /* Circular Gauge Styles */
+        .gauge-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+        }
+
+        /* Dropdown Styles */
+        .nav-dropdown:hover .dropdown-content {
+            display: block;
+        }
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 200px;
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: calc(var(--radius));
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        
+        .dropdown-content a {
+            text-decoration: none;
+        }
+        
+        .dropdown-content a:hover {
+            background-color: hsl(var(--accent));
+            color: hsl(var(--accent-foreground));
+        }
+
+        /* Text Colors for Glass Design */
+        .text-glass {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .text-glass-muted {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .text-glass-bright {
+            color: rgba(255, 255, 255, 1);
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body class="text-glass">
+    <!-- Header -->
+    <header class="sticky top-0 z-50 w-full border-b border-white/20 bg-black/20 backdrop-blur">
+        <div class="container mx-auto flex h-14 items-center px-4">
+            <div class="mr-4 flex items-center space-x-2">
+                <a href="/portal.html" class="font-bold text-xl hover:text-blue-300 transition-colors cursor-pointer text-glass-bright">🚀 AIRIS EPM</a>
+                <span class="bg-blue-500/30 text-white px-2 py-1 rounded-md text-xs font-medium">
+                    MLOPS/AIOPS 과학적 모니터링 및 관제
+                </span>
+            </div>
+            
+            <!-- Navigation -->
+            <nav class="flex items-center space-x-6 text-sm">
+                <a href="/" class="text-glass hover:text-white transition-colors">📊 통합 대시보드</a>
+                
+                <!-- APM 모니터링 드롭다운 -->
+                <div class="nav-dropdown relative">
+                    <button class="flex items-center text-glass hover:text-white px-3 py-2 rounded-md">
+                        📈 APM 모니터링
+                        <svg class="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div class="dropdown-content">
+                        <a href="/j2ee-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">☕ J2EE 모니터링</a>
+                        <a href="/was-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🏗️ WAS 모니터링</a>
+                        <a href="/exception-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🚨 예외 추적</a>
+                        <a href="/topology-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🗺️ 서비스 토폴로지</a>
+                        <a href="/alert-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔔 알림 관리</a>
+                    </div>
+                </div>
+                
+                <!-- AIOps & ML 드롭다운 -->
+                <div class="nav-dropdown relative">
+                    <button class="flex items-center text-white font-semibold px-3 py-2 rounded-md bg-blue-500/30">
+                        🤖 AIOps & ML
+                        <svg class="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div class="dropdown-content">
+                        <span class="block px-4 py-2 bg-accent text-accent-foreground">🤖 MLOPS/AIOPS 대시보드</span>
+                        <a href="/aiops-management.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🤖 AIOps 관리</a>
+                        <a href="/ml-training-autoencoder.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔬 ML 훈련 - 오토인코더</a>
+                        <a href="/ml-training-clustering.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">📈 ML 훈련 - 클러스터링</a>
+                        <a href="/ml-training-lstm.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🧠 ML 훈련 - LSTM</a>
+                        <a href="/ml-training-rca.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔍 ML 훈련 - RCA 분석</a>
+                        <a href="/clustering-insights.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">💡 클러스터링 인사이트</a>
+                    </div>
+                </div>
+                
+                <!-- 관리자 메뉴 드롭다운 -->
+                <div class="nav-dropdown relative">
+                    <button class="flex items-center text-glass hover:text-white px-3 py-2 rounded-md">
+                        👤 관리자 메뉴
+                        <svg class="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div class="dropdown-content">
+                        <a href="/admin-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">👤 관리자 대시보드</a>
+                        <a href="/users-roles.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">👥 사용자/역할 관리</a>
+                        <a href="/system-settings.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔧 시스템 설정</a>
+                        <a href="/api-tokens.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔑 API 토큰 관리</a>
+                        <a href="/backup-restore.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">💾 백업/복원</a>
+                        <a href="/audit-logs.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">📋 감사 로그</a>
+                        <a href="/alert-rules.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔔 알림 규칙</a>
+                        <a href="/performance-metrics.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">📈 성능 메트릭</a>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Right side actions -->
+            <div class="flex items-center space-x-4 ml-auto">
+                <button id="refreshBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-white/20 text-white hover:bg-white/30 h-9 px-4 transition-all">
+                    🔄 새로고침
+                </button>
+                <button id="themeToggle" class="inline-flex items-center justify-center rounded-md text-sm font-medium bg-white/20 text-white hover:bg-white/30 h-9 w-9 transition-all">
+                    🌙
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        <!-- Top KPI Metrics -->
+        <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="metric-card p-4">
+                <div class="text-center">
+                    <div class="text-xs text-glass-muted mb-1">Key Performance Indicator</div>
+                    <div class="text-2xl font-bold text-glass-bright">8671</div>
+                    <div class="text-xs text-green-400 mt-1">↗ Active Requests</div>
+                </div>
+            </div>
+            <div class="metric-card p-4">
+                <div class="text-center">
+                    <div class="text-xs text-glass-muted mb-1">Real-Time System Operations</div>
+                    <div class="text-2xl font-bold text-glass-bright">10867</div>
+                    <div class="text-xs text-blue-400 mt-1">🔄 Total Operations</div>
+                </div>
+            </div>
+            <div class="metric-card p-4">
+                <div class="text-center">
+                    <div class="text-xs text-glass-muted mb-1">Performance Metrics</div>
+                    <div class="text-2xl font-bold text-glass-bright">962</div>
+                    <div class="text-xs text-yellow-400 mt-1">⚡ Response Time</div>
+                </div>
+            </div>
+            <div class="metric-card p-4">
+                <div class="text-center">
+                    <div class="text-xs text-glass-muted mb-1">Alert & Incidents</div>
+                    <div class="text-2xl font-bold text-glass-bright">980</div>
+                    <div class="text-xs text-red-400 mt-1">🚨 Active Alerts</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="grid grid-cols-12 gap-6">
+            <!-- Central Network Topology -->
+            <div class="col-span-8">
+                <div class="glass-card p-6 h-80">
+                    <h3 class="text-lg font-semibold text-glass-bright mb-4">🌐 Service Network Topology</h3>
+                    <div id="network-topology" class="topology-container h-64"></div>
+                </div>
+            </div>
+
+            <!-- Right Alert Panel -->
+            <div class="col-span-4">
+                <div class="glass-card p-4 h-80">
+                    <h3 class="text-lg font-semibold text-glass-bright mb-4">🚨 Alerts & Incidents</h3>
+                    <div class="space-y-2 max-h-64 overflow-y-auto">
+                        <div class="alert-item alert-critical">
+                            <div class="text-sm font-medium text-red-400">High CPU Usage</div>
+                            <div class="text-xs text-glass-muted">Production Server #1 - 15 min ago</div>
+                        </div>
+                        <div class="alert-item alert-warning">
+                            <div class="text-sm font-medium text-yellow-400">Memory Usage</div>
+                            <div class="text-xs text-glass-muted">Database Server - 23 min ago</div>
+                        </div>
+                        <div class="alert-item alert-info">
+                            <div class="text-sm font-medium text-blue-400">System Update</div>
+                            <div class="text-xs text-glass-muted">Application Server - 45 min ago</div>
+                        </div>
+                        <div class="alert-item alert-warning">
+                            <div class="text-sm font-medium text-yellow-400">Network Latency</div>
+                            <div class="text-xs text-glass-muted">Load Balancer - 1 hr ago</div>
+                        </div>
+                        <div class="alert-item alert-info">
+                            <div class="text-sm font-medium text-blue-400">Security Scan</div>
+                            <div class="text-xs text-glass-muted">Firewall - 2 hrs ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Charts Grid -->
+        <div class="grid grid-cols-3 gap-6 mt-6">
+            <!-- Resource Utilization 1 -->
+            <div class="glass-card p-4">
+                <h4 class="text-sm font-semibold text-glass-bright mb-3">📊 Resource Utilization</h4>
+                <div class="chart-container">
+                    <canvas id="resourceChart1"></canvas>
+                </div>
+            </div>
+
+            <!-- Resource Utilization 2 -->
+            <div class="glass-card p-4">
+                <h4 class="text-sm font-semibold text-glass-bright mb-3">📈 Resource Utilization</h4>
+                <div class="chart-container">
+                    <canvas id="resourceChart2"></canvas>
+                </div>
+            </div>
+
+            <!-- Alerts & Incidents Chart -->
+            <div class="glass-card p-4">
+                <h4 class="text-sm font-semibold text-glass-bright mb-3">🔔 Alerts & Incidents</h4>
+                <div class="chart-container">
+                    <canvas id="alertsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Second Row of Charts -->
+        <div class="grid grid-cols-3 gap-6 mt-6">
+            <!-- Predictive Analytics -->
+            <div class="glass-card p-4">
+                <h4 class="text-sm font-semibold text-glass-bright mb-3">🔮 Predictive Analytics</h4>
+                <div class="chart-container">
+                    <canvas id="predictiveChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Control & Automation -->
+            <div class="glass-card p-4">
+                <h4 class="text-sm font-semibold text-glass-bright mb-3">⚙️ Control & Automation</h4>
+                <div class="flex justify-around items-center h-48">
+                    <div class="gauge-container">
+                        <canvas id="gauge1" width="120" height="120"></canvas>
+                        <div class="text-center text-xs text-glass-muted mt-2">CPU</div>
+                    </div>
+                    <div class="gauge-container">
+                        <canvas id="gauge2" width="120" height="120"></canvas>
+                        <div class="text-center text-xs text-glass-muted mt-2">Memory</div>
+                    </div>
+                    <div class="gauge-container">
+                        <canvas id="gauge3" width="120" height="120"></canvas>
+                        <div class="text-center text-xs text-glass-muted mt-2">Network</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="glass-card p-4">
+                <h4 class="text-sm font-semibold text-glass-bright mb-3">⚡ Performance Metrics</h4>
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Network Topology D3.js Implementation
+        function initNetworkTopology() {
+            const width = 600;
+            const height = 240;
+            
+            const svg = d3.select("#network-topology")
+                .append("svg")
+                .attr("width", "100%")
+                .attr("height", "100%")
+                .attr("viewBox", [0, 0, width, height]);
+
+            // Sample data for network nodes
+            const nodes = [
+                { id: "api-gateway", group: 1, name: "API Gateway" },
+                { id: "auth-service", group: 2, name: "Auth Service" },
+                { id: "user-service", group: 2, name: "User Service" },
+                { id: "order-service", group: 2, name: "Order Service" },
+                { id: "payment-service", group: 3, name: "Payment Service" },
+                { id: "database", group: 4, name: "Database" },
+                { id: "cache", group: 4, name: "Cache" }
+            ];
+
+            const links = [
+                { source: "api-gateway", target: "auth-service" },
+                { source: "api-gateway", target: "user-service" },
+                { source: "api-gateway", target: "order-service" },
+                { source: "order-service", target: "payment-service" },
+                { source: "user-service", target: "database" },
+                { source: "order-service", target: "database" },
+                { source: "auth-service", target: "cache" }
+            ];
+
+            const color = d3.scaleOrdinal()
+                .domain([1, 2, 3, 4])
+                .range(["#60a5fa", "#34d399", "#fbbf24", "#f87171"]);
+
+            const simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(links).id(d => d.id).distance(80))
+                .force("charge", d3.forceManyBody().strength(-300))
+                .force("center", d3.forceCenter(width / 2, height / 2));
+
+            // Add links
+            const link = svg.append("g")
+                .selectAll("line")
+                .data(links)
+                .join("line")
+                .attr("class", "topology-link")
+                .attr("stroke", "#94a3b8")
+                .attr("stroke-width", 2);
+
+            // Add nodes
+            const node = svg.append("g")
+                .selectAll("circle")
+                .data(nodes)
+                .join("circle")
+                .attr("class", "topology-node")
+                .attr("r", 20)
+                .attr("fill", d => color(d.group))
+                .attr("stroke", "#fff")
+                .attr("stroke-width", 2);
+
+            // Add labels
+            const labels = svg.append("g")
+                .selectAll("text")
+                .data(nodes)
+                .join("text")
+                .text(d => d.name)
+                .attr("font-size", "10px")
+                .attr("fill", "white")
+                .attr("text-anchor", "middle")
+                .attr("dy", 4);
+
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y);
+
+                labels
+                    .attr("x", d => d.x)
+                    .attr("y", d => d.y);
+            });
+        }
+
+        // Chart Initialization
+        function initCharts() {
+            const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: { 
+                        display: false,
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    },
+                    y: { 
+                        display: false,
+                        grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                    }
+                }
+            };
+
+            // Resource Chart 1
+            new Chart(document.getElementById('resourceChart1'), {
+                type: 'line',
+                data: {
+                    labels: ['00', '04', '08', '12', '16', '20'],
+                    datasets: [{
+                        data: [30, 45, 35, 60, 55, 40],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Resource Chart 2
+            new Chart(document.getElementById('resourceChart2'), {
+                type: 'bar',
+                data: {
+                    labels: ['CPU', 'RAM', 'Disk', 'Net'],
+                    datasets: [{
+                        data: [75, 60, 45, 80],
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Alerts Chart
+            new Chart(document.getElementById('alertsChart'), {
+                type: 'line',
+                data: {
+                    labels: ['00', '04', '08', '12', '16', '20'],
+                    datasets: [{
+                        data: [12, 18, 15, 25, 20, 16],
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: chartOptions
+            });
+
+            // Predictive Analytics
+            new Chart(document.getElementById('predictiveChart'), {
+                type: 'line',
+                data: {
+                    labels: ['Past', 'Current', 'Predicted'],
+                    datasets: [
+                        {
+                            data: [40, 55, 70],
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            data: [35, 50, 65],
+                            borderColor: '#06b6d4',
+                            backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: chartOptions
+            });
+
+            // Performance Metrics
+            new Chart(document.getElementById('performanceChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Excellent', 'Good', 'Fair', 'Poor'],
+                    datasets: [{
+                        data: [45, 30, 20, 5],
+                        backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        // Gauge Charts
+        function drawGauge(canvasId, value, color) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 40;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background arc
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0.75 * Math.PI, 0.25 * Math.PI);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 8;
+            ctx.stroke();
+            
+            // Draw value arc
+            const endAngle = 0.75 * Math.PI + (value / 100) * 1.5 * Math.PI;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0.75 * Math.PI, endAngle);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 8;
+            ctx.stroke();
+            
+            // Draw value text
+            ctx.fillStyle = 'white';
+            ctx.font = '16px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(value + '%', centerX, centerY + 5);
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', function() {
+            initNetworkTopology();
+            initCharts();
+            
+            // Initialize gauges
+            drawGauge('gauge1', 73, '#3b82f6');
+            drawGauge('gauge2', 85, '#10b981');
+            drawGauge('gauge3', 62, '#f59e0b');
+            
+            // Auto refresh data every 30 seconds
+            setInterval(() => {
+                // Update gauges with random values for demo
+                drawGauge('gauge1', Math.floor(Math.random() * 100), '#3b82f6');
+                drawGauge('gauge2', Math.floor(Math.random() * 100), '#10b981');
+                drawGauge('gauge3', Math.floor(Math.random() * 100), '#f59e0b');
+            }, 30000);
+
+            // Refresh button
+            document.getElementById('refreshBtn').addEventListener('click', function() {
+                location.reload();
+            });
+
+            // Theme toggle (placeholder)
+            document.getElementById('themeToggle').addEventListener('click', function() {
+                console.log('Theme toggle clicked');
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>성능 메트릭 관리 - AIRIS EPM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 222.2 84% 4.9%;
+            --radius: 0.5rem;
+        }
+        
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 212.7 26.8% 83.9%;
+        }
+
+        * {
+            border-color: hsl(var(--border));
+        }
+
+        body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+
+        .card {
+            background-color: hsl(var(--card));
+            color: hsl(var(--card-foreground));
+            border: 1px solid hsl(var(--border));
+        }
+
+        .btn-primary {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+
+        .btn-primary:hover {
+            background-color: hsl(var(--primary) / 0.9);
+        }
+
+        .btn-secondary {
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            color: hsl(var(--foreground));
+        }
+
+        .btn-ghost:hover {
+            background-color: hsl(var(--accent));
+            color: hsl(var(--accent-foreground));
+        }
+
+        .nav-dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 200px;
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .metric-card {
+            @apply transition-all duration-200 hover:shadow-lg cursor-pointer;
+        }
+
+        .metric-good {
+            @apply bg-green-50 dark:bg-green-900 border-green-200 dark:border-green-700;
+        }
+        
+        .metric-warning {
+            @apply bg-yellow-50 dark:bg-yellow-900 border-yellow-200 dark:border-yellow-700;
+        }
+        
+        .metric-critical {
+            @apply bg-red-50 dark:bg-red-900 border-red-200 dark:border-red-700;
+        }
+
+        .threshold-indicator {
+            @apply w-full h-2 rounded-full overflow-hidden;
+        }
+        
+        .threshold-bar {
+            @apply h-full transition-all duration-500;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- 상단 네비게이션 -->
+    <nav class="card rounded-none border-x-0 border-t-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+                    
+                    <!-- 메인 네비게이션 -->
+                    <div class="hidden md:flex items-center space-x-6">
+                        <!-- APM 모니터링 -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                📊 APM 모니터링
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/j2ee-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">☕ J2EE 모니터링</a>
+                                <a href="/was-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🏗️ WAS 모니터링</a>
+                                <a href="/exception-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🚨 예외 추적</a>
+                                <a href="/topology-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🗺️ 서비스 토폴로지</a>
+                                <a href="/alert-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔔 알림 관리</a>
+                            </div>
+                        </div>
+
+                        <!-- 시스템 관리 -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                ⚙️ 시스템 관리
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/admin-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">👤 관리자 대시보드</a>
+                                <a href="/users-roles.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">👥 사용자/역할 관리</a>
+                                <a href="/system-settings.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔧 시스템 설정</a>
+                                <a href="/external-systems-config.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔌 외부시스템 연동</a>
+                                <a href="/api-tokens.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔑 API 토큰 관리</a>
+                                <a href="/backup-restore.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">💾 백업/복원</a>
+                                <a href="/audit-logs.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">📋 감사 로그</a>
+                                <a href="/alert-rules.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔔 알림 규칙</a>
+                                <a href="/performance-metrics.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400">📈 성능 메트릭</a>
+                            </div>
+                        </div>
+
+                        <!-- AIOps & ML -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                🤖 AIOps & ML
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/aiops-management.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🤖 AIOps 관리</a>
+                                <a href="/ml-training-autoencoder.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔬 ML 훈련 - 오토인코더</a>
+                                <a href="/ml-training-clustering.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">📈 ML 훈련 - 클러스터링</a>
+                                <a href="/ml-training-lstm.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🧠 ML 훈련 - LSTM</a>
+                                <a href="/clustering-insights.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">💡 클러스터링 인사이트</a>
+                            </div>
+                        </div>
+
+                        <!-- 세션 & 분석 -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                📊 세션 & 분석
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/session-management.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">👤 세션 관리</a>
+                                <a href="/session-analysis.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔍 세션 분석</a>
+                                <a href="/session-telemetry-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">📈 세션 텔레메트리</a>
+                                <a href="/session-replay.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🎬 세션 재생</a>
+                            </div>
+                        </div>
+
+                        <!-- 지식 & 온톨로지 -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                🧠 지식 & 온톨로지
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/ontology.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🧠 온톨로지 시스템</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="btn-ghost p-2 rounded-full">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:block"></i>
+                    </button>
+                    <button id="refreshBtn" class="btn-secondary px-3 py-2 rounded-md text-sm">
+                        <i class="fas fa-refresh mr-1"></i>
+                        새로고침
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 메인 콘텐츠 -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">성능 메트릭 관리</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">시스템 성능 임계치와 메트릭을 설정하고 관리합니다</p>
+        </div>
+
+        <!-- 메트릭 개요 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div class="card rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">총 메트릭</p>
+                        <p class="text-2xl font-bold">156</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
+                        <i class="fas fa-chart-line text-blue-600 dark:text-blue-400"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">정상 상태</p>
+                        <p class="text-2xl font-bold text-green-600">132</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-green-100 dark:bg-green-900">
+                        <i class="fas fa-check-circle text-green-600 dark:text-green-400"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">경고 상태</p>
+                        <p class="text-2xl font-bold text-yellow-600">18</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-yellow-100 dark:bg-yellow-900">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">임계 상태</p>
+                        <p class="text-2xl font-bold text-red-600">6</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-red-100 dark:bg-red-900">
+                        <i class="fas fa-times-circle text-red-600 dark:text-red-400"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 주요 성능 메트릭 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- 시스템 리소스 메트릭 -->
+            <div class="card rounded-lg p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fas fa-server text-blue-600 dark:text-blue-400 mr-2"></i>
+                    시스템 리소스
+                </h3>
+                
+                <div class="space-y-4" id="systemMetrics">
+                    <!-- 메트릭이 동적으로 로드됩니다 -->
+                </div>
+            </div>
+
+            <!-- 애플리케이션 메트릭 -->
+            <div class="card rounded-lg p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fas fa-code text-green-600 dark:text-green-400 mr-2"></i>
+                    애플리케이션
+                </h3>
+                
+                <div class="space-y-4" id="appMetrics">
+                    <!-- 메트릭이 동적으로 로드됩니다 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 임계치 설정 -->
+        <div class="card rounded-lg p-6 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">성능 임계치 설정</h3>
+                <button id="addThresholdBtn" class="btn-primary px-4 py-2 rounded-md">
+                    <i class="fas fa-plus mr-2"></i>
+                    새 임계치 추가
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-3 px-4">메트릭</th>
+                            <th class="text-left py-3 px-4">현재 값</th>
+                            <th class="text-left py-3 px-4">경고 임계치</th>
+                            <th class="text-left py-3 px-4">위험 임계치</th>
+                            <th class="text-left py-3 px-4">상태</th>
+                            <th class="text-left py-3 px-4">마지막 업데이트</th>
+                            <th class="text-left py-3 px-4">작업</th>
+                        </tr>
+                    </thead>
+                    <tbody id="thresholdTable">
+                        <!-- 임계치가 동적으로 로드됩니다 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SLA 목표 설정 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- SLA 설정 -->
+            <div class="card rounded-lg p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fas fa-target text-purple-600 dark:text-purple-400 mr-2"></i>
+                    SLA 목표 설정
+                </h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">가용성 목표 (%)</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="range" id="availabilityTarget" min="90" max="100" value="99.9" step="0.1" 
+                                   class="flex-1">
+                            <span id="availabilityValue" class="text-sm font-mono">99.9%</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">현재: 99.94%</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">응답시간 목표 (ms)</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="range" id="responseTarget" min="50" max="5000" value="2000" step="50" 
+                                   class="flex-1">
+                            <span id="responseValue" class="text-sm font-mono">2000ms</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">현재: 1,847ms</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">처리량 목표 (req/s)</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="range" id="throughputTarget" min="100" max="10000" value="5000" step="100" 
+                                   class="flex-1">
+                            <span id="throughputValue" class="text-sm font-mono">5,000</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">현재: 4,823 req/s</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">에러율 목표 (%)</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="range" id="errorTarget" min="0" max="10" value="1" step="0.1" 
+                                   class="flex-1">
+                            <span id="errorValue" class="text-sm font-mono">1.0%</span>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">현재: 0.3%</p>
+                    </div>
+                    
+                    <button class="btn-primary w-full py-2 rounded-md">
+                        <i class="fas fa-save mr-2"></i>
+                        SLA 목표 저장
+                    </button>
+                </div>
+            </div>
+
+            <!-- SLA 대시보드 -->
+            <div class="card rounded-lg p-6">
+                <h3 class="text-lg font-semibold mb-4">SLA 성과 대시보드</h3>
+                
+                <div class="space-y-4">
+                    <div class="p-4 bg-green-50 dark:bg-green-900 rounded-lg border border-green-200 dark:border-green-700">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium">이번 달 가용성</span>
+                            <span class="text-green-600 dark:text-green-400 font-bold">99.94%</span>
+                        </div>
+                        <div class="threshold-indicator bg-green-200 dark:bg-green-800">
+                            <div class="threshold-bar bg-green-600" style="width: 99.94%"></div>
+                        </div>
+                        <p class="text-sm text-green-700 dark:text-green-300 mt-1">목표 달성 (+0.04%)</p>
+                    </div>
+                    
+                    <div class="p-4 bg-green-50 dark:bg-green-900 rounded-lg border border-green-200 dark:border-green-700">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium">평균 응답시간</span>
+                            <span class="text-green-600 dark:text-green-400 font-bold">1,847ms</span>
+                        </div>
+                        <div class="threshold-indicator bg-green-200 dark:bg-green-800">
+                            <div class="threshold-bar bg-green-600" style="width: 75%"></div>
+                        </div>
+                        <p class="text-sm text-green-700 dark:text-green-300 mt-1">목표 달성 (-153ms)</p>
+                    </div>
+                    
+                    <div class="p-4 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium">처리량</span>
+                            <span class="text-yellow-600 dark:text-yellow-400 font-bold">4,823 req/s</span>
+                        </div>
+                        <div class="threshold-indicator bg-yellow-200 dark:bg-yellow-800">
+                            <div class="threshold-bar bg-yellow-600" style="width: 96%"></div>
+                        </div>
+                        <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">목표 미달성 (-177 req/s)</p>
+                    </div>
+                    
+                    <div class="p-4 bg-green-50 dark:bg-green-900 rounded-lg border border-green-200 dark:border-green-700">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-medium">에러율</span>
+                            <span class="text-green-600 dark:text-green-400 font-bold">0.3%</span>
+                        </div>
+                        <div class="threshold-indicator bg-green-200 dark:bg-green-800">
+                            <div class="threshold-bar bg-green-600" style="width: 30%"></div>
+                        </div>
+                        <p class="text-sm text-green-700 dark:text-green-300 mt-1">목표 달성 (-0.7%)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 성능 최적화 권장사항 -->
+        <div class="card rounded-lg p-6">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fas fa-lightbulb text-yellow-600 dark:text-yellow-400 mr-2"></i>
+                성능 최적화 권장사항
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-4 bg-blue-50 dark:bg-blue-900 rounded-lg border border-blue-200 dark:border-blue-700">
+                    <h4 class="font-medium text-blue-800 dark:text-blue-200 mb-2">
+                        <i class="fas fa-database mr-2"></i>
+                        데이터베이스 최적화
+                    </h4>
+                    <ul class="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                        <li>• 인덱스 최적화로 쿼리 성능 15% 개선 가능</li>
+                        <li>• 연결 풀 크기 조정 권장 (현재: 50 → 권장: 80)</li>
+                        <li>• 슬로우 쿼리 3개 발견 - 최적화 필요</li>
+                    </ul>
+                </div>
+                
+                <div class="p-4 bg-green-50 dark:bg-green-900 rounded-lg border border-green-200 dark:border-green-700">
+                    <h4 class="font-medium text-green-800 dark:text-green-200 mb-2">
+                        <i class="fas fa-memory mr-2"></i>
+                        메모리 최적화
+                    </h4>
+                    <ul class="text-sm text-green-700 dark:text-green-300 space-y-1">
+                        <li>• JVM 힙 크기 증가 권장 (현재: 4GB → 권장: 6GB)</li>
+                        <li>• 캐시 적중률 개선으로 응답시간 20% 단축 가능</li>
+                        <li>• 메모리 누수 의심 컴포넌트 2개 발견</li>
+                    </ul>
+                </div>
+                
+                <div class="p-4 bg-purple-50 dark:bg-purple-900 rounded-lg border border-purple-200 dark:border-purple-700">
+                    <h4 class="font-medium text-purple-800 dark:text-purple-200 mb-2">
+                        <i class="fas fa-network-wired mr-2"></i>
+                        네트워크 최적화
+                    </h4>
+                    <ul class="text-sm text-purple-700 dark:text-purple-300 space-y-1">
+                        <li>• CDN 적용으로 정적 리소스 로딩 30% 단축 가능</li>
+                        <li>• 압축 설정으로 대역폭 사용량 25% 절약 가능</li>
+                        <li>• Keep-alive 연결 설정으로 지연시간 감소</li>
+                    </ul>
+                </div>
+                
+                <div class="p-4 bg-orange-50 dark:bg-orange-900 rounded-lg border border-orange-200 dark:border-orange-700">
+                    <h4 class="font-medium text-orange-800 dark:text-orange-200 mb-2">
+                        <i class="fas fa-cogs mr-2"></i>
+                        애플리케이션 최적화
+                    </h4>
+                    <ul class="text-sm text-orange-700 dark:text-orange-300 space-y-1">
+                        <li>• 비동기 처리로 블로킹 작업 개선</li>
+                        <li>• 코드 프로파일링으로 핫스팟 3개 발견</li>
+                        <li>• 리소스 풀링으로 객체 생성 비용 절약</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="mt-4 flex space-x-3">
+                <button class="btn-primary px-4 py-2 rounded-md">
+                    <i class="fas fa-magic mr-2"></i>
+                    자동 최적화 실행
+                </button>
+                <button class="btn-secondary px-4 py-2 rounded-md">
+                    <i class="fas fa-download mr-2"></i>
+                    최적화 보고서 다운로드
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 임계치 설정 모달 -->
+    <div id="thresholdModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="card rounded-lg p-6 w-full max-w-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="text-lg font-semibold">성능 임계치 설정</h4>
+                <button id="closeThresholdModal" class="btn-ghost p-2">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2">메트릭 선택</label>
+                    <select id="thresholdMetric" class="w-full p-2 rounded-md border bg-transparent">
+                        <option value="">메트릭을 선택하세요</option>
+                        <option value="cpu.usage">CPU 사용률</option>
+                        <option value="memory.usage">메모리 사용률</option>
+                        <option value="disk.usage">디스크 사용률</option>
+                        <option value="network.latency">네트워크 지연시간</option>
+                        <option value="response.time">응답시간</option>
+                        <option value="throughput">처리량</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">단위</label>
+                    <select id="thresholdUnit" class="w-full p-2 rounded-md border bg-transparent">
+                        <option value="%">퍼센트 (%)</option>
+                        <option value="ms">밀리초 (ms)</option>
+                        <option value="req/s">요청/초 (req/s)</option>
+                        <option value="MB">메가바이트 (MB)</option>
+                        <option value="GB">기가바이트 (GB)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">경고 임계치</label>
+                    <input type="number" id="warningThreshold" placeholder="70" 
+                           class="w-full p-2 rounded-md border bg-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">위험 임계치</label>
+                    <input type="number" id="criticalThreshold" placeholder="90" 
+                           class="w-full p-2 rounded-md border bg-transparent">
+                </div>
+            </div>
+            
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="cancelThreshold" class="btn-secondary px-4 py-2 rounded-md">취소</button>
+                <button id="saveThreshold" class="btn-primary px-4 py-2 rounded-md">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 테마 토글
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        // 저장된 테마 로드
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            html.classList.add('dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', currentTheme);
+        });
+
+        // 메트릭 데이터
+        const systemMetrics = [
+            { name: 'CPU 사용률', value: 67.3, threshold: 80, status: 'good', unit: '%', icon: 'fa-microchip' },
+            { name: '메모리 사용률', value: 84.2, threshold: 85, status: 'warning', unit: '%', icon: 'fa-memory' },
+            { name: '디스크 사용률', value: 92.1, threshold: 90, status: 'critical', unit: '%', icon: 'fa-hard-drive' },
+            { name: '네트워크 I/O', value: 156.7, threshold: 500, status: 'good', unit: 'MB/s', icon: 'fa-network-wired' }
+        ];
+
+        const appMetrics = [
+            { name: '응답시간', value: 1847, threshold: 2000, status: 'good', unit: 'ms', icon: 'fa-clock' },
+            { name: '처리량', value: 4823, threshold: 5000, status: 'warning', unit: 'req/s', icon: 'fa-tachometer-alt' },
+            { name: '에러율', value: 0.3, threshold: 1.0, status: 'good', unit: '%', icon: 'fa-exclamation-triangle' },
+            { name: '활성 세션', value: 2847, threshold: 3000, status: 'good', unit: '개', icon: 'fa-users' }
+        ];
+
+        const thresholdData = [
+            { id: 1, metric: 'CPU 사용률', current: '67.3%', warning: '80%', critical: '90%', status: 'good', updated: '2024-08-28 14:30' },
+            { id: 2, metric: '메모리 사용률', current: '84.2%', warning: '85%', critical: '95%', status: 'warning', updated: '2024-08-28 14:25' },
+            { id: 3, metric: '디스크 사용률', current: '92.1%', warning: '90%', critical: '95%', status: 'critical', updated: '2024-08-28 14:20' },
+            { id: 4, metric: '응답시간', current: '1,847ms', warning: '2,000ms', critical: '3,000ms', status: 'good', updated: '2024-08-28 14:35' },
+            { id: 5, metric: '에러율', current: '0.3%', warning: '1.0%', critical: '5.0%', status: 'good', updated: '2024-08-28 14:28' }
+        ];
+
+        // 메트릭 카드 렌더링
+        function renderMetrics() {
+            const systemContainer = document.getElementById('systemMetrics');
+            const appContainer = document.getElementById('appMetrics');
+            
+            systemContainer.innerHTML = '';
+            appContainer.innerHTML = '';
+
+            systemMetrics.forEach(metric => {
+                const card = createMetricCard(metric);
+                systemContainer.appendChild(card);
+            });
+
+            appMetrics.forEach(metric => {
+                const card = createMetricCard(metric);
+                appContainer.appendChild(card);
+            });
+        }
+
+        function createMetricCard(metric) {
+            const card = document.createElement('div');
+            card.className = `metric-card card rounded-lg p-4 metric-${metric.status}`;
+            
+            const percentage = Math.min(100, (metric.value / metric.threshold) * 100);
+            const statusIcon = {
+                'good': 'fa-check-circle text-green-600',
+                'warning': 'fa-exclamation-triangle text-yellow-600',
+                'critical': 'fa-times-circle text-red-600'
+            };
+
+            card.innerHTML = `
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center">
+                        <i class="fas ${metric.icon} mr-2 text-gray-600 dark:text-gray-400"></i>
+                        <span class="font-medium text-sm">${metric.name}</span>
+                    </div>
+                    <i class="fas ${statusIcon[metric.status]}"></i>
+                </div>
+                
+                <div class="mb-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-2xl font-bold">${metric.value.toLocaleString()}</span>
+                        <span class="text-sm text-gray-500">${metric.unit}</span>
+                    </div>
+                    <div class="text-xs text-gray-500">임계치: ${metric.threshold.toLocaleString()}${metric.unit}</div>
+                </div>
+                
+                <div class="threshold-indicator bg-gray-200 dark:bg-gray-700">
+                    <div class="threshold-bar ${metric.status === 'good' ? 'bg-green-500' : metric.status === 'warning' ? 'bg-yellow-500' : 'bg-red-500'}" 
+                         style="width: ${Math.min(100, percentage)}%"></div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // 임계치 테이블 렌더링
+        function renderThresholdTable() {
+            const tbody = document.getElementById('thresholdTable');
+            tbody.innerHTML = '';
+
+            thresholdData.forEach(threshold => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b hover:bg-gray-50 dark:hover:bg-gray-800';
+                
+                const statusClass = {
+                    'good': 'text-green-600',
+                    'warning': 'text-yellow-600',
+                    'critical': 'text-red-600'
+                };
+                const statusIcon = {
+                    'good': 'fa-check-circle',
+                    'warning': 'fa-exclamation-triangle',
+                    'critical': 'fa-times-circle'
+                };
+                const statusText = {
+                    'good': '정상',
+                    'warning': '경고',
+                    'critical': '위험'
+                };
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-medium">${threshold.metric}</td>
+                    <td class="py-3 px-4">${threshold.current}</td>
+                    <td class="py-3 px-4">${threshold.warning}</td>
+                    <td class="py-3 px-4">${threshold.critical}</td>
+                    <td class="py-3 px-4">
+                        <span class="${statusClass[threshold.status]}">
+                            <i class="fas ${statusIcon[threshold.status]} mr-1"></i>
+                            ${statusText[threshold.status]}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-sm">${threshold.updated}</td>
+                    <td class="py-3 px-4">
+                        <div class="flex space-x-2">
+                            <button onclick="editThreshold(${threshold.id})" class="btn-ghost px-2 py-1 rounded text-xs">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteThreshold(${threshold.id})" class="btn-ghost px-2 py-1 rounded text-xs text-red-600">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // SLA 슬라이더 업데이트
+        function updateSliders() {
+            const availability = document.getElementById('availabilityTarget');
+            const response = document.getElementById('responseTarget');
+            const throughput = document.getElementById('throughputTarget');
+            const error = document.getElementById('errorTarget');
+
+            availability.addEventListener('input', (e) => {
+                document.getElementById('availabilityValue').textContent = e.target.value + '%';
+            });
+
+            response.addEventListener('input', (e) => {
+                document.getElementById('responseValue').textContent = e.target.value + 'ms';
+            });
+
+            throughput.addEventListener('input', (e) => {
+                document.getElementById('throughputValue').textContent = parseInt(e.target.value).toLocaleString();
+            });
+
+            error.addEventListener('input', (e) => {
+                document.getElementById('errorValue').textContent = e.target.value + '%';
+            });
+        }
+
+        // 임계치 모달 관리
+        document.getElementById('addThresholdBtn').addEventListener('click', () => {
+            document.getElementById('thresholdModal').classList.remove('hidden');
+        });
+
+        document.getElementById('closeThresholdModal').addEventListener('click', () => {
+            document.getElementById('thresholdModal').classList.add('hidden');
+        });
+
+        document.getElementById('cancelThreshold').addEventListener('click', () => {
+            document.getElementById('thresholdModal').classList.add('hidden');
+        });
+
+        document.getElementById('saveThreshold').addEventListener('click', () => {
+            const metric = document.getElementById('thresholdMetric').value;
+            const unit = document.getElementById('thresholdUnit').value;
+            const warning = document.getElementById('warningThreshold').value;
+            const critical = document.getElementById('criticalThreshold').value;
+
+            if (!metric || !warning || !critical) {
+                alert('모든 필드를 입력해주세요.');
+                return;
+            }
+
+            // 새 임계치 추가
+            const newThreshold = {
+                id: thresholdData.length + 1,
+                metric: metric,
+                current: '0' + unit,
+                warning: warning + unit,
+                critical: critical + unit,
+                status: 'good',
+                updated: new Date().toLocaleString('ko-KR').slice(0, -3)
+            };
+
+            thresholdData.push(newThreshold);
+            renderThresholdTable();
+            document.getElementById('thresholdModal').classList.add('hidden');
+            alert('새 임계치가 추가되었습니다!');
+        });
+
+        // 임계치 편집/삭제
+        function editThreshold(id) {
+            const threshold = thresholdData.find(t => t.id === id);
+            if (threshold) {
+                alert(`${threshold.metric} 임계치를 편집합니다.`);
+            }
+        }
+
+        function deleteThreshold(id) {
+            const threshold = thresholdData.find(t => t.id === id);
+            if (threshold && confirm(`${threshold.metric} 임계치를 삭제하시겠습니까?`)) {
+                const index = thresholdData.findIndex(t => t.id === id);
+                thresholdData.splice(index, 1);
+                renderThresholdTable();
+                alert('임계치가 삭제되었습니다.');
+            }
+        }
+
+        // 새로고침
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            location.reload();
+        });
+
+        // 실시간 데이터 업데이트 시뮬레이션
+        function updateMetrics() {
+            systemMetrics.forEach(metric => {
+                const variance = (Math.random() - 0.5) * 10;
+                metric.value = Math.max(0, metric.value + variance);
+                
+                if (metric.value > metric.threshold * 0.9) {
+                    metric.status = metric.value > metric.threshold ? 'critical' : 'warning';
+                } else {
+                    metric.status = 'good';
+                }
+            });
+
+            appMetrics.forEach(metric => {
+                const variance = (Math.random() - 0.5) * (metric.value * 0.1);
+                metric.value = Math.max(0, metric.value + variance);
+                
+                if (metric.name === '에러율') {
+                    metric.status = metric.value < metric.threshold ? 'good' : 'critical';
+                } else {
+                    if (metric.value > metric.threshold * 0.9) {
+                        metric.status = metric.value > metric.threshold ? 'critical' : 'warning';
+                    } else {
+                        metric.status = 'good';
+                    }
+                }
+            });
+
+            renderMetrics();
+        }
+
+        // 초기 로드
+        document.addEventListener('DOMContentLoaded', () => {
+            renderMetrics();
+            renderThresholdTable();
+            updateSliders();
+            
+            // 30초마다 메트릭 업데이트
+            setInterval(updateMetrics, 30000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>백업/복원 관리 - AIRIS EPM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 222.2 84% 4.9%;
+            --radius: 0.5rem;
+        }
+        
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 212.7 26.8% 83.9%;
+        }
+
+        * {
+            border-color: hsl(var(--border));
+        }
+
+        body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+
+        .card {
+            background-color: hsl(var(--card));
+            color: hsl(var(--card-foreground));
+            border: 1px solid hsl(var(--border));
+        }
+
+        .btn-primary {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+
+        .btn-primary:hover {
+            background-color: hsl(var(--primary) / 0.9);
+        }
+
+        .btn-secondary {
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            color: hsl(var(--foreground));
+        }
+
+        .btn-ghost:hover {
+            background-color: hsl(var(--accent));
+            color: hsl(var(--accent-foreground));
+        }
+
+        .nav-dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 200px;
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .backup-success {
+            @apply bg-green-100 border-green-400 text-green-700;
+        }
+        
+        .backup-error {
+            @apply bg-red-100 border-red-400 text-red-700;
+        }
+        
+        .backup-in-progress {
+            @apply bg-blue-100 border-blue-400 text-blue-700;
+        }
+
+        .dark .backup-success {
+            @apply bg-green-900 border-green-700 text-green-300;
+        }
+        
+        .dark .backup-error {
+            @apply bg-red-900 border-red-700 text-red-300;
+        }
+        
+        .dark .backup-in-progress {
+            @apply bg-blue-900 border-blue-700 text-blue-300;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- 상단 네비게이션 -->
+    <nav class="card rounded-none border-x-0 border-t-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+                    
+                    <!-- 메인 네비게이션 -->
+                    <div class="hidden md:flex items-center space-x-6">
+                        <!-- APM 모니터링 -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                📊 APM 모니터링
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/j2ee-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">☕ J2EE 모니터링</a>
+                                <a href="/was-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🏗️ WAS 모니터링</a>
+                                <a href="/exception-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🚨 예외 추적</a>
+                                <a href="/topology-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🗺️ 서비스 토폴로지</a>
+                                <a href="/alert-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔔 알림 관리</a>
+                            </div>
+                        </div>
+
+                        <!-- 시스템 관리 -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                ⚙️ 시스템 관리
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/admin-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">👤 관리자 대시보드</a>
+                                <a href="/users-roles.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">👥 사용자/역할 관리</a>
+                                <a href="/system-settings.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔧 시스템 설정</a>
+                                <a href="/external-systems-config.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔌 외부시스템 연동</a>
+                                <a href="/api-tokens.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔑 API 토큰 관리</a>
+                                <a href="/backup-restore.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400">💾 백업/복원</a>
+                            </div>
+                        </div>
+
+                        <!-- AIOps & ML -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                🤖 AIOps & ML
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/aiops-management.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🤖 AIOps 관리</a>
+                                <a href="/ml-training-autoencoder.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔬 ML 훈련 - 오토인코더</a>
+                                <a href="/ml-training-clustering.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">📈 ML 훈련 - 클러스터링</a>
+                                <a href="/ml-training-lstm.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🧠 ML 훈련 - LSTM</a>
+                                <a href="/clustering-insights.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">💡 클러스터링 인사이트</a>
+                            </div>
+                        </div>
+
+                        <!-- 세션 & 분석 -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                📊 세션 & 분석
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/session-management.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">👤 세션 관리</a>
+                                <a href="/session-analysis.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔍 세션 분석</a>
+                                <a href="/session-telemetry-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">📈 세션 텔레메트리</a>
+                                <a href="/session-replay.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🎬 세션 재생</a>
+                            </div>
+                        </div>
+
+                        <!-- 지식 & 온톨로지 -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                🧠 지식 & 온톨로지
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/ontology.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🧠 온톨로지 시스템</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="btn-ghost p-2 rounded-full">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:block"></i>
+                    </button>
+                    <button id="refreshBtn" class="btn-secondary px-3 py-2 rounded-md text-sm">
+                        <i class="fas fa-refresh mr-1"></i>
+                        새로고침
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 메인 콘텐츠 -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">백업/복원 관리</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">시스템 데이터 백업 및 복원을 관리합니다</p>
+        </div>
+
+        <!-- 백업 개요 카드 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div class="card rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">총 백업</p>
+                        <p class="text-2xl font-bold">47</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
+                        <i class="fas fa-database text-blue-600 dark:text-blue-400"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">자동 백업</p>
+                        <p class="text-2xl font-bold text-green-600">활성화</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-green-100 dark:bg-green-900">
+                        <i class="fas fa-clock text-green-600 dark:text-green-400"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">마지막 백업</p>
+                        <p class="text-sm font-semibold">2024-08-28 02:00</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-purple-100 dark:bg-purple-900">
+                        <i class="fas fa-history text-purple-600 dark:text-purple-400"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">저장소 사용량</p>
+                        <p class="text-sm font-semibold">2.4TB / 5TB</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-orange-100 dark:bg-orange-900">
+                        <i class="fas fa-hard-drive text-orange-600 dark:text-orange-400"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 백업 생성 및 설정 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- 새 백업 생성 -->
+            <div class="card rounded-lg p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fas fa-plus text-blue-600 dark:text-blue-400 mr-2"></i>
+                    새 백업 생성
+                </h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">백업 유형</label>
+                        <select id="backupType" class="w-full p-2 rounded-md border bg-transparent">
+                            <option value="full">전체 백업</option>
+                            <option value="incremental">증분 백업</option>
+                            <option value="differential">차등 백업</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">백업 대상</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" class="mr-2" checked> 데이터베이스 (ClickHouse, PostgreSQL)
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="mr-2" checked> 설정 파일
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="mr-2" checked> 사용자 데이터
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="mr-2"> 로그 파일
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">백업 이름 (선택사항)</label>
+                        <input type="text" id="backupName" placeholder="예: 시스템_업데이트_전_백업" 
+                               class="w-full p-2 rounded-md border bg-transparent">
+                    </div>
+                    
+                    <button id="createBackupBtn" class="btn-primary w-full py-2 rounded-md">
+                        <i class="fas fa-database mr-2"></i>
+                        백업 시작
+                    </button>
+                </div>
+            </div>
+
+            <!-- 자동 백업 설정 -->
+            <div class="card rounded-lg p-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center">
+                    <i class="fas fa-cog text-green-600 dark:text-green-400 mr-2"></i>
+                    자동 백업 설정
+                </h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="mr-2" checked> 자동 백업 활성화
+                        </label>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">백업 주기</label>
+                        <select class="w-full p-2 rounded-md border bg-transparent">
+                            <option value="daily" selected>매일</option>
+                            <option value="weekly">매주</option>
+                            <option value="monthly">매월</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">백업 시간</label>
+                        <input type="time" value="02:00" class="w-full p-2 rounded-md border bg-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">보관 기간</label>
+                        <select class="w-full p-2 rounded-md border bg-transparent">
+                            <option value="30">30일</option>
+                            <option value="60" selected>60일</option>
+                            <option value="90">90일</option>
+                            <option value="180">180일</option>
+                            <option value="365">1년</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn-secondary w-full py-2 rounded-md">
+                        <i class="fas fa-save mr-2"></i>
+                        설정 저장
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 백업 히스토리 -->
+        <div class="card rounded-lg p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">백업 히스토리</h3>
+                <div class="flex space-x-2">
+                    <button class="btn-ghost px-3 py-1 rounded text-sm">
+                        <i class="fas fa-filter mr-1"></i>
+                        필터
+                    </button>
+                    <button class="btn-ghost px-3 py-1 rounded text-sm">
+                        <i class="fas fa-download mr-1"></i>
+                        내보내기
+                    </button>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-3 px-4">백업 이름</th>
+                            <th class="text-left py-3 px-4">유형</th>
+                            <th class="text-left py-3 px-4">크기</th>
+                            <th class="text-left py-3 px-4">생성일시</th>
+                            <th class="text-left py-3 px-4">상태</th>
+                            <th class="text-left py-3 px-4">작업</th>
+                        </tr>
+                    </thead>
+                    <tbody id="backupHistory">
+                        <!-- 백업 히스토리가 여기에 동적으로 로드됩니다 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 복원 작업 -->
+        <div class="card rounded-lg p-6">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fas fa-undo text-red-600 dark:text-red-400 mr-2"></i>
+                시스템 복원
+            </h3>
+            
+            <div class="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-4">
+                <div class="flex">
+                    <i class="fas fa-exclamation-triangle text-yellow-600 dark:text-yellow-400 mr-2 mt-1"></i>
+                    <div>
+                        <p class="font-medium text-yellow-800 dark:text-yellow-200">주의사항</p>
+                        <p class="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                            복원 작업은 현재 시스템 데이터를 덮어씁니다. 복원 전 현재 상태를 백업하는 것을 권장합니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2">복원할 백업 선택</label>
+                    <select id="restoreBackup" class="w-full p-2 rounded-md border bg-transparent">
+                        <option value="">백업을 선택하세요</option>
+                        <!-- 백업 목록이 동적으로 로드됩니다 -->
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">복원 대상</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" class="mr-2" checked> 데이터베이스
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="mr-2" checked> 설정 파일
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="mr-2"> 사용자 데이터
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 flex space-x-4">
+                <button id="testRestoreBtn" class="btn-secondary px-4 py-2 rounded-md">
+                    <i class="fas fa-vial mr-2"></i>
+                    복원 테스트
+                </button>
+                <button id="startRestoreBtn" class="btn-primary px-4 py-2 rounded-md" style="background-color: #dc2626;">
+                    <i class="fas fa-undo mr-2"></i>
+                    복원 시작
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 진행 상황 모달 -->
+    <div id="progressModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="card rounded-lg p-6 w-96">
+            <h4 class="text-lg font-semibold mb-4" id="progressTitle">백업 진행 중</h4>
+            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-4">
+                <div id="progressBar" class="bg-blue-600 h-2 rounded-full" style="width: 0%"></div>
+            </div>
+            <p id="progressStatus" class="text-sm text-gray-600 dark:text-gray-400">백업을 시작하는 중...</p>
+            <div class="mt-4 flex justify-end">
+                <button id="cancelOperation" class="btn-secondary px-4 py-2 rounded-md">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 테마 토글
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        // 저장된 테마 로드
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            html.classList.add('dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', currentTheme);
+        });
+
+        // 백업 데이터 (시뮬레이션)
+        const backupData = [
+            {
+                id: 1,
+                name: '자동_백업_2024-08-28_02-00',
+                type: '전체 백업',
+                size: '2.1GB',
+                createdAt: '2024-08-28 02:00:15',
+                status: 'completed',
+                duration: '15분 23초'
+            },
+            {
+                id: 2,
+                name: '자동_백업_2024-08-27_02-00',
+                type: '전체 백업',
+                size: '2.0GB',
+                createdAt: '2024-08-27 02:00:12',
+                status: 'completed',
+                duration: '14분 55초'
+            },
+            {
+                id: 3,
+                name: '시스템_업데이트_전_백업',
+                type: '전체 백업',
+                size: '1.9GB',
+                createdAt: '2024-08-26 14:30:45',
+                status: 'completed',
+                duration: '13분 42초'
+            },
+            {
+                id: 4,
+                name: '자동_백업_2024-08-26_02-00',
+                type: '증분 백업',
+                size: '456MB',
+                createdAt: '2024-08-26 02:00:08',
+                status: 'completed',
+                duration: '5분 18초'
+            },
+            {
+                id: 5,
+                name: '긴급_백업_2024-08-25',
+                type: '전체 백업',
+                size: '2.3GB',
+                createdAt: '2024-08-25 16:15:32',
+                status: 'failed',
+                duration: '8분 12초 (중단됨)'
+            }
+        ];
+
+        // 백업 히스토리 렌더링
+        function renderBackupHistory() {
+            const tbody = document.getElementById('backupHistory');
+            const restoreSelect = document.getElementById('restoreBackup');
+            
+            tbody.innerHTML = '';
+            restoreSelect.innerHTML = '<option value="">백업을 선택하세요</option>';
+
+            backupData.forEach(backup => {
+                // 히스토리 테이블
+                const tr = document.createElement('tr');
+                tr.className = 'border-b hover:bg-gray-50 dark:hover:bg-gray-800';
+                
+                const statusClass = backup.status === 'completed' ? 'backup-success' : 
+                                  backup.status === 'failed' ? 'backup-error' : 'backup-in-progress';
+                const statusText = backup.status === 'completed' ? '완료' : 
+                                 backup.status === 'failed' ? '실패' : '진행중';
+                const statusIcon = backup.status === 'completed' ? 'fa-check-circle' : 
+                                 backup.status === 'failed' ? 'fa-times-circle' : 'fa-clock';
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4">
+                        <div class="font-medium">${backup.name}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">ID: ${backup.id}</div>
+                    </td>
+                    <td class="py-3 px-4">${backup.type}</td>
+                    <td class="py-3 px-4">${backup.size}</td>
+                    <td class="py-3 px-4">
+                        <div>${backup.createdAt}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">${backup.duration}</div>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-1 rounded text-xs border ${statusClass}">
+                            <i class="fas ${statusIcon} mr-1"></i>
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="flex space-x-2">
+                            ${backup.status === 'completed' ? `
+                                <button onclick="downloadBackup(${backup.id})" class="btn-ghost px-2 py-1 rounded text-xs">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                <button onclick="restoreFromBackup(${backup.id})" class="btn-ghost px-2 py-1 rounded text-xs">
+                                    <i class="fas fa-undo"></i>
+                                </button>
+                            ` : ''}
+                            <button onclick="deleteBackup(${backup.id})" class="btn-ghost px-2 py-1 rounded text-xs text-red-600">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+
+                // 복원 선택 드롭다운 (완료된 백업만)
+                if (backup.status === 'completed') {
+                    const option = document.createElement('option');
+                    option.value = backup.id;
+                    option.textContent = `${backup.name} (${backup.createdAt})`;
+                    restoreSelect.appendChild(option);
+                }
+            });
+        }
+
+        // 새 백업 생성
+        document.getElementById('createBackupBtn').addEventListener('click', () => {
+            const backupType = document.getElementById('backupType').value;
+            const backupName = document.getElementById('backupName').value;
+            
+            const backupTypeText = {
+                'full': '전체 백업',
+                'incremental': '증분 백업', 
+                'differential': '차등 백업'
+            };
+
+            // 진행 모달 표시
+            showProgressModal('백업 생성 중', '백업을 준비하는 중...');
+            
+            // 시뮬레이션된 백업 프로세스
+            simulateBackupProcess(backupTypeText[backupType], backupName || `${backupTypeText[backupType]}_${new Date().toISOString().slice(0, 16).replace('T', '_').replace(':', '-')}`);
+        });
+
+        // 복원 시작
+        document.getElementById('startRestoreBtn').addEventListener('click', () => {
+            const selectedBackup = document.getElementById('restoreBackup').value;
+            if (!selectedBackup) {
+                alert('복원할 백업을 선택해주세요.');
+                return;
+            }
+
+            if (confirm('정말로 시스템을 복원하시겠습니까? 현재 데이터가 덮어써집니다.')) {
+                showProgressModal('시스템 복원 중', '복원을 준비하는 중...');
+                simulateRestoreProcess(selectedBackup);
+            }
+        });
+
+        // 복원 테스트
+        document.getElementById('testRestoreBtn').addEventListener('click', () => {
+            const selectedBackup = document.getElementById('restoreBackup').value;
+            if (!selectedBackup) {
+                alert('테스트할 백업을 선택해주세요.');
+                return;
+            }
+
+            showProgressModal('복원 테스트 중', '백업 무결성을 검사하는 중...');
+            simulateTestProcess(selectedBackup);
+        });
+
+        // 진행 상황 모달 표시
+        function showProgressModal(title, status) {
+            document.getElementById('progressTitle').textContent = title;
+            document.getElementById('progressStatus').textContent = status;
+            document.getElementById('progressBar').style.width = '0%';
+            document.getElementById('progressModal').classList.remove('hidden');
+        }
+
+        // 진행 상황 모달 숨기기
+        function hideProgressModal() {
+            document.getElementById('progressModal').classList.add('hidden');
+        }
+
+        // 백업 프로세스 시뮬레이션
+        function simulateBackupProcess(type, name) {
+            let progress = 0;
+            const progressBar = document.getElementById('progressBar');
+            const progressStatus = document.getElementById('progressStatus');
+            
+            const steps = [
+                '백업 대상 분석 중...',
+                '데이터베이스 백업 중...',
+                '설정 파일 백업 중...',
+                '사용자 데이터 백업 중...',
+                '백업 압축 중...',
+                '무결성 검사 중...',
+                '백업 완료!'
+            ];
+
+            const interval = setInterval(() => {
+                progress += Math.random() * 20;
+                if (progress > 100) progress = 100;
+                
+                progressBar.style.width = progress + '%';
+                
+                const stepIndex = Math.floor((progress / 100) * (steps.length - 1));
+                progressStatus.textContent = steps[stepIndex];
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        hideProgressModal();
+                        
+                        // 새 백업을 데이터에 추가
+                        const newBackup = {
+                            id: backupData.length + 1,
+                            name: name,
+                            type: type,
+                            size: (1.5 + Math.random() * 1).toFixed(1) + 'GB',
+                            createdAt: new Date().toLocaleString('ko-KR').replace(/\./g, '-').replace(/오전|오후/, '').trim(),
+                            status: 'completed',
+                            duration: Math.floor(10 + Math.random() * 10) + '분 ' + Math.floor(Math.random() * 60) + '초'
+                        };
+                        
+                        backupData.unshift(newBackup);
+                        renderBackupHistory();
+                        
+                        alert('백업이 성공적으로 생성되었습니다!');
+                    }, 1000);
+                }
+            }, 300);
+        }
+
+        // 복원 프로세스 시뮬레이션
+        function simulateRestoreProcess(backupId) {
+            let progress = 0;
+            const progressBar = document.getElementById('progressBar');
+            const progressStatus = document.getElementById('progressStatus');
+            
+            const steps = [
+                '백업 파일 검증 중...',
+                '시스템 중지 중...',
+                '데이터베이스 복원 중...',
+                '설정 파일 복원 중...',
+                '사용자 데이터 복원 중...',
+                '서비스 재시작 중...',
+                '복원 완료!'
+            ];
+
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 100) progress = 100;
+                
+                progressBar.style.width = progress + '%';
+                
+                const stepIndex = Math.floor((progress / 100) * (steps.length - 1));
+                progressStatus.textContent = steps[stepIndex];
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        hideProgressModal();
+                        alert('시스템 복원이 성공적으로 완료되었습니다!');
+                    }, 1000);
+                }
+            }, 500);
+        }
+
+        // 테스트 프로세스 시뮬레이션
+        function simulateTestProcess(backupId) {
+            let progress = 0;
+            const progressBar = document.getElementById('progressBar');
+            const progressStatus = document.getElementById('progressStatus');
+            
+            const steps = [
+                '백업 파일 무결성 검사 중...',
+                '데이터 구조 검증 중...',
+                '압축 해제 테스트 중...',
+                '호환성 확인 중...',
+                '테스트 완료!'
+            ];
+
+            const interval = setInterval(() => {
+                progress += Math.random() * 25;
+                if (progress > 100) progress = 100;
+                
+                progressBar.style.width = progress + '%';
+                
+                const stepIndex = Math.floor((progress / 100) * (steps.length - 1));
+                progressStatus.textContent = steps[stepIndex];
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        hideProgressModal();
+                        alert('백업 테스트가 성공적으로 완료되었습니다. 백업 파일이 정상입니다.');
+                    }, 1000);
+                }
+            }, 200);
+        }
+
+        // 백업 다운로드
+        function downloadBackup(id) {
+            const backup = backupData.find(b => b.id === id);
+            if (backup) {
+                alert(`백업 "${backup.name}"을(를) 다운로드합니다.`);
+                // 실제로는 다운로드 로직 구현
+            }
+        }
+
+        // 백업에서 복원
+        function restoreFromBackup(id) {
+            const backup = backupData.find(b => b.id === id);
+            if (backup && confirm(`"${backup.name}" 백업으로 복원하시겠습니까?`)) {
+                document.getElementById('restoreBackup').value = id;
+                document.getElementById('startRestoreBtn').click();
+            }
+        }
+
+        // 백업 삭제
+        function deleteBackup(id) {
+            const backup = backupData.find(b => b.id === id);
+            if (backup && confirm(`"${backup.name}" 백업을 삭제하시겠습니까?`)) {
+                const index = backupData.findIndex(b => b.id === id);
+                backupData.splice(index, 1);
+                renderBackupHistory();
+                alert('백업이 삭제되었습니다.');
+            }
+        }
+
+        // 작업 취소
+        document.getElementById('cancelOperation').addEventListener('click', () => {
+            if (confirm('진행 중인 작업을 취소하시겠습니까?')) {
+                hideProgressModal();
+            }
+        });
+
+        // 새로고침
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            location.reload();
+        });
+
+        // 초기 로드
+        document.addEventListener('DOMContentLoaded', () => {
+            renderBackupHistory();
+        });
+    </script>
+</body>
+</html>

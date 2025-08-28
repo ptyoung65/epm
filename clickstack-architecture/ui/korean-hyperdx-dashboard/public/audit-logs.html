@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>감사 로그 관리 - AIRIS EPM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 222.2 84% 4.9%;
+            --radius: 0.5rem;
+        }
+        
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 212.7 26.8% 83.9%;
+        }
+
+        * {
+            border-color: hsl(var(--border));
+        }
+
+        body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+
+        .card {
+            background-color: hsl(var(--card));
+            color: hsl(var(--card-foreground));
+            border: 1px solid hsl(var(--border));
+        }
+
+        .btn-primary {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+
+        .btn-primary:hover {
+            background-color: hsl(var(--primary) / 0.9);
+        }
+
+        .btn-secondary {
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            color: hsl(var(--foreground));
+        }
+
+        .btn-ghost:hover {
+            background-color: hsl(var(--accent));
+            color: hsl(var(--accent-foreground));
+        }
+
+        .nav-dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 200px;
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .log-level-info {
+            @apply bg-blue-100 border-blue-400 text-blue-700;
+        }
+        
+        .log-level-warning {
+            @apply bg-yellow-100 border-yellow-400 text-yellow-700;
+        }
+        
+        .log-level-error {
+            @apply bg-red-100 border-red-400 text-red-700;
+        }
+        
+        .log-level-success {
+            @apply bg-green-100 border-green-400 text-green-700;
+        }
+
+        .dark .log-level-info {
+            @apply bg-blue-900 border-blue-700 text-blue-300;
+        }
+        
+        .dark .log-level-warning {
+            @apply bg-yellow-900 border-yellow-700 text-yellow-300;
+        }
+        
+        .dark .log-level-error {
+            @apply bg-red-900 border-red-700 text-red-300;
+        }
+        
+        .dark .log-level-success {
+            @apply bg-green-900 border-green-700 text-green-300;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- 상단 네비게이션 -->
+    <nav class="card rounded-none border-x-0 border-t-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+                    
+                    <!-- 메인 네비게이션 -->
+                    <div class="hidden md:flex items-center space-x-6">
+                        <!-- APM 모니터링 -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                📊 APM 모니터링
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/j2ee-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">☕ J2EE 모니터링</a>
+                                <a href="/was-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🏗️ WAS 모니터링</a>
+                                <a href="/exception-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🚨 예외 추적</a>
+                                <a href="/topology-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🗺️ 서비스 토폴로지</a>
+                                <a href="/alert-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔔 알림 관리</a>
+                            </div>
+                        </div>
+
+                        <!-- 시스템 관리 -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                ⚙️ 시스템 관리
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/admin-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">👤 관리자 대시보드</a>
+                                <a href="/users-roles.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">👥 사용자/역할 관리</a>
+                                <a href="/system-settings.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔧 시스템 설정</a>
+                                <a href="/external-systems-config.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔌 외부시스템 연동</a>
+                                <a href="/api-tokens.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔑 API 토큰 관리</a>
+                                <a href="/backup-restore.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">💾 백업/복원</a>
+                                <a href="/audit-logs.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400">📋 감사 로그</a>
+                            </div>
+                        </div>
+
+                        <!-- AIOps & ML -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                🤖 AIOps & ML
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/aiops-management.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🤖 AIOps 관리</a>
+                                <a href="/ml-training-autoencoder.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔬 ML 훈련 - 오토인코더</a>
+                                <a href="/ml-training-clustering.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">📈 ML 훈련 - 클러스터링</a>
+                                <a href="/ml-training-lstm.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🧠 ML 훈련 - LSTM</a>
+                                <a href="/clustering-insights.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">💡 클러스터링 인사이트</a>
+                            </div>
+                        </div>
+
+                        <!-- 세션 & 분석 -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                📊 세션 & 분석
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/session-management.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">👤 세션 관리</a>
+                                <a href="/session-analysis.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔍 세션 분석</a>
+                                <a href="/session-telemetry-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">📈 세션 텔레메트리</a>
+                                <a href="/session-replay.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🎬 세션 재생</a>
+                            </div>
+                        </div>
+
+                        <!-- 지식 & 온톨로지 -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                🧠 지식 & 온톨로지
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/ontology.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🧠 온톨로지 시스템</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="btn-ghost p-2 rounded-full">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:block"></i>
+                    </button>
+                    <button id="refreshBtn" class="btn-secondary px-3 py-2 rounded-md text-sm">
+                        <i class="fas fa-refresh mr-1"></i>
+                        새로고침
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 메인 콘텐츠 -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">감사 로그 관리</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">시스템의 모든 중요한 활동을 추적하고 관리합니다</p>
+        </div>
+
+        <!-- 로그 통계 카드 -->
+        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+            <div class="card rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">총 로그</p>
+                        <p class="text-xl font-bold">12,847</p>
+                    </div>
+                    <div class="p-2 rounded-full bg-blue-100 dark:bg-blue-900">
+                        <i class="fas fa-list text-blue-600 dark:text-blue-400 text-sm"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">오늘 로그</p>
+                        <p class="text-xl font-bold">428</p>
+                    </div>
+                    <div class="p-2 rounded-full bg-green-100 dark:bg-green-900">
+                        <i class="fas fa-calendar-day text-green-600 dark:text-green-400 text-sm"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">보안 이벤트</p>
+                        <p class="text-xl font-bold text-red-600">23</p>
+                    </div>
+                    <div class="p-2 rounded-full bg-red-100 dark:bg-red-900">
+                        <i class="fas fa-shield-alt text-red-600 dark:text-red-400 text-sm"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">로그인</p>
+                        <p class="text-xl font-bold">156</p>
+                    </div>
+                    <div class="p-2 rounded-full bg-purple-100 dark:bg-purple-900">
+                        <i class="fas fa-sign-in-alt text-purple-600 dark:text-purple-400 text-sm"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">설정 변경</p>
+                        <p class="text-xl font-bold">34</p>
+                    </div>
+                    <div class="p-2 rounded-full bg-orange-100 dark:bg-orange-900">
+                        <i class="fas fa-cog text-orange-600 dark:text-orange-400 text-sm"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 필터 및 검색 -->
+        <div class="card rounded-lg p-6 mb-6">
+            <div class="grid grid-cols-1 lg:grid-cols-6 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">검색</label>
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="로그 내용 검색..." 
+                               class="w-full pl-10 pr-4 py-2 rounded-md border bg-transparent">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">로그 레벨</label>
+                    <select id="levelFilter" class="w-full p-2 rounded-md border bg-transparent">
+                        <option value="">전체</option>
+                        <option value="info">정보</option>
+                        <option value="warning">경고</option>
+                        <option value="error">에러</option>
+                        <option value="success">성공</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">카테고리</label>
+                    <select id="categoryFilter" class="w-full p-2 rounded-md border bg-transparent">
+                        <option value="">전체</option>
+                        <option value="auth">인증</option>
+                        <option value="system">시스템</option>
+                        <option value="security">보안</option>
+                        <option value="api">API</option>
+                        <option value="admin">관리</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">사용자</label>
+                    <select id="userFilter" class="w-full p-2 rounded-md border bg-transparent">
+                        <option value="">전체</option>
+                        <option value="admin">관리자</option>
+                        <option value="operator">운영자</option>
+                        <option value="system">시스템</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">시작일</label>
+                    <input type="date" id="startDate" class="w-full p-2 rounded-md border bg-transparent">
+                </div>
+                
+                <div class="flex items-end">
+                    <button id="applyFilter" class="btn-primary w-full py-2 rounded-md">
+                        <i class="fas fa-filter mr-2"></i>
+                        필터 적용
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 로그 테이블 -->
+        <div class="card rounded-lg p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">감사 로그 목록</h3>
+                <div class="flex space-x-2">
+                    <button id="exportBtn" class="btn-secondary px-3 py-2 rounded-md text-sm">
+                        <i class="fas fa-download mr-2"></i>
+                        내보내기
+                    </button>
+                    <button id="clearBtn" class="btn-ghost px-3 py-2 rounded-md text-sm text-red-600">
+                        <i class="fas fa-trash mr-2"></i>
+                        로그 정리
+                    </button>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-3 px-4">시간</th>
+                            <th class="text-left py-3 px-4">레벨</th>
+                            <th class="text-left py-3 px-4">카테고리</th>
+                            <th class="text-left py-3 px-4">사용자</th>
+                            <th class="text-left py-3 px-4">동작</th>
+                            <th class="text-left py-3 px-4">세부사항</th>
+                            <th class="text-left py-3 px-4">IP 주소</th>
+                            <th class="text-left py-3 px-4">작업</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditLogs">
+                        <!-- 로그가 여기에 동적으로 로드됩니다 -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- 페이지네이션 -->
+            <div class="flex items-center justify-between mt-6">
+                <div class="text-sm text-gray-600 dark:text-gray-400">
+                    전체 <span id="totalLogs">12,847</span>개 중 <span id="currentRange">1-50</span>개 표시
+                </div>
+                <div class="flex space-x-2">
+                    <button id="prevPage" class="btn-ghost px-3 py-2 rounded-md text-sm">이전</button>
+                    <button class="btn-primary px-3 py-2 rounded-md text-sm">1</button>
+                    <button class="btn-ghost px-3 py-2 rounded-md text-sm">2</button>
+                    <button class="btn-ghost px-3 py-2 rounded-md text-sm">3</button>
+                    <button id="nextPage" class="btn-ghost px-3 py-2 rounded-md text-sm">다음</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 로그 보존 정책 -->
+        <div class="card rounded-lg p-6">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fas fa-clock text-blue-600 dark:text-blue-400 mr-2"></i>
+                로그 보존 정책
+            </h3>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="font-medium mb-3">현재 설정</h4>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <span>일반 로그 보존 기간</span>
+                            <span class="font-semibold">90일</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <span>보안 로그 보존 기간</span>
+                            <span class="font-semibold">1년</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <span>자동 아카이브</span>
+                            <span class="font-semibold text-green-600">활성화</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <span>압축 후 보관</span>
+                            <span class="font-semibold text-green-600">활성화</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="font-medium mb-3">설정 변경</h4>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">일반 로그 보존 (일)</label>
+                            <select class="w-full p-2 rounded-md border bg-transparent">
+                                <option value="30">30일</option>
+                                <option value="60">60일</option>
+                                <option value="90" selected>90일</option>
+                                <option value="180">180일</option>
+                                <option value="365">1년</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">보안 로그 보존</label>
+                            <select class="w-full p-2 rounded-md border bg-transparent">
+                                <option value="90">90일</option>
+                                <option value="180">6개월</option>
+                                <option value="365" selected>1년</option>
+                                <option value="730">2년</option>
+                                <option value="1095">3년</option>
+                            </select>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" class="mr-2" checked> 자동 아카이브 활성화
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="mr-2" checked> 로그 압축 저장
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" class="mr-2"> 만료 전 알림
+                            </label>
+                        </div>
+                        
+                        <button class="btn-primary w-full py-2 rounded-md">
+                            <i class="fas fa-save mr-2"></i>
+                            정책 저장
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 로그 상세 모달 -->
+    <div id="logDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="card rounded-lg p-6 w-3/4 max-w-4xl max-h-3/4 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h4 class="text-lg font-semibold">로그 상세 정보</h4>
+                <button id="closeLogModal" class="btn-ghost p-2">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="logDetailContent">
+                <!-- 로그 상세 내용이 여기에 표시됩니다 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 테마 토글
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        // 저장된 테마 로드
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            html.classList.add('dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', currentTheme);
+        });
+
+        // 감사 로그 데이터 (시뮬레이션)
+        const auditLogData = [
+            {
+                id: 1,
+                timestamp: '2024-08-28 14:32:15',
+                level: 'success',
+                category: 'auth',
+                user: 'admin',
+                action: '사용자 로그인',
+                details: '관리자 계정으로 시스템 로그인 성공',
+                ip: '192.168.1.100',
+                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
+            {
+                id: 2,
+                timestamp: '2024-08-28 14:25:43',
+                level: 'warning',
+                category: 'security',
+                user: 'system',
+                action: '다중 로그인 시도',
+                details: '동일 IP에서 5회 연속 로그인 실패',
+                ip: '203.251.45.23',
+                userAgent: 'curl/7.68.0'
+            },
+            {
+                id: 3,
+                timestamp: '2024-08-28 14:15:22',
+                level: 'info',
+                category: 'system',
+                user: 'operator',
+                action: '시스템 설정 변경',
+                details: '백업 주기를 24시간으로 변경',
+                ip: '192.168.1.105',
+                userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+            },
+            {
+                id: 4,
+                timestamp: '2024-08-28 13:58:11',
+                level: 'error',
+                category: 'api',
+                user: 'api_user',
+                action: 'API 호출 실패',
+                details: '잘못된 API 키로 인한 인증 실패 - /api/v1/metrics',
+                ip: '10.0.1.45',
+                userAgent: 'Python-requests/2.28.1'
+            },
+            {
+                id: 5,
+                timestamp: '2024-08-28 13:45:33',
+                level: 'success',
+                category: 'admin',
+                user: 'admin',
+                action: '사용자 계정 생성',
+                details: '새 운영자 계정 생성: operator_new',
+                ip: '192.168.1.100',
+                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            },
+            {
+                id: 6,
+                timestamp: '2024-08-28 13:30:18',
+                level: 'warning',
+                category: 'system',
+                user: 'system',
+                action: '디스크 용량 경고',
+                details: '시스템 디스크 사용량이 85%를 초과함',
+                ip: 'localhost',
+                userAgent: 'System Monitor'
+            },
+            {
+                id: 7,
+                timestamp: '2024-08-28 13:12:55',
+                level: 'info',
+                category: 'auth',
+                user: 'operator',
+                action: '사용자 로그아웃',
+                details: '정상적인 세션 종료',
+                ip: '192.168.1.105',
+                userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+            },
+            {
+                id: 8,
+                timestamp: '2024-08-28 12:45:22',
+                level: 'error',
+                category: 'security',
+                user: 'unknown',
+                action: '비인가 접근 시도',
+                details: '관리자 페이지에 대한 무단 접근 시도',
+                ip: '185.220.101.45',
+                userAgent: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+            }
+        ];
+
+        let filteredData = [...auditLogData];
+        let currentPage = 1;
+        const itemsPerPage = 50;
+
+        // 로그 테이블 렌더링
+        function renderAuditLogs() {
+            const tbody = document.getElementById('auditLogs');
+            tbody.innerHTML = '';
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            pageData.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b hover:bg-gray-50 dark:hover:bg-gray-800';
+                
+                const levelClass = `log-level-${log.level}`;
+                const levelText = {
+                    'info': '정보',
+                    'warning': '경고', 
+                    'error': '에러',
+                    'success': '성공'
+                };
+                const levelIcon = {
+                    'info': 'fa-info-circle',
+                    'warning': 'fa-exclamation-triangle',
+                    'error': 'fa-times-circle',
+                    'success': 'fa-check-circle'
+                };
+
+                const categoryText = {
+                    'auth': '인증',
+                    'system': '시스템',
+                    'security': '보안',
+                    'api': 'API',
+                    'admin': '관리'
+                };
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4">
+                        <div class="text-sm">${log.timestamp}</div>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-1 rounded text-xs border ${levelClass}">
+                            <i class="fas ${levelIcon[log.level]} mr-1"></i>
+                            ${levelText[log.level]}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">${categoryText[log.category] || log.category}</td>
+                    <td class="py-3 px-4">
+                        <div class="font-medium">${log.user}</div>
+                    </td>
+                    <td class="py-3 px-4">${log.action}</td>
+                    <td class="py-3 px-4">
+                        <div class="max-w-xs truncate" title="${log.details}">${log.details}</div>
+                    </td>
+                    <td class="py-3 px-4">
+                        <code class="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">${log.ip}</code>
+                    </td>
+                    <td class="py-3 px-4">
+                        <button onclick="showLogDetail(${log.id})" class="btn-ghost px-2 py-1 rounded text-xs">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // 페이지 정보 업데이트
+            document.getElementById('totalLogs').textContent = filteredData.length.toLocaleString();
+            document.getElementById('currentRange').textContent = `${startIndex + 1}-${endIndex}`;
+        }
+
+        // 로그 상세 보기
+        function showLogDetail(logId) {
+            const log = auditLogData.find(l => l.id === logId);
+            if (!log) return;
+
+            const modal = document.getElementById('logDetailModal');
+            const content = document.getElementById('logDetailContent');
+
+            const levelClass = `log-level-${log.level}`;
+            const levelText = {
+                'info': '정보',
+                'warning': '경고', 
+                'error': '에러',
+                'success': '성공'
+            };
+            const categoryText = {
+                'auth': '인증',
+                'system': '시스템',
+                'security': '보안',
+                'api': 'API',
+                'admin': '관리'
+            };
+
+            content.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">로그 ID</label>
+                            <div class="font-mono text-sm">${log.id}</div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">발생 시간</label>
+                            <div class="font-medium">${log.timestamp}</div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">로그 레벨</label>
+                            <span class="px-2 py-1 rounded text-xs border ${levelClass}">
+                                ${levelText[log.level]}
+                            </span>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">카테고리</label>
+                            <div>${categoryText[log.category] || log.category}</div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">사용자</label>
+                            <div class="font-medium">${log.user}</div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">수행 동작</label>
+                            <div class="font-medium">${log.action}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">IP 주소</label>
+                            <code class="text-sm bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">${log.ip}</code>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">User Agent</label>
+                            <div class="text-sm font-mono bg-gray-50 dark:bg-gray-800 p-2 rounded break-all">${log.userAgent}</div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">세부 사항</label>
+                            <div class="bg-gray-50 dark:bg-gray-800 p-3 rounded">${log.details}</div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">추가 정보</label>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">
+                                세션 ID: ${Math.random().toString(36).substr(2, 9)}<br>
+                                요청 크기: ${Math.floor(Math.random() * 1000 + 100)} bytes<br>
+                                응답 시간: ${Math.floor(Math.random() * 500 + 50)}ms
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button class="btn-secondary px-4 py-2 rounded-md">
+                        <i class="fas fa-download mr-2"></i>
+                        로그 다운로드
+                    </button>
+                    <button id="closeLogModal" class="btn-primary px-4 py-2 rounded-md">
+                        닫기
+                    </button>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+        }
+
+        // 모달 닫기
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'closeLogModal' || e.target.closest('#closeLogModal')) {
+                document.getElementById('logDetailModal').classList.add('hidden');
+            }
+        });
+
+        // 필터 적용
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const levelFilter = document.getElementById('levelFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const userFilter = document.getElementById('userFilter').value;
+            const startDate = document.getElementById('startDate').value;
+
+            filteredData = auditLogData.filter(log => {
+                const matchesSearch = !searchTerm || 
+                    log.details.toLowerCase().includes(searchTerm) || 
+                    log.action.toLowerCase().includes(searchTerm) ||
+                    log.user.toLowerCase().includes(searchTerm);
+                
+                const matchesLevel = !levelFilter || log.level === levelFilter;
+                const matchesCategory = !categoryFilter || log.category === categoryFilter;
+                const matchesUser = !userFilter || log.user.includes(userFilter);
+                
+                const matchesDate = !startDate || log.timestamp.startsWith(startDate);
+
+                return matchesSearch && matchesLevel && matchesCategory && matchesUser && matchesDate;
+            });
+
+            currentPage = 1;
+            renderAuditLogs();
+        }
+
+        // 이벤트 리스너
+        document.getElementById('applyFilter').addEventListener('click', applyFilters);
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+
+        // 내보내기
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const csvContent = [
+                ['시간', '레벨', '카테고리', '사용자', '동작', '세부사항', 'IP주소'],
+                ...filteredData.map(log => [
+                    log.timestamp, log.level, log.category, log.user, 
+                    log.action, log.details, log.ip
+                ])
+            ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `audit_logs_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // 로그 정리
+        document.getElementById('clearBtn').addEventListener('click', () => {
+            if (confirm('30일 이전의 일반 로그를 정리하시겠습니까?\n보안 로그는 보존 정책에 따라 유지됩니다.')) {
+                alert('로그 정리가 완료되었습니다. 총 3,247개의 로그가 정리되었습니다.');
+            }
+        });
+
+        // 새로고침
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            location.reload();
+        });
+
+        // 초기 로드
+        document.addEventListener('DOMContentLoaded', () => {
+            // 오늘 날짜를 기본으로 설정
+            const today = new Date().toISOString().slice(0, 10);
+            document.getElementById('startDate').value = today;
+            
+            renderAuditLogs();
+        });
+    </script>
+</body>
+</html>

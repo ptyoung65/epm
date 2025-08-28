@@ -177,6 +177,310 @@ app.get('/api/metrics', async (req, res) => {
   }
 });
 
+// ==================== TRAINING ENDPOINTS ====================
+
+// Train Autoencoder Anomaly Detection Model
+app.post('/api/models/autoencoder/train', async (req, res) => {
+  try {
+    const { datasetId, hyperparameters, trainingData } = req.body;
+    
+    logger.info('Autoencoder 모델 학습 시작', {
+      datasetId,
+      hyperparameters,
+      dataSize: trainingData?.length
+    });
+    
+    // Update model configuration if hyperparameters provided
+    if (hyperparameters) {
+      aiopsEngine.updateModelConfig('autoencoder', hyperparameters);
+    }
+    
+    // Start training
+    const trainingResult = await aiopsEngine.trainAnomalyModel(trainingData || []);
+    
+    res.json({
+      success: true,
+      modelType: 'autoencoder',
+      trainingResult: {
+        finalLoss: trainingResult.history.loss[trainingResult.history.loss.length - 1],
+        epochs: trainingResult.params.epochs,
+        accuracy: 1 - trainingResult.history.loss[trainingResult.history.loss.length - 1]
+      },
+      message: 'Autoencoder 모델 학습이 완료되었습니다'
+    });
+
+  } catch (error) {
+    logger.error('Autoencoder 학습 API 오류', {
+      error: error.message
+    });
+    
+    res.status(500).json({
+      error: 'Autoencoder 모델 학습 실패',
+      message: error.message
+    });
+  }
+});
+
+// Train LSTM Failure Prediction Model
+app.post('/api/models/lstm/train', async (req, res) => {
+  try {
+    const { datasetId, hyperparameters, trainingData } = req.body;
+    
+    logger.info('LSTM 모델 학습 시작', {
+      datasetId,
+      hyperparameters,
+      dataSize: trainingData?.length
+    });
+    
+    // Update model configuration if hyperparameters provided
+    if (hyperparameters) {
+      aiopsEngine.updateModelConfig('lstm', hyperparameters);
+    }
+    
+    // Start training
+    const trainingResult = await aiopsEngine.trainPredictionModel(trainingData || []);
+    
+    res.json({
+      success: true,
+      modelType: 'lstm',
+      trainingResult: {
+        finalLoss: trainingResult.history.loss[trainingResult.history.loss.length - 1],
+        epochs: trainingResult.params.epochs,
+        mae: trainingResult.history.mae[trainingResult.history.mae.length - 1]
+      },
+      message: 'LSTM 모델 학습이 완료되었습니다'
+    });
+
+  } catch (error) {
+    logger.error('LSTM 학습 API 오류', {
+      error: error.message
+    });
+    
+    res.status(500).json({
+      error: 'LSTM 모델 학습 실패',
+      message: error.message
+    });
+  }
+});
+
+// Train RCA Analysis Model
+app.post('/api/models/rca/train', async (req, res) => {
+  try {
+    const { datasetId, hyperparameters, trainingData } = req.body;
+    
+    logger.info('RCA 분석 모델 학습 시작', {
+      datasetId,
+      hyperparameters,
+      dataSize: trainingData?.length
+    });
+    
+    // Update model configuration if hyperparameters provided
+    if (hyperparameters) {
+      aiopsEngine.updateModelConfig('rca', hyperparameters);
+    }
+    
+    // Start training
+    const trainingResult = await aiopsEngine.trainRCAModel(trainingData || []);
+    
+    res.json({
+      success: true,
+      modelType: 'rca',
+      trainingResult: {
+        finalLoss: trainingResult.history.loss[trainingResult.history.loss.length - 1],
+        epochs: trainingResult.params.epochs,
+        accuracy: trainingResult.history.accuracy[trainingResult.history.accuracy.length - 1]
+      },
+      message: 'RCA 분석 모델 학습이 완료되었습니다'
+    });
+
+  } catch (error) {
+    logger.error('RCA 학습 API 오류', {
+      error: error.message
+    });
+    
+    res.status(500).json({
+      error: 'RCA 모델 학습 실패',
+      message: error.message
+    });
+  }
+});
+
+// Train Pattern Clustering Model
+app.post('/api/models/clustering/train', async (req, res) => {
+  try {
+    const { datasetId, hyperparameters, trainingData } = req.body;
+    
+    logger.info('클러스터링 모델 학습 시작', {
+      datasetId,
+      hyperparameters,
+      dataSize: trainingData?.length
+    });
+    
+    // Update model configuration if hyperparameters provided
+    if (hyperparameters) {
+      aiopsEngine.updateModelConfig('clustering', hyperparameters);
+    }
+    
+    // Start training
+    const trainingResult = await aiopsEngine.trainClusteringModel(trainingData || []);
+    
+    res.json({
+      success: true,
+      modelType: 'clustering',
+      trainingResult: {
+        finalLoss: trainingResult.history.loss[trainingResult.history.loss.length - 1],
+        epochs: trainingResult.params.epochs,
+        accuracy: trainingResult.history.accuracy[trainingResult.history.accuracy.length - 1]
+      },
+      message: '클러스터링 모델 학습이 완료되었습니다'
+    });
+
+  } catch (error) {
+    logger.error('클러스터링 학습 API 오류', {
+      error: error.message
+    });
+    
+    res.status(500).json({
+      error: '클러스터링 모델 학습 실패',
+      message: error.message
+    });
+  }
+});
+
+// Get training status for a specific model
+app.get('/api/models/:modelType/status', async (req, res) => {
+  try {
+    const { modelType } = req.params;
+    const status = aiopsEngine.getTrainingStatus(modelType);
+    
+    res.json({
+      success: true,
+      modelType,
+      status
+    });
+
+  } catch (error) {
+    logger.error('학습 상태 조회 API 오류', {
+      error: error.message,
+      modelType: req.params.modelType
+    });
+    
+    res.status(500).json({
+      error: '학습 상태 조회 실패',
+      message: error.message
+    });
+  }
+});
+
+// Get model hyperparameters
+app.get('/api/models/:modelType/config', async (req, res) => {
+  try {
+    const { modelType } = req.params;
+    const config = aiopsEngine.getModelConfig(modelType);
+    
+    res.json({
+      success: true,
+      modelType,
+      config
+    });
+
+  } catch (error) {
+    logger.error('모델 설정 조회 API 오류', {
+      error: error.message,
+      modelType: req.params.modelType
+    });
+    
+    res.status(500).json({
+      error: '모델 설정 조회 실패',
+      message: error.message
+    });
+  }
+});
+
+// Update model hyperparameters
+app.put('/api/models/:modelType/config', async (req, res) => {
+  try {
+    const { modelType } = req.params;
+    const { hyperparameters } = req.body;
+    
+    aiopsEngine.updateModelConfig(modelType, hyperparameters);
+    
+    res.json({
+      success: true,
+      modelType,
+      message: '모델 설정이 업데이트되었습니다',
+      config: hyperparameters
+    });
+
+  } catch (error) {
+    logger.error('모델 설정 업데이트 API 오류', {
+      error: error.message,
+      modelType: req.params.modelType
+    });
+    
+    res.status(500).json({
+      error: '모델 설정 업데이트 실패',
+      message: error.message
+    });
+  }
+});
+
+// Save model checkpoint
+app.post('/api/models/:modelType/save', async (req, res) => {
+  try {
+    const { modelType } = req.params;
+    const { checkpointName } = req.body;
+    
+    const savePath = await aiopsEngine.saveModelCheckpoint(modelType, checkpointName);
+    
+    res.json({
+      success: true,
+      modelType,
+      message: '모델 체크포인트가 저장되었습니다',
+      savePath
+    });
+
+  } catch (error) {
+    logger.error('모델 저장 API 오류', {
+      error: error.message,
+      modelType: req.params.modelType
+    });
+    
+    res.status(500).json({
+      error: '모델 저장 실패',
+      message: error.message
+    });
+  }
+});
+
+// Load model checkpoint
+app.post('/api/models/:modelType/load', async (req, res) => {
+  try {
+    const { modelType } = req.params;
+    const { checkpointName } = req.body;
+    
+    await aiopsEngine.loadModelCheckpoint(modelType, checkpointName);
+    
+    res.json({
+      success: true,
+      modelType,
+      message: '모델 체크포인트가 로드되었습니다',
+      checkpointName
+    });
+
+  } catch (error) {
+    logger.error('모델 로드 API 오류', {
+      error: error.message,
+      modelType: req.params.modelType
+    });
+    
+    res.status(500).json({
+      error: '모델 로드 실패',
+      message: error.message
+    });
+  }
+});
+
 // Error handling middleware
 app.use((error, req, res, next) => {
   logger.error('Express 오류', {

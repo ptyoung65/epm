@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>알림 규칙 관리 - AIRIS EPM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 222.2 84% 4.9%;
+            --radius: 0.5rem;
+        }
+        
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 212.7 26.8% 83.9%;
+        }
+
+        * {
+            border-color: hsl(var(--border));
+        }
+
+        body {
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+
+        .card {
+            background-color: hsl(var(--card));
+            color: hsl(var(--card-foreground));
+            border: 1px solid hsl(var(--border));
+        }
+
+        .btn-primary {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+
+        .btn-primary:hover {
+            background-color: hsl(var(--primary) / 0.9);
+        }
+
+        .btn-secondary {
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+        }
+
+        .btn-ghost {
+            background-color: transparent;
+            color: hsl(var(--foreground));
+        }
+
+        .btn-ghost:hover {
+            background-color: hsl(var(--accent));
+            color: hsl(var(--accent-foreground));
+        }
+
+        .nav-dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            min-width: 200px;
+            background-color: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .severity-critical {
+            @apply bg-red-100 border-red-400 text-red-700;
+        }
+        
+        .severity-high {
+            @apply bg-orange-100 border-orange-400 text-orange-700;
+        }
+        
+        .severity-medium {
+            @apply bg-yellow-100 border-yellow-400 text-yellow-700;
+        }
+        
+        .severity-low {
+            @apply bg-blue-100 border-blue-400 text-blue-700;
+        }
+
+        .dark .severity-critical {
+            @apply bg-red-900 border-red-700 text-red-300;
+        }
+        
+        .dark .severity-high {
+            @apply bg-orange-900 border-orange-700 text-orange-300;
+        }
+        
+        .dark .severity-medium {
+            @apply bg-yellow-900 border-yellow-700 text-yellow-300;
+        }
+        
+        .dark .severity-low {
+            @apply bg-blue-900 border-blue-700 text-blue-300;
+        }
+
+        .rule-condition {
+            @apply bg-gray-50 dark:bg-gray-800 p-3 rounded-md border;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <!-- 상단 네비게이션 -->
+    <nav class="card rounded-none border-x-0 border-t-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+                    
+                    <!-- 메인 네비게이션 -->
+                    <div class="hidden md:flex items-center space-x-6">
+                        <!-- APM 모니터링 -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                📊 APM 모니터링
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/j2ee-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">☕ J2EE 모니터링</a>
+                                <a href="/was-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🏗️ WAS 모니터링</a>
+                                <a href="/exception-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🚨 예외 추적</a>
+                                <a href="/topology-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🗺️ 서비스 토폴로지</a>
+                                <a href="/alert-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔔 알림 관리</a>
+                            </div>
+                        </div>
+
+                        <!-- 시스템 관리 -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                ⚙️ 시스템 관리
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/admin-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">👤 관리자 대시보드</a>
+                                <a href="/users-roles.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">👥 사용자/역할 관리</a>
+                                <a href="/system-settings.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔧 시스템 설정</a>
+                                <a href="/external-systems-config.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔌 외부시스템 연동</a>
+                                <a href="/api-tokens.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔑 API 토큰 관리</a>
+                                <a href="/backup-restore.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">💾 백업/복원</a>
+                                <a href="/audit-logs.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">📋 감사 로그</a>
+                                <a href="/alert-rules.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400">🔔 알림 규칙</a>
+                            </div>
+                        </div>
+
+                        <!-- AIOps & ML -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                🤖 AIOps & ML
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/aiops-management.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🤖 AIOps 관리</a>
+                                <a href="/ml-training-autoencoder.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔬 ML 훈련 - 오토인코더</a>
+                                <a href="/ml-training-clustering.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">📈 ML 훈련 - 클러스터링</a>
+                                <a href="/ml-training-lstm.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🧠 ML 훈련 - LSTM</a>
+                                <a href="/clustering-insights.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">💡 클러스터링 인사이트</a>
+                            </div>
+                        </div>
+
+                        <!-- 세션 & 분석 -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                📊 세션 & 분석
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/session-management.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">👤 세션 관리</a>
+                                <a href="/session-analysis.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🔍 세션 분석</a>
+                                <a href="/session-telemetry-dashboard.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">📈 세션 텔레메트리</a>
+                                <a href="/session-replay.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🎬 세션 재생</a>
+                            </div>
+                        </div>
+
+                        <!-- 지식 & 온톨로지 -->
+                        <div class="nav-dropdown relative">
+                            <button class="flex items-center text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 px-3 py-2 rounded-md">
+                                🧠 지식 & 온톨로지
+                                <i class="fas fa-chevron-down ml-1 text-xs"></i>
+                            </button>
+                            <div class="dropdown-content">
+                                <a href="/ontology.html" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-800">🧠 온톨로지 시스템</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="btn-ghost p-2 rounded-full">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:block"></i>
+                    </button>
+                    <button id="refreshBtn" class="btn-secondary px-3 py-2 rounded-md text-sm">
+                        <i class="fas fa-refresh mr-1"></i>
+                        새로고침
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 메인 콘텐츠 -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">알림 규칙 관리</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">시스템 모니터링 알림 규칙을 생성하고 관리합니다</p>
+        </div>
+
+        <!-- 알림 규칙 통계 카드 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div class="card rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">총 규칙</p>
+                        <p class="text-2xl font-bold">42</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
+                        <i class="fas fa-bell text-blue-600 dark:text-blue-400"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">활성 규칙</p>
+                        <p class="text-2xl font-bold text-green-600">38</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-green-100 dark:bg-green-900">
+                        <i class="fas fa-check-circle text-green-600 dark:text-green-400"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">비활성 규칙</p>
+                        <p class="text-2xl font-bold text-orange-600">4</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-orange-100 dark:bg-orange-900">
+                        <i class="fas fa-pause-circle text-orange-600 dark:text-orange-400"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card rounded-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">24시간 알림</p>
+                        <p class="text-2xl font-bold">127</p>
+                    </div>
+                    <div class="p-3 rounded-full bg-red-100 dark:bg-red-900">
+                        <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 새 규칙 생성 -->
+        <div class="card rounded-lg p-6 mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">새 알림 규칙 생성</h3>
+                <button id="toggleRuleForm" class="btn-primary px-4 py-2 rounded-md">
+                    <i class="fas fa-plus mr-2"></i>
+                    새 규칙 추가
+                </button>
+            </div>
+            
+            <div id="ruleForm" class="hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">규칙 이름</label>
+                            <input type="text" id="ruleName" placeholder="예: CPU 사용률 고임계치 알림" 
+                                   class="w-full p-2 rounded-md border bg-transparent">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">메트릭</label>
+                            <select id="ruleMetric" class="w-full p-2 rounded-md border bg-transparent">
+                                <option value="">메트릭 선택</option>
+                                <option value="cpu.usage">CPU 사용률</option>
+                                <option value="memory.usage">메모리 사용률</option>
+                                <option value="disk.usage">디스크 사용률</option>
+                                <option value="network.latency">네트워크 지연시간</option>
+                                <option value="response.time">응답시간</option>
+                                <option value="error.rate">에러율</option>
+                                <option value="request.count">요청 수</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">조건</label>
+                            <div class="flex space-x-2">
+                                <select id="ruleOperator" class="p-2 rounded-md border bg-transparent">
+                                    <option value=">">> (초과)</option>
+                                    <option value=">=">>= (이상)</option>
+                                    <option value="<">< (미만)</option>
+                                    <option value="<=">&lt;= (이하)</option>
+                                    <option value="==">=== (같음)</option>
+                                    <option value="!=">&lt;&gt; (다름)</option>
+                                </select>
+                                <input type="number" id="ruleThreshold" placeholder="임계값" 
+                                       class="flex-1 p-2 rounded-md border bg-transparent">
+                                <select id="ruleUnit" class="p-2 rounded-md border bg-transparent">
+                                    <option value="%">%</option>
+                                    <option value="ms">ms</option>
+                                    <option value="count">개</option>
+                                    <option value="MB">MB</option>
+                                    <option value="GB">GB</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">지속 시간</label>
+                            <div class="flex space-x-2">
+                                <input type="number" id="ruleDuration" value="5" 
+                                       class="flex-1 p-2 rounded-md border bg-transparent">
+                                <select class="p-2 rounded-md border bg-transparent">
+                                    <option value="minutes">분</option>
+                                    <option value="seconds">초</option>
+                                    <option value="hours">시간</option>
+                                </select>
+                            </div>
+                            <p class="text-sm text-gray-500 mt-1">조건이 지속되어야 하는 시간</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">심각도</label>
+                            <select id="ruleSeverity" class="w-full p-2 rounded-md border bg-transparent">
+                                <option value="low">낮음 (Low)</option>
+                                <option value="medium">보통 (Medium)</option>
+                                <option value="high">높음 (High)</option>
+                                <option value="critical">치명적 (Critical)</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">알림 채널</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="mr-2" checked> 이메일
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="mr-2"> Slack
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="mr-2"> SMS
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" class="mr-2"> Webhook
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">태그 (선택사항)</label>
+                            <input type="text" id="ruleTags" placeholder="예: production, database, critical" 
+                                   class="w-full p-2 rounded-md border bg-transparent">
+                            <p class="text-sm text-gray-500 mt-1">쉼표로 구분하여 입력</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2">설명</label>
+                            <textarea id="ruleDescription" rows="3" 
+                                      placeholder="알림 규칙에 대한 설명을 입력하세요..." 
+                                      class="w-full p-2 rounded-md border bg-transparent"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button id="cancelRule" class="btn-secondary px-4 py-2 rounded-md">취소</button>
+                    <button id="testRule" class="btn-ghost px-4 py-2 rounded-md">테스트</button>
+                    <button id="saveRule" class="btn-primary px-4 py-2 rounded-md">
+                        <i class="fas fa-save mr-2"></i>
+                        규칙 저장
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 알림 규칙 목록 -->
+        <div class="card rounded-lg p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">알림 규칙 목록</h3>
+                <div class="flex space-x-2">
+                    <select id="categoryFilter" class="p-2 rounded-md border bg-transparent text-sm">
+                        <option value="">전체 카테고리</option>
+                        <option value="system">시스템</option>
+                        <option value="application">애플리케이션</option>
+                        <option value="network">네트워크</option>
+                        <option value="security">보안</option>
+                    </select>
+                    <select id="statusFilter" class="p-2 rounded-md border bg-transparent text-sm">
+                        <option value="">전체 상태</option>
+                        <option value="active">활성</option>
+                        <option value="inactive">비활성</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-3 px-4">규칙 이름</th>
+                            <th class="text-left py-3 px-4">메트릭</th>
+                            <th class="text-left py-3 px-4">조건</th>
+                            <th class="text-left py-3 px-4">심각도</th>
+                            <th class="text-left py-3 px-4">상태</th>
+                            <th class="text-left py-3 px-4">마지막 알림</th>
+                            <th class="text-left py-3 px-4">작업</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alertRules">
+                        <!-- 알림 규칙이 여기에 동적으로 로드됩니다 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 알림 템플릿 -->
+        <div class="card rounded-lg p-6">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fas fa-envelope text-blue-600 dark:text-blue-400 mr-2"></i>
+                알림 템플릿 관리
+            </h3>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="font-medium mb-3">기본 템플릿</h4>
+                    <div class="space-y-3">
+                        <div class="rule-condition">
+                            <h5 class="font-medium text-sm mb-2">이메일 템플릿</h5>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">제목: [{{severity}}] {{rule_name}}</p>
+                            <div class="text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded">
+                                안녕하세요,<br><br>
+                                다음 알림 규칙이 트리거되었습니다:<br>
+                                - 규칙: {{rule_name}}<br>
+                                - 메트릭: {{metric}} {{operator}} {{threshold}}<br>
+                                - 현재 값: {{current_value}}<br>
+                                - 발생 시간: {{timestamp}}<br><br>
+                                확인 바랍니다.
+                            </div>
+                            <div class="mt-2 flex space-x-2">
+                                <button class="btn-ghost px-3 py-1 rounded text-sm">편집</button>
+                                <button class="btn-ghost px-3 py-1 rounded text-sm">미리보기</button>
+                            </div>
+                        </div>
+                        
+                        <div class="rule-condition">
+                            <h5 class="font-medium text-sm mb-2">Slack 템플릿</h5>
+                            <div class="text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded">
+                                🚨 *{{severity}}* 알림<br>
+                                **{{rule_name}}**<br>
+                                메트릭: `{{metric}}` {{operator}} {{threshold}}<br>
+                                현재 값: **{{current_value}}**<br>
+                                시간: {{timestamp}}
+                            </div>
+                            <div class="mt-2 flex space-x-2">
+                                <button class="btn-ghost px-3 py-1 rounded text-sm">편집</button>
+                                <button class="btn-ghost px-3 py-1 rounded text-sm">테스트 전송</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h4 class="font-medium mb-3">템플릿 변수</h4>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                            <code>{{rule_name}}</code>
+                            <span class="text-gray-600 dark:text-gray-400">규칙 이름</span>
+                        </div>
+                        <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                            <code>{{metric}}</code>
+                            <span class="text-gray-600 dark:text-gray-400">메트릭 이름</span>
+                        </div>
+                        <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                            <code>{{threshold}}</code>
+                            <span class="text-gray-600 dark:text-gray-400">임계값</span>
+                        </div>
+                        <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                            <code>{{current_value}}</code>
+                            <span class="text-gray-600 dark:text-gray-400">현재 값</span>
+                        </div>
+                        <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                            <code>{{severity}}</code>
+                            <span class="text-gray-600 dark:text-gray-400">심각도</span>
+                        </div>
+                        <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                            <code>{{timestamp}}</code>
+                            <span class="text-gray-600 dark:text-gray-400">발생 시간</span>
+                        </div>
+                        <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                            <code>{{operator}}</code>
+                            <span class="text-gray-600 dark:text-gray-400">조건 연산자</span>
+                        </div>
+                        <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                            <code>{{tags}}</code>
+                            <span class="text-gray-600 dark:text-gray-400">태그 목록</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button class="btn-primary w-full py-2 rounded-md">
+                            <i class="fas fa-plus mr-2"></i>
+                            새 템플릿 생성
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 테마 토글
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        // 저장된 테마 로드
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            html.classList.add('dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const currentTheme = html.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', currentTheme);
+        });
+
+        // 알림 규칙 데이터 (시뮬레이션)
+        const alertRulesData = [
+            {
+                id: 1,
+                name: 'CPU 사용률 고임계치',
+                metric: 'cpu.usage',
+                condition: '> 85%',
+                severity: 'high',
+                status: 'active',
+                lastAlert: '2024-08-28 13:45:22',
+                category: 'system',
+                description: 'CPU 사용률이 85%를 5분간 초과할 때 알림'
+            },
+            {
+                id: 2,
+                name: '메모리 부족 경고',
+                metric: 'memory.usage',
+                condition: '> 90%',
+                severity: 'critical',
+                status: 'active',
+                lastAlert: '2024-08-28 12:30:15',
+                category: 'system',
+                description: '메모리 사용률이 90%를 초과할 때 즉시 알림'
+            },
+            {
+                id: 3,
+                name: '디스크 용량 경고',
+                metric: 'disk.usage',
+                condition: '> 80%',
+                severity: 'medium',
+                status: 'active',
+                lastAlert: '2024-08-27 18:22:33',
+                category: 'system',
+                description: '디스크 사용률이 80%를 초과할 때 알림'
+            },
+            {
+                id: 4,
+                name: 'API 응답시간 지연',
+                metric: 'response.time',
+                condition: '> 2000ms',
+                severity: 'high',
+                status: 'active',
+                lastAlert: '2024-08-28 14:15:41',
+                category: 'application',
+                description: 'API 응답시간이 2초를 초과할 때 알림'
+            },
+            {
+                id: 5,
+                name: '네트워크 지연시간',
+                metric: 'network.latency',
+                condition: '> 500ms',
+                severity: 'medium',
+                status: 'inactive',
+                lastAlert: '2024-08-26 09:45:12',
+                category: 'network',
+                description: '네트워크 지연시간이 500ms를 초과할 때 알림'
+            },
+            {
+                id: 6,
+                name: '에러율 급증',
+                metric: 'error.rate',
+                condition: '> 5%',
+                severity: 'critical',
+                status: 'active',
+                lastAlert: '2024-08-28 11:20:55',
+                category: 'application',
+                description: '에러율이 5%를 초과할 때 즉시 알림'
+            },
+            {
+                id: 7,
+                name: '보안 이벤트 탐지',
+                metric: 'security.events',
+                condition: '> 0',
+                severity: 'critical',
+                status: 'active',
+                lastAlert: '2024-08-28 08:15:30',
+                category: 'security',
+                description: '보안 이벤트가 탐지될 때 즉시 알림'
+            },
+            {
+                id: 8,
+                name: '데이터베이스 연결 실패',
+                metric: 'db.connection.failed',
+                condition: '> 3',
+                severity: 'high',
+                status: 'inactive',
+                lastAlert: '2024-08-25 16:30:22',
+                category: 'application',
+                description: '데이터베이스 연결 실패가 3회를 초과할 때 알림'
+            }
+        ];
+
+        let filteredRules = [...alertRulesData];
+
+        // 알림 규칙 테이블 렌더링
+        function renderAlertRules() {
+            const tbody = document.getElementById('alertRules');
+            tbody.innerHTML = '';
+
+            filteredRules.forEach(rule => {
+                const tr = document.createElement('tr');
+                tr.className = 'border-b hover:bg-gray-50 dark:hover:bg-gray-800';
+                
+                const severityClass = `severity-${rule.severity}`;
+                const severityText = {
+                    'low': '낮음',
+                    'medium': '보통',
+                    'high': '높음',
+                    'critical': '치명적'
+                };
+                const statusClass = rule.status === 'active' ? 'text-green-600' : 'text-gray-500';
+                const statusText = rule.status === 'active' ? '활성' : '비활성';
+                const statusIcon = rule.status === 'active' ? 'fa-check-circle' : 'fa-pause-circle';
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4">
+                        <div class="font-medium">${rule.name}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">${rule.description}</div>
+                    </td>
+                    <td class="py-3 px-4">
+                        <code class="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">${rule.metric}</code>
+                    </td>
+                    <td class="py-3 px-4">${rule.condition}</td>
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-1 rounded text-xs border ${severityClass}">
+                            ${severityText[rule.severity]}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <span class="${statusClass}">
+                            <i class="fas ${statusIcon} mr-1"></i>
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="text-sm">${rule.lastAlert}</div>
+                    </td>
+                    <td class="py-3 px-4">
+                        <div class="flex space-x-2">
+                            <button onclick="editRule(${rule.id})" class="btn-ghost px-2 py-1 rounded text-xs">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="toggleRule(${rule.id})" class="btn-ghost px-2 py-1 rounded text-xs">
+                                <i class="fas fa-power-off"></i>
+                            </button>
+                            <button onclick="testRule(${rule.id})" class="btn-ghost px-2 py-1 rounded text-xs">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button onclick="deleteRule(${rule.id})" class="btn-ghost px-2 py-1 rounded text-xs text-red-600">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 규칙 폼 토글
+        document.getElementById('toggleRuleForm').addEventListener('click', () => {
+            const form = document.getElementById('ruleForm');
+            form.classList.toggle('hidden');
+        });
+
+        // 폼 취소
+        document.getElementById('cancelRule').addEventListener('click', () => {
+            document.getElementById('ruleForm').classList.add('hidden');
+            document.getElementById('ruleName').value = '';
+        });
+
+        // 규칙 저장
+        document.getElementById('saveRule').addEventListener('click', () => {
+            const ruleName = document.getElementById('ruleName').value;
+            const metric = document.getElementById('ruleMetric').value;
+            const operator = document.getElementById('ruleOperator').value;
+            const threshold = document.getElementById('ruleThreshold').value;
+            const unit = document.getElementById('ruleUnit').value;
+            const severity = document.getElementById('ruleSeverity').value;
+            
+            if (!ruleName || !metric || !threshold) {
+                alert('필수 항목을 모두 입력해주세요.');
+                return;
+            }
+            
+            const newRule = {
+                id: alertRulesData.length + 1,
+                name: ruleName,
+                metric: metric,
+                condition: `${operator} ${threshold}${unit}`,
+                severity: severity,
+                status: 'active',
+                lastAlert: '-',
+                category: 'system',
+                description: `${metric} 메트릭이 ${operator} ${threshold}${unit} 조건을 만족할 때 알림`
+            };
+            
+            alertRulesData.unshift(newRule);
+            filteredRules = [...alertRulesData];
+            renderAlertRules();
+            
+            document.getElementById('ruleForm').classList.add('hidden');
+            document.getElementById('ruleName').value = '';
+            
+            alert('새 알림 규칙이 생성되었습니다!');
+        });
+
+        // 규칙 테스트
+        function testRule(id) {
+            const rule = alertRulesData.find(r => r.id === id);
+            if (rule) {
+                alert(`규칙 "${rule.name}"의 테스트 알림을 전송했습니다.`);
+            }
+        }
+
+        // 규칙 편집
+        function editRule(id) {
+            const rule = alertRulesData.find(r => r.id === id);
+            if (rule) {
+                document.getElementById('ruleName').value = rule.name;
+                document.getElementById('ruleForm').classList.remove('hidden');
+            }
+        }
+
+        // 규칙 토글
+        function toggleRule(id) {
+            const rule = alertRulesData.find(r => r.id === id);
+            if (rule) {
+                rule.status = rule.status === 'active' ? 'inactive' : 'active';
+                filteredRules = [...alertRulesData];
+                renderAlertRules();
+                alert(`규칙 "${rule.name}"이(가) ${rule.status === 'active' ? '활성화' : '비활성화'}되었습니다.`);
+            }
+        }
+
+        // 규칙 삭제
+        function deleteRule(id) {
+            const rule = alertRulesData.find(r => r.id === id);
+            if (rule && confirm(`"${rule.name}" 규칙을 삭제하시겠습니까?`)) {
+                const index = alertRulesData.findIndex(r => r.id === id);
+                alertRulesData.splice(index, 1);
+                filteredRules = [...alertRulesData];
+                renderAlertRules();
+                alert('규칙이 삭제되었습니다.');
+            }
+        }
+
+        // 필터 적용
+        function applyFilters() {
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            filteredRules = alertRulesData.filter(rule => {
+                const matchesCategory = !categoryFilter || rule.category === categoryFilter;
+                const matchesStatus = !statusFilter || rule.status === statusFilter;
+                return matchesCategory && matchesStatus;
+            });
+
+            renderAlertRules();
+        }
+
+        // 필터 이벤트 리스너
+        document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+        document.getElementById('statusFilter').addEventListener('change', applyFilters);
+
+        // 새로고침
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            location.reload();
+        });
+
+        // 초기 로드
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAlertRules();
+        });
+    </script>
+</body>
+</html>

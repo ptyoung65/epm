@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>클러스터링 인사이트 분석 - AIRIS EPM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <style>
+        /* shadcn/ui CSS Variables */
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96.1%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --muted: 210 40% 96.1%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96.1%;
+            --accent-foreground: 222.2 47.4% 11.2%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 222.2 84% 4.9%;
+            --radius: 0.5rem;
+        }
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 212.7 26.8% 83.9%;
+        }
+        
+        /* Chart Container Fixed Sizing */
+        .insight-chart-container {
+            width: 100% !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+        
+        .insight-chart-container.h-64 {
+            height: 16rem !important; /* 256px */
+        }
+        
+        .insight-chart-container.h-80 {
+            height: 20rem !important; /* 320px */
+        }
+        
+        .insight-chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+        }
+
+        /* Gradient Background */
+        .insight-gradient {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+        }
+
+        /* Insight Card Hover Effects */
+        .insight-card {
+            transition: all 0.3s ease;
+            border: 1px solid hsl(var(--border));
+            background: hsl(var(--card));
+        }
+        
+        .insight-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        /* Progress Ring Animation */
+        .progress-ring {
+            animation: rotate 2s linear infinite;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground">
+    <!-- Header Navigation -->
+    <header class="border-b bg-card">
+        <div class="container mx-auto px-4 py-4">
+            <nav class="flex items-center justify-between">
+                <div class="flex items-center space-x-8">
+                    <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
+                        🚀 AIRIS EPM
+                    </a>
+                    <div class="flex space-x-6 text-sm">
+                        <button onclick="window.location.href='/'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+                            대시보드
+                        </button>
+                        <button onclick="window.location.href='/ml-training-clustering.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
+                            클러스터링 학습
+                        </button>
+                        <button class="text-primary font-semibold bg-transparent border-none cursor-pointer">
+                            클러스터링 인사이트
+                        </button>
+                    </div>
+                </div>
+                <div class="text-sm text-muted-foreground flex items-center space-x-4">
+                    <button onclick="refreshInsights()" class="px-3 py-1 bg-primary text-primary-foreground rounded text-xs hover:bg-primary/90 transition-colors">
+                        🔄 새로고침
+                    </button>
+                    <span id="currentTime"></span>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Page Title & Summary -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h1 class="text-3xl font-bold mb-2">💡 클러스터링 인사이트 분석</h1>
+                    <p class="text-muted-foreground">AI 클러스터링을 통해 발견된 시스템 패턴 및 비즈니스 인사이트 종합 분석</p>
+                </div>
+                <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg px-6 py-4 text-center">
+                    <p class="text-sm opacity-90">마지막 분석</p>
+                    <p class="font-bold text-lg" id="lastAnalysisTime">2024-08-27 14:35</p>
+                </div>
+            </div>
+            
+            <!-- Quick Insights Summary -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 rounded-lg p-4">
+                    <h3 class="text-sm text-muted-foreground mb-1">발견된 패턴</h3>
+                    <p class="text-2xl font-bold text-emerald-700 dark:text-emerald-300" id="totalPatterns">8개</p>
+                    <p class="text-xs text-emerald-600 dark:text-emerald-400">+2개 신규</p>
+                </div>
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4">
+                    <h3 class="text-sm text-muted-foreground mb-1">예방 가능 장애</h3>
+                    <p class="text-2xl font-bold text-blue-700 dark:text-blue-300" id="preventableIncidents">73%</p>
+                    <p class="text-xs text-blue-600 dark:text-blue-400">+5% 개선</p>
+                </div>
+                <div class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-4">
+                    <h3 class="text-sm text-muted-foreground mb-1">운영 효율성</h3>
+                    <p class="text-2xl font-bold text-purple-700 dark:text-purple-300" id="operationalEfficiency">+34%</p>
+                    <p class="text-xs text-purple-600 dark:text-purple-400">MTTR 단축</p>
+                </div>
+                <div class="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg p-4">
+                    <h3 class="text-sm text-muted-foreground mb-1">비용 절감</h3>
+                    <p class="text-2xl font-bold text-orange-700 dark:text-orange-300" id="costSavings">₩2.4M</p>
+                    <p class="text-xs text-orange-600 dark:text-orange-400">월간 절감액</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cluster Analysis Details -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Cluster Performance Matrix -->
+            <div class="insight-card rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">🎯 클러스터 성능 매트릭스</h2>
+                <div class="insight-chart-container h-80">
+                    <canvas id="clusterPerformanceMatrix"></canvas>
+                </div>
+                <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-muted-foreground">최고 성능 클러스터</span>
+                        <span class="font-medium text-green-600">클러스터 F (균형 로드)</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-muted-foreground">개선 필요 클러스터</span>
+                        <span class="font-medium text-red-600">클러스터 A (고부하)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time-based Pattern Analysis -->
+            <div class="insight-card rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">⏰ 시간대별 패턴 분석</h2>
+                <div class="insight-chart-container h-80">
+                    <canvas id="timePatternChart"></canvas>
+                </div>
+                <div class="mt-4 text-sm">
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">피크 시간</span>
+                            <span class="font-medium text-red-600">오후 2-4시</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-muted-foreground">안정 시간</span>
+                            <span class="font-medium text-green-600">새벽 3-6시</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Cluster Insights -->
+        <div class="insight-card rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-6">🔍 클러스터별 상세 인사이트</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6">
+                <!-- Resource Correlation Heatmap -->
+                <div>
+                    <h3 class="font-medium mb-3">리소스 상관관계 히트맵</h3>
+                    <div class="insight-chart-container h-64">
+                        <canvas id="correlationHeatmap"></canvas>
+                    </div>
+                </div>
+
+                <!-- Anomaly Distribution -->
+                <div>
+                    <h3 class="font-medium mb-3">이상 상황 분포</h3>
+                    <div class="insight-chart-container h-64">
+                        <canvas id="anomalyDistribution"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cluster Details Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-muted">
+                        <tr>
+                            <th class="px-4 py-3 text-left">클러스터</th>
+                            <th class="px-4 py-3 text-left">패턴 특성</th>
+                            <th class="px-4 py-3 text-left">발생률</th>
+                            <th class="px-4 py-3 text-left">영향도</th>
+                            <th class="px-4 py-3 text-left">예측 정확도</th>
+                            <th class="px-4 py-3 text-left">권장 조치</th>
+                            <th class="px-4 py-3 text-left">자동화 가능</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y" id="clusterDetailsTable">
+                        <!-- Dynamic content will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Business Impact Analysis -->
+        <div class="insight-card rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-6">💼 비즈니스 영향도 분석</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                <!-- Cost Impact -->
+                <div class="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-medium text-red-800 dark:text-red-200">💰 비용 영향</h3>
+                        <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
+                            <span class="text-white text-xs font-bold" id="costImpactScore">85</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-red-600 dark:text-red-300">장애 비용</span>
+                            <span class="font-medium">₩8.5M/월</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-red-600 dark:text-red-300">예방 절감</span>
+                            <span class="font-medium text-green-600">₩6.1M/월</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-red-600 dark:text-red-300">ROI</span>
+                            <span class="font-medium text-blue-600">347%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Experience Impact -->
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-medium text-blue-800 dark:text-blue-200">👥 사용자 경험</h3>
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                            <span class="text-white text-xs font-bold" id="uxImpactScore">92</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-blue-600 dark:text-blue-300">응답시간 개선</span>
+                            <span class="font-medium">-23%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-blue-600 dark:text-blue-300">에러율 감소</span>
+                            <span class="font-medium">-67%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-blue-600 dark:text-blue-300">가용성</span>
+                            <span class="font-medium">99.95%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Operational Efficiency -->
+                <div class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-medium text-green-800 dark:text-green-200">⚙️ 운영 효율성</h3>
+                        <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                            <span class="text-white text-xs font-bold" id="efficiencyScore">78</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-green-600 dark:text-green-300">MTTR 단축</span>
+                            <span class="font-medium">-42%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-green-600 dark:text-green-300">자동 대응</span>
+                            <span class="font-medium">73%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-green-600 dark:text-green-300">인력 절감</span>
+                            <span class="font-medium">2.3 FTE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROI Timeline -->
+            <div>
+                <h3 class="font-medium mb-3">📈 ROI 타임라인 (6개월 전망)</h3>
+                <div class="insight-chart-container h-64">
+                    <canvas id="roiTimelineChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Recommendations -->
+        <div class="insight-card rounded-lg p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-6">🤖 AI 기반 개선 권장사항</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Immediate Actions -->
+                <div>
+                    <h3 class="font-medium mb-4 text-red-600">🚨 즉시 조치 필요 (High Priority)</h3>
+                    <div class="space-y-3" id="immediateActions">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+
+                <!-- Strategic Improvements -->
+                <div>
+                    <h3 class="font-medium mb-4 text-blue-600">📋 전략적 개선사항 (Medium Priority)</h3>
+                    <div class="space-y-3" id="strategicImprovements">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Long-term Optimizations -->
+            <div class="mt-6 pt-6 border-t">
+                <h3 class="font-medium mb-4 text-green-600">🔮 장기 최적화 계획 (Low Priority)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="longTermOptimizations">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Export and Actions -->
+        <div class="flex gap-4">
+            <button onclick="exportInsights()" class="px-6 py-3 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors">
+                📊 인사이트 내보내기
+            </button>
+            <button onclick="generateReport()" class="px-6 py-3 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors">
+                📄 상세 리포트 생성
+            </button>
+            <button onclick="scheduleOptimization()" class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                ⚡ 자동 최적화 예약
+            </button>
+        </div>
+    </main>
+
+    <script>
+        let clusterPerformanceMatrix, timePatternChart, correlationHeatmap, anomalyDistribution, roiTimelineChart;
+
+        // Mock data for insights
+        const mockInsightData = {
+            clusters: [
+                {
+                    id: 'A', name: '고부하 CPU+메모리', pattern: 'high_cpu_memory', frequency: 26, impact: 'High', 
+                    accuracy: 94, recommendation: '자동 스케일링', automation: true, color: '#ef4444'
+                },
+                {
+                    id: 'B', name: '네트워크 지연', pattern: 'network_latency', frequency: 23, impact: 'Medium', 
+                    accuracy: 89, recommendation: '네트워크 최적화', automation: true, color: '#3b82f6'
+                },
+                {
+                    id: 'C', name: '디스크 I/O 병목', pattern: 'disk_io_bottleneck', frequency: 16, impact: 'High', 
+                    accuracy: 92, recommendation: '스토리지 확장', automation: false, color: '#22c55e'
+                },
+                {
+                    id: 'D', name: '간헐적 에러', pattern: 'intermittent_errors', frequency: 12, impact: 'Low', 
+                    accuracy: 87, recommendation: '로그 분석', automation: true, color: '#9333ea'
+                },
+                {
+                    id: 'E', name: '메모리 압박', pattern: 'memory_pressure', frequency: 9, impact: 'Medium', 
+                    accuracy: 91, recommendation: '메모리 증설', automation: false, color: '#f97316'
+                },
+                {
+                    id: 'F', name: '균형 로드', pattern: 'balanced_load', frequency: 8, impact: 'Low', 
+                    accuracy: 96, recommendation: '현상 유지', automation: true, color: '#06b6d4'
+                },
+                {
+                    id: 'G', name: '트래픽 급증', pattern: 'burst_traffic', frequency: 6, impact: 'High', 
+                    accuracy: 85, recommendation: 'CDN 최적화', automation: true, color: '#9ca3af'
+                }
+            ],
+            timePatterns: {
+                '00-06': { load: 0.3, incidents: 12, efficiency: 95 },
+                '06-09': { load: 0.7, incidents: 34, efficiency: 87 },
+                '09-12': { load: 0.9, incidents: 67, efficiency: 78 },
+                '12-14': { load: 1.0, incidents: 89, efficiency: 65 },
+                '14-17': { load: 1.2, incidents: 134, efficiency: 58 },
+                '17-20': { load: 0.8, incidents: 56, efficiency: 82 },
+                '20-24': { load: 0.5, incidents: 23, efficiency: 90 }
+            },
+            correlations: [
+                ['CPU', 'Memory', 0.85], ['CPU', 'Network', 0.23], ['CPU', 'Disk', 0.56],
+                ['Memory', 'Network', 0.12], ['Memory', 'Disk', 0.67], ['Network', 'Disk', 0.34]
+            ]
+        };
+
+        function initCharts() {
+            // Cluster Performance Matrix (Bubble Chart)
+            const perfCtx = document.getElementById('clusterPerformanceMatrix')?.getContext('2d');
+            if (perfCtx) {
+                clusterPerformanceMatrix = new Chart(perfCtx, {
+                    type: 'bubble',
+                    data: {
+                        datasets: mockInsightData.clusters.map(cluster => ({
+                            label: `클러스터 ${cluster.id}`,
+                            data: [{
+                                x: cluster.frequency, // 발생률
+                                y: cluster.accuracy, // 정확도
+                                r: (cluster.impact === 'High' ? 15 : cluster.impact === 'Medium' ? 10 : 7) // 영향도
+                            }],
+                            backgroundColor: cluster.color + '80',
+                            borderColor: cluster.color,
+                            borderWidth: 2
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { 
+                                position: 'bottom',
+                                labels: { usePointStyle: true, boxWidth: 6 }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const cluster = mockInsightData.clusters[context.datasetIndex];
+                                        return [
+                                            `${cluster.name}`,
+                                            `발생률: ${context.parsed.x}%`,
+                                            `정확도: ${context.parsed.y}%`,
+                                            `영향도: ${cluster.impact}`
+                                        ];
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { title: { display: true, text: '발생률 (%)' } },
+                            y: { title: { display: true, text: '예측 정확도 (%)' } }
+                        }
+                    }
+                });
+            }
+
+            // Time Pattern Chart
+            const timeCtx = document.getElementById('timePatternChart')?.getContext('2d');
+            if (timeCtx) {
+                const timeLabels = Object.keys(mockInsightData.timePatterns);
+                timePatternChart = new Chart(timeCtx, {
+                    type: 'line',
+                    data: {
+                        labels: timeLabels,
+                        datasets: [{
+                            label: '시스템 부하',
+                            data: timeLabels.map(time => mockInsightData.timePatterns[time].load * 100),
+                            borderColor: 'rgb(239, 68, 68)',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }, {
+                            label: '인시던트 수',
+                            data: timeLabels.map(time => mockInsightData.timePatterns[time].incidents),
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: true } },
+                        scales: {
+                            x: { title: { display: true, text: '시간대' } },
+                            y: { 
+                                type: 'linear', 
+                                display: true, 
+                                position: 'left',
+                                title: { display: true, text: '부하 (%)' }
+                            },
+                            y1: { 
+                                type: 'linear', 
+                                display: true, 
+                                position: 'right',
+                                title: { display: true, text: '인시던트 수' },
+                                grid: { drawOnChartArea: false }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Correlation Heatmap (using bar chart as approximation)
+            const corrCtx = document.getElementById('correlationHeatmap')?.getContext('2d');
+            if (corrCtx) {
+                correlationHeatmap = new Chart(corrCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: mockInsightData.correlations.map(corr => `${corr[0]} - ${corr[1]}`),
+                        datasets: [{
+                            label: '상관계수',
+                            data: mockInsightData.correlations.map(corr => corr[2]),
+                            backgroundColor: mockInsightData.correlations.map(corr => 
+                                corr[2] > 0.7 ? 'rgba(239, 68, 68, 0.8)' :
+                                corr[2] > 0.4 ? 'rgba(249, 115, 22, 0.8)' :
+                                'rgba(34, 197, 94, 0.8)'
+                            ),
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { 
+                                min: 0, 
+                                max: 1,
+                                title: { display: true, text: '상관계수' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Anomaly Distribution
+            const anomalyCtx = document.getElementById('anomalyDistribution')?.getContext('2d');
+            if (anomalyCtx) {
+                anomalyDistribution = new Chart(anomalyCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['정상', '경미', '보통', '심각', '치명적'],
+                        datasets: [{
+                            data: [78.5, 12.3, 6.2, 2.4, 0.6],
+                            backgroundColor: [
+                                'rgba(34, 197, 94, 0.8)',
+                                'rgba(59, 130, 246, 0.8)', 
+                                'rgba(249, 115, 22, 0.8)',
+                                'rgba(239, 68, 68, 0.8)',
+                                'rgba(147, 51, 234, 0.8)'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.label + ': ' + context.parsed + '%';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // ROI Timeline Chart
+            const roiCtx = document.getElementById('roiTimelineChart')?.getContext('2d');
+            if (roiCtx) {
+                const months = ['1월', '2월', '3월', '4월', '5월', '6월'];
+                roiTimelineChart = new Chart(roiCtx, {
+                    type: 'line',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: '누적 절감액 (백만원)',
+                            data: [0.8, 2.1, 4.2, 7.5, 12.3, 18.7],
+                            borderColor: 'rgb(34, 197, 94)',
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }, {
+                            label: '투자 회수율 (%)',
+                            data: [45, 89, 156, 247, 347, 456],
+                            borderColor: 'rgb(147, 51, 234)',
+                            backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: true } },
+                        scales: {
+                            x: { title: { display: true, text: '월' } },
+                            y: { title: { display: true, text: '절감액 (백만원)' } },
+                            y1: { 
+                                type: 'linear', 
+                                display: true, 
+                                position: 'right',
+                                title: { display: true, text: 'ROI (%)' },
+                                grid: { drawOnChartArea: false }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function populateClusterTable() {
+            const tbody = document.getElementById('clusterDetailsTable');
+            tbody.innerHTML = mockInsightData.clusters.map(cluster => `
+                <tr class="hover:bg-muted/50">
+                    <td class="px-4 py-3">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 rounded-full mr-2" style="background-color: ${cluster.color}"></div>
+                            클러스터 ${cluster.id}
+                        </div>
+                    </td>
+                    <td class="px-4 py-3">${cluster.name}</td>
+                    <td class="px-4 py-3">${cluster.frequency}%</td>
+                    <td class="px-4 py-3">
+                        <span class="px-2 py-1 rounded text-xs ${
+                            cluster.impact === 'High' ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300' :
+                            cluster.impact === 'Medium' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-300' :
+                            'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
+                        }">${cluster.impact}</span>
+                    </td>
+                    <td class="px-4 py-3 font-mono">${cluster.accuracy}%</td>
+                    <td class="px-4 py-3">${cluster.recommendation}</td>
+                    <td class="px-4 py-3">
+                        ${cluster.automation ? 
+                            '<span class="text-green-600">✅ 가능</span>' : 
+                            '<span class="text-orange-600">⚠️ 수동</span>'
+                        }
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function populateRecommendations() {
+            const immediateActions = [
+                { title: '클러스터 A 자동 스케일링 설정', impact: 'High', effort: 'Low', roi: '347%' },
+                { title: '디스크 I/O 병목 해결 (SSD 업그레이드)', impact: 'High', effort: 'Medium', roi: '234%' },
+                { title: '네트워크 지연 최적화 (CDN 설정)', impact: 'Medium', effort: 'Low', roi: '189%' }
+            ];
+
+            const strategicImprovements = [
+                { title: '예측 모델 정확도 향상 (추가 특성 수집)', impact: 'Medium', effort: 'High', roi: '156%' },
+                { title: '클러스터링 알고리즘 최적화', impact: 'Medium', effort: 'Medium', roi: '134%' },
+                { title: '다중 클라우드 부하 분산 구현', impact: 'High', effort: 'High', roi: '278%' }
+            ];
+
+            const longTermOptimizations = [
+                { title: '완전 자동화된 사전 대응 시스템', timeline: '6-12개월', roi: '450%' },
+                { title: 'AI 기반 용량 계획 및 예산 최적화', timeline: '3-6개월', roi: '278%' },
+                { title: '실시간 비즈니스 영향도 예측', timeline: '9-12개월', roi: '367%' }
+            ];
+
+            document.getElementById('immediateActions').innerHTML = immediateActions.map(action => `
+                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-3">
+                    <h4 class="font-medium text-red-800 dark:text-red-200 mb-1">${action.title}</h4>
+                    <div class="flex gap-4 text-xs text-red-600 dark:text-red-300">
+                        <span>영향도: ${action.impact}</span>
+                        <span>노력: ${action.effort}</span>
+                        <span class="font-medium">ROI: ${action.roi}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('strategicImprovements').innerHTML = strategicImprovements.map(action => `
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3">
+                    <h4 class="font-medium text-blue-800 dark:text-blue-200 mb-1">${action.title}</h4>
+                    <div class="flex gap-4 text-xs text-blue-600 dark:text-blue-300">
+                        <span>영향도: ${action.impact}</span>
+                        <span>노력: ${action.effort}</span>
+                        <span class="font-medium">ROI: ${action.roi}</span>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('longTermOptimizations').innerHTML = longTermOptimizations.map(action => `
+                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-3">
+                    <h4 class="font-medium text-green-800 dark:text-green-200 mb-2">${action.title}</h4>
+                    <div class="flex justify-between text-xs">
+                        <span class="text-green-600 dark:text-green-300">일정: ${action.timeline}</span>
+                        <span class="font-medium text-green-700 dark:text-green-200">예상 ROI: ${action.roi}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function refreshInsights() {
+            console.log('🔄 클러스터링 인사이트 새로고침 중...');
+            
+            // Simulate API call delay
+            const refreshBtn = document.querySelector('button[onclick="refreshInsights()"]');
+            refreshBtn.innerHTML = '⏳ 새로고침 중...';
+            refreshBtn.disabled = true;
+            
+            setTimeout(() => {
+                // Update timestamps
+                const now = new Date();
+                document.getElementById('lastAnalysisTime').textContent = now.toLocaleString('ko-KR');
+                
+                // Re-initialize charts with slightly different data
+                if (clusterPerformanceMatrix) {
+                    clusterPerformanceMatrix.data.datasets.forEach(dataset => {
+                        dataset.data[0].y += (Math.random() - 0.5) * 2; // Vary accuracy slightly
+                    });
+                    clusterPerformanceMatrix.update();
+                }
+                
+                refreshBtn.innerHTML = '🔄 새로고침';
+                refreshBtn.disabled = false;
+                
+                console.log('✅ 클러스터링 인사이트 새로고침 완료');
+            }, 2000);
+        }
+
+        function exportInsights() {
+            console.log('📊 클러스터링 인사이트 내보내기 시작...');
+            
+            // Simulate export process
+            const exportData = {
+                timestamp: new Date().toISOString(),
+                clusters: mockInsightData.clusters,
+                summary: {
+                    totalPatterns: 8,
+                    preventableIncidents: '73%',
+                    operationalEfficiency: '+34%',
+                    costSavings: '₩2.4M'
+                },
+                businessImpact: {
+                    costImpact: 85,
+                    uxImpact: 92,
+                    efficiency: 78
+                }
+            };
+            
+            // Create and download mock file
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `clustering-insights-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            
+            alert('클러스터링 인사이트가 JSON 파일로 내보내졌습니다.');
+        }
+
+        function generateReport() {
+            alert('상세 PDF 리포트를 생성하고 있습니다...\n\n포함 내용:\n• 클러스터별 상세 분석\n• 비즈니스 영향도 평가\n• AI 기반 개선 권장사항\n• ROI 분석 및 타임라인');
+        }
+
+        function scheduleOptimization() {
+            if (confirm('자동 최적화를 예약하시겠습니까?\n\n다음 작업이 예약됩니다:\n• 클러스터 A: 자동 스케일링 설정\n• 클러스터 B: 네트워크 최적화\n• 클러스터 C: 디스크 I/O 모니터링 강화')) {
+                alert('자동 최적화가 예약되었습니다!\n\n실행 시간: 오늘 밤 22:00\n예상 소요 시간: 2-3시간\n알림: 완료 시 이메일 발송');
+            }
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleString('ko-KR', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: false
+            });
+            document.getElementById('currentTime').textContent = timeString;
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 클러스터링 인사이트 페이지 로드 완료');
+            
+            initCharts();
+            populateClusterTable();
+            populateRecommendations();
+            updateTime();
+            setInterval(updateTime, 1000);
+            
+            // Update last analysis time
+            const now = new Date();
+            document.getElementById('lastAnalysisTime').textContent = now.toLocaleString('ko-KR');
+            
+            console.log('✅ 모든 인사이트 컴포넌트 초기화 완료');
+        });
+    </script>
+</body>
+</html>

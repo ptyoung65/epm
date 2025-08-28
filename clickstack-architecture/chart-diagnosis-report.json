@@ -1,0 +1,887 @@
+{
+  "timestamp": "2025-08-27T12:57:51.990Z",
+  "results": [
+    {
+      "page": "LSTM 장애 예측",
+      "url": "http://localhost:3001/ml-training-lstm.html",
+      "chartContainers": [
+        {
+          "tagName": "CANVAS",
+          "id": "metricsTimeSeriesChart",
+          "className": "w-full h-full",
+          "width": 587,
+          "height": 192,
+          "styles": {
+            "width": "587px",
+            "height": "192px",
+            "position": "static",
+            "display": "block"
+          }
+        },
+        {
+          "tagName": "CANVAS",
+          "id": "failurePatternChart",
+          "className": "w-full h-full",
+          "width": 587,
+          "height": 192,
+          "styles": {
+            "width": "587px",
+            "height": "192px",
+            "position": "static",
+            "display": "block"
+          }
+        },
+        {
+          "tagName": "CANVAS",
+          "id": "lossChart",
+          "className": "w-full h-full",
+          "width": 0,
+          "height": 0,
+          "styles": {
+            "width": "0px",
+            "height": "0px",
+            "position": "static",
+            "display": "block"
+          }
+        },
+        {
+          "tagName": "CANVAS",
+          "id": "predictionChart",
+          "className": "w-full h-full",
+          "width": 0,
+          "height": 0,
+          "styles": {
+            "width": "0px",
+            "height": "0px",
+            "position": "static",
+            "display": "block"
+          }
+        },
+        {
+          "tagName": "CANVAS",
+          "id": "featureImportanceChart",
+          "className": "w-full h-full",
+          "width": 0,
+          "height": 0,
+          "styles": {
+            "width": "100%",
+            "height": "100%",
+            "position": "static",
+            "display": "block"
+          }
+        }
+      ],
+      "chartInstances": [
+        {
+          "id": "0",
+          "type": "line",
+          "canvas": {
+            "width": 587,
+            "height": 192,
+            "style": {
+              "width": "587px",
+              "height": "192px"
+            }
+          },
+          "options": {
+            "responsive": true,
+            "maintainAspectRatio": false
+          }
+        },
+        {
+          "id": "1",
+          "type": "scatter",
+          "canvas": {
+            "width": 587,
+            "height": 192,
+            "style": {
+              "width": "587px",
+              "height": "192px"
+            }
+          },
+          "options": {
+            "responsive": true,
+            "maintainAspectRatio": false
+          }
+        },
+        {
+          "id": "2",
+          "type": "line",
+          "canvas": {
+            "width": 0,
+            "height": 0,
+            "style": {
+              "width": "0px",
+              "height": "0px"
+            }
+          },
+          "options": {
+            "responsive": true,
+            "maintainAspectRatio": false
+          }
+        },
+        {
+          "id": "3",
+          "type": "scatter",
+          "canvas": {
+            "width": 0,
+            "height": 0,
+            "style": {
+              "width": "0px",
+              "height": "0px"
+            }
+          },
+          "options": {
+            "responsive": true,
+            "maintainAspectRatio": false
+          }
+        }
+      ],
+      "sizeChanges": [
+        {
+          "iteration": 1,
+          "sizes": [
+            {
+              "width": 587,
+              "height": 192,
+              "timestamp": 1756299447198
+            },
+            {
+              "width": 587,
+              "height": 192,
+              "timestamp": 1756299447198
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299447198
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299447198
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299447198
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "sizes": [
+            {
+              "width": 587,
+              "height": 192,
+              "timestamp": 1756299448211
+            },
+            {
+              "width": 587,
+              "height": 192,
+              "timestamp": 1756299448211
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299448211
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299448211
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299448211
+            }
+          ]
+        },
+        {
+          "iteration": 3,
+          "sizes": [
+            {
+              "width": 587,
+              "height": 192,
+              "timestamp": 1756299449223
+            },
+            {
+              "width": 587,
+              "height": 192,
+              "timestamp": 1756299449223
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299449223
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299449223
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299449223
+            }
+          ]
+        },
+        {
+          "iteration": 4,
+          "sizes": [
+            {
+              "width": 587,
+              "height": 192,
+              "timestamp": 1756299450233
+            },
+            {
+              "width": 587,
+              "height": 192,
+              "timestamp": 1756299450233
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299450233
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299450233
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299450233
+            }
+          ]
+        },
+        {
+          "iteration": 5,
+          "sizes": [
+            {
+              "width": 587,
+              "height": 192,
+              "timestamp": 1756299451244
+            },
+            {
+              "width": 587,
+              "height": 192,
+              "timestamp": 1756299451244
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299451244
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299451244
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299451244
+            }
+          ]
+        }
+      ],
+      "jsAnalysis": {
+        "chartJsLoaded": true,
+        "windowResizeListeners": [],
+        "chartUpdateFunctions": [
+          "resizeBy",
+          "resizeTo",
+          "Chart",
+          "initCharts",
+          "updateTime"
+        ],
+        "timers": []
+      },
+      "cssAnalysis": {
+        "mediaQueries": [
+          "(min-width: 640px)",
+          "(min-width: 768px)",
+          "(min-width: 1024px)",
+          "(min-width: 1280px)",
+          "(min-width: 1536px)",
+          "(min-width: 768px)",
+          "(min-width: 1024px)",
+          "(prefers-color-scheme: dark)"
+        ],
+        "containerQueries": [
+          ".container { width: 100%; }"
+        ]
+      },
+      "jsErrors": [],
+      "timestamp": "2025-08-27T12:57:31.265Z"
+    },
+    {
+      "page": "RCA 분석",
+      "url": "http://localhost:3001/ml-training-rca.html",
+      "chartContainers": [
+        {
+          "tagName": "CANVAS",
+          "id": "datasetCompositionChart",
+          "className": "w-full h-full",
+          "width": 562,
+          "height": 128,
+          "styles": {
+            "width": "562px",
+            "height": "128px",
+            "position": "static",
+            "display": "block"
+          }
+        },
+        {
+          "tagName": "CANVAS",
+          "id": "trainingChart",
+          "className": "w-full h-full",
+          "width": 0,
+          "height": 0,
+          "styles": {
+            "width": "0px",
+            "height": "0px",
+            "position": "static",
+            "display": "block"
+          }
+        },
+        {
+          "tagName": "CANVAS",
+          "id": "confusionMatrixChart",
+          "className": "w-full h-full",
+          "width": 0,
+          "height": 0,
+          "styles": {
+            "width": "0px",
+            "height": "0px",
+            "position": "static",
+            "display": "block"
+          }
+        },
+        {
+          "tagName": "CANVAS",
+          "id": "categoryAccuracyChart",
+          "className": "w-full h-full",
+          "width": 0,
+          "height": 0,
+          "styles": {
+            "width": "100%",
+            "height": "100%",
+            "position": "static",
+            "display": "block"
+          }
+        },
+        {
+          "tagName": "CANVAS",
+          "id": "featureImportanceChart",
+          "className": "w-full h-full",
+          "width": 0,
+          "height": 0,
+          "styles": {
+            "width": "100%",
+            "height": "100%",
+            "position": "static",
+            "display": "block"
+          }
+        }
+      ],
+      "chartInstances": [
+        {
+          "id": "0",
+          "type": "doughnut",
+          "canvas": {
+            "width": 562,
+            "height": 128,
+            "style": {
+              "width": "562px",
+              "height": "128px"
+            }
+          },
+          "options": {
+            "responsive": true,
+            "maintainAspectRatio": false
+          }
+        },
+        {
+          "id": "1",
+          "type": "line",
+          "canvas": {
+            "width": 0,
+            "height": 0,
+            "style": {
+              "width": "0px",
+              "height": "0px"
+            }
+          },
+          "options": {
+            "responsive": true,
+            "maintainAspectRatio": false
+          }
+        },
+        {
+          "id": "2",
+          "type": "bar",
+          "canvas": {
+            "width": 0,
+            "height": 0,
+            "style": {
+              "width": "0px",
+              "height": "0px"
+            }
+          },
+          "options": {
+            "responsive": true,
+            "maintainAspectRatio": false
+          }
+        }
+      ],
+      "sizeChanges": [
+        {
+          "iteration": 1,
+          "sizes": [
+            {
+              "width": 562,
+              "height": 128,
+              "timestamp": 1756299457456
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299457456
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299457456
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299457456
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299457456
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "sizes": [
+            {
+              "width": 562,
+              "height": 128,
+              "timestamp": 1756299458466
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299458466
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299458466
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299458466
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299458466
+            }
+          ]
+        },
+        {
+          "iteration": 3,
+          "sizes": [
+            {
+              "width": 562,
+              "height": 128,
+              "timestamp": 1756299459477
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299459477
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299459477
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299459477
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299459477
+            }
+          ]
+        },
+        {
+          "iteration": 4,
+          "sizes": [
+            {
+              "width": 562,
+              "height": 128,
+              "timestamp": 1756299460490
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299460490
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299460490
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299460490
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299460490
+            }
+          ]
+        },
+        {
+          "iteration": 5,
+          "sizes": [
+            {
+              "width": 562,
+              "height": 128,
+              "timestamp": 1756299461500
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299461500
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299461500
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299461500
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299461500
+            }
+          ]
+        }
+      ],
+      "jsAnalysis": {
+        "chartJsLoaded": true,
+        "windowResizeListeners": [],
+        "chartUpdateFunctions": [
+          "resizeBy",
+          "resizeTo",
+          "Chart",
+          "initCharts",
+          "updateTime"
+        ],
+        "timers": []
+      },
+      "cssAnalysis": {
+        "mediaQueries": [
+          "(min-width: 640px)",
+          "(min-width: 768px)",
+          "(min-width: 1024px)",
+          "(min-width: 1280px)",
+          "(min-width: 1536px)",
+          "(min-width: 768px)",
+          "(min-width: 1024px)",
+          "(prefers-color-scheme: dark)"
+        ],
+        "containerQueries": [
+          ".container { width: 100%; }"
+        ]
+      },
+      "jsErrors": [],
+      "timestamp": "2025-08-27T12:57:41.515Z"
+    },
+    {
+      "page": "클러스터링",
+      "url": "http://localhost:3001/ml-training-clustering.html",
+      "chartContainers": [
+        {
+          "tagName": "CANVAS",
+          "id": "clusterDistributionChart",
+          "className": "w-full h-full",
+          "width": 562,
+          "height": 192,
+          "styles": {
+            "width": "562px",
+            "height": "192px",
+            "position": "static",
+            "display": "block"
+          }
+        },
+        {
+          "tagName": "CANVAS",
+          "id": "convergenceChart",
+          "className": "w-full h-full",
+          "width": 0,
+          "height": 0,
+          "styles": {
+            "width": "0px",
+            "height": "0px",
+            "position": "static",
+            "display": "block"
+          }
+        },
+        {
+          "tagName": "CANVAS",
+          "id": "clusterVisualizationChart",
+          "className": "w-full h-full",
+          "width": 0,
+          "height": 0,
+          "styles": {
+            "width": "0px",
+            "height": "0px",
+            "position": "static",
+            "display": "block"
+          }
+        }
+      ],
+      "chartInstances": [
+        {
+          "id": "0",
+          "type": "doughnut",
+          "canvas": {
+            "width": 562,
+            "height": 192,
+            "style": {
+              "width": "562px",
+              "height": "192px"
+            }
+          },
+          "options": {
+            "responsive": true,
+            "maintainAspectRatio": false
+          }
+        },
+        {
+          "id": "1",
+          "type": "line",
+          "canvas": {
+            "width": 0,
+            "height": 0,
+            "style": {
+              "width": "0px",
+              "height": "0px"
+            }
+          },
+          "options": {
+            "responsive": true,
+            "maintainAspectRatio": false
+          }
+        },
+        {
+          "id": "2",
+          "type": "scatter",
+          "canvas": {
+            "width": 0,
+            "height": 0,
+            "style": {
+              "width": "0px",
+              "height": "0px"
+            }
+          },
+          "options": {
+            "responsive": true,
+            "maintainAspectRatio": false
+          }
+        }
+      ],
+      "sizeChanges": [
+        {
+          "iteration": 1,
+          "sizes": [
+            {
+              "width": 562,
+              "height": 192,
+              "timestamp": 1756299467468
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299467468
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299467468
+            }
+          ]
+        },
+        {
+          "iteration": 2,
+          "sizes": [
+            {
+              "width": 562,
+              "height": 192,
+              "timestamp": 1756299468479
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299468479
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299468479
+            }
+          ]
+        },
+        {
+          "iteration": 3,
+          "sizes": [
+            {
+              "width": 562,
+              "height": 192,
+              "timestamp": 1756299469487
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299469487
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299469487
+            }
+          ]
+        },
+        {
+          "iteration": 4,
+          "sizes": [
+            {
+              "width": 562,
+              "height": 192,
+              "timestamp": 1756299470494
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299470494
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299470494
+            }
+          ]
+        },
+        {
+          "iteration": 5,
+          "sizes": [
+            {
+              "width": 562,
+              "height": 192,
+              "timestamp": 1756299471503
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299471503
+            },
+            {
+              "width": 0,
+              "height": 0,
+              "timestamp": 1756299471503
+            }
+          ]
+        }
+      ],
+      "jsAnalysis": {
+        "chartJsLoaded": true,
+        "windowResizeListeners": [],
+        "chartUpdateFunctions": [
+          "resizeBy",
+          "resizeTo",
+          "Chart",
+          "initCharts",
+          "updateTime"
+        ],
+        "timers": []
+      },
+      "cssAnalysis": {
+        "mediaQueries": [
+          "(min-width: 640px)",
+          "(min-width: 768px)",
+          "(min-width: 1024px)",
+          "(min-width: 1280px)",
+          "(min-width: 1536px)",
+          "(min-width: 768px)",
+          "(min-width: 1024px)",
+          "(prefers-color-scheme: dark)"
+        ],
+        "containerQueries": [
+          ".container { width: 100%; }"
+        ]
+      },
+      "jsErrors": [],
+      "timestamp": "2025-08-27T12:57:51.522Z"
+    }
+  ],
+  "analysis": {
+    "issues": [],
+    "recommendations": [
+      "💡 LSTM 장애 예측 컨테이너 1: 컨테이너에 고정 크기 설정 고려",
+      "💡 LSTM 장애 예측 컨테이너 2: 컨테이너에 고정 크기 설정 고려",
+      "💡 LSTM 장애 예측 컨테이너 3: 컨테이너에 고정 크기 설정 고려",
+      "💡 LSTM 장애 예측 컨테이너 4: 컨테이너에 고정 크기 설정 고려",
+      "💡 LSTM 장애 예측 컨테이너 5: 컨테이너에 고정 크기 설정 고려",
+      "💡 RCA 분석 컨테이너 1: 컨테이너에 고정 크기 설정 고려",
+      "💡 RCA 분석 컨테이너 2: 컨테이너에 고정 크기 설정 고려",
+      "💡 RCA 분석 컨테이너 3: 컨테이너에 고정 크기 설정 고려",
+      "💡 RCA 분석 컨테이너 4: 컨테이너에 고정 크기 설정 고려",
+      "💡 RCA 분석 컨테이너 5: 컨테이너에 고정 크기 설정 고려",
+      "💡 클러스터링 컨테이너 1: 컨테이너에 고정 크기 설정 고려",
+      "💡 클러스터링 컨테이너 2: 컨테이너에 고정 크기 설정 고려",
+      "💡 클러스터링 컨테이너 3: 컨테이너에 고정 크기 설정 고려"
+    ]
+  },
+  "solutions": [
+    {
+      "title": "1. Chart.js 설정 최적화",
+      "code": "\n// Chart.js 초기화 시 다음 옵션 적용\nconst chartOptions = {\n  responsive: true,\n  maintainAspectRatio: false, // 컨테이너 크기에 맞춤\n  // 또는 고정 비율 사용:\n  // maintainAspectRatio: true,\n  // aspectRatio: 2, // 고정 비율 설정\n  plugins: {\n    legend: {\n      display: true\n    }\n  },\n  scales: {\n    x: {\n      display: true\n    },\n    y: {\n      display: true\n    }\n  }\n};"
+    },
+    {
+      "title": "2. CSS 컨테이너 고정 크기 설정",
+      "code": "\n/* 차트 컨테이너에 고정 크기 적용 */\n.chart-container {\n  width: 800px !important;\n  height: 400px !important;\n  position: relative;\n  overflow: hidden;\n}\n\n/* 반응형이 필요한 경우 최대/최소 크기 제한 */\n.chart-container {\n  width: 100%;\n  height: 400px;\n  max-width: 1200px;\n  min-height: 300px;\n  position: relative;\n}\n\n/* Canvas 직접 제어 */\ncanvas {\n  max-width: 100% !important;\n  height: auto !important;\n}"
+    },
+    {
+      "title": "3. JavaScript 업데이트 로직 최적화",
+      "code": "\n// 차트 업데이트 시 크기 변경 방지\nfunction updateChart(chart, newData) {\n  // 크기 변경 없이 데이터만 업데이트\n  chart.data = newData;\n  chart.update('none'); // 애니메이션 없이 업데이트\n}\n\n// 리사이즈 이벤트 디바운싱\nlet resizeTimeout;\nwindow.addEventListener('resize', () => {\n  clearTimeout(resizeTimeout);\n  resizeTimeout = setTimeout(() => {\n    // 리사이즈 후 차트 크기 재조정\n    Chart.instances.forEach(chart => {\n      chart.resize();\n    });\n  }, 250);\n});"
+    },
+    {
+      "title": "4. 페이지별 개별 수정 방안",
+      "code": "\n<!-- HTML 구조 개선 -->\n<div class=\"ml-chart-wrapper\">\n  <div class=\"chart-container\" style=\"width: 800px; height: 400px;\">\n    <canvas id=\"lstmChart\"></canvas>\n  </div>\n</div>\n\n<script>\n// 각 페이지의 차트 초기화 개선\nconst ctx = document.getElementById('lstmChart').getContext('2d');\nconst chart = new Chart(ctx, {\n  type: 'line',\n  data: chartData,\n  options: {\n    responsive: true,\n    maintainAspectRatio: false,\n    animation: {\n      duration: 0 // 크기 변경 시 애니메이션 제거\n    }\n  }\n});\n</script>"
+    }
+  ]
+}

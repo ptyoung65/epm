@@ -1,0 +1,270 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - navigation [ref=e4]:
+      - generic [ref=e5]:
+        - link "🚀 AIRIS EPM" [ref=e6] [cursor=pointer]:
+          - /url: /portal.html
+        - generic [ref=e7]:
+          - button "대시보드" [ref=e8] [cursor=pointer]
+          - button "AIOPS 관리" [ref=e9] [cursor=pointer]
+          - button "학습 보고서" [ref=e10] [cursor=pointer]
+      - generic [ref=e12]: 2025. 08. 27. 오후 11:19:12
+  - main [ref=e13]:
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - heading "🎯 클러스터링 패턴 분석 모델 학습 보고서" [level=1] [ref=e17]
+          - paragraph [ref=e18]: 비지도 학습을 통한 패턴 클러스터링 모델의 성능 분석 리포트
+        - generic [ref=e19]:
+          - button "🖨️ 인쇄/PDF" [ref=e20] [cursor=pointer]
+          - button "📥 내보내기" [ref=e21] [cursor=pointer]
+          - button "↩️ 학습 페이지로" [ref=e22] [cursor=pointer]
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - paragraph [ref=e25]: 모델 타입
+          - paragraph [ref=e26]: Clustering
+        - generic [ref=e27]:
+          - paragraph [ref=e28]: 학습 완료일
+          - paragraph [ref=e29]: 2024-01-15 14:32:15
+        - generic [ref=e30]:
+          - paragraph [ref=e31]: 학습 시간
+          - paragraph [ref=e32]: 29분 33초
+        - generic [ref=e33]:
+          - paragraph [ref=e34]: 최종 정확도
+          - paragraph [ref=e35]: 89.7%
+    - generic [ref=e36]:
+      - heading "📋 실행 요약 (Executive Summary)" [level=2] [ref=e37]
+      - generic [ref=e39]:
+        - generic [ref=e40]:
+          - heading "학습 결과" [level=3] [ref=e41]
+          - list [ref=e42]:
+            - listitem [ref=e43]: ✅ 학습 성공적으로 완료
+            - listitem [ref=e44]: 🎯 목표 정확도 95% 달성
+            - listitem [ref=e45]: 📈 검증 손실 0.0234 달성
+        - generic [ref=e46]:
+          - heading "성능 지표" [level=3] [ref=e47]
+          - list [ref=e48]:
+            - listitem [ref=e49]: "정밀도 (Precision): 94.2%"
+            - listitem [ref=e50]: "재현율 (Recall): 91.8%"
+            - listitem [ref=e51]: "F1-Score: 93.0%"
+        - generic [ref=e52]:
+          - heading "권장사항" [level=3] [ref=e53]
+          - list [ref=e54]:
+            - listitem [ref=e55]: 🚀 프로덕션 배포 준비 완료
+            - listitem [ref=e56]: 📊 정기 재학습 권장 (월 1회)
+            - listitem [ref=e57]: ⚡ 실시간 모니터링 설정 필요
+    - generic [ref=e58]:
+      - heading "⚙️ 모델 설정" [level=2] [ref=e59]
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - heading "하이퍼파라미터" [level=3] [ref=e62]
+          - generic [ref=e63]:
+            - generic [ref=e64]:
+              - generic [ref=e65]: "학습률 (Learning Rate):"
+              - generic: "0.001"
+            - generic [ref=e66]:
+              - generic [ref=e67]: "배치 크기 (Batch Size):"
+              - generic: "32"
+            - generic [ref=e68]:
+              - generic [ref=e69]: "에포크 수 (Epochs):"
+              - generic: "100"
+            - generic [ref=e70]:
+              - generic [ref=e71]: "Dropout Rate:"
+              - generic: "0.2"
+            - generic [ref=e72]:
+              - generic [ref=e73]: "Validation Split:"
+              - generic: "0.2"
+        - generic [ref=e74]:
+          - heading "모델 아키텍처" [level=3] [ref=e75]
+          - generic [ref=e76]:
+            - generic [ref=e77]:
+              - generic [ref=e78]: "입력 차원:"
+              - generic: "100"
+            - generic [ref=e79]:
+              - generic [ref=e80]: "은닉층:"
+              - generic: 64 → 32 → 16
+            - generic [ref=e81]:
+              - generic [ref=e82]: "출력 차원:"
+              - generic: "100"
+            - generic [ref=e83]:
+              - generic [ref=e84]: "활성화 함수:"
+              - generic: ReLU, Sigmoid
+            - generic [ref=e85]:
+              - generic [ref=e86]: "최적화기:"
+              - generic: Adam
+    - generic [ref=e87]:
+      - heading "📈 학습 진행 차트" [level=2] [ref=e88]
+      - generic [ref=e89]:
+        - heading "손실 함수 추이" [level=3] [ref=e91]
+        - heading "정확도 추이" [level=3] [ref=e95]
+    - generic [ref=e98]:
+      - heading "🎯 성능 분석" [level=2] [ref=e99]
+      - generic [ref=e100]:
+        - heading "이상 탐지 성능" [level=3] [ref=e102]
+        - heading "재구성 오류 분포" [level=3] [ref=e106]
+      - generic [ref=e109]:
+        - heading "상세 성능 지표" [level=3] [ref=e110]
+        - table [ref=e112]:
+          - rowgroup [ref=e113]:
+            - row "지표 훈련 세트 검증 세트 테스트 세트 목표값" [ref=e114]:
+              - cell "지표" [ref=e115]
+              - cell "훈련 세트" [ref=e116]
+              - cell "검증 세트" [ref=e117]
+              - cell "테스트 세트" [ref=e118]
+              - cell "목표값" [ref=e119]
+          - rowgroup [ref=e120]:
+            - row "정확도 (Accuracy) 98.2% 96.8% 95.4% 95.0%" [ref=e121]:
+              - cell "정확도 (Accuracy)" [ref=e122]
+              - cell "98.2%" [ref=e123]
+              - cell "96.8%" [ref=e124]
+              - cell "95.4%" [ref=e125]
+              - cell "95.0%" [ref=e126]
+            - row "정밀도 (Precision) 97.8% 94.2% 93.1% 90.0%" [ref=e127]:
+              - cell "정밀도 (Precision)" [ref=e128]
+              - cell "97.8%" [ref=e129]
+              - cell "94.2%" [ref=e130]
+              - cell "93.1%" [ref=e131]
+              - cell "90.0%" [ref=e132]
+            - row "재현율 (Recall) 96.4% 91.8% 90.7% 85.0%" [ref=e133]:
+              - cell "재현율 (Recall)" [ref=e134]
+              - cell "96.4%" [ref=e135]
+              - cell "91.8%" [ref=e136]
+              - cell "90.7%" [ref=e137]
+              - cell "85.0%" [ref=e138]
+            - row "F1-Score 97.1% 93.0% 91.9% 87.5%" [ref=e139]:
+              - cell "F1-Score" [ref=e140]
+              - cell "97.1%" [ref=e141]
+              - cell "93.0%" [ref=e142]
+              - cell "91.9%" [ref=e143]
+              - cell "87.5%" [ref=e144]
+            - row "재구성 오류 (MSE) 0.0187 0.0234 0.0267 < 0.05" [ref=e145]:
+              - cell "재구성 오류 (MSE)" [ref=e146]
+              - cell "0.0187" [ref=e147]
+              - cell "0.0234" [ref=e148]
+              - cell "0.0267" [ref=e149]
+              - cell "< 0.05" [ref=e150]
+    - generic [ref=e151]:
+      - heading "💼 비즈니스 임팩트 분석" [level=2] [ref=e152]
+      - generic [ref=e153]:
+        - generic [ref=e154]:
+          - generic [ref=e155]:
+            - generic [ref=e156]: ✓
+            - heading "예상 효과" [level=3] [ref=e157]
+          - list [ref=e158]:
+            - listitem [ref=e159]: "• 장애 조기 감지: 평균 15분 단축"
+            - listitem [ref=e160]: "• 시스템 가동률: 99.9% → 99.95%"
+            - listitem [ref=e161]: "• 운영 비용 절감: 월 $2,500"
+            - listitem [ref=e162]: • 고객 만족도 향상 예상
+        - generic [ref=e163]:
+          - generic [ref=e164]:
+            - generic [ref=e165]: 📊
+            - heading "ROI 분석" [level=3] [ref=e166]
+          - list [ref=e167]:
+            - listitem [ref=e168]: "• 개발 비용: $15,000"
+            - listitem [ref=e169]: "• 월간 절감: $2,500"
+            - listitem [ref=e170]: "• ROI 회수 기간: 6개월"
+            - listitem [ref=e171]: "• 연간 예상 절감: $30,000"
+        - generic [ref=e172]:
+          - generic [ref=e173]:
+            - generic [ref=e174]: ⚠️
+            - heading "리스크 요소" [level=3] [ref=e175]
+          - list [ref=e176]:
+            - listitem [ref=e177]: • 데이터 품질 의존성 높음
+            - listitem [ref=e178]: • 정기 재학습 필요
+            - listitem [ref=e179]: • 운영팀 교육 필요
+            - listitem [ref=e180]: • 초기 오탐율 가능성
+    - generic [ref=e181]:
+      - heading "📋 권장사항 및 다음 단계" [level=2] [ref=e182]
+      - generic [ref=e183]:
+        - generic [ref=e184]:
+          - heading "🚀 즉시 실행 권장" [level=3] [ref=e185]
+          - list [ref=e186]:
+            - listitem [ref=e187]: • 프로덕션 환경 배포 준비
+            - listitem [ref=e188]: • 실시간 모니터링 대시보드 설정
+            - listitem [ref=e189]: • 알림 임계값 설정 (재구성 오류 > 0.05)
+            - listitem [ref=e190]: • 운영팀 교육 및 매뉴얼 작성
+        - generic [ref=e191]:
+          - heading "📅 단기 계획 (1-3개월)" [level=3] [ref=e192]
+          - list [ref=e193]:
+            - listitem [ref=e194]: • A/B 테스트를 통한 성능 검증
+            - listitem [ref=e195]: • 사용자 피드백 수집 및 분석
+            - listitem [ref=e196]: • 모델 성능 지표 정기 리뷰
+            - listitem [ref=e197]: • 추가 데이터 수집 및 학습 데이터 확장
+        - generic [ref=e198]:
+          - heading "🔮 장기 전략 (3-12개월)" [level=3] [ref=e199]
+          - list [ref=e200]:
+            - listitem [ref=e201]: • 다중 모델 앙상블 구축
+            - listitem [ref=e202]: • 자동 재학습 파이프라인 구축
+            - listitem [ref=e203]: • 설명 가능한 AI 기능 추가
+            - listitem [ref=e204]: • 다른 시스템으로 확장 적용
+    - generic [ref=e205]:
+      - heading "📖 기술 부록" [level=2] [ref=e206]
+      - generic [ref=e207]:
+        - heading "데이터셋 정보" [level=3] [ref=e208]
+        - generic [ref=e209]:
+          - generic [ref=e210]:
+            - generic [ref=e211]: "총 샘플 수:"
+            - paragraph: 12,000
+          - generic [ref=e212]:
+            - generic [ref=e213]: "훈련 세트:"
+            - paragraph: 8,400 (70%)
+          - generic [ref=e214]:
+            - generic [ref=e215]: "검증 세트:"
+            - paragraph: 2,400 (20%)
+          - generic [ref=e216]:
+            - generic [ref=e217]: "테스트 세트:"
+            - paragraph: 1,200 (10%)
+      - generic [ref=e218]:
+        - heading "학습 환경" [level=3] [ref=e219]
+        - generic [ref=e220]:
+          - generic [ref=e221]:
+            - generic [ref=e222]: "Python 버전:"
+            - paragraph: 3.9.7
+          - generic [ref=e223]:
+            - generic [ref=e224]: "TensorFlow:"
+            - paragraph: 2.14.0
+          - generic [ref=e225]:
+            - generic [ref=e226]: "GPU:"
+            - paragraph: NVIDIA Tesla V100
+          - generic [ref=e227]:
+            - generic [ref=e228]: "메모리 사용량:"
+            - paragraph: 4.2GB
+      - generic [ref=e229]:
+        - heading "모델 체크포인트" [level=3] [ref=e230]
+        - table [ref=e232]:
+          - rowgroup [ref=e233]:
+            - row "에포크 훈련 손실 검증 손실 체크포인트" [ref=e234]:
+              - cell "에포크" [ref=e235]
+              - cell "훈련 손실" [ref=e236]
+              - cell "검증 손실" [ref=e237]
+              - cell "체크포인트" [ref=e238]
+          - rowgroup [ref=e239]:
+            - row "25 0.0432 0.0456 checkpoint_025.h5" [ref=e240]:
+              - cell "25" [ref=e241]
+              - cell "0.0432" [ref=e242]
+              - cell "0.0456" [ref=e243]
+              - cell "checkpoint_025.h5" [ref=e244]
+            - row "50 0.0287 0.0298 checkpoint_050.h5" [ref=e245]:
+              - cell "50" [ref=e246]
+              - cell "0.0287" [ref=e247]
+              - cell "0.0298" [ref=e248]
+              - cell "checkpoint_050.h5" [ref=e249]
+            - row "75 0.0201 0.0245 checkpoint_075.h5" [ref=e250]:
+              - cell "75" [ref=e251]
+              - cell "0.0201" [ref=e252]
+              - cell "0.0245" [ref=e253]
+              - cell "checkpoint_075.h5" [ref=e254]
+            - row "100 0.0187 0.0234 final_model.h5 ⭐" [ref=e255]:
+              - cell "100" [ref=e256]
+              - cell "0.0187" [ref=e257]
+              - cell "0.0234" [ref=e258]
+              - cell "final_model.h5 ⭐" [ref=e259]
+    - generic [ref=e260]:
+      - paragraph [ref=e261]:
+        - text: © 2024 AIRIS EPM - ML Model Training Report | Generated on
+        - generic [ref=e262]: 2025. 8. 27. 오후 11:19:09
+      - paragraph [ref=e263]: 이 보고서는 AIRIS EPM 시스템에서 자동 생성되었습니다.
+```

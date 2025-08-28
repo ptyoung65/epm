@@ -1185,6 +1185,387 @@ class AIOpsMLEngine extends EventEmitter {
                    ((Date.now() - this.metrics.startTime) / 1000) || 0
     };
   }
+
+  /**
+   * Train Prediction Model (LSTM)
+   */
+  async trainPredictionModel(historicalData) {
+    try {
+      logger.info('LSTM 예측 모델 학습 시작', {
+        dataSize: historicalData.length,
+        service: 'aiops-ml'
+      });
+
+      // Prepare time series training data
+      const sequences = await this.prepareTimeSeriesData(historicalData);
+      const { inputs, outputs } = sequences;
+      
+      const inputTensor = tf.tensor3d(inputs);
+      const outputTensor = tf.tensor2d(outputs);
+
+      // Train LSTM model
+      const history = await this.models.prediction.fit(inputTensor, outputTensor, {
+        epochs: 100,
+        batchSize: 16,
+        validationSplit: 0.2,
+        callbacks: {
+          onEpochEnd: (epoch, logs) => {
+            if (epoch % 20 === 0) {
+              logger.debug(`LSTM Epoch ${epoch}: mae = ${logs.mae?.toFixed(4)}`);
+            }
+          }
+        }
+      });
+
+      logger.info('LSTM 예측 모델 학습 완료', {
+        finalMAE: history.history.mae[history.history.mae.length - 1],
+        service: 'aiops-ml'
+      });
+
+      // Clean up tensors
+      inputTensor.dispose();
+      outputTensor.dispose();
+
+      return history;
+
+    } catch (error) {
+      this.metrics.errors++;
+      logger.error('LSTM 예측 모델 학습 실패', {
+        error: error.message,
+        service: 'aiops-ml'
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Train RCA Model
+   */
+  async trainRCAModel(historicalIncidents) {
+    try {
+      logger.info('RCA 분석 모델 학습 시작', {
+        dataSize: historicalIncidents.length,
+        service: 'aiops-ml'
+      });
+
+      // Prepare RCA training data
+      const { features, labels } = await this.prepareRCAData(historicalIncidents);
+      
+      const inputTensor = tf.tensor2d(features);
+      const outputTensor = tf.tensor2d(labels);
+
+      // Train RCA model
+      const history = await this.models.rca.fit(inputTensor, outputTensor, {
+        epochs: 80,
+        batchSize: 24,
+        validationSplit: 0.2,
+        callbacks: {
+          onEpochEnd: (epoch, logs) => {
+            if (epoch % 20 === 0) {
+              logger.debug(`RCA Epoch ${epoch}: accuracy = ${logs.accuracy?.toFixed(4)}`);
+            }
+          }
+        }
+      });
+
+      logger.info('RCA 분석 모델 학습 완료', {
+        finalAccuracy: history.history.accuracy[history.history.accuracy.length - 1],
+        service: 'aiops-ml'
+      });
+
+      // Clean up tensors
+      inputTensor.dispose();
+      outputTensor.dispose();
+
+      return history;
+
+    } catch (error) {
+      this.metrics.errors++;
+      logger.error('RCA 분석 모델 학습 실패', {
+        error: error.message,
+        service: 'aiops-ml'
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Train Clustering Model
+   */
+  async trainClusteringModel(historicalPatterns) {
+    try {
+      logger.info('클러스터링 모델 학습 시작', {
+        dataSize: historicalPatterns.length,
+        service: 'aiops-ml'
+      });
+
+      // Prepare clustering training data
+      const { features, labels } = await this.prepareClusteringData(historicalPatterns);
+      
+      const inputTensor = tf.tensor2d(features);
+      const outputTensor = tf.tensor2d(labels);
+
+      // Train clustering model
+      const history = await this.models.clustering.fit(inputTensor, outputTensor, {
+        epochs: 60,
+        batchSize: 32,
+        validationSplit: 0.2,
+        callbacks: {
+          onEpochEnd: (epoch, logs) => {
+            if (epoch % 15 === 0) {
+              logger.debug(`Clustering Epoch ${epoch}: accuracy = ${logs.accuracy?.toFixed(4)}`);
+            }
+          }
+        }
+      });
+
+      logger.info('클러스터링 모델 학습 완료', {
+        finalAccuracy: history.history.accuracy[history.history.accuracy.length - 1],
+        service: 'aiops-ml'
+      });
+
+      // Clean up tensors
+      inputTensor.dispose();
+      outputTensor.dispose();
+
+      return history;
+
+    } catch (error) {
+      this.metrics.errors++;
+      logger.error('클러스터링 모델 학습 실패', {
+        error: error.message,
+        service: 'aiops-ml'
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Update model configuration
+   */
+  updateModelConfig(modelType, hyperparameters) {
+    const modelConfigMap = {
+      'autoencoder': 'anomaly',
+      'lstm': 'prediction',
+      'rca': 'rca',
+      'clustering': 'clustering'
+    };
+
+    const modelName = modelConfigMap[modelType];
+    if (!modelName) {
+      throw new Error(`Unknown model type: ${modelType}`);
+    }
+
+    // Update configuration
+    if (hyperparameters.learningRate) {
+      this.config[`${modelName}LearningRate`] = hyperparameters.learningRate;
+    }
+    if (hyperparameters.epochs) {
+      this.config[`${modelName}Epochs`] = hyperparameters.epochs;
+    }
+    if (hyperparameters.batchSize) {
+      this.config[`${modelName}BatchSize`] = hyperparameters.batchSize;
+    }
+    if (hyperparameters.threshold) {
+      this.config[`${modelName}Threshold`] = hyperparameters.threshold;
+    }
+
+    logger.info(`모델 설정 업데이트: ${modelType}`, {
+      hyperparameters,
+      service: 'aiops-ml'
+    });
+  }
+
+  /**
+   * Get model configuration
+   */
+  getModelConfig(modelType) {
+    const modelConfigMap = {
+      'autoencoder': 'anomaly',
+      'lstm': 'prediction',
+      'rca': 'rca',
+      'clustering': 'clustering'
+    };
+
+    const modelName = modelConfigMap[modelType];
+    if (!modelName) {
+      throw new Error(`Unknown model type: ${modelType}`);
+    }
+
+    return {
+      learningRate: this.config[`${modelName}LearningRate`] || 0.001,
+      epochs: this.config[`${modelName}Epochs`] || 50,
+      batchSize: this.config[`${modelName}BatchSize`] || 32,
+      threshold: this.config[`${modelName}Threshold`] || 0.95,
+      modelPath: this.config.modelPath,
+      lastTrained: this.models[modelName]?.lastTrained || null
+    };
+  }
+
+  /**
+   * Get training status
+   */
+  getTrainingStatus(modelType) {
+    const modelConfigMap = {
+      'autoencoder': 'anomaly',
+      'lstm': 'prediction',
+      'rca': 'rca',
+      'clustering': 'clustering'
+    };
+
+    const modelName = modelConfigMap[modelType];
+    if (!modelName) {
+      throw new Error(`Unknown model type: ${modelType}`);
+    }
+
+    const model = this.models[modelName];
+    return {
+      isTraining: model?.isTraining || false,
+      progress: model?.trainingProgress || 0,
+      lastTrained: model?.lastTrained || null,
+      modelLoaded: !!model,
+      accuracy: this.metrics.accuracy || 0,
+      totalPredictions: this.metrics.totalPredictions || 0
+    };
+  }
+
+  /**
+   * Save model checkpoint
+   */
+  async saveModelCheckpoint(modelType, checkpointName) {
+    const modelConfigMap = {
+      'autoencoder': 'anomaly',
+      'lstm': 'prediction',
+      'rca': 'rca',
+      'clustering': 'clustering'
+    };
+
+    const modelName = modelConfigMap[modelType];
+    if (!modelName || !this.models[modelName]) {
+      throw new Error(`Model not found: ${modelType}`);
+    }
+
+    const savePath = `file://${this.config.modelPath}/${modelName}_${checkpointName}`;
+    await this.models[modelName].save(savePath);
+    
+    logger.info(`모델 체크포인트 저장: ${modelType}`, {
+      savePath,
+      checkpointName,
+      service: 'aiops-ml'
+    });
+
+    return savePath;
+  }
+
+  /**
+   * Load model checkpoint
+   */
+  async loadModelCheckpoint(modelType, checkpointName) {
+    const modelConfigMap = {
+      'autoencoder': 'anomaly',
+      'lstm': 'prediction',
+      'rca': 'rca',
+      'clustering': 'clustering'
+    };
+
+    const modelName = modelConfigMap[modelType];
+    if (!modelName) {
+      throw new Error(`Unknown model type: ${modelType}`);
+    }
+
+    const loadPath = `file://${this.config.modelPath}/${modelName}_${checkpointName}`;
+    this.models[modelName] = await tf.loadLayersModel(loadPath);
+    
+    logger.info(`모델 체크포인트 로드: ${modelType}`, {
+      loadPath,
+      checkpointName,
+      service: 'aiops-ml'
+    });
+  }
+
+  /**
+   * Prepare time series data for LSTM training
+   */
+  async prepareTimeSeriesData(data) {
+    const sequenceLength = 24;
+    const inputs = [];
+    const outputs = [];
+
+    for (let i = 0; i < data.length - sequenceLength - 10; i++) {
+      const sequence = data.slice(i, i + sequenceLength);
+      const target = data.slice(i + sequenceLength, i + sequenceLength + 10);
+      
+      inputs.push(sequence.map(d => [
+        d.cpu || 0, d.memory || 0, d.disk || 0, d.network || 0,
+        d.responseTime || 0, d.errorRate || 0, d.throughput || 0,
+        d.connections || 0, d.threads || 0, d.transactions || 0
+      ]));
+      
+      outputs.push(target.map(d => d.cpu || 0));
+    }
+
+    return { inputs, outputs };
+  }
+
+  /**
+   * Prepare RCA data for training
+   */
+  async prepareRCAData(incidents) {
+    const features = [];
+    const labels = [];
+
+    for (const incident of incidents) {
+      // Extract features from incident
+      const feature = new Array(50).fill(0);
+      // Simplified feature extraction
+      feature[0] = incident.severity || 0;
+      feature[1] = incident.errorCount || 0;
+      feature[2] = incident.responseTime || 0;
+      // ... more features
+      
+      // One-hot encode root cause
+      const label = new Array(20).fill(0);
+      const causeIndex = incident.rootCauseId || 0;
+      if (causeIndex < 20) {
+        label[causeIndex] = 1;
+      }
+      
+      features.push(feature);
+      labels.push(label);
+    }
+
+    return { features, labels };
+  }
+
+  /**
+   * Prepare clustering data for training
+   */
+  async prepareClusteringData(patterns) {
+    const features = [];
+    const labels = [];
+
+    for (const pattern of patterns) {
+      // Extract features from pattern
+      const feature = new Array(30).fill(0);
+      // Simplified feature extraction
+      feature[0] = pattern.frequency || 0;
+      feature[1] = pattern.amplitude || 0;
+      feature[2] = pattern.duration || 0;
+      // ... more features
+      
+      // One-hot encode cluster
+      const label = new Array(8).fill(0);
+      const clusterIndex = pattern.clusterId || 0;
+      if (clusterIndex < 8) {
+        label[clusterIndex] = 1;
+      }
+      
+      features.push(feature);
+      labels.push(label);
+    }
+
+    return { features, labels };
+  }
 }
 
 module.exports = AIOpsMLEngine;
