@@ -17,7 +17,7 @@ const PlaywrightConverterService = require('./services/PlaywrightConverterServic
 const PlaywrightExecutorService = require('./services/PlaywrightExecutorService');
 
 const app = express();
-const port = process.env.PORT || 3004;
+const port = process.env.PORT || 3000;
 
 // 서비스 인스턴스 생성
 const recordingService = new SessionRecordingService();

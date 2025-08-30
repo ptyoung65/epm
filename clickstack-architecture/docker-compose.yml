@@ -4,6 +4,7 @@ services:
   clickhouse:
     image: clickhouse/clickhouse-server:23.12
     hostname: clickhouse
+    container_name: clickstack-architecture-clickhouse-1
     ports:
       - "8123:8123"  # HTTP interface
       - "9000:9000"  # Native client
@@ -17,16 +18,19 @@ services:
       - ./database/clickhouse/config:/etc/clickhouse-server/config.d
     networks:
       - airis_network
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
-      interval: 30s
+      interval: 20s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 60s
 
   # Apache Kafka - Event Streaming
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     hostname: kafka
+    container_name: clickstack-architecture-kafka-1
     ports:
       - "9092:9092"
       - "29092:29092"
@@ -40,50 +44,67 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_started
     networks:
       - airis_network
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: 20s
+      timeout: 15s
+      retries: 5
+      start_period: 90s
 
   # Zookeeper for Kafka
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
     hostname: zookeeper
+    container_name: clickstack-architecture-zookeeper-1
     ports:
       - "2181:2181"
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
     networks:
       - airis_network
     volumes:
       - zookeeper_data:/var/lib/zookeeper
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   # Redis - Caching & Session Store
   redis:
     image: redis:7.2-alpine
     hostname: redis
+    container_name: clickstack-architecture-redis-1
     ports:
       - "6379:6379"
-    command: redis-server --appendonly yes --requirepass airis_redis_2024
+    command: redis-server --appendonly yes --requirepass airis_redis_2024 --maxmemory 512mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
     networks:
       - airis_network
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "airis_redis_2024", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   # PostgreSQL - Primary Database for User Data & Chatbot
   postgres:
     image: postgres:16-alpine
     hostname: postgres
+    container_name: clickstack-architecture-postgres-1
     ports:
       - "5432:5432"
     environment:
@@ -91,16 +112,27 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/postgres/init:/docker-entrypoint-initdb.d
     networks:
       - airis_network
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d airis_epm"]
-      interval: 30s
+      test: ["CMD-SHELL", "pg_isready -U postgres -d airis_epm -h localhost"]
+      interval: 20s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
 
   # AIRIS-MON API Gateway
   api-gateway:
@@ -144,6 +176,7 @@ services:
       context: ./services/data-ingestion
       dockerfile: Dockerfile
     hostname: data-ingestion
+    container_name: clickstack-architecture-data-ingestion-1
     ports:
       - "3007:3001"
     environment:
@@ -160,14 +193,25 @@ services:
       BATCH_SIZE: 1000
       FLUSH_INTERVAL: 5000
     depends_on:
-      - clickhouse
-      - kafka
-      - redis
+      clickhouse:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - airis_network
+    restart: unless-stopped
     volumes:
       - ./services/data-ingestion/src:/app/src
       - ./services/data-ingestion/logs:/app/logs
+      - ./scripts/universal-healthcheck.sh:/usr/local/bin/healthcheck.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/local/bin/healthcheck.sh node 3001"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
 
   # Analytics Processing Service
   analytics-engine:
@@ -175,6 +219,7 @@ services:
       context: ./services/analytics-engine
       dockerfile: Dockerfile
     hostname: analytics-engine
+    container_name: clickstack-architecture-analytics-engine-1
     environment:
       NODE_ENV: development
       CLICKHOUSE_HOST: clickhouse
@@ -184,14 +229,25 @@ services:
       CLICKHOUSE_PASSWORD: airis_secure_2024
       KAFKA_BROKERS: kafka:9092
       ML_MODEL_PATH: /app/models
+      PORT: 3000
     depends_on:
-      - clickhouse
-      - kafka
+      clickhouse:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     networks:
       - airis_network
+    restart: unless-stopped
     volumes:
       - ./services/analytics-engine/src:/app/src
       - ./services/analytics-engine/models:/app/models
+      - ./scripts/universal-healthcheck.sh:/usr/local/bin/healthcheck.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/local/bin/healthcheck.sh node 3000"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
 
   # OpenTelemetry Collector
   otel-collector:
@@ -224,6 +280,7 @@ services:
       context: ./services/session-replay
       dockerfile: Dockerfile
     hostname: session-replay
+    container_name: clickstack-architecture-session-replay-1
     ports:
       - "3003:3000"
     environment:
@@ -240,15 +297,25 @@ services:
       MAX_SESSION_DURATION: 1800000
       SAMPLING_RATE: 1.0
     depends_on:
-      - clickhouse
-      - redis
-      - kafka
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     networks:
       - airis_network
     volumes:
       - ./services/session-replay/src:/app/src
       - session_replay_data:/app/data
+      - ./scripts/universal-healthcheck.sh:/usr/local/bin/healthcheck.sh:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "/usr/local/bin/healthcheck.sh node 3000"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
 
   # AIOps ML Engine
   aiops:
@@ -369,17 +436,20 @@ services:
       JWT_SECRET: airis_chatbot_jwt_secret_change_in_production
       CORS_ORIGINS: http://localhost:3001,http://localhost:3002
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     networks:
       - airis_network
     volumes:
       - ./services/chatbot-api/src:/app/src
+      - ./scripts/universal-healthcheck.sh:/usr/local/bin/healthcheck.sh:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3013/health"]
-      interval: 30s
+      test: ["CMD-SHELL", "/usr/local/bin/healthcheck.sh node 3013"]
+      interval: 20s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 45s
 
   # Korean HyperDX-style UI
   ui:
@@ -387,19 +457,25 @@ services:
       context: ./ui/korean-hyperdx-dashboard
       dockerfile: Dockerfile
     hostname: ui
+    container_name: clickstack-architecture-ui-1
     ports:
       - "3001:80"
     environment:
       - NODE_ENV=production
     depends_on:
-      - api-gateway
+      api-gateway:
+        condition: service_healthy
     networks:
       - airis_network
+    volumes:
+      - ./scripts/universal-healthcheck.sh:/usr/local/bin/healthcheck.sh:ro
+    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80"]
-      interval: 30s
+      test: ["CMD-SHELL", "/usr/local/bin/healthcheck.sh nginx 80"]
+      interval: 20s
       timeout: 10s
-      retries: 3
+      retries: 5
+      start_period: 30s
 
   # NGINX Reverse Proxy
   # nginx:
@@ -420,9 +496,20 @@ services:
 networks:
   airis_network:
     driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: airis-bridge
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+      com.docker.network.bridge.host_binding_ipv4: "0.0.0.0"
     ipam:
+      driver: default
       config:
         - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+          ip_range: 172.20.1.0/24
+    labels:
+      com.docker.compose.project: "airis-epm"
+      com.docker.compose.network: "main"
 
 volumes:
   clickhouse_data:
