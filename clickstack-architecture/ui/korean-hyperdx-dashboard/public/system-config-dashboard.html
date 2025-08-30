@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>시스템 설정 대시보드 - AIRIS EPM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96.1%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --muted: 210 40% 96.1%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96.1%;
+            --accent-foreground: 222.2 47.4% 11.2%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 222.2 84% 4.9%;
+            --radius: 0.5rem;
+        }
+        
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 212.7 26.8% 83.9%;
+        }
+
+        body {
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+
+        .card {
+            background: hsl(var(--card));
+            color: hsl(var(--card-foreground));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+        }
+
+        .config-item {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            padding: 1rem;
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            margin-bottom: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .config-item:hover {
+            background: hsl(var(--muted));
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #10b981;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+
+        .form-input:focus {
+            outline: none;
+            ring: 2px;
+            ring-color: hsl(var(--ring));
+            border-color: hsl(var(--ring));
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+
+        .config-section {
+            border-left: 4px solid;
+            padding-left: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .config-section.system {
+            border-left-color: #3b82f6;
+        }
+
+        .config-section.security {
+            border-left-color: #ef4444;
+        }
+
+        .config-section.performance {
+            border-left-color: #10b981;
+        }
+
+        .config-section.integration {
+            border-left-color: #f59e0b;
+        }
+
+        .config-section.monitoring {
+            border-left-color: #8b5cf6;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.1);
+            color: #059669;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-inactive {
+            background: rgba(107, 114, 128, 0.1);
+            color: #4b5563;
+            border: 1px solid rgba(107, 114, 128, 0.3);
+        }
+
+        .status-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .tab-button {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab-button.active {
+            border-bottom-color: hsl(var(--primary));
+            color: hsl(var(--primary));
+        }
+
+        .tab-button:hover {
+            background: hsl(var(--muted));
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div class="container mx-auto px-4">
+            <div class="flex h-14 items-center">
+                <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+                
+                <div class="ml-auto flex items-center space-x-4">
+                    
+                    <!-- APM 모니터링 드롭다운 -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
+                            <span>📊 APM 모니터링</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute left-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/j2ee-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">☕ J2EE 모니터링</a>
+                            <a href="/was-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🏗️ WAS 모니터링</a>
+                            <a href="/exception-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🚨 예외 추적</a>
+                            <a href="/topology-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🗺️ 서비스 맵</a>
+                            <a href="/performance-optimization-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">⚡ 성능 최적화</a>
+                        </div>
+                    </div>
+
+                    <!-- AI/ML 시스템 드롭다운 -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
+                            <span>🤖 AI/ML 시스템</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute left-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/ai-prediction-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔮 AI 예측 분석</a>
+                            <a href="/data-quality-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📊 데이터 품질</a>
+                            <a href="/aiops-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🤖 AIOps 관리</a>
+                            <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                            <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">ML 훈련</div>
+                            <a href="/ml-training-autoencoder.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔬 오토인코더</a>
+                            <a href="/ml-training-clustering.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🎯 클러스터링</a>
+                            <a href="/ml-training-lstm.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🧠 LSTM</a>
+                            <a href="/ml-training-rca.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔍 RCA 분석</a>
+                            <a href="/ml-training-report.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📋 훈련 리포트</a>
+                            <a href="/clustering-insights.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">💡 인사이트</a>
+                        </div>
+                    </div>
+
+                    <!-- 시스템 관리 드롭다운 -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20">
+                            <span>⚙️ 시스템 관리</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/alert-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔔 알림 관리</a>
+                            <a href="/security-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🛡️ 보안 모니터링</a>
+                            <a href="/log-analysis-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📄 로그 분석</a>
+                            <a href="/external-integration-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔗 외부 통합</a>
+                            <a href="/system-config-dashboard.html" class="block px-4 py-2 text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40">⚙️ 시스템 설정</a>
+                        </div>
+                    </div>
+
+                    <!-- 분석 & 리포트 드롭다운 -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
+                            <span>📈 분석 & 리포트</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute right-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/deployment-manager.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🚀 배포 관리</a>
+                            <a href="/session-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">👤 세션 관리</a>
+                            <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                            <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">온톨로지</div>
+                            <a href="/ontology.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🧠 기본 온톨로지</a>
+                            <a href="/ontology-tabs.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📂 탭 온톨로지</a>
+                            <a href="/ontology-complete.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔗 완전 온톨로지</a>
+                        </div>
+                    </div>
+
+                    <!-- 챗봇 아이콘 -->
+                    <button onclick="window.open('/chatbot.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes')" class="btn btn-ghost" title="지능형 분석 챗봇">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </button>
+
+                    <!-- 테마 토글 -->
+                    <button id="themeToggle" class="btn btn-ghost">🌙</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-2">
+        <!-- Page Header -->
+        <div class="flex justify-between items-center mb-4">
+            <div>
+                <h1 class="text-2xl font-bold mb-2">🔧 시스템 설정 대시보드</h1>
+                <p class="text-muted-foreground">AIRIS EPM 시스템 환경 구성 및 설정 관리</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="exportConfig()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    <i class="fas fa-download mr-2"></i>설정 내보내기
+                </button>
+                <button onclick="saveAllSettings()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-save mr-2"></i>모든 설정 저장
+                </button>
+            </div>
+        </div>
+
+        <!-- Configuration Tabs -->
+        <div class="card mb-6">
+            <div class="flex border-b">
+                <button class="tab-button active" onclick="switchTab('system')" id="system-tab">
+                    <i class="fas fa-cogs mr-2"></i>시스템
+                </button>
+                <button class="tab-button" onclick="switchTab('security')" id="security-tab">
+                    <i class="fas fa-shield-alt mr-2"></i>보안
+                </button>
+                <button class="tab-button" onclick="switchTab('performance')" id="performance-tab">
+                    <i class="fas fa-tachometer-alt mr-2"></i>성능
+                </button>
+                <button class="tab-button" onclick="switchTab('integration')" id="integration-tab">
+                    <i class="fas fa-plug mr-2"></i>통합
+                </button>
+                <button class="tab-button" onclick="switchTab('monitoring')" id="monitoring-tab">
+                    <i class="fas fa-chart-line mr-2"></i>모니터링
+                </button>
+            </div>
+
+            <!-- System Configuration Tab -->
+            <div id="system-content" class="tab-content active p-6">
+                <div class="config-section system">
+                    <h3 class="text-lg font-semibold mb-4">기본 시스템 설정</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">시스템 이름</label>
+                            <input type="text" class="form-input" value="AIRIS EPM Production" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">환경</label>
+                            <select class="form-select">
+                                <option value="production">Production</option>
+                                <option value="staging">Staging</option>
+                                <option value="development">Development</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">시간대</label>
+                            <select class="form-select">
+                                <option value="Asia/Seoul">Asia/Seoul (KST)</option>
+                                <option value="UTC">UTC</option>
+                                <option value="America/New_York">America/New_York</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">언어</label>
+                            <select class="form-select">
+                                <option value="ko">한국어</option>
+                                <option value="en">English</option>
+                                <option value="ja">日本語</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h4 class="text-md font-semibold mb-3 mt-6">서비스 설정</h4>
+                    <div class="space-y-3">
+                        <div class="config-item">
+                            <div class="flex-1">
+                                <div class="font-medium">자동 백업</div>
+                                <div class="text-sm text-muted-foreground">매일 자동으로 데이터 백업 수행</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked onchange="toggleSetting('autoBackup', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="config-item">
+                            <div class="flex-1">
+                                <div class="font-medium">자동 업데이트</div>
+                                <div class="text-sm text-muted-foreground">시스템 구성 요소 자동 업데이트</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked onchange="toggleSetting('autoUpdate', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="config-item">
+                            <div class="flex-1">
+                                <div class="font-medium">디버그 모드</div>
+                                <div class="text-sm text-muted-foreground">상세한 디버그 로그 활성화</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" onchange="toggleSetting('debugMode', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Configuration Tab -->
+            <div id="security-content" class="tab-content p-6">
+                <div class="config-section security">
+                    <h3 class="text-lg font-semibold mb-4">보안 설정</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">세션 타임아웃 (분)</label>
+                            <input type="number" class="form-input" value="30" min="5" max="480" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">비밀번호 만료 기간 (일)</label>
+                            <input type="number" class="form-input" value="90" min="30" max="365" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">로그인 실패 허용 횟수</label>
+                            <input type="number" class="form-input" value="5" min="1" max="10" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">IP 허용 목록</label>
+                            <textarea class="form-input h-20" placeholder="192.168.1.0/24&#10;10.0.0.0/8"></textarea>
+                        </div>
+                    </div>
+
+                    <h4 class="text-md font-semibold mb-3 mt-6">보안 기능</h4>
+                    <div class="space-y-3">
+                        <div class="config-item">
+                            <div class="flex-1">
+                                <div class="font-medium">2단계 인증 (2FA)</div>
+                                <div class="text-sm text-muted-foreground">TOTP 기반 추가 인증 활성화</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked onchange="toggleSetting('twoFactorAuth', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="config-item">
+                            <div class="flex-1">
+                                <div class="font-medium">SSL/TLS 강제</div>
+                                <div class="text-sm text-muted-foreground">모든 연결에 HTTPS 요구</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked onchange="toggleSetting('forceSSL', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="config-item">
+                            <div class="flex-1">
+                                <div class="font-medium">브루트포스 보호</div>
+                                <div class="text-sm text-muted-foreground">반복 로그인 시도 차단</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked onchange="toggleSetting('bruteForceProtection', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Configuration Tab -->
+            <div id="performance-content" class="tab-content p-6">
+                <div class="config-section performance">
+                    <h3 class="text-lg font-semibold mb-4">성능 설정</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">최대 동시 연결 수</label>
+                            <input type="number" class="form-input" value="1000" min="100" max="10000" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">쿼리 타임아웃 (초)</label>
+                            <input type="number" class="form-input" value="30" min="5" max="300" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">메모리 캐시 크기 (MB)</label>
+                            <input type="number" class="form-input" value="512" min="128" max="4096" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">로그 보존 기간 (일)</label>
+                            <input type="number" class="form-input" value="30" min="7" max="365" />
+                        </div>
+                    </div>
+
+                    <h4 class="text-md font-semibold mb-3 mt-6">최적화 설정</h4>
+                    <div class="space-y-3">
+                        <div class="config-item">
+                            <div class="flex-1">
+                                <div class="font-medium">자동 스케일링</div>
+                                <div class="text-sm text-muted-foreground">부하에 따른 자동 리소스 조정</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked onchange="toggleSetting('autoScaling', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="config-item">
+                            <div class="flex-1">
+                                <div class="font-medium">압축 활성화</div>
+                                <div class="text-sm text-muted-foreground">응답 데이터 gzip 압축</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked onchange="toggleSetting('compression', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="config-item">
+                            <div class="flex-1">
+                                <div class="font-medium">캐시 최적화</div>
+                                <div class="text-sm text-muted-foreground">지능형 캐싱 전략 적용</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked onchange="toggleSetting('cacheOptimization', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Integration Configuration Tab -->
+            <div id="integration-content" class="tab-content p-6">
+                <div class="config-section integration">
+                    <h3 class="text-lg font-semibold mb-4">통합 설정</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">API 키 (ServiceNow)</label>
+                            <input type="password" class="form-input" placeholder="••••••••••••••••" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">API 키 (Jira)</label>
+                            <input type="password" class="form-input" placeholder="••••••••••••••••" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Webhook URL</label>
+                            <input type="url" class="form-input" value="https://airis-epm.company.com/webhook" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">동기화 간격 (분)</label>
+                            <input type="number" class="form-input" value="15" min="1" max="1440" />
+                        </div>
+                    </div>
+
+                    <h4 class="text-md font-semibold mb-3 mt-6">외부 시스템 연동</h4>
+                    <div class="space-y-3">
+                        <div class="config-item">
+                            <div class="flex-1">
+                                <div class="font-medium">ServiceNow 통합</div>
+                                <div class="text-sm text-muted-foreground">인시던트 및 변경 관리 연동</div>
+                            </div>
+                            <span class="status-badge status-active">활성</span>
+                        </div>
+                        <div class="config-item">
+                            <div class="flex-1">
+                                <div class="font-medium">Jira 통합</div>
+                                <div class="text-sm text-muted-foreground">이슈 및 프로젝트 관리 연동</div>
+                            </div>
+                            <span class="status-badge status-warning">오류</span>
+                        </div>
+                        <div class="config-item">
+                            <div class="flex-1">
+                                <div class="font-medium">Slack 알림</div>
+                                <div class="text-sm text-muted-foreground">실시간 알림 전송</div>
+                            </div>
+                            <span class="status-badge status-active">활성</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monitoring Configuration Tab -->
+            <div id="monitoring-content" class="tab-content p-6">
+                <div class="config-section monitoring">
+                    <h3 class="text-lg font-semibold mb-4">모니터링 설정</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">수집 간격 (초)</label>
+                            <input type="number" class="form-input" value="10" min="1" max="300" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">알림 임계치 (CPU %)</label>
+                            <input type="number" class="form-input" value="80" min="50" max="95" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">메모리 알림 임계치 (%)</label>
+                            <input type="number" class="form-input" value="85" min="70" max="95" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">디스크 알림 임계치 (%)</label>
+                            <input type="number" class="form-input" value="90" min="80" max="98" />
+                        </div>
+                    </div>
+
+                    <h4 class="text-md font-semibold mb-3 mt-6">고급 모니터링</h4>
+                    <div class="space-y-3">
+                        <div class="config-item">
+                            <div class="flex-1">
+                                <div class="font-medium">실시간 메트릭</div>
+                                <div class="text-sm text-muted-foreground">실시간 성능 지표 수집</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked onchange="toggleSetting('realTimeMetrics', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="config-item">
+                            <div class="flex-1">
+                                <div class="font-medium">분산 트레이싱</div>
+                                <div class="text-sm text-muted-foreground">마이크로서비스 간 추적</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked onchange="toggleSetting('distributedTracing', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="config-item">
+                            <div class="flex-1">
+                                <div class="font-medium">이상 탐지</div>
+                                <div class="text-sm text-muted-foreground">AI 기반 이상 패턴 감지</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" checked onchange="toggleSetting('anomalyDetection', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Status Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="card p-4">
+                <div class="text-center">
+                    <i class="fas fa-cogs text-2xl text-blue-600 mb-2"></i>
+                    <div class="font-semibold">시스템 설정</div>
+                    <div class="text-sm text-muted-foreground">12개 항목 구성됨</div>
+                </div>
+            </div>
+            <div class="card p-4">
+                <div class="text-center">
+                    <i class="fas fa-shield-alt text-2xl text-red-600 mb-2"></i>
+                    <div class="font-semibold">보안 설정</div>
+                    <div class="text-sm text-muted-foreground">8개 정책 활성화</div>
+                </div>
+            </div>
+            <div class="card p-4">
+                <div class="text-center">
+                    <i class="fas fa-tachometer-alt text-2xl text-green-600 mb-2"></i>
+                    <div class="font-semibold">성능 설정</div>
+                    <div class="text-sm text-muted-foreground">최적화됨</div>
+                </div>
+            </div>
+            <div class="card p-4">
+                <div class="text-center">
+                    <i class="fas fa-plug text-2xl text-orange-600 mb-2"></i>
+                    <div class="font-semibold">통합 설정</div>
+                    <div class="text-sm text-muted-foreground">3개 시스템 연결</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        if (currentTheme === 'dark') {
+            html.classList.add('dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const theme = html.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', theme);
+        });
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Remove active class from all tabs and content
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to selected tab and content
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            document.getElementById(`${tabName}-content`).classList.add('active');
+        }
+
+        // Toggle settings
+        function toggleSetting(settingName, enabled) {
+            console.log(`Setting ${settingName} ${enabled ? 'enabled' : 'disabled'}`);
+            
+            // Show feedback to user
+            const message = enabled ? '활성화' : '비활성화';
+            showNotification(`${settingName} 설정이 ${message}되었습니다.`);
+        }
+
+        // Show notification
+        function showNotification(message) {
+            // Create notification element (simple implementation)
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 3000);
+        }
+
+        // Configuration management functions
+        function saveAllSettings() {
+            // Collect all form values
+            const settings = {};
+            
+            // Get all input values
+            document.querySelectorAll('input, select, textarea').forEach(element => {
+                if (element.type === 'checkbox') {
+                    settings[element.id || 'unnamed'] = element.checked;
+                } else {
+                    settings[element.id || 'unnamed'] = element.value;
+                }
+            });
+            
+            console.log('Saving settings:', settings);
+            showNotification('모든 설정이 저장되었습니다.');
+        }
+
+        function exportConfig() {
+            const config = {
+                timestamp: new Date().toISOString(),
+                system: {
+                    name: 'AIRIS EPM Production',
+                    environment: 'production',
+                    timezone: 'Asia/Seoul',
+                    language: 'ko'
+                },
+                security: {
+                    sessionTimeout: 30,
+                    passwordExpiry: 90,
+                    maxLoginAttempts: 5,
+                    twoFactorAuth: true,
+                    forceSSL: true
+                },
+                performance: {
+                    maxConnections: 1000,
+                    queryTimeout: 30,
+                    cacheSize: 512,
+                    logRetention: 30
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `airis-epm-config-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showNotification('설정 파일이 내보내기되었습니다.');
+        }
+
+        function refreshData() {
+            showNotification('설정 데이터를 새로고침했습니다.');
+        }
+
+        // Initialize form validation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add input validation
+            document.querySelectorAll('input[type="number"]').forEach(input => {
+                input.addEventListener('change', function() {
+                    const min = parseInt(this.min);
+                    const max = parseInt(this.max);
+                    const value = parseInt(this.value);
+                    
+                    if (value < min) this.value = min;
+                    if (value > max) this.value = max;
+                });
+            });
+        });
+    </script>
+</body>
+</html>

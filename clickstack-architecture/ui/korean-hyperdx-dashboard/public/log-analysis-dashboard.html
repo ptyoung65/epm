@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그 분석 - AIRIS EPM</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    
+    <!-- shadcn/ui styles -->
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 222.2 84% 4.9%;
+        }
+
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 212.7 26.8% 83.9%;
+        }
+
+        .btn {
+            @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background;
+        }
+
+        .btn-primary {
+            @apply bg-primary text-primary-foreground hover:bg-primary/90;
+            padding: 0.5rem 1rem;
+        }
+
+        .btn-ghost {
+            @apply hover:bg-accent hover:text-accent-foreground;
+            padding: 0.5rem 1rem;
+        }
+
+        .card {
+            @apply rounded-lg border bg-card text-card-foreground shadow-sm;
+        }
+
+        .card-header {
+            @apply flex flex-col space-y-1.5 p-6;
+        }
+
+        .card-title {
+            @apply text-2xl font-semibold leading-none tracking-tight;
+        }
+
+        .card-content {
+            @apply p-6 pt-0;
+        }
+
+        .badge {
+            @apply inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2;
+        }
+
+        .badge-critical {
+            @apply border-transparent bg-red-600 text-white hover:bg-red-600/80;
+        }
+
+        .badge-high {
+            @apply border-transparent bg-red-500 text-white hover:bg-red-500/80;
+        }
+
+        .badge-medium {
+            @apply border-transparent bg-yellow-500 text-white hover:bg-yellow-500/80;
+        }
+
+        .badge-low {
+            @apply border-transparent bg-green-500 text-white hover:bg-green-500/80;
+        }
+
+        .badge-info {
+            @apply border-transparent bg-blue-500 text-white hover:bg-blue-500/80;
+        }
+
+        .pattern-item {
+            @apply p-4 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors;
+        }
+
+        .anomaly-alert {
+            @apply p-3 border-l-4 border-l-red-500 bg-red-50 dark:bg-red-900/20 rounded-r-lg;
+        }
+
+        .trend-up {
+            @apply text-red-600 dark:text-red-400;
+        }
+
+        .trend-down {
+            @apply text-green-600 dark:text-green-400;
+        }
+
+        .trend-stable {
+            @apply text-blue-600 dark:text-blue-400;
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground">
+    <!-- Navigation -->
+    <nav class="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div class="container mx-auto px-4">
+            <div class="flex h-14 items-center">
+                <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+                
+                <div class="ml-auto flex items-center space-x-4">
+                    <!-- APM 모니터링 드롭다운 -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
+                            <span>📊 APM 모니터링</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/j2ee-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">☕ J2EE 모니터링</a>
+                            <a href="/was-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🏗️ WAS 모니터링</a>
+                            <a href="/exception-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🚨 예외 추적</a>
+                            <a href="/topology-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🗺️ 서비스 맵</a>
+                            <a href="/performance-optimization-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">⚡ 성능 최적화</a>
+                        </div>
+                    </div>
+
+                    <!-- AI/ML 시스템 드롭다운 -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
+                            <span>🤖 AI/ML 시스템</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute left-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/ai-prediction-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔮 AI 예측 분석</a>
+                            <a href="/data-quality-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📊 데이터 품질</a>
+                            <a href="/aiops-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🤖 AIOps 관리</a>
+                            <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                            <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">ML 훈련</div>
+                            <a href="/ml-training-autoencoder.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔬 오토인코더</a>
+                            <a href="/ml-training-clustering.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🎯 클러스터링</a>
+                            <a href="/ml-training-lstm.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🧠 LSTM</a>
+                            <a href="/ml-training-rca.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔍 RCA 분석</a>
+                            <a href="/ml-training-report.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📋 훈련 리포트</a>
+                            <a href="/clustering-insights.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">💡 인사이트</a>
+                        </div>
+                    </div>
+
+                    <!-- 시스템 관리 드롭다운 -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20">
+                            <span>⚙️ 시스템 관리</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/alert-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔔 알림 관리</a>
+                            <a href="/security-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🛡️ 보안 모니터링</a>
+                            <a href="/log-analysis-dashboard.html" class="block px-4 py-2 text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40">📄 로그 분석</a>
+                            <a href="/external-integration-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔗 외부 통합</a>
+                            <a href="/system-config-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">⚙️ 시스템 설정</a>
+                        </div>
+                    </div>
+
+                    <!-- 분석 & 리포트 드롭다운 -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
+                            <span>📈 분석 & 리포트</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute right-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/deployment-manager.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🚀 배포 관리</a>
+                            <a href="/session-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">👤 세션 관리</a>
+                            <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                            <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">온톨로지</div>
+                            <a href="/ontology.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🧠 기본 온톨로지</a>
+                            <a href="/ontology-tabs.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📂 탭 온톨로지</a>
+                            <a href="/ontology-complete.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔗 완전 온톨로지</a>
+                        </div>
+                    </div>
+
+                    <!-- 챗봇 아이콘 -->
+                    <button onclick="window.open('/chatbot.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes')" class="btn btn-ghost" title="지능형 분석 챗봇">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- 테마 토글 버튼 -->
+                    <button id="themeToggle" class="btn btn-ghost">
+                        <svg id="sunIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                        <svg id="moonIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 메인 컨테이너 -->
+    <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+        <!-- 페이지 헤더 -->
+        <div class="mb-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">📊 로그 분석</h1>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">패턴 분석, 통계, 트렌드 및 이상 탐지</p>
+                </div>
+                <div class="flex gap-2">
+                    <button id="refreshBtn" class="btn btn-ghost">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        새로고침
+                    </button>
+                    <button id="reportBtn" class="btn btn-primary">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        분석 리포트
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 분석 기간 선택 -->
+        <div class="card mb-6">
+            <div class="card-content">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">📅 분석 기간</label>
+                        <select id="timeRange" class="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                            <option value="1h">최근 1시간</option>
+                            <option value="6h">최근 6시간</option>
+                            <option value="1d" selected>최근 1일</option>
+                            <option value="7d">최근 7일</option>
+                            <option value="30d">최근 30일</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">🎯 분석 대상</label>
+                        <select id="analysisTarget" class="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                            <option value="all">전체 서비스</option>
+                            <option value="api-gateway">API Gateway</option>
+                            <option value="auth-service">인증 서비스</option>
+                            <option value="user-service">사용자 서비스</option>
+                            <option value="order-service">주문 서비스</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">📊 분석 유형</label>
+                        <select id="analysisType" class="w-full px-3 py-2 border border-border rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring">
+                            <option value="pattern">패턴 분석</option>
+                            <option value="anomaly">이상 탐지</option>
+                            <option value="trend">트렌드 분석</option>
+                            <option value="performance">성능 분석</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button id="analyzeBtn" class="w-full btn btn-primary">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            분석 실행
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 주요 지표 요약 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="card">
+                <div class="card-content">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-muted-foreground">총 이벤트</p>
+                            <p class="text-2xl font-bold" id="totalEvents">24,586</p>
+                            <p class="text-xs text-green-600 mt-1">▲ 12% 증가</p>
+                        </div>
+                        <div class="text-blue-500">
+                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-content">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-muted-foreground">탐지된 패턴</p>
+                            <p class="text-2xl font-bold text-purple-600" id="detectedPatterns">47</p>
+                            <p class="text-xs text-purple-600 mt-1">▲ 5개 신규</p>
+                        </div>
+                        <div class="text-purple-500">
+                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-content">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-muted-foreground">이상 징후</p>
+                            <p class="text-2xl font-bold text-red-600" id="anomalies">8</p>
+                            <p class="text-xs text-red-600 mt-1">⚠️ 주의 필요</p>
+                        </div>
+                        <div class="text-red-500">
+                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-content">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-muted-foreground">품질 점수</p>
+                            <p class="text-2xl font-bold text-green-600" id="qualityScore">92%</p>
+                            <p class="text-xs text-green-600 mt-1">✓ 우수</p>
+                        </div>
+                        <div class="text-green-500">
+                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- 로그 볼륨 트렌드 차트 -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">📈 로그 볼륨 트렌드</h2>
+                </div>
+                <div class="card-content">
+                    <div class="h-64">
+                        <canvas id="volumeTrendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 로그 레벨 분포 차트 -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">🎯 로그 레벨 분포</h2>
+                </div>
+                <div class="card-content">
+                    <div class="h-64">
+                        <canvas id="levelDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- 이상 탐지 알림 -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">🚨 이상 탐지 알림</h2>
+                </div>
+                <div class="card-content">
+                    <div class="space-y-3" id="anomalyList">
+                        <div class="anomaly-alert">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="badge badge-critical">CRITICAL</span>
+                                <span class="text-xs text-muted-foreground">5분 전</span>
+                            </div>
+                            <p class="text-sm font-medium">로그인 실패율 급증</p>
+                            <p class="text-xs text-muted-foreground mt-1">auth-service에서 평소 대비 300% 증가</p>
+                        </div>
+
+                        <div class="p-3 border-l-4 border-l-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 rounded-r-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="badge badge-medium">HIGH</span>
+                                <span class="text-xs text-muted-foreground">12분 전</span>
+                            </div>
+                            <p class="text-sm font-medium">응답 시간 지연</p>
+                            <p class="text-xs text-muted-foreground mt-1">user-service 평균 응답시간 1.2초 초과</p>
+                        </div>
+
+                        <div class="p-3 border-l-4 border-l-blue-500 bg-blue-50 dark:bg-blue-900/20 rounded-r-lg">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="badge badge-info">INFO</span>
+                                <span class="text-xs text-muted-foreground">25분 전</span>
+                            </div>
+                            <p class="text-sm font-medium">신규 에러 패턴</p>
+                            <p class="text-xs text-muted-foreground mt-1">ConnectionTimeoutException 패턴 감지</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 패턴 분석 결과 -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">🔍 주요 패턴 분석</h2>
+                </div>
+                <div class="card-content">
+                    <div class="space-y-3" id="patternList">
+                        <div class="pattern-item" onclick="showPatternDetails('auth-failure')">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="badge badge-high">HIGH</span>
+                                    <span class="text-sm font-medium">인증 실패 패턴</span>
+                                </div>
+                                <span class="text-xs text-muted-foreground">발생: 156회</span>
+                            </div>
+                            <p class="text-xs text-muted-foreground">JWT 토큰 검증 실패 관련 에러 패턴</p>
+                            <div class="mt-2 flex items-center gap-2">
+                                <span class="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded">auth-service</span>
+                                <span class="text-xs trend-up">↗ 급증</span>
+                            </div>
+                        </div>
+
+                        <div class="pattern-item" onclick="showPatternDetails('slow-query')">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="badge badge-medium">MEDIUM</span>
+                                    <span class="text-sm font-medium">슬로우 쿼리 패턴</span>
+                                </div>
+                                <span class="text-xs text-muted-foreground">발생: 89회</span>
+                            </div>
+                            <p class="text-xs text-muted-foreground">데이터베이스 조회 성능 저하 패턴</p>
+                            <div class="mt-2 flex items-center gap-2">
+                                <span class="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded">user-service</span>
+                                <span class="text-xs trend-stable">→ 안정</span>
+                            </div>
+                        </div>
+
+                        <div class="pattern-item" onclick="showPatternDetails('connection-timeout')">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="badge badge-low">LOW</span>
+                                    <span class="text-sm font-medium">연결 타임아웃</span>
+                                </div>
+                                <span class="text-xs text-muted-foreground">발생: 23회</span>
+                            </div>
+                            <p class="text-xs text-muted-foreground">외부 API 연결 타임아웃 패턴</p>
+                            <div class="mt-2 flex items-center gap-2">
+                                <span class="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded">payment-service</span>
+                                <span class="text-xs trend-down">↘ 감소</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 서비스별 상세 통계 -->
+        <div class="card mb-6">
+            <div class="card-header">
+                <h2 class="card-title">📊 서비스별 로그 통계</h2>
+            </div>
+            <div class="card-content">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 서비스별 에러율 차트 -->
+                    <div>
+                        <h3 class="text-lg font-medium mb-4">서비스별 에러율</h3>
+                        <div class="h-64">
+                            <canvas id="errorRateChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 시간대별 활동 히트맵 -->
+                    <div>
+                        <h3 class="text-lg font-medium mb-4">시간대별 로그 활동</h3>
+                        <div class="grid grid-cols-24 gap-1" id="heatmap">
+                            <!-- 동적으로 생성될 히트맵 -->
+                        </div>
+                        <div class="flex justify-between text-xs text-muted-foreground mt-2">
+                            <span>00:00</span>
+                            <span>06:00</span>
+                            <span>12:00</span>
+                            <span>18:00</span>
+                            <span>23:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 로그 품질 지표 -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">🏆 로그 품질 지표</h2>
+            </div>
+            <div class="card-content">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-green-600 mb-2">92%</div>
+                        <div class="text-sm text-muted-foreground mb-1">구조화 점수</div>
+                        <div class="text-xs text-green-600">✓ 우수</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-blue-600 mb-2">88%</div>
+                        <div class="text-sm text-muted-foreground mb-1">완성도</div>
+                        <div class="text-xs text-blue-600">→ 양호</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-yellow-600 mb-2">76%</div>
+                        <div class="text-sm text-muted-foreground mb-1">일관성</div>
+                        <div class="text-xs text-yellow-600">⚠ 개선 필요</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 패턴 상세 정보 모달 -->
+    <div id="patternModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-96 overflow-y-auto">
+                <div class="flex justify-between items-center p-6 border-b border-border">
+                    <h3 class="text-lg font-semibold">패턴 상세 분석</h3>
+                    <button onclick="closePatternModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-6">
+                    <div id="patternDetails" class="space-y-4">
+                        <!-- 동적으로 채워질 내용 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 테마 토글
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            document.documentElement.classList.toggle('dark');
+        });
+
+        // 차트 초기화
+        let volumeTrendChart, levelDistributionChart, errorRateChart;
+
+        function initCharts() {
+            // 로그 볼륨 트렌드 차트
+            const volumeCtx = document.getElementById('volumeTrendChart').getContext('2d');
+            volumeTrendChart = new Chart(volumeCtx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [
+                        {
+                            label: 'INFO',
+                            data: [120, 190, 300, 500, 420, 350, 280],
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true
+                        },
+                        {
+                            label: 'WARN',
+                            data: [20, 30, 45, 80, 60, 50, 40],
+                            borderColor: 'rgb(245, 158, 11)',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            fill: true
+                        },
+                        {
+                            label: 'ERROR',
+                            data: [5, 8, 12, 25, 18, 15, 10],
+                            borderColor: 'rgb(239, 68, 68)',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // 로그 레벨 분포 차트
+            const levelCtx = document.getElementById('levelDistributionChart').getContext('2d');
+            levelDistributionChart = new Chart(levelCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['INFO', 'WARN', 'ERROR', 'DEBUG'],
+                    datasets: [{
+                        data: [18542, 3421, 1205, 1418],
+                        backgroundColor: [
+                            'rgb(59, 130, 246)',
+                            'rgb(245, 158, 11)',
+                            'rgb(239, 68, 68)',
+                            'rgb(107, 114, 128)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+
+            // 서비스별 에러율 차트
+            const errorCtx = document.getElementById('errorRateChart').getContext('2d');
+            errorRateChart = new Chart(errorCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['API Gateway', 'Auth Service', 'User Service', 'Order Service', 'Payment Service'],
+                    datasets: [{
+                        label: '에러율 (%)',
+                        data: [2.3, 5.8, 1.2, 3.1, 4.5],
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(245, 158, 11, 0.8)',
+                            'rgba(34, 197, 94, 0.8)',
+                            'rgba(239, 68, 68, 0.8)',
+                            'rgba(245, 158, 11, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 10
+                        }
+                    }
+                }
+            });
+        }
+
+        // 히트맵 생성
+        function generateHeatmap() {
+            const heatmap = document.getElementById('heatmap');
+            const hours = 24;
+            const days = 7;
+            
+            for (let day = 0; day < days; day++) {
+                for (let hour = 0; hour < hours; hour++) {
+                    const cell = document.createElement('div');
+                    const intensity = Math.random();
+                    const opacity = Math.max(0.1, intensity);
+                    
+                    cell.className = 'w-3 h-3 rounded-sm cursor-pointer';
+                    cell.style.backgroundColor = `rgba(59, 130, 246, ${opacity})`;
+                    cell.title = `Day ${day + 1}, Hour ${hour}: ${Math.floor(intensity * 1000)} logs`;
+                    
+                    heatmap.appendChild(cell);
+                }
+            }
+        }
+
+        // 패턴 상세 정보 표시
+        function showPatternDetails(patternId) {
+            const modal = document.getElementById('patternModal');
+            const details = document.getElementById('patternDetails');
+            
+            const patternData = {
+                'auth-failure': {
+                    title: '인증 실패 패턴',
+                    severity: 'HIGH',
+                    occurrences: 156,
+                    description: 'JWT 토큰 검증 실패로 인한 인증 오류 패턴',
+                    timeline: '지난 6시간 동안 급격히 증가',
+                    impact: '사용자 로그인 차단, 서비스 접근 불가',
+                    recommendation: 'JWT 토큰 만료 시간 검토 및 리프레시 토큰 로직 점검 필요'
+                }
+            };
+            
+            const data = patternData[patternId] || patternData['auth-failure'];
+            
+            details.innerHTML = `
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-semibold mb-3">패턴 정보</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>패턴명:</strong> ${data.title}</div>
+                            <div><strong>심각도:</strong> <span class="badge badge-${data.severity.toLowerCase()}">${data.severity}</span></div>
+                            <div><strong>발생 횟수:</strong> ${data.occurrences}회</div>
+                            <div><strong>타임라인:</strong> ${data.timeline}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold mb-3">영향 및 권장사항</h4>
+                        <div class="space-y-2 text-sm">
+                            <div><strong>영향:</strong> ${data.impact}</div>
+                            <div><strong>권장사항:</strong> ${data.recommendation}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <h4 class="font-semibold mb-3">최근 로그 샘플</h4>
+                    <div class="bg-muted p-3 rounded font-mono text-xs">
+                        [2024-01-15 14:30:25] ERROR auth-service: JWT token validation failed - Invalid signature<br>
+                        [2024-01-15 14:30:23] ERROR auth-service: JWT token validation failed - Token expired<br>
+                        [2024-01-15 14:30:21] ERROR auth-service: JWT token validation failed - Malformed token
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closePatternModal() {
+            document.getElementById('patternModal').classList.add('hidden');
+        }
+
+        // 분석 실행
+        document.getElementById('analyzeBtn').addEventListener('click', function() {
+            const timeRange = document.getElementById('timeRange').value;
+            const target = document.getElementById('analysisTarget').value;
+            const type = document.getElementById('analysisType').value;
+            
+            console.log('분석 실행:', { timeRange, target, type });
+            
+            // 분석 결과 업데이트 시뮬레이션
+            updateAnalysisResults();
+        });
+
+        function updateAnalysisResults() {
+            // 지표 업데이트
+            document.getElementById('totalEvents').textContent = (Math.floor(Math.random() * 50000) + 20000).toLocaleString();
+            document.getElementById('detectedPatterns').textContent = Math.floor(Math.random() * 100) + 30;
+            document.getElementById('anomalies').textContent = Math.floor(Math.random() * 20) + 5;
+            document.getElementById('qualityScore').textContent = Math.floor(Math.random() * 20) + 80 + '%';
+            
+            // 차트 업데이트
+            if (volumeTrendChart) {
+                volumeTrendChart.data.datasets.forEach(dataset => {
+                    dataset.data = dataset.data.map(() => Math.floor(Math.random() * 600));
+                });
+                volumeTrendChart.update();
+            }
+        }
+
+        // 새로고침 버튼
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            location.reload();
+        });
+
+        // 리포트 버튼
+        document.getElementById('reportBtn').addEventListener('click', function() {
+            alert('분석 리포트를 생성하고 있습니다...');
+        });
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            generateHeatmap();
+        });
+    </script>
+</body>
+</html>

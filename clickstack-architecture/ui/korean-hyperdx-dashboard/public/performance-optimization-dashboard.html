@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>성능 최적화 대시보드 - AIRIS EPM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96.1%;
+            --secondary-foreground: 222.2 47.4% 11.2%;
+            --muted: 210 40% 96.1%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96.1%;
+            --accent-foreground: 222.2 47.4% 11.2%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 222.2 84% 4.9%;
+            --radius: 0.5rem;
+        }
+        
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --primary: 210 40% 98%;
+            --primary-foreground: 222.2 47.4% 11.2%;
+            --secondary: 217.2 32.6% 17.5%;
+            --secondary-foreground: 210 40% 98%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --accent: 217.2 32.6% 17.5%;
+            --accent-foreground: 210 40% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --input: 217.2 32.6% 17.5%;
+            --ring: 212.7 26.8% 83.9%;
+        }
+
+        body {
+            background: hsl(var(--background));
+            color: hsl(var(--foreground));
+        }
+
+        .card {
+            background: hsl(var(--card));
+            color: hsl(var(--card-foreground));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
+        }
+
+        .btn-primary:hover {
+            background: hsl(var(--primary) / 0.9);
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        .optimization-score {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: var(--radius);
+        }
+
+        .metric-card {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .recommendation-item {
+            background: hsl(var(--card));
+            border: 1px solid hsl(var(--border));
+            border-radius: var(--radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .recommendation-high {
+            border-left-color: #ef4444;
+        }
+
+        .recommendation-medium {
+            border-left-color: #f97316;
+        }
+
+        .recommendation-low {
+            border-left-color: #10b981;
+        }
+
+        /* Navigation Dropdown Styles - Updated for Tailwind group hover */
+        .group:hover .group-hover\\:opacity-100 {
+            opacity: 1 !important;
+        }
+        
+        .group:hover .group-hover\\:visible {
+            visibility: visible !important;
+        }
+        
+        /* High z-index for navigation dropdowns */
+        nav .group > div[class*="absolute"] {
+            z-index: 9999 !important;
+        }
+        
+        /* Ensure navigation bar has appropriate stacking context */
+        nav {
+            position: relative;
+            z-index: 1000;
+        }
+        
+        /* Override any conflicting z-index from other elements */
+        .z-50 {
+            z-index: 9999 !important;
+        }
+
+        .btn {
+            @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background;
+        }
+
+        .btn-ghost {
+            @apply hover:bg-accent hover:text-accent-foreground;
+            padding: 0.5rem 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div class="container mx-auto px-4">
+            <div class="flex h-14 items-center">
+                <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+                
+                <div class="ml-auto flex items-center space-x-4">
+                    <!-- APM 모니터링 드롭다운 -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20">
+                            <span>📊 APM 모니터링</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/j2ee-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">☕ J2EE 모니터링</a>
+                            <a href="/was-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🏗️ WAS 모니터링</a>
+                            <a href="/exception-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🚨 예외 추적</a>
+                            <a href="/topology-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🗺️ 서비스 맵</a>
+                            <a href="/performance-optimization-dashboard.html" class="block px-4 py-2 text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 font-medium">⚡ 성능 최적화</a>
+                        </div>
+                    </div>
+
+                    <!-- AI/ML 시스템 드롭다운 -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
+                            <span>🤖 AI/ML 시스템</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute left-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/ai-prediction-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔮 AI 예측 분석</a>
+                            <a href="/data-quality-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📊 데이터 품질</a>
+                            <a href="/aiops-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🤖 AIOps 관리</a>
+                            <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                            <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">ML 훈련</div>
+                            <a href="/ml-training-autoencoder.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔬 오토인코더</a>
+                            <a href="/ml-training-clustering.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🎯 클러스터링</a>
+                            <a href="/ml-training-lstm.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🧠 LSTM</a>
+                            <a href="/ml-training-rca.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔍 RCA 분석</a>
+                            <a href="/ml-training-report.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📋 훈련 리포트</a>
+                            <a href="/clustering-insights.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">💡 인사이트</a>
+                        </div>
+                    </div>
+
+                    <!-- 시스템 관리 드롭다운 -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
+                            <span>⚙️ 시스템 관리</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/alert-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔔 알림 관리</a>
+                            <a href="/security-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🛡️ 보안 모니터링</a>
+                            <a href="/log-analysis-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📄 로그 분석</a>
+                            <a href="/external-integration-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔗 외부 통합</a>
+                            <a href="/system-config-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">⚙️ 시스템 설정</a>
+                        </div>
+                    </div>
+
+                    <!-- 분석 & 리포트 드롭다운 -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
+                            <span>📈 분석 & 리포트</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute right-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/deployment-manager.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🚀 배포 관리</a>
+                            <a href="/session-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">👤 세션 관리</a>
+                            <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                            <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">온톨로지</div>
+                            <a href="/ontology.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🧠 기본 온톨로지</a>
+                            <a href="/ontology-tabs.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📂 탭 온톨로지</a>
+                            <a href="/ontology-complete.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔗 완전 온톨로지</a>
+                        </div>
+                    </div>
+
+                    <!-- 챗봇 아이콘 -->
+                    <button onclick="window.open('/chatbot.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes')" class="btn btn-ghost" title="지능형 분석 챗봇">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- 테마 토글 버튼 -->
+                    <button id="themeToggle" class="btn btn-ghost">
+                        <svg id="sunIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                        <svg id="moonIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-4">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">⚡ 성능 최적화 대시보드</h1>
+                <p class="text-gray-600 dark:text-gray-400">시스템 성능 분석 및 최적화 권장사항</p>
+            </div>
+            <button onclick="refreshData()" class="btn btn-primary">
+                <i class="fas fa-sync-alt mr-2"></i>새로고침
+            </button>
+        </div>
+
+        <!-- Overall Performance Score -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div class="lg:col-span-1">
+                <div class="card p-6 optimization-score">
+                    <h2 class="text-xl font-bold mb-4">전체 성능 점수</h2>
+                    <div class="text-center">
+                        <div class="text-4xl font-bold mb-2" id="overallScore">92</div>
+                        <div class="text-sm opacity-90">100점 만점</div>
+                        <div class="mt-4">
+                            <div class="bg-white/20 rounded-full h-2">
+                                <div class="bg-white rounded-full h-2" style="width: 92%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="lg:col-span-2">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="metric-card">
+                        <i class="fas fa-tachometer-alt text-3xl text-blue-500 mb-2"></i>
+                        <div class="text-2xl font-bold" id="avgResponseTime">45ms</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">평균 응답시간</div>
+                    </div>
+                    <div class="metric-card">
+                        <i class="fas fa-chart-line text-3xl text-green-500 mb-2"></i>
+                        <div class="text-2xl font-bold" id="throughput">1,234</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">초당 요청 수</div>
+                    </div>
+                    <div class="metric-card">
+                        <i class="fas fa-memory text-3xl text-orange-500 mb-2"></i>
+                        <div class="text-2xl font-bold" id="memoryUsage">68%</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">메모리 사용률</div>
+                    </div>
+                    <div class="metric-card">
+                        <i class="fas fa-microchip text-3xl text-purple-500 mb-2"></i>
+                        <div class="text-2xl font-bold" id="cpuUsage">42%</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">CPU 사용률</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Trends -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="card p-6">
+                <h3 class="text-lg font-semibold mb-4">응답시간 추이</h3>
+                <div class="chart-container">
+                    <canvas id="responseTimeChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card p-6">
+                <h3 class="text-lg font-semibold mb-4">리소스 사용률</h3>
+                <div class="chart-container">
+                    <canvas id="resourceChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Optimization Recommendations -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="card p-6">
+                <h3 class="text-lg font-semibold mb-4">최적화 권장사항</h3>
+                <div class="space-y-4">
+                    <div class="recommendation-item recommendation-high">
+                        <div class="flex items-start">
+                            <i class="fas fa-exclamation-circle text-red-500 mt-1 mr-3"></i>
+                            <div>
+                                <h4 class="font-medium">높은 우선순위</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">데이터베이스 연결 풀 크기를 늘려 응답시간을 개선하세요.</p>
+                                <div class="mt-2">
+                                    <span class="text-xs bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-2 py-1 rounded">예상 개선: 15-20%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="recommendation-item recommendation-medium">
+                        <div class="flex items-start">
+                            <i class="fas fa-exclamation-triangle text-orange-500 mt-1 mr-3"></i>
+                            <div>
+                                <h4 class="font-medium">보통 우선순위</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">정적 리소스에 대한 캐싱을 강화하세요.</p>
+                                <div class="mt-2">
+                                    <span class="text-xs bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-2 py-1 rounded">예상 개선: 8-12%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="recommendation-item recommendation-low">
+                        <div class="flex items-start">
+                            <i class="fas fa-info-circle text-green-500 mt-1 mr-3"></i>
+                            <div>
+                                <h4 class="font-medium">낮은 우선순위</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">로그 레벨을 조정하여 I/O 부하를 줄이세요.</p>
+                                <div class="mt-2">
+                                    <span class="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">예상 개선: 3-5%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card p-6">
+                <h3 class="text-lg font-semibold mb-4">성능 분석</h3>
+                <div class="space-y-4">
+                    <div class="border-l-4 border-blue-500 pl-4">
+                        <h4 class="font-medium text-blue-700 dark:text-blue-300">병목 지점 분석</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            주요 병목 지점: 데이터베이스 쿼리 (35%), 네트워크 지연 (28%), CPU 처리 (20%)
+                        </p>
+                    </div>
+                    
+                    <div class="border-l-4 border-green-500 pl-4">
+                        <h4 class="font-medium text-green-700 dark:text-green-300">성능 개선 잠재력</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            권장사항 적용 시 전체 성능 25-35% 개선 예상
+                        </p>
+                    </div>
+                    
+                    <div class="border-l-4 border-purple-500 pl-4">
+                        <h4 class="font-medium text-purple-700 dark:text-purple-300">트렌드 분석</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            지난 7일간 평균 응답시간 12% 증가, 메모리 사용률 안정세
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        // Check for saved theme preference or default to 'light' mode
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        if (currentTheme === 'dark') {
+            html.classList.add('dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            const theme = html.classList.contains('dark') ? 'dark' : 'light';
+            localStorage.setItem('theme', theme);
+        });
+
+        // Chart configurations
+        const isDark = () => html.classList.contains('dark');
+        const getTextColor = () => isDark() ? '#e5e7eb' : '#374151';
+        const getGridColor = () => isDark() ? '#374151' : '#e5e7eb';
+
+        // Response Time Chart
+        const responseTimeCtx = document.getElementById('responseTimeChart').getContext('2d');
+        const responseTimeChart = new Chart(responseTimeCtx, {
+            type: 'line',
+            data: {
+                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                datasets: [{
+                    label: '응답시간 (ms)',
+                    data: [35, 42, 55, 48, 52, 38, 45],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: getTextColor() },
+                        grid: { color: getGridColor() }
+                    },
+                    x: {
+                        ticks: { color: getTextColor() },
+                        grid: { color: getGridColor() }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: { color: getTextColor() }
+                    }
+                }
+            }
+        });
+
+        // Resource Usage Chart
+        const resourceCtx = document.getElementById('resourceChart').getContext('2d');
+        const resourceChart = new Chart(resourceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['CPU 사용률', 'CPU 여유', 'Memory 사용률', 'Memory 여유'],
+                datasets: [{
+                    data: [42, 58, 68, 32],
+                    backgroundColor: ['#8b5cf6', '#e5e7eb', '#f97316', '#e5e7eb'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: getTextColor() }
+                    }
+                }
+            }
+        });
+
+        // Refresh data function
+        function refreshData() {
+            // Simulate data refresh
+            const metrics = {
+                avgResponseTime: Math.floor(Math.random() * 20) + 35,
+                throughput: Math.floor(Math.random() * 500) + 1000,
+                memoryUsage: Math.floor(Math.random() * 20) + 60,
+                cpuUsage: Math.floor(Math.random() * 30) + 30,
+                overallScore: Math.floor(Math.random() * 15) + 85
+            };
+
+            // Update metrics
+            document.getElementById('avgResponseTime').textContent = metrics.avgResponseTime + 'ms';
+            document.getElementById('throughput').textContent = metrics.throughput.toLocaleString();
+            document.getElementById('memoryUsage').textContent = metrics.memoryUsage + '%';
+            document.getElementById('cpuUsage').textContent = metrics.cpuUsage + '%';
+            document.getElementById('overallScore').textContent = metrics.overallScore;
+
+            // Update chart data
+            responseTimeChart.data.datasets[0].data = Array.from({length: 7}, () => 
+                Math.floor(Math.random() * 30) + 30
+            );
+            responseTimeChart.update();
+
+            resourceChart.data.datasets[0].data = [
+                metrics.cpuUsage, 
+                100 - metrics.cpuUsage,
+                metrics.memoryUsage,
+                100 - metrics.memoryUsage
+            ];
+            resourceChart.update();
+        }
+
+        // Auto refresh every 30 seconds
+        setInterval(refreshData, 30000);
+    </script>
+</body>
+</html>

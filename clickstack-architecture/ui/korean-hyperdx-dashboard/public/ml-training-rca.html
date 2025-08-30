@@ -51,6 +51,20 @@
             --input: 217.2 32.6% 17.5%;
             --ring: 212.7 26.8% 83.9%;
         }
+
+        .btn {
+            @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background;
+        }
+
+        .btn-primary {
+            @apply bg-primary text-primary-foreground hover:bg-primary/90;
+            padding: 0.5rem 1rem;
+        }
+
+        .btn-ghost {
+            @apply hover:bg-accent hover:text-accent-foreground;
+            padding: 0.5rem 1rem;
+        }
         
         /* Chart Container Fixed Height */
         .ml-chart-container {
@@ -81,23 +95,102 @@
     </style>
 </head>
 <body class="bg-background text-foreground">
-    <!-- Header Navigation -->
-    <header class="border-b bg-card">
-        <div class="container mx-auto px-4 py-4">
-            <nav class="flex items-center justify-between">
-                <div class="flex items-center space-x-8">
-                    <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">
-                        🚀 AIRIS EPM
-                    </a>
-                    <div class="flex space-x-6 text-sm">
-                        <button onclick="window.location.href='/'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-                            대시보드
+    <!-- Navigation -->
+    <nav class="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div class="container mx-auto px-4">
+            <div class="flex h-14 items-center">
+                <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+                
+                <div class="ml-auto flex items-center space-x-4">
+                    <!-- APM 모니터링 드롭다운 -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
+                            <span>📊 APM 모니터링</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
                         </button>
-                        <button onclick="window.location.href='/aiops-management.html'" class="text-foreground/60 hover:text-foreground/80 transition-colors bg-transparent border-none cursor-pointer">
-                            AIOPS 관리
+                        <div class="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/j2ee-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">☕ J2EE 모니터링</a>
+                            <a href="/was-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🏗️ WAS 모니터링</a>
+                            <a href="/exception-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🚨 예외 추적</a>
+                            <a href="/topology-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🗺️ 서비스 맵</a>
+                            <a href="/performance-optimization-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">⚡ 성능 최적화</a>
+                        </div>
+                    </div>
+
+                    <!-- AI/ML 시스템 드롭다운 -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20">
+                            <span>🤖 AI/ML 시스템</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
                         </button>
-                        <button class="text-primary font-semibold bg-transparent border-none cursor-pointer">
-                            모델 학습
+                        <div class="absolute left-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/ai-prediction-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔮 AI 예측 분석</a>
+                            <a href="/data-quality-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📊 데이터 품질</a>
+                            <a href="/aiops-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🤖 AIOps 관리</a>
+                            <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                            <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">ML 훈련</div>
+                            <a href="/ml-training-autoencoder.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔬 오토인코더</a>
+                            <a href="/ml-training-clustering.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🎯 클러스터링</a>
+                            <a href="/ml-training-lstm.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🧠 LSTM</a>
+                            <a href="/ml-training-rca.html" class="block px-4 py-2 text-sm text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40">🔍 RCA 분석</a>
+                            <a href="/ml-training-report.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📋 훈련 리포트</a>
+                            <a href="/clustering-insights.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">💡 인사이트</a>
+                        </div>
+                    </div>
+
+                    <!-- 시스템 관리 드롭다운 -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
+                            <span>⚙️ 시스템 관리</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/alert-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔔 알림 관리</a>
+                            <a href="/security-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🛡️ 보안 모니터링</a>
+                            <a href="/log-analysis-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📄 로그 분석</a>
+                            <a href="/external-integration-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔗 외부 통합</a>
+                            <a href="/system-config-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">⚙️ 시스템 설정</a>
+                        </div>
+                    </div>
+
+                    <!-- 분석 & 리포트 드롭다운 -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
+                            <span>📈 분석 & 리포트</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div class="absolute right-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                            <a href="/deployment-manager.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🚀 배포 관리</a>
+                            <a href="/session-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">👤 세션 관리</a>
+                            <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+                            <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">온톨로지</div>
+                            <a href="/ontology.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🧠 기본 온톨로지</a>
+                            <a href="/ontology-tabs.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📂 탭 온톨로지</a>
+                            <a href="/ontology-complete.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔗 완전 온톨로지</a>
+                        </div>
+                    </div>
+
+                    <!-- 챗봇 아이콘 -->
+                    <button onclick="window.open('/chatbot.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes')" class="btn btn-ghost" title="지능형 분석 챗봇">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </button>
+
+                    <!-- 테마 토글 -->
+                    <button id="themeToggle" class="btn btn-ghost">🌙</button>
+                </div>
+            </div>
+        </div>
+    </nav>
                         </button>
                     </div>
                 </div>
@@ -893,7 +986,81 @@
         }
 
         function testRCA() {
-            window.open('/rca-test-interface.html', '_blank');
+            // RCA 테스트 실행 (현재 페이지에서 바로 실행)
+            console.log('🧪 RCA 테스트 시작...');
+            
+            // 테스트용 모의 인시던트 데이터 생성
+            const testIncident = {
+                id: 'test_' + Date.now(),
+                service: 'user-service',
+                timestamp: new Date().toISOString(),
+                cpu_usage: 85.3,
+                memory_usage: 92.1,
+                response_time: 4500,
+                error_rate: 8.7,
+                log_patterns: ['OutOfMemoryError', 'java.lang.Exception', 'Connection timeout'],
+                alert_count: 15,
+                network_latency: 120,
+                disk_io: 78.5,
+                thread_count: 245,
+                db_connections: 18
+            };
+            
+            // 모의 RCA 분석 실행
+            setTimeout(() => {
+                const analysisResult = {
+                    primary_cause: '메모리 누수',
+                    confidence: 0.89,
+                    category: 'application',
+                    suggested_actions: [
+                        '힙 덤프 분석을 통한 메모리 누수 지점 식별',
+                        '애플리케이션 재시작으로 즉시 복구',
+                        '코드 리뷰를 통한 근본 원인 해결'
+                    ],
+                    estimated_resolution_time: '25분'
+                };
+                
+                // 결과를 모달이나 알림으로 표시
+                const resultHtml = `
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3>🔍 RCA 분석 결과</h3>
+                        <p><strong>근본 원인:</strong> ${analysisResult.primary_cause}</p>
+                        <p><strong>신뢰도:</strong> ${(analysisResult.confidence * 100).toFixed(1)}%</p>
+                        <p><strong>카테고리:</strong> ${analysisResult.category}</p>
+                        <p><strong>예상 해결 시간:</strong> ${analysisResult.estimated_resolution_time}</p>
+                        <p><strong>권장 조치사항:</strong></p>
+                        <ul>
+                            ${analysisResult.suggested_actions.map(action => `<li>${action}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+                
+                // 결과를 페이지에 표시
+                const resultDiv = document.createElement('div');
+                resultDiv.innerHTML = resultHtml;
+                resultDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); max-width: 600px; z-index: 1000;';
+                
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;';
+                
+                const closeBtn = document.createElement('button');
+                closeBtn.textContent = '닫기';
+                closeBtn.style.cssText = 'margin-top: 15px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;';
+                closeBtn.onclick = () => {
+                    document.body.removeChild(overlay);
+                    document.body.removeChild(resultDiv);
+                };
+                
+                resultDiv.appendChild(closeBtn);
+                document.body.appendChild(overlay);
+                document.body.appendChild(resultDiv);
+                
+                console.log('✅ RCA 테스트 완료:', analysisResult);
+                
+            }, 2000); // 2초 후 결과 표시 (분석 시뮬레이션)
+            
+            // 즉시 피드백 제공
+            alert('🧪 RCA 테스트가 시작되었습니다. 잠시 후 분석 결과가 표시됩니다.');
         }
 
         function deployModel() {

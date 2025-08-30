@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AIRIS APM | 통합 모니터링 대시보드</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <link href="./css/tailwind.css" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
@@ -106,150 +106,153 @@
       color: hsl(var(--foreground));
       text-decoration: none;
     }
+
+    .btn {
+      @apply inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background;
+    }
+
+    .btn-primary {
+      @apply bg-primary text-primary-foreground hover:bg-primary/90;
+      padding: 0.5rem 1rem;
+    }
+
+    .btn-ghost {
+      @apply hover:bg-accent hover:text-accent-foreground;
+      padding: 0.5rem 1rem;
+    }
   </style>
 </head>
 <body class="bg-background text-foreground">
-  <!-- Modern Header -->
-  <header class="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur">
-    <div class="container mx-auto flex h-14 items-center px-4">
-      <div class="mr-4 flex items-center space-x-2">
-        <a href="/portal.html" class="font-bold text-xl text-foreground hover:text-primary transition-colors cursor-pointer">AIRIS APM</a>
-        <span class="bg-primary/10 text-primary px-2 py-1 rounded-md text-xs font-medium">통합 모니터링</span>
+  <!-- Navigation -->
+  <nav class="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <div class="container mx-auto px-4">
+      <div class="flex h-14 items-center">
+        <a href="/portal.html" class="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer">🚀 AIRIS EPM</a>
+        
+        <div class="ml-auto flex items-center space-x-4">
+          <!-- APM 모니터링 드롭다운 -->
+          <div class="relative group">
+            <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20">
+              <span>📊 APM 모니터링</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div class="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <a href="/j2ee-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">☕ J2EE 모니터링</a>
+              <a href="/was-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🏗️ WAS 모니터링</a>
+              <a href="/exception-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🚨 예외 추적</a>
+              <a href="/topology-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🗺️ 서비스 맵</a>
+              <a href="/performance-optimization-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">⚡ 성능 최적화</a>
+            </div>
+          </div>
+
+          <!-- AI/ML 시스템 드롭다운 -->
+          <div class="relative group">
+            <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
+              <span>🤖 AI/ML 시스템</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div class="absolute left-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <a href="/ai-prediction-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔮 AI 예측 분석</a>
+              <a href="/data-quality-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📊 데이터 품질</a>
+              <a href="/aiops-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🤖 AIOps 관리</a>
+              <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+              <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">ML 훈련</div>
+              <a href="/ml-training-autoencoder.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔬 오토인코더</a>
+              <a href="/ml-training-clustering.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🎯 클러스터링</a>
+              <a href="/ml-training-lstm.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🧠 LSTM</a>
+              <a href="/ml-training-rca.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔍 RCA 분석</a>
+              <a href="/ml-training-report.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📋 훈련 리포트</a>
+              <a href="/clustering-insights.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">💡 인사이트</a>
+            </div>
+          </div>
+
+          <!-- 시스템 관리 드롭다운 -->
+          <div class="relative group">
+            <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
+              <span>⚙️ 시스템 관리</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div class="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <a href="/alert-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔔 알림 관리</a>
+              <a href="/security-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🛡️ 보안 모니터링</a>
+              <a href="/log-analysis-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📄 로그 분석</a>
+              <a href="/external-integration-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔗 외부 통합</a>
+              <a href="/system-config-dashboard.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">⚙️ 시스템 설정</a>
+            </div>
+          </div>
+
+          <!-- 분석 & 리포트 드롭다운 -->
+          <div class="relative group">
+            <button class="flex items-center space-x-1 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
+              <span>📈 분석 & 리포트</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div class="absolute right-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <a href="/deployment-manager.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🚀 배포 관리</a>
+              <a href="/session-management.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">👤 세션 관리</a>
+              <div class="border-t border-gray-200 dark:border-gray-600 my-1"></div>
+              <div class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">온톨로지</div>
+              <a href="/ontology.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🧠 기본 온톨로지</a>
+              <a href="/ontology-tabs.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">📂 탭 온톨로지</a>
+              <a href="/ontology-complete.html" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">🔗 완전 온톨로지</a>
+            </div>
+          </div>
+
+          <!-- 챗봇 아이콘 -->
+          <button onclick="window.open('/chatbot.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes')" class="btn btn-ghost" title="지능형 분석 챗봇">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </button>
+          
+          <!-- 테마 토글 버튼 -->
+          <button id="themeToggle" class="btn btn-ghost">
+            <svg id="sunIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+            </svg>
+            <svg id="moonIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+            </svg>
+          </button>
+        </div>
       </div>
-      
-      <!-- Navigation Menu -->
-      <nav class="hidden md:flex items-center space-x-6 text-sm ml-6">
-        <!-- APM 모니터링 -->
-        <div class="nav-dropdown relative">
-          <button class="flex items-center text-foreground/60 hover:text-foreground/80 px-3 py-2 rounded-md">
-            📊 APM 모니터링
-            <svg class="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <div class="dropdown-content">
-            <a href="/j2ee-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">☕ J2EE 모니터링</a>
-            <a href="/was-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🏗️ WAS 모니터링</a>
-            <a href="/exception-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🚨 예외 추적</a>
-            <a href="/topology-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🗺️ 서비스 토폴로지</a>
-            <a href="/alert-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔔 알림 관리</a>
-          </div>
-        </div>
+    </div>
+  </nav>
 
-        <!-- 관리자 메뉴 -->
-        <div class="nav-dropdown relative">
-          <button class="flex items-center text-foreground/60 hover:text-foreground/80 px-3 py-2 rounded-md">
-            👤 관리자 메뉴
-            <svg class="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <div class="dropdown-content">
-            <a href="/admin-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">👤 관리자 대시보드</a>
-            <a href="/users-roles.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">👥 사용자/역할 관리</a>
-            <a href="/system-settings.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔧 시스템 설정</a>
-            <a href="/api-tokens.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔑 API 토큰 관리</a>
-            <a href="/backup-restore.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">💾 백업/복원</a>
-            <a href="/audit-logs.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">📋 감사 로그</a>
-            <a href="/alert-rules.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔔 알림 규칙</a>
-            <a href="/performance-metrics.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">📈 성능 메트릭</a>
-          </div>
+  <!-- Header Controls -->
+  <header class="border-b bg-background">
+    <div class="container mx-auto px-4">
+      <div class="flex items-center justify-between py-4">
+        <div>
+          <h1 class="text-2xl font-bold text-foreground">통합 모니터링 대시보드</h1>
+          <p class="text-sm text-muted-foreground">실시간 시스템 성능 모니터링</p>
         </div>
-
-        <!-- 외부 시스템 연동 -->
-        <div class="nav-dropdown relative">
-          <button class="flex items-center text-foreground/60 hover:text-foreground/80 px-3 py-2 rounded-md">
-            🔌 외부 시스템
-            <svg class="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
+        <div class="flex items-center space-x-4">
+          <select id="timeRange" class="text-sm border border-border rounded-md px-3 py-1 bg-background">
+            <option value="1h">최근 1시간</option>
+            <option value="24h" selected>최근 24시간</option>
+            <option value="7d">최근 7일</option>
+            <option value="30d">최근 30일</option>
+          </select>
+          
+          <button id="refreshBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
+            새로고침
           </button>
-          <div class="dropdown-content">
-            <a href="/external-systems-config.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔌 외부시스템 연동</a>
-          </div>
         </div>
-
-        <!-- AIOps & ML -->
-        <div class="nav-dropdown relative">
-          <button class="flex items-center text-foreground/60 hover:text-foreground/80 px-3 py-2 rounded-md">
-            🤖 AIOps & ML
-            <svg class="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <div class="dropdown-content">
-            <a href="/mlops-aiops-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground font-semibold border-b border-border/50">🚀 MLOPS/AIOPS 메인 대시보드</a>
-            <a href="/aiops-management.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🤖 AIOps 관리</a>
-            <a href="/ml-training-autoencoder.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔬 ML 훈련 - 오토인코더</a>
-            <a href="/ml-training-clustering.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">📈 ML 훈련 - 클러스터링</a>
-            <a href="/ml-training-lstm.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🧠 ML 훈련 - LSTM</a>
-            <a href="/ml-training-rca.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔍 ML 훈련 - RCA 분석</a>
-            <a href="/ml-training-report.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">📋 ML 훈련 리포트</a>
-            <a href="/clustering-insights.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">💡 클러스터링 인사이트</a>
-          </div>
-        </div>
-
-        <!-- 세션 & 분석 -->
-        <div class="nav-dropdown relative">
-          <button class="flex items-center text-foreground/60 hover:text-foreground/80 px-3 py-2 rounded-md">
-            📊 세션 & 분석
-            <svg class="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <div class="dropdown-content">
-            <a href="/session-management.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">👤 세션 관리</a>
-            <a href="/session-analysis.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🔍 세션 분석</a>
-            <a href="/session-telemetry-dashboard.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">📈 세션 텔레메트리</a>
-            <a href="/session-replay.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🎬 세션 재생</a>
-          </div>
-        </div>
-
-        <!-- 지식 & 온톨로지 -->
-        <div class="nav-dropdown relative">
-          <button class="flex items-center text-foreground/60 hover:text-foreground/80 px-3 py-2 rounded-md">
-            🧠 지식 & 온톨로지
-            <svg class="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <div class="dropdown-content">
-            <a href="/ontology.html" class="block px-4 py-2 hover:bg-accent hover:text-accent-foreground">🧠 온톨로지 시스템</a>
-          </div>
-        </div>
-      </nav>
-      
-      <div class="flex items-center space-x-4 ml-auto">
-        <select id="timeRange" class="text-sm border border-border rounded-md px-3 py-1 bg-background">
-          <option value="1h">최근 1시간</option>
-          <option value="24h" selected>최근 24시간</option>
-          <option value="7d">최근 7일</option>
-          <option value="30d">최근 30일</option>
-        </select>
-        
-        <button id="refreshBtn" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3">
-          새로고침
-        </button>
-        
-        <!-- Chatbot Icon -->
-        <button onclick="window.open('/chatbot.html', '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes')" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 w-9 relative" title="지능형 분석 챗봇">
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
-          <span id="chatbotBadge" class="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full hidden items-center justify-center">
-            1
-          </span>
-        </button>
-        
-        <button id="themeToggle" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 w-9">
-          🌙
-        </button>
       </div>
     </div>
   </header>
 
   <!-- Main Content -->
-  <main class="container mx-auto px-4 py-6">
+  <main class="container mx-auto px-4 py-4">
     <!-- Key Metrics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <div class="metric-card bg-card border border-border rounded-lg p-6 shadow-sm">
@@ -391,26 +394,15 @@
       networkIO: 234
     };
 
-    // Theme toggle functionality
-    const themeToggle = document.getElementById('themeToggle');
-    let isDark = false;
-
-    themeToggle.addEventListener('click', () => {
-      isDark = !isDark;
-      if (isDark) {
-        document.documentElement.classList.add('dark');
-        themeToggle.textContent = '☀️';
-      } else {
-        document.documentElement.classList.remove('dark');
-        themeToggle.textContent = '🌙';
-      }
-    });
 
     // Refresh button functionality
-    document.getElementById('refreshBtn').addEventListener('click', () => {
-      updateMetrics();
-      updateCharts();
-    });
+    const refreshBtn = document.getElementById('refreshBtn');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', () => {
+        updateMetrics();
+        updateCharts();
+      });
+    }
 
     // Update metrics function
     function updateMetrics() {
@@ -517,6 +509,20 @@
         ];
         resourceChart.update();
       }
+    }
+
+    // Theme toggle functionality
+    const themeToggle = document.getElementById('themeToggle');
+    const sunIcon = document.getElementById('sunIcon');
+    const moonIcon = document.getElementById('moonIcon');
+    const html = document.documentElement;
+
+    if (themeToggle) {
+      themeToggle.addEventListener('click', () => {
+        html.classList.toggle('dark');
+        sunIcon.classList.toggle('hidden');
+        moonIcon.classList.toggle('hidden');
+      });
     }
 
     // Auto-update metrics every 30 seconds
