@@ -1,0 +1,452 @@
+{
+  "common": {
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "warning": "警告",
+    "info": "情報",
+    "confirm": "確認",
+    "cancel": "キャンセル",
+    "save": "保存",
+    "delete": "削除",
+    "edit": "編集",
+    "add": "追加",
+    "remove": "削除",
+    "update": "更新",
+    "refresh": "更新",
+    "search": "検索",
+    "filter": "フィルター",
+    "sort": "並び替え",
+    "reset": "リセット",
+    "close": "閉じる",
+    "back": "戻る",
+    "next": "次へ",
+    "previous": "前へ",
+    "submit": "送信",
+    "download": "ダウンロード",
+    "upload": "アップロード",
+    "export": "エクスポート",
+    "import": "インポート",
+    "view": "表示",
+    "details": "詳細",
+    "settings": "設定",
+    "help": "ヘルプ",
+    "about": "について",
+    "logout": "ログアウト",
+    "login": "ログイン",
+    "register": "登録",
+    "profile": "プロフィール",
+    "dashboard": "ダッシュボード",
+    "monitoring": "監視",
+    "incidents": "インシデント",
+    "alerts": "アラート",
+    "reports": "レポート",
+    "analytics": "分析",
+    "administration": "管理",
+    "yes": "はい",
+    "no": "いいえ",
+    "ok": "OK",
+    "retry": "再試行",
+    "skip": "スキップ",
+    "continue": "続行",
+    "finish": "完了",
+    "home": "ホーム",
+    "menu": "メニュー",
+    "actions": "アクション",
+    "options": "オプション",
+    "preferences": "設定",
+    "configuration": "構成",
+    "status": "ステータス",
+    "type": "タイプ",
+    "category": "カテゴリ",
+    "priority": "優先度",
+    "severity": "重要度",
+    "date": "日付",
+    "time": "時刻",
+    "duration": "期間",
+    "created": "作成日時",
+    "updated": "更新日時",
+    "modified": "変更日時",
+    "author": "作成者",
+    "user": "ユーザー",
+    "name": "名前",
+    "title": "タイトル",
+    "description": "説明",
+    "message": "メッセージ",
+    "comment": "コメント",
+    "note": "注記",
+    "tag": "タグ",
+    "tags": "タグ",
+    "version": "バージョン",
+    "build": "ビルド",
+    "release": "リリース"
+  },
+  "navigation": {
+    "dashboard": "ダッシュボード",
+    "realtime_monitoring": "リアルタイム監視",
+    "j2ee_monitoring": "J2EE 監視",
+    "was_monitoring": "WAS 監視",
+    "exception_tracking": "例外追跡",
+    "service_topology": "サービス トポロジ",
+    "alert_management": "アラート管理",
+    "apm_monitoring": "APM 監視",
+    "system_health": "システムヘルス",
+    "performance_metrics": "パフォーマンス指標",
+    "log_analysis": "ログ分析",
+    "trace_analysis": "トレース分析",
+    "user_management": "ユーザー管理",
+    "configuration": "構成",
+    "ontology_system": "オントロジーシステム",
+    "session_replay": "セッションリプレイ"
+  },
+  "dashboard": {
+    "title": "AIRIS EPM ダッシュボード",
+    "subtitle": "エンタープライズパフォーマンス監視",
+    "welcome": "AIRIS EPM へようこそ",
+    "overview": "システム概要",
+    "kpi": "主要業績指標",
+    "metrics": {
+      "response_time": "応答時間",
+      "throughput": "スループット",
+      "error_rate": "エラー率",
+      "availability": "可用性",
+      "cpu_usage": "CPU 使用率",
+      "memory_usage": "メモリ使用率",
+      "disk_usage": "ディスク使用率",
+      "network_io": "ネットワーク I/O",
+      "active_users": "アクティブユーザー",
+      "transactions": "トランザクション",
+      "requests_per_minute": "毎分リクエスト数",
+      "database_connections": "データベース接続数"
+    },
+    "status": {
+      "healthy": "正常",
+      "warning": "警告",
+      "critical": "危険",
+      "unknown": "不明",
+      "maintenance": "メンテナンス中",
+      "offline": "オフライン"
+    },
+    "charts": {
+      "performance_trend": "パフォーマンス傾向",
+      "error_distribution": "エラー分布",
+      "traffic_pattern": "トラフィックパターン",
+      "resource_utilization": "リソース使用率"
+    },
+    "widgets": {
+      "system_health": "システムヘルス",
+      "recent_incidents": "最近のインシデント",
+      "top_errors": "トップエラー",
+      "slow_transactions": "遅いトランザクション",
+      "database_performance": "データベースパフォーマンス",
+      "server_status": "サーバー状態"
+    }
+  },
+  "monitoring": {
+    "title": "リアルタイム監視",
+    "subtitle": "ライブシステムパフォーマンス",
+    "refresh_rate": "更新間隔",
+    "auto_refresh": "自動更新",
+    "time_range": "時間範囲",
+    "last_updated": "最終更新",
+    "filters": {
+      "all_servers": "全サーバー",
+      "production": "本番環境",
+      "staging": "ステージング",
+      "development": "開発環境",
+      "critical_only": "クリティカルのみ"
+    },
+    "servers": {
+      "title": "サーバー状態",
+      "name": "サーバー名",
+      "ip_address": "IPアドレス",
+      "status": "ステータス",
+      "uptime": "稼働時間",
+      "load": "負荷",
+      "connections": "接続数"
+    },
+    "applications": {
+      "title": "アプリケーションパフォーマンス",
+      "name": "アプリケーション",
+      "version": "バージョン",
+      "instances": "インスタンス",
+      "health_score": "ヘルススコア"
+    },
+    "databases": {
+      "title": "データベース監視",
+      "name": "データベース",
+      "type": "タイプ",
+      "connections": "接続数",
+      "query_time": "平均クエリ時間",
+      "locks": "ロック数"
+    }
+  },
+  "incidents": {
+    "title": "インシデント管理",
+    "subtitle": "問題の追跡と解決",
+    "create_incident": "インシデント作成",
+    "incident_details": "インシデント詳細",
+    "incident_id": "インシデントID",
+    "severity": {
+      "critical": "クリティカル",
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "status": {
+      "open": "オープン",
+      "in_progress": "進行中",
+      "resolved": "解決済み",
+      "closed": "クローズ済み"
+    },
+    "priority": {
+      "urgent": "緊急",
+      "high": "高",
+      "normal": "通常",
+      "low": "低"
+    },
+    "fields": {
+      "title": "タイトル",
+      "description": "説明",
+      "reporter": "報告者",
+      "assignee": "担当者",
+      "created_date": "作成日",
+      "updated_date": "更新日",
+      "resolved_date": "解決日",
+      "affected_services": "影響を受けるサービス",
+      "resolution": "解決方法",
+      "root_cause": "根本原因"
+    },
+    "actions": {
+      "assign": "割り当て",
+      "reassign": "再割り当て",
+      "escalate": "エスカレート",
+      "resolve": "解決",
+      "close": "クローズ",
+      "reopen": "再オープン",
+      "add_comment": "コメント追加",
+      "attach_file": "ファイル添付"
+    },
+    "comments": {
+      "title": "コメント",
+      "add_comment": "コメント追加",
+      "no_comments": "まだコメントはありません",
+      "comment_added": "コメントが正常に追加されました"
+    },
+    "timeline": {
+      "title": "タイムライン",
+      "created": "インシデント作成",
+      "assigned": "{{assignee}} に割り当て",
+      "status_changed": "ステータスを {{status}} に変更",
+      "comment_added": "コメント追加",
+      "resolved": "インシデント解決",
+      "closed": "インシデントクローズ"
+    }
+  },
+  "alerts": {
+    "title": "アラート管理",
+    "subtitle": "システム通知とアラート",
+    "create_alert": "アラート作成",
+    "alert_rules": "アラートルール",
+    "notifications": "通知",
+    "channels": {
+      "email": "メール",
+      "sms": "SMS",
+      "slack": "Slack",
+      "webhook": "Webhook",
+      "push": "プッシュ通知"
+    },
+    "types": {
+      "threshold": "閾値アラート",
+      "anomaly": "異常検知",
+      "composite": "複合アラート",
+      "heartbeat": "ハートビートアラート"
+    },
+    "conditions": {
+      "greater_than": "より大きい",
+      "less_than": "より小さい",
+      "equals": "等しい",
+      "not_equals": "等しくない",
+      "contains": "含む",
+      "regex": "正規表現"
+    },
+    "settings": {
+      "title": "アラート設定",
+      "enable_notifications": "通知を有効にする",
+      "quiet_hours": "静寂時間",
+      "escalation_policy": "エスカレーションポリシー",
+      "notification_channels": "通知チャンネル"
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "subtitle": "システム構成",
+    "general": "一般",
+    "users": "ユーザー",
+    "security": "セキュリティ",
+    "integrations": "統合",
+    "advanced": "詳細設定",
+    "language": "言語",
+    "timezone": "タイムゾーン",
+    "theme": "テーマ",
+    "notifications": "通知",
+    "api_keys": "APIキー",
+    "backup": "バックアップ",
+    "restore": "復元",
+    "maintenance": "メンテナンス"
+  },
+  "auth": {
+    "login": {
+      "title": "サインイン",
+      "subtitle": "AIRIS EPM へようこそ",
+      "username": "ユーザー名",
+      "email": "メールアドレス",
+      "password": "パスワード",
+      "remember_me": "ログイン状態を保持",
+      "forgot_password": "パスワードを忘れた場合",
+      "sign_in": "サインイン",
+      "sign_up": "サインアップ",
+      "demo_mode": "デモモード",
+      "biometric_login": "生体認証ログイン",
+      "or": "または"
+    },
+    "logout": {
+      "title": "サインアウト",
+      "message": "本当にサインアウトしますか？",
+      "confirm": "サインアウト",
+      "success": "正常にサインアウトしました"
+    },
+    "errors": {
+      "invalid_credentials": "ユーザー名またはパスワードが無効です",
+      "account_locked": "アカウントが一時的にロックされています",
+      "network_error": "ネットワーク接続エラー",
+      "server_error": "サーバーエラーが発生しました。もう一度お試しください",
+      "biometric_failed": "生体認証に失敗しました",
+      "biometric_unavailable": "生体認証は利用できません"
+    }
+  },
+  "errors": {
+    "network": {
+      "offline": "現在オフラインです",
+      "connection_failed": "接続に失敗しました",
+      "timeout": "リクエストがタイムアウトしました",
+      "server_error": "サーバーエラー ({{status}})",
+      "not_found": "リソースが見つかりません",
+      "unauthorized": "認証されていません",
+      "forbidden": "アクセスが禁止されています"
+    },
+    "validation": {
+      "required": "この項目は必須です",
+      "invalid_email": "メールアドレスの形式が無効です",
+      "invalid_url": "URLの形式が無効です",
+      "min_length": "最低 {{min}} 文字必要です",
+      "max_length": "最大 {{max}} 文字まで許可されています",
+      "numeric": "数値である必要があります",
+      "positive": "正の数である必要があります"
+    },
+    "system": {
+      "unexpected": "予期しないエラーが発生しました",
+      "maintenance": "システムはメンテナンス中です",
+      "upgrade_required": "システムのアップグレードが必要です",
+      "feature_unavailable": "この機能は現在利用できません"
+    }
+  },
+  "messages": {
+    "success": {
+      "saved": "正常に保存されました",
+      "updated": "正常に更新されました",
+      "deleted": "正常に削除されました",
+      "created": "正常に作成されました",
+      "sent": "正常に送信されました",
+      "imported": "正常にインポートされました",
+      "exported": "正常にエクスポートされました"
+    },
+    "confirm": {
+      "delete": "このアイテムを削除してもよろしいですか？",
+      "logout": "本当にサインアウトしますか？",
+      "reset": "すべての設定をリセットしてもよろしいですか？",
+      "cancel": "変更をキャンセルしてもよろしいですか？"
+    },
+    "info": {
+      "no_data": "データがありません",
+      "loading": "データを読み込み中...",
+      "searching": "検索中...",
+      "processing": "処理中...",
+      "syncing": "データを同期中...",
+      "backup_in_progress": "バックアップ進行中..."
+    }
+  },
+  "dates": {
+    "today": "今日",
+    "yesterday": "昨日",
+    "tomorrow": "明日",
+    "this_week": "今週",
+    "last_week": "先週",
+    "this_month": "今月",
+    "last_month": "先月",
+    "this_year": "今年",
+    "last_year": "昨年",
+    "formats": {
+      "short": "MM/DD",
+      "medium": "YYYY年MM月DD日",
+      "long": "YYYY年MM月DD日",
+      "full": "YYYY年MM月DD日 (dddd)",
+      "time": "HH:mm",
+      "datetime": "YYYY年MM月DD日 HH:mm"
+    }
+  },
+  "units": {
+    "time": {
+      "second": "秒",
+      "seconds": "秒",
+      "minute": "分",
+      "minutes": "分",
+      "hour": "時間",
+      "hours": "時間",
+      "day": "日",
+      "days": "日",
+      "week": "週",
+      "weeks": "週",
+      "month": "月",
+      "months": "月",
+      "year": "年",
+      "years": "年"
+    },
+    "bytes": {
+      "byte": "B",
+      "kilobyte": "KB",
+      "megabyte": "MB",
+      "gigabyte": "GB",
+      "terabyte": "TB",
+      "petabyte": "PB"
+    },
+    "rate": {
+      "per_second": "/秒",
+      "per_minute": "/分",
+      "per_hour": "/時",
+      "per_day": "/日"
+    }
+  },
+  "tooltips": {
+    "refresh": "データを更新",
+    "settings": "設定を開く",
+    "help": "ヘルプを表示",
+    "export": "データをエクスポート",
+    "filter": "結果をフィルター",
+    "search": "アイテムを検索",
+    "sort": "アイテムを並び替え",
+    "view_details": "詳細を表示",
+    "edit_item": "アイテムを編集",
+    "delete_item": "アイテムを削除"
+  },
+  "placeholders": {
+    "search": "検索...",
+    "enter_text": "テキストを入力...",
+    "select_option": "オプションを選択...",
+    "choose_file": "ファイルを選択...",
+    "enter_email": "メールアドレスを入力...",
+    "enter_password": "パスワードを入力...",
+    "enter_url": "URLを入力...",
+    "add_comment": "コメントを追加..."
+  }
+}

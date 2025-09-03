@@ -1,0 +1,452 @@
+{
+  "common": {
+    "loading": "جارٍ التحميل...",
+    "error": "خطأ",
+    "success": "نجح",
+    "warning": "تحذير",
+    "info": "معلومات",
+    "confirm": "تأكيد",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تحرير",
+    "add": "إضافة",
+    "remove": "إزالة",
+    "update": "تحديث",
+    "refresh": "تحديث",
+    "search": "بحث",
+    "filter": "تصفية",
+    "sort": "ترتيب",
+    "reset": "إعادة تعيين",
+    "close": "إغلاق",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "submit": "إرسال",
+    "download": "تنزيل",
+    "upload": "تحميل",
+    "export": "تصدير",
+    "import": "استيراد",
+    "view": "عرض",
+    "details": "التفاصيل",
+    "settings": "الإعدادات",
+    "help": "مساعدة",
+    "about": "حول",
+    "logout": "تسجيل خروج",
+    "login": "تسجيل دخول",
+    "register": "تسجيل",
+    "profile": "الملف الشخصي",
+    "dashboard": "لوحة المعلومات",
+    "monitoring": "مراقبة",
+    "incidents": "الحوادث",
+    "alerts": "التنبيهات",
+    "reports": "التقارير",
+    "analytics": "التحليلات",
+    "administration": "الإدارة",
+    "yes": "نعم",
+    "no": "لا",
+    "ok": "موافق",
+    "retry": "إعادة المحاولة",
+    "skip": "تخطي",
+    "continue": "متابعة",
+    "finish": "إنهاء",
+    "home": "الرئيسية",
+    "menu": "القائمة",
+    "actions": "الإجراءات",
+    "options": "الخيارات",
+    "preferences": "التفضيلات",
+    "configuration": "التكوين",
+    "status": "الحالة",
+    "type": "النوع",
+    "category": "الفئة",
+    "priority": "الأولوية",
+    "severity": "الخطورة",
+    "date": "التاريخ",
+    "time": "الوقت",
+    "duration": "المدة",
+    "created": "تم الإنشاء",
+    "updated": "تم التحديث",
+    "modified": "تم التعديل",
+    "author": "المؤلف",
+    "user": "المستخدم",
+    "name": "الاسم",
+    "title": "العنوان",
+    "description": "الوصف",
+    "message": "الرسالة",
+    "comment": "التعليق",
+    "note": "ملاحظة",
+    "tag": "علامة",
+    "tags": "العلامات",
+    "version": "الإصدار",
+    "build": "البناء",
+    "release": "الإصدار"
+  },
+  "navigation": {
+    "dashboard": "لوحة المعلومات",
+    "realtime_monitoring": "مراقبة في الوقت الفعلي",
+    "j2ee_monitoring": "مراقبة J2EE",
+    "was_monitoring": "مراقبة WAS",
+    "exception_tracking": "تتبع الاستثناءات",
+    "service_topology": "طوبولوجية الخدمات",
+    "alert_management": "إدارة التنبيهات",
+    "apm_monitoring": "مراقبة APM",
+    "system_health": "صحة النظام",
+    "performance_metrics": "مقاييس الأداء",
+    "log_analysis": "تحليل السجلات",
+    "trace_analysis": "تحليل التتبع",
+    "user_management": "إدارة المستخدمين",
+    "configuration": "التكوين",
+    "ontology_system": "نظام الأنطولوجيا",
+    "session_replay": "إعادة تشغيل الجلسة"
+  },
+  "dashboard": {
+    "title": "لوحة معلومات AIRIS EPM",
+    "subtitle": "مراقبة الأداء المؤسسي",
+    "welcome": "مرحباً بك في AIRIS EPM",
+    "overview": "نظرة عامة على النظام",
+    "kpi": "مؤشرات الأداء الرئيسية",
+    "metrics": {
+      "response_time": "وقت الاستجابة",
+      "throughput": "الإنتاجية",
+      "error_rate": "معدل الأخطاء",
+      "availability": "التوافر",
+      "cpu_usage": "استخدام المعالج",
+      "memory_usage": "استخدام الذاكرة",
+      "disk_usage": "استخدام القرص",
+      "network_io": "إدخال/إخراج الشبكة",
+      "active_users": "المستخدمون النشطون",
+      "transactions": "المعاملات",
+      "requests_per_minute": "الطلبات في الدقيقة",
+      "database_connections": "اتصالات قاعدة البيانات"
+    },
+    "status": {
+      "healthy": "سليم",
+      "warning": "تحذير",
+      "critical": "حرج",
+      "unknown": "غير معروف",
+      "maintenance": "صيانة",
+      "offline": "غير متصل"
+    },
+    "charts": {
+      "performance_trend": "اتجاه الأداء",
+      "error_distribution": "توزيع الأخطاء",
+      "traffic_pattern": "نمط الحركة",
+      "resource_utilization": "استخدام الموارد"
+    },
+    "widgets": {
+      "system_health": "صحة النظام",
+      "recent_incidents": "الحوادث الأخيرة",
+      "top_errors": "أكثر الأخطاء",
+      "slow_transactions": "المعاملات البطيئة",
+      "database_performance": "أداء قاعدة البيانات",
+      "server_status": "حالة الخادم"
+    }
+  },
+  "monitoring": {
+    "title": "مراقبة في الوقت الفعلي",
+    "subtitle": "أداء النظام المباشر",
+    "refresh_rate": "معدل التحديث",
+    "auto_refresh": "تحديث تلقائي",
+    "time_range": "النطاق الزمني",
+    "last_updated": "آخر تحديث",
+    "filters": {
+      "all_servers": "جميع الخوادم",
+      "production": "الإنتاج",
+      "staging": "التطوير التجريبي",
+      "development": "التطوير",
+      "critical_only": "الحرجة فقط"
+    },
+    "servers": {
+      "title": "حالة الخوادم",
+      "name": "اسم الخادم",
+      "ip_address": "عنوان IP",
+      "status": "الحالة",
+      "uptime": "وقت التشغيل",
+      "load": "الحمولة",
+      "connections": "الاتصالات"
+    },
+    "applications": {
+      "title": "أداء التطبيقات",
+      "name": "التطبيق",
+      "version": "الإصدار",
+      "instances": "المثيلات",
+      "health_score": "نقاط الصحة"
+    },
+    "databases": {
+      "title": "مراقبة قاعدة البيانات",
+      "name": "قاعدة البيانات",
+      "type": "النوع",
+      "connections": "الاتصالات",
+      "query_time": "متوسط وقت الاستعلام",
+      "locks": "الأقفال"
+    }
+  },
+  "incidents": {
+    "title": "إدارة الحوادث",
+    "subtitle": "تتبع وحل المشاكل",
+    "create_incident": "إنشاء حادث",
+    "incident_details": "تفاصيل الحادث",
+    "incident_id": "معرف الحادث",
+    "severity": {
+      "critical": "حرج",
+      "high": "عالي",
+      "medium": "متوسط",
+      "low": "منخفض"
+    },
+    "status": {
+      "open": "مفتوح",
+      "in_progress": "قيد التنفيذ",
+      "resolved": "تم الحل",
+      "closed": "مغلق"
+    },
+    "priority": {
+      "urgent": "عاجل",
+      "high": "عالي",
+      "normal": "عادي",
+      "low": "منخفض"
+    },
+    "fields": {
+      "title": "العنوان",
+      "description": "الوصف",
+      "reporter": "المبلغ",
+      "assignee": "المكلف",
+      "created_date": "تاريخ الإنشاء",
+      "updated_date": "تاريخ التحديث",
+      "resolved_date": "تاريخ الحل",
+      "affected_services": "الخدمات المتأثرة",
+      "resolution": "الحل",
+      "root_cause": "السبب الجذري"
+    },
+    "actions": {
+      "assign": "تكليف",
+      "reassign": "إعادة تكليف",
+      "escalate": "تصعيد",
+      "resolve": "حل",
+      "close": "إغلاق",
+      "reopen": "إعادة فتح",
+      "add_comment": "إضافة تعليق",
+      "attach_file": "إرفاق ملف"
+    },
+    "comments": {
+      "title": "التعليقات",
+      "add_comment": "إضافة تعليق",
+      "no_comments": "لا توجد تعليقات بعد",
+      "comment_added": "تم إضافة التعليق بنجاح"
+    },
+    "timeline": {
+      "title": "الجدول الزمني",
+      "created": "تم إنشاء الحادث",
+      "assigned": "تم تكليف {{assignee}}",
+      "status_changed": "تم تغيير الحالة إلى {{status}}",
+      "comment_added": "تم إضافة تعليق",
+      "resolved": "تم حل الحادث",
+      "closed": "تم إغلاق الحادث"
+    }
+  },
+  "alerts": {
+    "title": "إدارة التنبيهات",
+    "subtitle": "إشعارات وتنبيهات النظام",
+    "create_alert": "إنشاء تنبيه",
+    "alert_rules": "قواعد التنبيه",
+    "notifications": "الإشعارات",
+    "channels": {
+      "email": "البريد الإلكتروني",
+      "sms": "رسالة نصية",
+      "slack": "سلاك",
+      "webhook": "ويب هوك",
+      "push": "إشعار فوري"
+    },
+    "types": {
+      "threshold": "تنبيه العتبة",
+      "anomaly": "اكتشاف الشذوذ",
+      "composite": "تنبيه مركب",
+      "heartbeat": "تنبيه نبضة القلب"
+    },
+    "conditions": {
+      "greater_than": "أكبر من",
+      "less_than": "أصغر من",
+      "equals": "يساوي",
+      "not_equals": "لا يساوي",
+      "contains": "يحتوي على",
+      "regex": "التعبير النمطي"
+    },
+    "settings": {
+      "title": "إعدادات التنبيه",
+      "enable_notifications": "تفعيل الإشعارات",
+      "quiet_hours": "الساعات الهادئة",
+      "escalation_policy": "سياسة التصعيد",
+      "notification_channels": "قنوات الإشعار"
+    }
+  },
+  "settings": {
+    "title": "الإعدادات",
+    "subtitle": "تكوين النظام",
+    "general": "عام",
+    "users": "المستخدمون",
+    "security": "الأمان",
+    "integrations": "التكاملات",
+    "advanced": "متقدم",
+    "language": "اللغة",
+    "timezone": "المنطقة الزمنية",
+    "theme": "المظهر",
+    "notifications": "الإشعارات",
+    "api_keys": "مفاتيح API",
+    "backup": "النسخ الاحتياطي",
+    "restore": "الاستعادة",
+    "maintenance": "الصيانة"
+  },
+  "auth": {
+    "login": {
+      "title": "تسجيل الدخول",
+      "subtitle": "أهلاً بعودتك إلى AIRIS EPM",
+      "username": "اسم المستخدم",
+      "email": "البريد الإلكتروني",
+      "password": "كلمة المرور",
+      "remember_me": "تذكرني",
+      "forgot_password": "نسيت كلمة المرور؟",
+      "sign_in": "تسجيل دخول",
+      "sign_up": "تسجيل جديد",
+      "demo_mode": "وضع التجريب",
+      "biometric_login": "تسجيل دخول بيومتري",
+      "or": "أو"
+    },
+    "logout": {
+      "title": "تسجيل الخروج",
+      "message": "هل أنت متأكد من رغبتك في تسجيل الخروج؟",
+      "confirm": "تسجيل خروج",
+      "success": "تم تسجيل الخروج بنجاح"
+    },
+    "errors": {
+      "invalid_credentials": "اسم المستخدم أو كلمة المرور غير صحيحة",
+      "account_locked": "الحساب مقفل مؤقتاً",
+      "network_error": "خطأ في الاتصال بالشبكة",
+      "server_error": "خطأ في الخادم، الرجاء المحاولة مرة أخرى",
+      "biometric_failed": "فشل المصادقة البيومترية",
+      "biometric_unavailable": "المصادقة البيومترية غير متوفرة"
+    }
+  },
+  "errors": {
+    "network": {
+      "offline": "أنت غير متصل حالياً",
+      "connection_failed": "فشل الاتصال",
+      "timeout": "انتهت مهلة الطلب",
+      "server_error": "خطأ في الخادم ({{status}})",
+      "not_found": "المورد غير موجود",
+      "unauthorized": "وصول غير مصرح به",
+      "forbidden": "وصول ممنوع"
+    },
+    "validation": {
+      "required": "هذا الحقل مطلوب",
+      "invalid_email": "تنسيق البريد الإلكتروني غير صحيح",
+      "invalid_url": "تنسيق الرابط غير صحيح",
+      "min_length": "الحد الأدنى {{min}} أحرف مطلوب",
+      "max_length": "الحد الأقصى {{max}} حرف مسموح",
+      "numeric": "يجب أن يكون رقماً",
+      "positive": "يجب أن يكون رقماً موجباً"
+    },
+    "system": {
+      "unexpected": "حدث خطأ غير متوقع",
+      "maintenance": "النظام تحت الصيانة",
+      "upgrade_required": "مطلوب ترقية النظام",
+      "feature_unavailable": "هذه الميزة غير متوفرة حالياً"
+    }
+  },
+  "messages": {
+    "success": {
+      "saved": "تم الحفظ بنجاح",
+      "updated": "تم التحديث بنجاح",
+      "deleted": "تم الحذف بنجاح",
+      "created": "تم الإنشاء بنجاح",
+      "sent": "تم الإرسال بنجاح",
+      "imported": "تم الاستيراد بنجاح",
+      "exported": "تم التصدير بنجاح"
+    },
+    "confirm": {
+      "delete": "هل أنت متأكد من رغبتك في حذف هذا العنصر؟",
+      "logout": "هل أنت متأكد من رغبتك في تسجيل الخروج؟",
+      "reset": "هل أنت متأكد من رغبتك في إعادة تعيين جميع الإعدادات؟",
+      "cancel": "هل أنت متأكد من رغبتك في إلغاء التغييرات؟"
+    },
+    "info": {
+      "no_data": "لا توجد بيانات متاحة",
+      "loading": "جارٍ تحميل البيانات...",
+      "searching": "جارٍ البحث...",
+      "processing": "جارٍ المعالجة...",
+      "syncing": "جارٍ مزامنة البيانات...",
+      "backup_in_progress": "جارٍ إجراء النسخ الاحتياطي..."
+    }
+  },
+  "dates": {
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "tomorrow": "غداً",
+    "this_week": "هذا الأسبوع",
+    "last_week": "الأسبوع الماضي",
+    "this_month": "هذا الشهر",
+    "last_month": "الشهر الماضي",
+    "this_year": "هذا العام",
+    "last_year": "العام الماضي",
+    "formats": {
+      "short": "DD/MM",
+      "medium": "DD/MM/YYYY",
+      "long": "DD MMMM YYYY",
+      "full": "dddd، DD MMMM YYYY",
+      "time": "HH:mm",
+      "datetime": "DD/MM/YYYY HH:mm"
+    }
+  },
+  "units": {
+    "time": {
+      "second": "ثانية",
+      "seconds": "ثوانٍ",
+      "minute": "دقيقة",
+      "minutes": "دقائق",
+      "hour": "ساعة",
+      "hours": "ساعات",
+      "day": "يوم",
+      "days": "أيام",
+      "week": "أسبوع",
+      "weeks": "أسابيع",
+      "month": "شهر",
+      "months": "شهور",
+      "year": "سنة",
+      "years": "سنوات"
+    },
+    "bytes": {
+      "byte": "بايت",
+      "kilobyte": "كيلوبايت",
+      "megabyte": "ميجابايت",
+      "gigabyte": "جيجابايت",
+      "terabyte": "تيرابايت",
+      "petabyte": "بيتابايت"
+    },
+    "rate": {
+      "per_second": "/ثانية",
+      "per_minute": "/دقيقة",
+      "per_hour": "/ساعة",
+      "per_day": "/يوم"
+    }
+  },
+  "tooltips": {
+    "refresh": "تحديث البيانات",
+    "settings": "فتح الإعدادات",
+    "help": "إظهار المساعدة",
+    "export": "تصدير البيانات",
+    "filter": "تصفية النتائج",
+    "search": "البحث في العناصر",
+    "sort": "ترتيب العناصر",
+    "view_details": "عرض التفاصيل",
+    "edit_item": "تحرير العنصر",
+    "delete_item": "حذف العنصر"
+  },
+  "placeholders": {
+    "search": "البحث...",
+    "enter_text": "أدخل النص...",
+    "select_option": "اختر خياراً...",
+    "choose_file": "اختر ملف...",
+    "enter_email": "أدخل عنوان البريد الإلكتروني...",
+    "enter_password": "أدخل كلمة المرور...",
+    "enter_url": "أدخل الرابط...",
+    "add_comment": "أضف تعليقاً..."
+  }
+}

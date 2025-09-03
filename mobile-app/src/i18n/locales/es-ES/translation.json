@@ -1,0 +1,452 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "warning": "Advertencia",
+    "info": "Información",
+    "confirm": "Confirmar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "add": "Agregar",
+    "remove": "Quitar",
+    "update": "Actualizar",
+    "refresh": "Actualizar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "reset": "Restablecer",
+    "close": "Cerrar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "submit": "Enviar",
+    "download": "Descargar",
+    "upload": "Subir",
+    "export": "Exportar",
+    "import": "Importar",
+    "view": "Ver",
+    "details": "Detalles",
+    "settings": "Configuración",
+    "help": "Ayuda",
+    "about": "Acerca de",
+    "logout": "Cerrar sesión",
+    "login": "Iniciar sesión",
+    "register": "Registrarse",
+    "profile": "Perfil",
+    "dashboard": "Panel de control",
+    "monitoring": "Monitoreo",
+    "incidents": "Incidentes",
+    "alerts": "Alertas",
+    "reports": "Reportes",
+    "analytics": "Análisis",
+    "administration": "Administración",
+    "yes": "Sí",
+    "no": "No",
+    "ok": "OK",
+    "retry": "Reintentar",
+    "skip": "Omitir",
+    "continue": "Continuar",
+    "finish": "Finalizar",
+    "home": "Inicio",
+    "menu": "Menú",
+    "actions": "Acciones",
+    "options": "Opciones",
+    "preferences": "Preferencias",
+    "configuration": "Configuración",
+    "status": "Estado",
+    "type": "Tipo",
+    "category": "Categoría",
+    "priority": "Prioridad",
+    "severity": "Severidad",
+    "date": "Fecha",
+    "time": "Hora",
+    "duration": "Duración",
+    "created": "Creado",
+    "updated": "Actualizado",
+    "modified": "Modificado",
+    "author": "Autor",
+    "user": "Usuario",
+    "name": "Nombre",
+    "title": "Título",
+    "description": "Descripción",
+    "message": "Mensaje",
+    "comment": "Comentario",
+    "note": "Nota",
+    "tag": "Etiqueta",
+    "tags": "Etiquetas",
+    "version": "Versión",
+    "build": "Compilación",
+    "release": "Lanzamiento"
+  },
+  "navigation": {
+    "dashboard": "Panel de control",
+    "realtime_monitoring": "Monitoreo en tiempo real",
+    "j2ee_monitoring": "Monitoreo J2EE",
+    "was_monitoring": "Monitoreo WAS",
+    "exception_tracking": "Seguimiento de excepciones",
+    "service_topology": "Topología de servicios",
+    "alert_management": "Gestión de alertas",
+    "apm_monitoring": "Monitoreo APM",
+    "system_health": "Salud del sistema",
+    "performance_metrics": "Métricas de rendimiento",
+    "log_analysis": "Análisis de registros",
+    "trace_analysis": "Análisis de trazas",
+    "user_management": "Gestión de usuarios",
+    "configuration": "Configuración",
+    "ontology_system": "Sistema de ontología",
+    "session_replay": "Reproducción de sesiones"
+  },
+  "dashboard": {
+    "title": "Panel AIRIS EPM",
+    "subtitle": "Monitoreo de Rendimiento Empresarial",
+    "welcome": "Bienvenido a AIRIS EPM",
+    "overview": "Resumen del sistema",
+    "kpi": "Indicadores clave de rendimiento",
+    "metrics": {
+      "response_time": "Tiempo de respuesta",
+      "throughput": "Rendimiento",
+      "error_rate": "Tasa de errores",
+      "availability": "Disponibilidad",
+      "cpu_usage": "Uso de CPU",
+      "memory_usage": "Uso de memoria",
+      "disk_usage": "Uso de disco",
+      "network_io": "E/S de red",
+      "active_users": "Usuarios activos",
+      "transactions": "Transacciones",
+      "requests_per_minute": "Solicitudes por minuto",
+      "database_connections": "Conexiones de base de datos"
+    },
+    "status": {
+      "healthy": "Saludable",
+      "warning": "Advertencia",
+      "critical": "Crítico",
+      "unknown": "Desconocido",
+      "maintenance": "En mantenimiento",
+      "offline": "Sin conexión"
+    },
+    "charts": {
+      "performance_trend": "Tendencia de rendimiento",
+      "error_distribution": "Distribución de errores",
+      "traffic_pattern": "Patrón de tráfico",
+      "resource_utilization": "Utilización de recursos"
+    },
+    "widgets": {
+      "system_health": "Salud del sistema",
+      "recent_incidents": "Incidentes recientes",
+      "top_errors": "Principales errores",
+      "slow_transactions": "Transacciones lentas",
+      "database_performance": "Rendimiento de base de datos",
+      "server_status": "Estado del servidor"
+    }
+  },
+  "monitoring": {
+    "title": "Monitoreo en tiempo real",
+    "subtitle": "Rendimiento del sistema en vivo",
+    "refresh_rate": "Frecuencia de actualización",
+    "auto_refresh": "Actualización automática",
+    "time_range": "Rango de tiempo",
+    "last_updated": "Última actualización",
+    "filters": {
+      "all_servers": "Todos los servidores",
+      "production": "Producción",
+      "staging": "Staging",
+      "development": "Desarrollo",
+      "critical_only": "Solo críticos"
+    },
+    "servers": {
+      "title": "Estado de servidores",
+      "name": "Nombre del servidor",
+      "ip_address": "Dirección IP",
+      "status": "Estado",
+      "uptime": "Tiempo activo",
+      "load": "Carga",
+      "connections": "Conexiones"
+    },
+    "applications": {
+      "title": "Rendimiento de aplicaciones",
+      "name": "Aplicación",
+      "version": "Versión",
+      "instances": "Instancias",
+      "health_score": "Puntuación de salud"
+    },
+    "databases": {
+      "title": "Monitoreo de base de datos",
+      "name": "Base de datos",
+      "type": "Tipo",
+      "connections": "Conexiones",
+      "query_time": "Tiempo promedio de consulta",
+      "locks": "Bloqueos"
+    }
+  },
+  "incidents": {
+    "title": "Gestión de incidentes",
+    "subtitle": "Rastrear y resolver problemas",
+    "create_incident": "Crear incidente",
+    "incident_details": "Detalles del incidente",
+    "incident_id": "ID del incidente",
+    "severity": {
+      "critical": "Crítico",
+      "high": "Alto",
+      "medium": "Medio",
+      "low": "Bajo"
+    },
+    "status": {
+      "open": "Abierto",
+      "in_progress": "En progreso",
+      "resolved": "Resuelto",
+      "closed": "Cerrado"
+    },
+    "priority": {
+      "urgent": "Urgente",
+      "high": "Alto",
+      "normal": "Normal",
+      "low": "Bajo"
+    },
+    "fields": {
+      "title": "Título",
+      "description": "Descripción",
+      "reporter": "Reportero",
+      "assignee": "Asignado",
+      "created_date": "Fecha de creación",
+      "updated_date": "Fecha de actualización",
+      "resolved_date": "Fecha de resolución",
+      "affected_services": "Servicios afectados",
+      "resolution": "Resolución",
+      "root_cause": "Causa raíz"
+    },
+    "actions": {
+      "assign": "Asignar",
+      "reassign": "Reasignar",
+      "escalate": "Escalar",
+      "resolve": "Resolver",
+      "close": "Cerrar",
+      "reopen": "Reabrir",
+      "add_comment": "Agregar comentario",
+      "attach_file": "Adjuntar archivo"
+    },
+    "comments": {
+      "title": "Comentarios",
+      "add_comment": "Agregar comentario",
+      "no_comments": "Aún no hay comentarios",
+      "comment_added": "Comentario agregado exitosamente"
+    },
+    "timeline": {
+      "title": "Cronología",
+      "created": "Incidente creado",
+      "assigned": "Asignado a {{assignee}}",
+      "status_changed": "Estado cambiado a {{status}}",
+      "comment_added": "Comentario agregado",
+      "resolved": "Incidente resuelto",
+      "closed": "Incidente cerrado"
+    }
+  },
+  "alerts": {
+    "title": "Gestión de alertas",
+    "subtitle": "Notificaciones y alertas del sistema",
+    "create_alert": "Crear alerta",
+    "alert_rules": "Reglas de alertas",
+    "notifications": "Notificaciones",
+    "channels": {
+      "email": "Correo electrónico",
+      "sms": "SMS",
+      "slack": "Slack",
+      "webhook": "Webhook",
+      "push": "Notificación push"
+    },
+    "types": {
+      "threshold": "Alerta de umbral",
+      "anomaly": "Detección de anomalías",
+      "composite": "Alerta compuesta",
+      "heartbeat": "Alerta de latido"
+    },
+    "conditions": {
+      "greater_than": "Mayor que",
+      "less_than": "Menor que",
+      "equals": "Igual a",
+      "not_equals": "No igual a",
+      "contains": "Contiene",
+      "regex": "Expresión regular"
+    },
+    "settings": {
+      "title": "Configuración de alertas",
+      "enable_notifications": "Habilitar notificaciones",
+      "quiet_hours": "Horas silenciosas",
+      "escalation_policy": "Política de escalamiento",
+      "notification_channels": "Canales de notificación"
+    }
+  },
+  "settings": {
+    "title": "Configuración",
+    "subtitle": "Configuración del sistema",
+    "general": "General",
+    "users": "Usuarios",
+    "security": "Seguridad",
+    "integrations": "Integraciones",
+    "advanced": "Avanzado",
+    "language": "Idioma",
+    "timezone": "Zona horaria",
+    "theme": "Tema",
+    "notifications": "Notificaciones",
+    "api_keys": "Claves API",
+    "backup": "Copia de seguridad",
+    "restore": "Restaurar",
+    "maintenance": "Mantenimiento"
+  },
+  "auth": {
+    "login": {
+      "title": "Iniciar sesión",
+      "subtitle": "Bienvenido de vuelta a AIRIS EPM",
+      "username": "Nombre de usuario",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "remember_me": "Recordarme",
+      "forgot_password": "¿Olvidaste tu contraseña?",
+      "sign_in": "Iniciar sesión",
+      "sign_up": "Registrarse",
+      "demo_mode": "Modo demo",
+      "biometric_login": "Login biométrico",
+      "or": "o"
+    },
+    "logout": {
+      "title": "Cerrar sesión",
+      "message": "¿Estás seguro de que quieres cerrar sesión?",
+      "confirm": "Cerrar sesión",
+      "success": "Sesión cerrada exitosamente"
+    },
+    "errors": {
+      "invalid_credentials": "Nombre de usuario o contraseña inválidos",
+      "account_locked": "La cuenta está temporalmente bloqueada",
+      "network_error": "Error de conexión de red",
+      "server_error": "Error del servidor, por favor inténtalo de nuevo",
+      "biometric_failed": "Autenticación biométrica fallida",
+      "biometric_unavailable": "La autenticación biométrica no está disponible"
+    }
+  },
+  "errors": {
+    "network": {
+      "offline": "Actualmente estás sin conexión",
+      "connection_failed": "Conexión fallida",
+      "timeout": "Tiempo de espera agotado",
+      "server_error": "Error del servidor ({{status}})",
+      "not_found": "Recurso no encontrado",
+      "unauthorized": "Acceso no autorizado",
+      "forbidden": "Acceso prohibido"
+    },
+    "validation": {
+      "required": "Este campo es obligatorio",
+      "invalid_email": "Formato de correo electrónico inválido",
+      "invalid_url": "Formato de URL inválido",
+      "min_length": "Se requieren mínimo {{min}} caracteres",
+      "max_length": "Se permiten máximo {{max}} caracteres",
+      "numeric": "Debe ser un número",
+      "positive": "Debe ser un número positivo"
+    },
+    "system": {
+      "unexpected": "Ocurrió un error inesperado",
+      "maintenance": "El sistema está en mantenimiento",
+      "upgrade_required": "Se requiere actualización del sistema",
+      "feature_unavailable": "Esta función no está disponible actualmente"
+    }
+  },
+  "messages": {
+    "success": {
+      "saved": "Guardado exitosamente",
+      "updated": "Actualizado exitosamente",
+      "deleted": "Eliminado exitosamente",
+      "created": "Creado exitosamente",
+      "sent": "Enviado exitosamente",
+      "imported": "Importado exitosamente",
+      "exported": "Exportado exitosamente"
+    },
+    "confirm": {
+      "delete": "¿Estás seguro de que quieres eliminar este elemento?",
+      "logout": "¿Estás seguro de que quieres cerrar sesión?",
+      "reset": "¿Estás seguro de que quieres restablecer todas las configuraciones?",
+      "cancel": "¿Estás seguro de que quieres cancelar los cambios?"
+    },
+    "info": {
+      "no_data": "No hay datos disponibles",
+      "loading": "Cargando datos...",
+      "searching": "Buscando...",
+      "processing": "Procesando...",
+      "syncing": "Sincronizando datos...",
+      "backup_in_progress": "Copia de seguridad en progreso..."
+    }
+  },
+  "dates": {
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "tomorrow": "Mañana",
+    "this_week": "Esta semana",
+    "last_week": "Semana pasada",
+    "this_month": "Este mes",
+    "last_month": "Mes pasado",
+    "this_year": "Este año",
+    "last_year": "Año pasado",
+    "formats": {
+      "short": "DD/MM",
+      "medium": "DD/MM/YYYY",
+      "long": "DD de MMMM de YYYY",
+      "full": "dddd, DD de MMMM de YYYY",
+      "time": "HH:mm",
+      "datetime": "DD/MM/YYYY HH:mm"
+    }
+  },
+  "units": {
+    "time": {
+      "second": "segundo",
+      "seconds": "segundos",
+      "minute": "minuto",
+      "minutes": "minutos",
+      "hour": "hora",
+      "hours": "horas",
+      "day": "día",
+      "days": "días",
+      "week": "semana",
+      "weeks": "semanas",
+      "month": "mes",
+      "months": "meses",
+      "year": "año",
+      "years": "años"
+    },
+    "bytes": {
+      "byte": "B",
+      "kilobyte": "KB",
+      "megabyte": "MB",
+      "gigabyte": "GB",
+      "terabyte": "TB",
+      "petabyte": "PB"
+    },
+    "rate": {
+      "per_second": "/seg",
+      "per_minute": "/min",
+      "per_hour": "/hora",
+      "per_day": "/día"
+    }
+  },
+  "tooltips": {
+    "refresh": "Actualizar datos",
+    "settings": "Abrir configuración",
+    "help": "Mostrar ayuda",
+    "export": "Exportar datos",
+    "filter": "Filtrar resultados",
+    "search": "Buscar elementos",
+    "sort": "Ordenar elementos",
+    "view_details": "Ver detalles",
+    "edit_item": "Editar elemento",
+    "delete_item": "Eliminar elemento"
+  },
+  "placeholders": {
+    "search": "Buscar...",
+    "enter_text": "Ingresa texto...",
+    "select_option": "Selecciona una opción...",
+    "choose_file": "Elige archivo...",
+    "enter_email": "Ingresa dirección de correo...",
+    "enter_password": "Ingresa contraseña...",
+    "enter_url": "Ingresa URL...",
+    "add_comment": "Agregar un comentario..."
+  }
+}

@@ -1,0 +1,452 @@
+{
+  "common": {
+    "loading": "Wird geladen...",
+    "error": "Fehler",
+    "success": "Erfolgreich",
+    "warning": "Warnung",
+    "info": "Information",
+    "confirm": "Bestätigen",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "add": "Hinzufügen",
+    "remove": "Entfernen",
+    "update": "Aktualisieren",
+    "refresh": "Aktualisieren",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "sort": "Sortieren",
+    "reset": "Zurücksetzen",
+    "close": "Schließen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "submit": "Senden",
+    "download": "Herunterladen",
+    "upload": "Hochladen",
+    "export": "Exportieren",
+    "import": "Importieren",
+    "view": "Ansehen",
+    "details": "Details",
+    "settings": "Einstellungen",
+    "help": "Hilfe",
+    "about": "Über",
+    "logout": "Abmelden",
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "profile": "Profil",
+    "dashboard": "Dashboard",
+    "monitoring": "Überwachung",
+    "incidents": "Vorfälle",
+    "alerts": "Warnungen",
+    "reports": "Berichte",
+    "analytics": "Analysen",
+    "administration": "Administration",
+    "yes": "Ja",
+    "no": "Nein",
+    "ok": "OK",
+    "retry": "Wiederholen",
+    "skip": "Überspringen",
+    "continue": "Fortfahren",
+    "finish": "Beenden",
+    "home": "Startseite",
+    "menu": "Menü",
+    "actions": "Aktionen",
+    "options": "Optionen",
+    "preferences": "Einstellungen",
+    "configuration": "Konfiguration",
+    "status": "Status",
+    "type": "Typ",
+    "category": "Kategorie",
+    "priority": "Priorität",
+    "severity": "Schweregrad",
+    "date": "Datum",
+    "time": "Zeit",
+    "duration": "Dauer",
+    "created": "Erstellt",
+    "updated": "Aktualisiert",
+    "modified": "Geändert",
+    "author": "Autor",
+    "user": "Benutzer",
+    "name": "Name",
+    "title": "Titel",
+    "description": "Beschreibung",
+    "message": "Nachricht",
+    "comment": "Kommentar",
+    "note": "Notiz",
+    "tag": "Tag",
+    "tags": "Tags",
+    "version": "Version",
+    "build": "Build",
+    "release": "Release"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "realtime_monitoring": "Echtzeit-Überwachung",
+    "j2ee_monitoring": "J2EE-Überwachung",
+    "was_monitoring": "WAS-Überwachung",
+    "exception_tracking": "Fehler-Verfolgung",
+    "service_topology": "Service-Topologie",
+    "alert_management": "Warnungs-Verwaltung",
+    "apm_monitoring": "APM-Überwachung",
+    "system_health": "System-Gesundheit",
+    "performance_metrics": "Leistungsmetriken",
+    "log_analysis": "Log-Analyse",
+    "trace_analysis": "Trace-Analyse",
+    "user_management": "Benutzerverwaltung",
+    "configuration": "Konfiguration",
+    "ontology_system": "Ontologie-System",
+    "session_replay": "Session-Wiederholung"
+  },
+  "dashboard": {
+    "title": "AIRIS EPM Dashboard",
+    "subtitle": "Enterprise Performance Monitoring",
+    "welcome": "Willkommen bei AIRIS EPM",
+    "overview": "System-Übersicht",
+    "kpi": "Key Performance Indicators",
+    "metrics": {
+      "response_time": "Antwortzeit",
+      "throughput": "Durchsatz",
+      "error_rate": "Fehlerrate",
+      "availability": "Verfügbarkeit",
+      "cpu_usage": "CPU-Auslastung",
+      "memory_usage": "Speicherverbrauch",
+      "disk_usage": "Festplattenverbrauch",
+      "network_io": "Netzwerk-I/O",
+      "active_users": "Aktive Benutzer",
+      "transactions": "Transaktionen",
+      "requests_per_minute": "Anfragen pro Minute",
+      "database_connections": "Datenbankverbindungen"
+    },
+    "status": {
+      "healthy": "Gesund",
+      "warning": "Warnung",
+      "critical": "Kritisch",
+      "unknown": "Unbekannt",
+      "maintenance": "Wartung",
+      "offline": "Offline"
+    },
+    "charts": {
+      "performance_trend": "Leistungstrend",
+      "error_distribution": "Fehlerverteilung",
+      "traffic_pattern": "Traffic-Muster",
+      "resource_utilization": "Ressourcennutzung"
+    },
+    "widgets": {
+      "system_health": "System-Gesundheit",
+      "recent_incidents": "Aktuelle Vorfälle",
+      "top_errors": "Häufigste Fehler",
+      "slow_transactions": "Langsame Transaktionen",
+      "database_performance": "Datenbank-Performance",
+      "server_status": "Server-Status"
+    }
+  },
+  "monitoring": {
+    "title": "Echtzeit-Überwachung",
+    "subtitle": "Live-System-Performance",
+    "refresh_rate": "Aktualisierungsrate",
+    "auto_refresh": "Automatische Aktualisierung",
+    "time_range": "Zeitbereich",
+    "last_updated": "Zuletzt aktualisiert",
+    "filters": {
+      "all_servers": "Alle Server",
+      "production": "Produktion",
+      "staging": "Staging",
+      "development": "Entwicklung",
+      "critical_only": "Nur kritische"
+    },
+    "servers": {
+      "title": "Server-Status",
+      "name": "Servername",
+      "ip_address": "IP-Adresse",
+      "status": "Status",
+      "uptime": "Betriebszeit",
+      "load": "Last",
+      "connections": "Verbindungen"
+    },
+    "applications": {
+      "title": "Anwendungsperformance",
+      "name": "Anwendung",
+      "version": "Version",
+      "instances": "Instanzen",
+      "health_score": "Gesundheitsbewertung"
+    },
+    "databases": {
+      "title": "Datenbank-Überwachung",
+      "name": "Datenbank",
+      "type": "Typ",
+      "connections": "Verbindungen",
+      "query_time": "Durchschnittliche Abfragezeit",
+      "locks": "Sperren"
+    }
+  },
+  "incidents": {
+    "title": "Vorfalls-Management",
+    "subtitle": "Probleme verfolgen und lösen",
+    "create_incident": "Vorfall erstellen",
+    "incident_details": "Vorfalls-Details",
+    "incident_id": "Vorfalls-ID",
+    "severity": {
+      "critical": "Kritisch",
+      "high": "Hoch",
+      "medium": "Mittel",
+      "low": "Niedrig"
+    },
+    "status": {
+      "open": "Offen",
+      "in_progress": "In Bearbeitung",
+      "resolved": "Gelöst",
+      "closed": "Geschlossen"
+    },
+    "priority": {
+      "urgent": "Dringend",
+      "high": "Hoch",
+      "normal": "Normal",
+      "low": "Niedrig"
+    },
+    "fields": {
+      "title": "Titel",
+      "description": "Beschreibung",
+      "reporter": "Melder",
+      "assignee": "Zugewiesen",
+      "created_date": "Erstellungsdatum",
+      "updated_date": "Aktualisierungsdatum",
+      "resolved_date": "Lösungsdatum",
+      "affected_services": "Betroffene Services",
+      "resolution": "Lösung",
+      "root_cause": "Grundursache"
+    },
+    "actions": {
+      "assign": "Zuweisen",
+      "reassign": "Neu zuweisen",
+      "escalate": "Eskalieren",
+      "resolve": "Lösen",
+      "close": "Schließen",
+      "reopen": "Wieder öffnen",
+      "add_comment": "Kommentar hinzufügen",
+      "attach_file": "Datei anhängen"
+    },
+    "comments": {
+      "title": "Kommentare",
+      "add_comment": "Kommentar hinzufügen",
+      "no_comments": "Noch keine Kommentare",
+      "comment_added": "Kommentar erfolgreich hinzugefügt"
+    },
+    "timeline": {
+      "title": "Zeitlinie",
+      "created": "Vorfall erstellt",
+      "assigned": "Zugewiesen an {{assignee}}",
+      "status_changed": "Status geändert zu {{status}}",
+      "comment_added": "Kommentar hinzugefügt",
+      "resolved": "Vorfall gelöst",
+      "closed": "Vorfall geschlossen"
+    }
+  },
+  "alerts": {
+    "title": "Warnungs-Verwaltung",
+    "subtitle": "System-Benachrichtigungen und Warnungen",
+    "create_alert": "Warnung erstellen",
+    "alert_rules": "Warnungsregeln",
+    "notifications": "Benachrichtigungen",
+    "channels": {
+      "email": "E-Mail",
+      "sms": "SMS",
+      "slack": "Slack",
+      "webhook": "Webhook",
+      "push": "Push-Benachrichtigung"
+    },
+    "types": {
+      "threshold": "Schwellwert-Warnung",
+      "anomaly": "Anomalie-Erkennung",
+      "composite": "Zusammengesetzte Warnung",
+      "heartbeat": "Heartbeat-Warnung"
+    },
+    "conditions": {
+      "greater_than": "Größer als",
+      "less_than": "Kleiner als",
+      "equals": "Gleich",
+      "not_equals": "Ungleich",
+      "contains": "Enthält",
+      "regex": "Regulärer Ausdruck"
+    },
+    "settings": {
+      "title": "Warnungseinstellungen",
+      "enable_notifications": "Benachrichtigungen aktivieren",
+      "quiet_hours": "Ruhige Stunden",
+      "escalation_policy": "Eskalations-Richtlinie",
+      "notification_channels": "Benachrichtigungskanäle"
+    }
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "subtitle": "System-Konfiguration",
+    "general": "Allgemein",
+    "users": "Benutzer",
+    "security": "Sicherheit",
+    "integrations": "Integrationen",
+    "advanced": "Erweitert",
+    "language": "Sprache",
+    "timezone": "Zeitzone",
+    "theme": "Design",
+    "notifications": "Benachrichtigungen",
+    "api_keys": "API-Schlüssel",
+    "backup": "Sicherung",
+    "restore": "Wiederherstellen",
+    "maintenance": "Wartung"
+  },
+  "auth": {
+    "login": {
+      "title": "Anmelden",
+      "subtitle": "Willkommen zurück bei AIRIS EPM",
+      "username": "Benutzername",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "remember_me": "Angemeldet bleiben",
+      "forgot_password": "Passwort vergessen?",
+      "sign_in": "Anmelden",
+      "sign_up": "Registrieren",
+      "demo_mode": "Demo-Modus",
+      "biometric_login": "Biometrische Anmeldung",
+      "or": "oder"
+    },
+    "logout": {
+      "title": "Abmelden",
+      "message": "Sind Sie sicher, dass Sie sich abmelden möchten?",
+      "confirm": "Abmelden",
+      "success": "Erfolgreich abgemeldet"
+    },
+    "errors": {
+      "invalid_credentials": "Ungültiger Benutzername oder Passwort",
+      "account_locked": "Konto ist vorübergehend gesperrt",
+      "network_error": "Netzwerk-Verbindungsfehler",
+      "server_error": "Server-Fehler, bitte versuchen Sie es erneut",
+      "biometric_failed": "Biometrische Authentifizierung fehlgeschlagen",
+      "biometric_unavailable": "Biometrische Authentifizierung ist nicht verfügbar"
+    }
+  },
+  "errors": {
+    "network": {
+      "offline": "Sie sind derzeit offline",
+      "connection_failed": "Verbindung fehlgeschlagen",
+      "timeout": "Anfrage-Timeout",
+      "server_error": "Server-Fehler ({{status}})",
+      "not_found": "Ressource nicht gefunden",
+      "unauthorized": "Nicht autorisierter Zugriff",
+      "forbidden": "Zugriff verboten"
+    },
+    "validation": {
+      "required": "Dieses Feld ist erforderlich",
+      "invalid_email": "Ungültiges E-Mail-Format",
+      "invalid_url": "Ungültiges URL-Format",
+      "min_length": "Mindestens {{min}} Zeichen erforderlich",
+      "max_length": "Maximal {{max}} Zeichen erlaubt",
+      "numeric": "Muss eine Zahl sein",
+      "positive": "Muss eine positive Zahl sein"
+    },
+    "system": {
+      "unexpected": "Ein unerwarteter Fehler ist aufgetreten",
+      "maintenance": "System befindet sich in Wartung",
+      "upgrade_required": "System-Upgrade erforderlich",
+      "feature_unavailable": "Diese Funktion ist derzeit nicht verfügbar"
+    }
+  },
+  "messages": {
+    "success": {
+      "saved": "Erfolgreich gespeichert",
+      "updated": "Erfolgreich aktualisiert",
+      "deleted": "Erfolgreich gelöscht",
+      "created": "Erfolgreich erstellt",
+      "sent": "Erfolgreich gesendet",
+      "imported": "Erfolgreich importiert",
+      "exported": "Erfolgreich exportiert"
+    },
+    "confirm": {
+      "delete": "Sind Sie sicher, dass Sie dieses Element löschen möchten?",
+      "logout": "Sind Sie sicher, dass Sie sich abmelden möchten?",
+      "reset": "Sind Sie sicher, dass Sie alle Einstellungen zurücksetzen möchten?",
+      "cancel": "Sind Sie sicher, dass Sie die Änderungen verwerfen möchten?"
+    },
+    "info": {
+      "no_data": "Keine Daten verfügbar",
+      "loading": "Daten werden geladen...",
+      "searching": "Suche läuft...",
+      "processing": "Verarbeitung läuft...",
+      "syncing": "Daten werden synchronisiert...",
+      "backup_in_progress": "Sicherung läuft..."
+    }
+  },
+  "dates": {
+    "today": "Heute",
+    "yesterday": "Gestern",
+    "tomorrow": "Morgen",
+    "this_week": "Diese Woche",
+    "last_week": "Letzte Woche",
+    "this_month": "Dieser Monat",
+    "last_month": "Letzter Monat",
+    "this_year": "Dieses Jahr",
+    "last_year": "Letztes Jahr",
+    "formats": {
+      "short": "DD.MM",
+      "medium": "DD.MM.YYYY",
+      "long": "DD. MMMM YYYY",
+      "full": "dddd, DD. MMMM YYYY",
+      "time": "HH:mm",
+      "datetime": "DD.MM.YYYY HH:mm"
+    }
+  },
+  "units": {
+    "time": {
+      "second": "Sekunde",
+      "seconds": "Sekunden",
+      "minute": "Minute",
+      "minutes": "Minuten",
+      "hour": "Stunde",
+      "hours": "Stunden",
+      "day": "Tag",
+      "days": "Tage",
+      "week": "Woche",
+      "weeks": "Wochen",
+      "month": "Monat",
+      "months": "Monate",
+      "year": "Jahr",
+      "years": "Jahre"
+    },
+    "bytes": {
+      "byte": "B",
+      "kilobyte": "KB",
+      "megabyte": "MB",
+      "gigabyte": "GB",
+      "terabyte": "TB",
+      "petabyte": "PB"
+    },
+    "rate": {
+      "per_second": "/Sek",
+      "per_minute": "/Min",
+      "per_hour": "/Std",
+      "per_day": "/Tag"
+    }
+  },
+  "tooltips": {
+    "refresh": "Daten aktualisieren",
+    "settings": "Einstellungen öffnen",
+    "help": "Hilfe anzeigen",
+    "export": "Daten exportieren",
+    "filter": "Ergebnisse filtern",
+    "search": "Elemente suchen",
+    "sort": "Elemente sortieren",
+    "view_details": "Details anzeigen",
+    "edit_item": "Element bearbeiten",
+    "delete_item": "Element löschen"
+  },
+  "placeholders": {
+    "search": "Suchen...",
+    "enter_text": "Text eingeben...",
+    "select_option": "Option auswählen...",
+    "choose_file": "Datei auswählen...",
+    "enter_email": "E-Mail-Adresse eingeben...",
+    "enter_password": "Passwort eingeben...",
+    "enter_url": "URL eingeben...",
+    "add_comment": "Kommentar hinzufügen..."
+  }
+}

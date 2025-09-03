@@ -1,0 +1,452 @@
+{
+  "common": {
+    "loading": "載入中...",
+    "error": "錯誤",
+    "success": "成功",
+    "warning": "警告",
+    "info": "資訊",
+    "confirm": "確認",
+    "cancel": "取消",
+    "save": "儲存",
+    "delete": "刪除",
+    "edit": "編輯",
+    "add": "新增",
+    "remove": "移除",
+    "update": "更新",
+    "refresh": "重新整理",
+    "search": "搜尋",
+    "filter": "篩選",
+    "sort": "排序",
+    "reset": "重設",
+    "close": "關閉",
+    "back": "返回",
+    "next": "下一頁",
+    "previous": "上一頁",
+    "submit": "提交",
+    "download": "下載",
+    "upload": "上傳",
+    "export": "匯出",
+    "import": "匯入",
+    "view": "檢視",
+    "details": "詳細資料",
+    "settings": "設定",
+    "help": "說明",
+    "about": "關於",
+    "logout": "登出",
+    "login": "登入",
+    "register": "註冊",
+    "profile": "個人資料",
+    "dashboard": "儀表板",
+    "monitoring": "監控",
+    "incidents": "事件",
+    "alerts": "警示",
+    "reports": "報告",
+    "analytics": "分析",
+    "administration": "管理",
+    "yes": "是",
+    "no": "否",
+    "ok": "確定",
+    "retry": "重試",
+    "skip": "跳過",
+    "continue": "繼續",
+    "finish": "完成",
+    "home": "首頁",
+    "menu": "選單",
+    "actions": "操作",
+    "options": "選項",
+    "preferences": "偏好設定",
+    "configuration": "設定",
+    "status": "狀態",
+    "type": "類型",
+    "category": "分類",
+    "priority": "優先順序",
+    "severity": "嚴重程度",
+    "date": "日期",
+    "time": "時間",
+    "duration": "持續時間",
+    "created": "建立時間",
+    "updated": "更新時間",
+    "modified": "修改時間",
+    "author": "作者",
+    "user": "使用者",
+    "name": "名稱",
+    "title": "標題",
+    "description": "描述",
+    "message": "訊息",
+    "comment": "評論",
+    "note": "備註",
+    "tag": "標籤",
+    "tags": "標籤",
+    "version": "版本",
+    "build": "建置",
+    "release": "發布"
+  },
+  "navigation": {
+    "dashboard": "儀表板",
+    "realtime_monitoring": "即時監控",
+    "j2ee_monitoring": "J2EE 監控",
+    "was_monitoring": "WAS 監控",
+    "exception_tracking": "例外追蹤",
+    "service_topology": "服務拓撲",
+    "alert_management": "警示管理",
+    "apm_monitoring": "APM 監控",
+    "system_health": "系統健康",
+    "performance_metrics": "效能指標",
+    "log_analysis": "記錄檔分析",
+    "trace_analysis": "追蹤分析",
+    "user_management": "使用者管理",
+    "configuration": "設定",
+    "ontology_system": "本體論系統",
+    "session_replay": "工作階段重播"
+  },
+  "dashboard": {
+    "title": "AIRIS EPM 儀表板",
+    "subtitle": "企業效能監控",
+    "welcome": "歡迎使用 AIRIS EPM",
+    "overview": "系統概覽",
+    "kpi": "關鍵效能指標",
+    "metrics": {
+      "response_time": "回應時間",
+      "throughput": "輸送量",
+      "error_rate": "錯誤率",
+      "availability": "可用性",
+      "cpu_usage": "CPU 使用率",
+      "memory_usage": "記憶體使用率",
+      "disk_usage": "磁碟使用率",
+      "network_io": "網路 I/O",
+      "active_users": "活躍使用者",
+      "transactions": "交易",
+      "requests_per_minute": "每分鐘要求數",
+      "database_connections": "資料庫連線數"
+    },
+    "status": {
+      "healthy": "健康",
+      "warning": "警告",
+      "critical": "嚴重",
+      "unknown": "未知",
+      "maintenance": "維護中",
+      "offline": "離線"
+    },
+    "charts": {
+      "performance_trend": "效能趨勢",
+      "error_distribution": "錯誤分佈",
+      "traffic_pattern": "流量模式",
+      "resource_utilization": "資源利用率"
+    },
+    "widgets": {
+      "system_health": "系統健康",
+      "recent_incidents": "最近事件",
+      "top_errors": "常見錯誤",
+      "slow_transactions": "緩慢交易",
+      "database_performance": "資料庫效能",
+      "server_status": "伺服器狀態"
+    }
+  },
+  "monitoring": {
+    "title": "即時監控",
+    "subtitle": "即時系統效能",
+    "refresh_rate": "重新整理頻率",
+    "auto_refresh": "自動重新整理",
+    "time_range": "時間範圍",
+    "last_updated": "最後更新",
+    "filters": {
+      "all_servers": "所有伺服器",
+      "production": "生產環境",
+      "staging": "預備環境",
+      "development": "開發環境",
+      "critical_only": "僅嚴重"
+    },
+    "servers": {
+      "title": "伺服器狀態",
+      "name": "伺服器名稱",
+      "ip_address": "IP 位址",
+      "status": "狀態",
+      "uptime": "運行時間",
+      "load": "負載",
+      "connections": "連線數"
+    },
+    "applications": {
+      "title": "應用程式效能",
+      "name": "應用程式",
+      "version": "版本",
+      "instances": "執行個體",
+      "health_score": "健康評分"
+    },
+    "databases": {
+      "title": "資料庫監控",
+      "name": "資料庫",
+      "type": "類型",
+      "connections": "連線數",
+      "query_time": "平均查詢時間",
+      "locks": "鎖定數"
+    }
+  },
+  "incidents": {
+    "title": "事件管理",
+    "subtitle": "追蹤和解決問題",
+    "create_incident": "建立事件",
+    "incident_details": "事件詳細資料",
+    "incident_id": "事件 ID",
+    "severity": {
+      "critical": "嚴重",
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "status": {
+      "open": "開放",
+      "in_progress": "進行中",
+      "resolved": "已解決",
+      "closed": "已關閉"
+    },
+    "priority": {
+      "urgent": "緊急",
+      "high": "高",
+      "normal": "正常",
+      "low": "低"
+    },
+    "fields": {
+      "title": "標題",
+      "description": "描述",
+      "reporter": "報告者",
+      "assignee": "負責人",
+      "created_date": "建立日期",
+      "updated_date": "更新日期",
+      "resolved_date": "解決日期",
+      "affected_services": "受影響的服務",
+      "resolution": "解決方案",
+      "root_cause": "根本原因"
+    },
+    "actions": {
+      "assign": "指派",
+      "reassign": "重新指派",
+      "escalate": "升級",
+      "resolve": "解決",
+      "close": "關閉",
+      "reopen": "重新開啟",
+      "add_comment": "新增評論",
+      "attach_file": "附加檔案"
+    },
+    "comments": {
+      "title": "評論",
+      "add_comment": "新增評論",
+      "no_comments": "尚無評論",
+      "comment_added": "評論新增成功"
+    },
+    "timeline": {
+      "title": "時間軸",
+      "created": "事件已建立",
+      "assigned": "已指派給 {{assignee}}",
+      "status_changed": "狀態已變更為 {{status}}",
+      "comment_added": "已新增評論",
+      "resolved": "事件已解決",
+      "closed": "事件已關閉"
+    }
+  },
+  "alerts": {
+    "title": "警示管理",
+    "subtitle": "系統通知和警示",
+    "create_alert": "建立警示",
+    "alert_rules": "警示規則",
+    "notifications": "通知",
+    "channels": {
+      "email": "電子郵件",
+      "sms": "簡訊",
+      "slack": "Slack",
+      "webhook": "Webhook",
+      "push": "推播通知"
+    },
+    "types": {
+      "threshold": "臨界值警示",
+      "anomaly": "異常偵測",
+      "composite": "複合警示",
+      "heartbeat": "心跳警示"
+    },
+    "conditions": {
+      "greater_than": "大於",
+      "less_than": "小於",
+      "equals": "等於",
+      "not_equals": "不等於",
+      "contains": "包含",
+      "regex": "正規表達式"
+    },
+    "settings": {
+      "title": "警示設定",
+      "enable_notifications": "啟用通知",
+      "quiet_hours": "靜默時間",
+      "escalation_policy": "升級政策",
+      "notification_channels": "通知通道"
+    }
+  },
+  "settings": {
+    "title": "設定",
+    "subtitle": "系統設定",
+    "general": "一般",
+    "users": "使用者",
+    "security": "安全性",
+    "integrations": "整合",
+    "advanced": "進階",
+    "language": "語言",
+    "timezone": "時區",
+    "theme": "佈景主題",
+    "notifications": "通知",
+    "api_keys": "API 金鑰",
+    "backup": "備份",
+    "restore": "還原",
+    "maintenance": "維護"
+  },
+  "auth": {
+    "login": {
+      "title": "登入",
+      "subtitle": "歡迎回到 AIRIS EPM",
+      "username": "使用者名稱",
+      "email": "電子郵件",
+      "password": "密碼",
+      "remember_me": "記住我",
+      "forgot_password": "忘記密碼？",
+      "sign_in": "登入",
+      "sign_up": "註冊",
+      "demo_mode": "示範模式",
+      "biometric_login": "生物識別登入",
+      "or": "或"
+    },
+    "logout": {
+      "title": "登出",
+      "message": "確定要登出嗎？",
+      "confirm": "登出",
+      "success": "登出成功"
+    },
+    "errors": {
+      "invalid_credentials": "使用者名稱或密碼無效",
+      "account_locked": "帳戶已被暫時鎖定",
+      "network_error": "網路連線錯誤",
+      "server_error": "伺服器錯誤，請重試",
+      "biometric_failed": "生物識別認證失敗",
+      "biometric_unavailable": "生物識別認證不可用"
+    }
+  },
+  "errors": {
+    "network": {
+      "offline": "您目前處於離線狀態",
+      "connection_failed": "連線失敗",
+      "timeout": "要求逾時",
+      "server_error": "伺服器錯誤 ({{status}})",
+      "not_found": "找不到資源",
+      "unauthorized": "未經授權的存取",
+      "forbidden": "禁止存取"
+    },
+    "validation": {
+      "required": "此欄位為必填項目",
+      "invalid_email": "電子郵件格式無效",
+      "invalid_url": "URL 格式無效",
+      "min_length": "至少需要 {{min}} 個字元",
+      "max_length": "最多允許 {{max}} 個字元",
+      "numeric": "必須是數字",
+      "positive": "必須是正數"
+    },
+    "system": {
+      "unexpected": "發生意外錯誤",
+      "maintenance": "系統正在維護中",
+      "upgrade_required": "需要系統升級",
+      "feature_unavailable": "此功能目前無法使用"
+    }
+  },
+  "messages": {
+    "success": {
+      "saved": "儲存成功",
+      "updated": "更新成功",
+      "deleted": "刪除成功",
+      "created": "建立成功",
+      "sent": "傳送成功",
+      "imported": "匯入成功",
+      "exported": "匯出成功"
+    },
+    "confirm": {
+      "delete": "確定要刪除此項目嗎？",
+      "logout": "確定要登出嗎？",
+      "reset": "確定要重設所有設定嗎？",
+      "cancel": "確定要取消變更嗎？"
+    },
+    "info": {
+      "no_data": "無資料",
+      "loading": "正在載入資料...",
+      "searching": "搜尋中...",
+      "processing": "處理中...",
+      "syncing": "同步資料中...",
+      "backup_in_progress": "備份進行中..."
+    }
+  },
+  "dates": {
+    "today": "今天",
+    "yesterday": "昨天",
+    "tomorrow": "明天",
+    "this_week": "本週",
+    "last_week": "上週",
+    "this_month": "本月",
+    "last_month": "上月",
+    "this_year": "今年",
+    "last_year": "去年",
+    "formats": {
+      "short": "MM/DD",
+      "medium": "YYYY年MM月DD日",
+      "long": "YYYY年MM月DD日",
+      "full": "YYYY年MM月DD日 dddd",
+      "time": "HH:mm",
+      "datetime": "YYYY年MM月DD日 HH:mm"
+    }
+  },
+  "units": {
+    "time": {
+      "second": "秒",
+      "seconds": "秒",
+      "minute": "分鐘",
+      "minutes": "分鐘",
+      "hour": "小時",
+      "hours": "小時",
+      "day": "天",
+      "days": "天",
+      "week": "週",
+      "weeks": "週",
+      "month": "月",
+      "months": "月",
+      "year": "年",
+      "years": "年"
+    },
+    "bytes": {
+      "byte": "B",
+      "kilobyte": "KB",
+      "megabyte": "MB",
+      "gigabyte": "GB",
+      "terabyte": "TB",
+      "petabyte": "PB"
+    },
+    "rate": {
+      "per_second": "/秒",
+      "per_minute": "/分鐘",
+      "per_hour": "/小時",
+      "per_day": "/天"
+    }
+  },
+  "tooltips": {
+    "refresh": "重新整理資料",
+    "settings": "開啟設定",
+    "help": "顯示說明",
+    "export": "匯出資料",
+    "filter": "篩選結果",
+    "search": "搜尋項目",
+    "sort": "排序項目",
+    "view_details": "檢視詳細資料",
+    "edit_item": "編輯項目",
+    "delete_item": "刪除項目"
+  },
+  "placeholders": {
+    "search": "搜尋...",
+    "enter_text": "輸入文字...",
+    "select_option": "選擇選項...",
+    "choose_file": "選擇檔案...",
+    "enter_email": "輸入電子郵件地址...",
+    "enter_password": "輸入密碼...",
+    "enter_url": "輸入 URL...",
+    "add_comment": "新增評論..."
+  }
+}

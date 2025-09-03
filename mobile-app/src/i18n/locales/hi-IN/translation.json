@@ -1,0 +1,452 @@
+{
+  "common": {
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "success": "सफल",
+    "warning": "चेतावनी",
+    "info": "जानकारी",
+    "confirm": "पुष्टि करें",
+    "cancel": "रद्द करें",
+    "save": "सहेजें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "add": "जोड़ें",
+    "remove": "हटाएं",
+    "update": "अपडेट करें",
+    "refresh": "रीफ्रेश करें",
+    "search": "खोजें",
+    "filter": "फिल्टर करें",
+    "sort": "क्रमबद्ध करें",
+    "reset": "रीसेट करें",
+    "close": "बंद करें",
+    "back": "वापस",
+    "next": "अगला",
+    "previous": "पिछला",
+    "submit": "प्रस्तुत करें",
+    "download": "डाउनलोड करें",
+    "upload": "अपलोड करें",
+    "export": "निर्यात करें",
+    "import": "आयात करें",
+    "view": "देखें",
+    "details": "विवरण",
+    "settings": "सेटिंग्स",
+    "help": "सहायता",
+    "about": "के बारे में",
+    "logout": "लॉगआउट",
+    "login": "लॉगिन",
+    "register": "रजिस्टर करें",
+    "profile": "प्रोफाइल",
+    "dashboard": "डैशबोर्ड",
+    "monitoring": "निगरानी",
+    "incidents": "घटनाएं",
+    "alerts": "अलर्ट",
+    "reports": "रिपोर्ट",
+    "analytics": "एनालिटिक्स",
+    "administration": "प्रशासन",
+    "yes": "हां",
+    "no": "नहीं",
+    "ok": "ठीक है",
+    "retry": "पुनः प्रयास करें",
+    "skip": "छोड़ें",
+    "continue": "जारी रखें",
+    "finish": "समाप्त करें",
+    "home": "होम",
+    "menu": "मेनू",
+    "actions": "कार्रवाई",
+    "options": "विकल्प",
+    "preferences": "प्राथमिकताएं",
+    "configuration": "कॉन्फिगरेशन",
+    "status": "स्थिति",
+    "type": "प्रकार",
+    "category": "श्रेणी",
+    "priority": "प्राथमिकता",
+    "severity": "गंभीरता",
+    "date": "तारीख",
+    "time": "समय",
+    "duration": "अवधि",
+    "created": "बनाया गया",
+    "updated": "अपडेट किया गया",
+    "modified": "संशोधित",
+    "author": "लेखक",
+    "user": "उपयोगकर्ता",
+    "name": "नाम",
+    "title": "शीर्षक",
+    "description": "विवरण",
+    "message": "संदेश",
+    "comment": "टिप्पणी",
+    "note": "नोट",
+    "tag": "टैग",
+    "tags": "टैग्स",
+    "version": "संस्करण",
+    "build": "बिल्ड",
+    "release": "रिलीज़"
+  },
+  "navigation": {
+    "dashboard": "डैशबोर्ड",
+    "realtime_monitoring": "वास्तविक समय निगरानी",
+    "j2ee_monitoring": "J2EE निगरानी",
+    "was_monitoring": "WAS निगरानी",
+    "exception_tracking": "अपवाद ट्रैकिंग",
+    "service_topology": "सेवा टोपोलॉजी",
+    "alert_management": "अलर्ट प्रबंधन",
+    "apm_monitoring": "APM निगरानी",
+    "system_health": "सिस्टम स्वास्थ्य",
+    "performance_metrics": "प्रदर्शन मेट्रिक्स",
+    "log_analysis": "लॉग विश्लेषण",
+    "trace_analysis": "ट्रेस विश्लेषण",
+    "user_management": "उपयोगकर्ता प्रबंधन",
+    "configuration": "कॉन्फिगरेशन",
+    "ontology_system": "ऑन्टोलॉजी सिस्टम",
+    "session_replay": "सेशन रिप्ले"
+  },
+  "dashboard": {
+    "title": "AIRIS EPM डैशबोर्ड",
+    "subtitle": "एंटरप्राइज़ प्रदर्शन निगरानी",
+    "welcome": "AIRIS EPM में आपका स्वागत है",
+    "overview": "सिस्टम अवलोकन",
+    "kpi": "मुख्य प्रदर्शन संकेतक",
+    "metrics": {
+      "response_time": "प्रतिक्रिया समय",
+      "throughput": "थ्रूपुट",
+      "error_rate": "त्रुटि दर",
+      "availability": "उपलब्धता",
+      "cpu_usage": "CPU उपयोग",
+      "memory_usage": "मेमोरी उपयोग",
+      "disk_usage": "डिस्क उपयोग",
+      "network_io": "नेटवर्क I/O",
+      "active_users": "सक्रिय उपयोगकर्ता",
+      "transactions": "लेनदेन",
+      "requests_per_minute": "प्रति मिनट अनुरोध",
+      "database_connections": "डेटाबेस कनेक्शन"
+    },
+    "status": {
+      "healthy": "स्वस्थ",
+      "warning": "चेतावनी",
+      "critical": "गंभीर",
+      "unknown": "अज्ञात",
+      "maintenance": "रखरखाव",
+      "offline": "ऑफलाइन"
+    },
+    "charts": {
+      "performance_trend": "प्रदर्शन रुझान",
+      "error_distribution": "त्रुटि वितरण",
+      "traffic_pattern": "ट्रैफिक पैटर्न",
+      "resource_utilization": "संसाधन उपयोग"
+    },
+    "widgets": {
+      "system_health": "सिस्टम स्वास्थ्य",
+      "recent_incidents": "हाल की घटनाएं",
+      "top_errors": "मुख्य त्रुटियां",
+      "slow_transactions": "धीमे लेनदेन",
+      "database_performance": "डेटाबेस प्रदर्शन",
+      "server_status": "सर्वर स्थिति"
+    }
+  },
+  "monitoring": {
+    "title": "वास्तविक समय निगरानी",
+    "subtitle": "लाइव सिस्टम प्रदर्शन",
+    "refresh_rate": "रीफ्रेश दर",
+    "auto_refresh": "ऑटो रीफ्रेश",
+    "time_range": "समय सीमा",
+    "last_updated": "अंतिम अपडेट",
+    "filters": {
+      "all_servers": "सभी सर्वर",
+      "production": "प्रोडक्शन",
+      "staging": "स्टेजिंग",
+      "development": "डेवलपमेंट",
+      "critical_only": "केवल गंभीर"
+    },
+    "servers": {
+      "title": "सर्वर स्थिति",
+      "name": "सर्वर नाम",
+      "ip_address": "IP पता",
+      "status": "स्थिति",
+      "uptime": "अपटाइम",
+      "load": "लोड",
+      "connections": "कनेक्शन"
+    },
+    "applications": {
+      "title": "एप्लिकेशन प्रदर्शन",
+      "name": "एप्लिकेशन",
+      "version": "संस्करण",
+      "instances": "इंस्टेंसेज",
+      "health_score": "स्वास्थ्य स्कोर"
+    },
+    "databases": {
+      "title": "डेटाबेस निगरानी",
+      "name": "डेटाबेस",
+      "type": "प्रकार",
+      "connections": "कनेक्शन",
+      "query_time": "औसत क्वेरी समय",
+      "locks": "लॉक्स"
+    }
+  },
+  "incidents": {
+    "title": "घटना प्रबंधन",
+    "subtitle": "समस्याओं को ट्रैक और हल करें",
+    "create_incident": "घटना बनाएं",
+    "incident_details": "घटना विवरण",
+    "incident_id": "घटना ID",
+    "severity": {
+      "critical": "गंभीर",
+      "high": "उच्च",
+      "medium": "मध्यम",
+      "low": "कम"
+    },
+    "status": {
+      "open": "खुला",
+      "in_progress": "प्रगति में",
+      "resolved": "हल हो गया",
+      "closed": "बंद"
+    },
+    "priority": {
+      "urgent": "तत्काल",
+      "high": "उच्च",
+      "normal": "सामान्य",
+      "low": "कम"
+    },
+    "fields": {
+      "title": "शीर्षक",
+      "description": "विवरण",
+      "reporter": "रिपोर्टर",
+      "assignee": "असाइनी",
+      "created_date": "निर्माण तारीख",
+      "updated_date": "अपडेट तारीख",
+      "resolved_date": "समाधान तारीख",
+      "affected_services": "प्रभावित सेवाएं",
+      "resolution": "समाधान",
+      "root_cause": "मूल कारण"
+    },
+    "actions": {
+      "assign": "असाइन करें",
+      "reassign": "पुनः असाइन करें",
+      "escalate": "एस्कलेट करें",
+      "resolve": "हल करें",
+      "close": "बंद करें",
+      "reopen": "पुनः खोलें",
+      "add_comment": "टिप्पणी जोड़ें",
+      "attach_file": "फाइल संलग्न करें"
+    },
+    "comments": {
+      "title": "टिप्पणियां",
+      "add_comment": "टिप्पणी जोड़ें",
+      "no_comments": "अभी तक कोई टिप्पणी नहीं",
+      "comment_added": "टिप्पणी सफलतापूर्वक जोड़ी गई"
+    },
+    "timeline": {
+      "title": "समयरेखा",
+      "created": "घटना निर्मित",
+      "assigned": "{{assignee}} को असाइन किया गया",
+      "status_changed": "स्थिति {{status}} में बदली गई",
+      "comment_added": "टिप्पणी जोड़ी गई",
+      "resolved": "घटना हल हो गई",
+      "closed": "घटना बंद की गई"
+    }
+  },
+  "alerts": {
+    "title": "अलर्ट प्रबंधन",
+    "subtitle": "सिस्टम अधिसूचना और अलर्ट",
+    "create_alert": "अलर्ट बनाएं",
+    "alert_rules": "अलर्ट नियम",
+    "notifications": "अधिसूचनाएं",
+    "channels": {
+      "email": "ईमेल",
+      "sms": "SMS",
+      "slack": "Slack",
+      "webhook": "Webhook",
+      "push": "पुश अधिसूचना"
+    },
+    "types": {
+      "threshold": "थ्रेशहोल्ड अलर्ट",
+      "anomaly": "विसंगति का पता लगाना",
+      "composite": "कंपोज़िट अलर्ट",
+      "heartbeat": "हार्टबीट अलर्ट"
+    },
+    "conditions": {
+      "greater_than": "से अधिक",
+      "less_than": "से कम",
+      "equals": "बराबर है",
+      "not_equals": "बराबर नहीं है",
+      "contains": "शामिल है",
+      "regex": "रेगुलर एक्सप्रेशन"
+    },
+    "settings": {
+      "title": "अलर्ट सेटिंग्स",
+      "enable_notifications": "अधिसूचनाएं सक्षम करें",
+      "quiet_hours": "शांत घंटे",
+      "escalation_policy": "एस्कलेशन नीति",
+      "notification_channels": "अधिसूचना चैनल"
+    }
+  },
+  "settings": {
+    "title": "सेटिंग्स",
+    "subtitle": "सिस्टम कॉन्फिगरेशन",
+    "general": "सामान्य",
+    "users": "उपयोगकर्ता",
+    "security": "सुरक्षा",
+    "integrations": "इंटीग्रेशन",
+    "advanced": "उन्नत",
+    "language": "भाषा",
+    "timezone": "समय क्षेत्र",
+    "theme": "थीम",
+    "notifications": "अधिसूचनाएं",
+    "api_keys": "API कुंजियां",
+    "backup": "बैकअप",
+    "restore": "रिस्टोर",
+    "maintenance": "रखरखाव"
+  },
+  "auth": {
+    "login": {
+      "title": "लॉगिन",
+      "subtitle": "AIRIS EPM में वापस आपका स्वागत है",
+      "username": "उपयोगकर्ता नाम",
+      "email": "ईमेल",
+      "password": "पासवर्ड",
+      "remember_me": "मुझे याद रखें",
+      "forgot_password": "पासवर्ड भूल गए?",
+      "sign_in": "साइन इन करें",
+      "sign_up": "साइन अप करें",
+      "demo_mode": "डेमो मोड",
+      "biometric_login": "बायोमेट्रिक लॉगिन",
+      "or": "या"
+    },
+    "logout": {
+      "title": "लॉगआउट",
+      "message": "क्या आप वाकई लॉगआउट करना चाहते हैं?",
+      "confirm": "लॉगआउट करें",
+      "success": "सफलतापूर्वक लॉगआउट हो गए"
+    },
+    "errors": {
+      "invalid_credentials": "अमान्य उपयोगकर्ता नाम या पासवर्ड",
+      "account_locked": "खाता अस्थायी रूप से लॉक है",
+      "network_error": "नेटवर्क कनेक्शन त्रुटि",
+      "server_error": "सर्वर त्रुटि, कृपया पुनः प्रयास करें",
+      "biometric_failed": "बायोमेट्रिक प्रमाणीकरण विफल",
+      "biometric_unavailable": "बायोमेट्रिक प्रमाणीकरण उपलब्ध नहीं है"
+    }
+  },
+  "errors": {
+    "network": {
+      "offline": "आप वर्तमान में ऑफलाइन हैं",
+      "connection_failed": "कनेक्शन विफल",
+      "timeout": "अनुरोध टाइमआउट",
+      "server_error": "सर्वर त्रुटि ({{status}})",
+      "not_found": "संसाधन नहीं मिला",
+      "unauthorized": "अनधिकृत पहुंच",
+      "forbidden": "निषिद्ध पहुंच"
+    },
+    "validation": {
+      "required": "यह फील्ड आवश्यक है",
+      "invalid_email": "अमान्य ईमेल प्रारूप",
+      "invalid_url": "अमान्य URL प्रारूप",
+      "min_length": "न्यूनतम {{min}} अक्षर आवश्यक हैं",
+      "max_length": "अधिकतम {{max}} अक्षर अनुमतित हैं",
+      "numeric": "एक संख्या होना चाहिए",
+      "positive": "एक सकारात्मक संख्या होना चाहिए"
+    },
+    "system": {
+      "unexpected": "एक अप्रत्याशित त्रुटि हुई",
+      "maintenance": "सिस्टम रखरखाव में है",
+      "upgrade_required": "सिस्टम अपग्रेड आवश्यक है",
+      "feature_unavailable": "यह सुविधा वर्तमान में उपलब्ध नहीं है"
+    }
+  },
+  "messages": {
+    "success": {
+      "saved": "सफलतापूर्वक सहेजा गया",
+      "updated": "सफलतापूर्वक अपडेट किया गया",
+      "deleted": "सफलतापूर्वक हटाया गया",
+      "created": "सफलतापूर्वक बनाया गया",
+      "sent": "सफलतापूर्वक भेजा गया",
+      "imported": "सफलतापूर्वक आयात किया गया",
+      "exported": "सफलतापूर्वक निर्यात किया गया"
+    },
+    "confirm": {
+      "delete": "क्या आप वाकई इस आइटम को हटाना चाहते हैं?",
+      "logout": "क्या आप वाकई लॉगआउट करना चाहते हैं?",
+      "reset": "क्या आप वाकई सभी सेटिंग्स रीसेट करना चाहते हैं?",
+      "cancel": "क्या आप वाकई बदलाव रद्द करना चाहते हैं?"
+    },
+    "info": {
+      "no_data": "कोई डेटा उपलब्ध नहीं",
+      "loading": "डेटा लोड हो रहा है...",
+      "searching": "खोज रहा है...",
+      "processing": "प्रसंस्करण हो रहा है...",
+      "syncing": "डेटा सिंक हो रहा है...",
+      "backup_in_progress": "बैकअप प्रगति में है..."
+    }
+  },
+  "dates": {
+    "today": "आज",
+    "yesterday": "कल",
+    "tomorrow": "कल",
+    "this_week": "इस सप्ताह",
+    "last_week": "पिछला सप्ताह",
+    "this_month": "इस महीने",
+    "last_month": "पिछला महीना",
+    "this_year": "इस साल",
+    "last_year": "पिछला साल",
+    "formats": {
+      "short": "DD/MM",
+      "medium": "DD/MM/YYYY",
+      "long": "DD MMMM YYYY",
+      "full": "dddd, DD MMMM YYYY",
+      "time": "HH:mm",
+      "datetime": "DD/MM/YYYY HH:mm"
+    }
+  },
+  "units": {
+    "time": {
+      "second": "सेकंड",
+      "seconds": "सेकंड",
+      "minute": "मिनट",
+      "minutes": "मिनट",
+      "hour": "घंटा",
+      "hours": "घंटे",
+      "day": "दिन",
+      "days": "दिन",
+      "week": "सप्ताह",
+      "weeks": "सप्ताह",
+      "month": "महीना",
+      "months": "महीने",
+      "year": "साल",
+      "years": "साल"
+    },
+    "bytes": {
+      "byte": "B",
+      "kilobyte": "KB",
+      "megabyte": "MB",
+      "gigabyte": "GB",
+      "terabyte": "TB",
+      "petabyte": "PB"
+    },
+    "rate": {
+      "per_second": "/सेकंड",
+      "per_minute": "/मिनट",
+      "per_hour": "/घंटा",
+      "per_day": "/दिन"
+    }
+  },
+  "tooltips": {
+    "refresh": "डेटा रीफ्रेश करें",
+    "settings": "सेटिंग्स खोलें",
+    "help": "सहायता दिखाएं",
+    "export": "डेटा निर्यात करें",
+    "filter": "परिणाम फिल्टर करें",
+    "search": "आइटम खोजें",
+    "sort": "आइटम क्रमबद्ध करें",
+    "view_details": "विवरण देखें",
+    "edit_item": "आइटम संपादित करें",
+    "delete_item": "आइटम हटाएं"
+  },
+  "placeholders": {
+    "search": "खोजें...",
+    "enter_text": "टेक्स्ट दर्ज करें...",
+    "select_option": "विकल्प चुनें...",
+    "choose_file": "फाइल चुनें...",
+    "enter_email": "ईमेल पता दर्ज करें...",
+    "enter_password": "पासवर्ड दर्ज करें...",
+    "enter_url": "URL दर्ज करें...",
+    "add_comment": "टिप्पणी जोड़ें..."
+  }
+}

@@ -1,0 +1,537 @@
+# Multi-Region Deployment Configuration for AIRIS EPM
+# Supports US, EU, Asia-Pacific, and other regions with compliance requirements
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: airis-epm-regions
+  namespace: airis-epm
+data:
+  regions.yml: |
+    # Global Configuration
+    global:
+      project: "airis-epm"
+      version: "2.0.0"
+      domain: "airis-epm.com"
+      cdn_provider: "cloudflare"
+      monitoring:
+        enabled: true
+        retention_days: 90
+      backup:
+        enabled: true
+        schedule: "0 2 * * *"
+      
+    # Regional Deployments
+    regions:
+      # United States - Primary Region
+      us-east-1:
+        provider: "aws"
+        region: "us-east-1"
+        datacenter: "Virginia"
+        subdomain: "us.airis-epm.com"
+        timezone: "America/New_York"
+        compliance:
+          - "SOC2"
+          - "HIPAA"
+          - "CCPA"
+        resources:
+          compute:
+            instances: 3
+            type: "t3.large"
+            auto_scaling:
+              min: 2
+              max: 10
+              target_cpu: 70
+          database:
+            engine: "postgresql"
+            version: "14"
+            instance_class: "db.t3.medium"
+            multi_az: true
+            backup_retention: 30
+          storage:
+            type: "gp3"
+            size_gb: 100
+            backup: true
+        networking:
+          vpc_cidr: "10.1.0.0/16"
+          subnets:
+            - "10.1.1.0/24"
+            - "10.1.2.0/24"
+            - "10.1.3.0/24"
+          load_balancer:
+            type: "application"
+            ssl_policy: "ELBSecurityPolicy-TLS-1-2-2017-01"
+        features:
+          cdn: true
+          waf: true
+          ddos_protection: true
+          ssl_certificates: true
+        data_residency:
+          enabled: false
+          restrictions: []
+      
+      # United States - West Coast
+      us-west-2:
+        provider: "aws"
+        region: "us-west-2"
+        datacenter: "Oregon"
+        subdomain: "us-west.airis-epm.com"
+        timezone: "America/Los_Angeles"
+        compliance:
+          - "SOC2"
+          - "CCPA"
+        resources:
+          compute:
+            instances: 2
+            type: "t3.medium"
+            auto_scaling:
+              min: 1
+              max: 6
+              target_cpu: 75
+          database:
+            engine: "postgresql"
+            version: "14"
+            instance_class: "db.t3.small"
+            multi_az: false
+            backup_retention: 7
+          storage:
+            type: "gp3"
+            size_gb: 50
+            backup: true
+        networking:
+          vpc_cidr: "10.2.0.0/16"
+          subnets:
+            - "10.2.1.0/24"
+            - "10.2.2.0/24"
+        features:
+          cdn: true
+          waf: true
+          ddos_protection: false
+          ssl_certificates: true
+        data_residency:
+          enabled: false
+          restrictions: []
+      
+      # European Union - GDPR Compliant
+      eu-west-1:
+        provider: "aws"
+        region: "eu-west-1"
+        datacenter: "Ireland"
+        subdomain: "eu.airis-epm.com"
+        timezone: "Europe/Dublin"
+        compliance:
+          - "GDPR"
+          - "ISO27001"
+          - "SOC2"
+        resources:
+          compute:
+            instances: 3
+            type: "t3.large"
+            auto_scaling:
+              min: 2
+              max: 8
+              target_cpu: 70
+          database:
+            engine: "postgresql"
+            version: "14"
+            instance_class: "db.t3.medium"
+            multi_az: true
+            backup_retention: 90  # GDPR requires longer retention
+            encryption: true
+          storage:
+            type: "gp3"
+            size_gb: 100
+            backup: true
+            encryption: true
+        networking:
+          vpc_cidr: "10.3.0.0/16"
+          subnets:
+            - "10.3.1.0/24"
+            - "10.3.2.0/24"
+            - "10.3.3.0/24"
+          load_balancer:
+            type: "application"
+            ssl_policy: "ELBSecurityPolicy-TLS-1-2-2017-01"
+        features:
+          cdn: true
+          waf: true
+          ddos_protection: true
+          ssl_certificates: true
+          data_anonymization: true
+          consent_management: true
+        data_residency:
+          enabled: true
+          restrictions:
+            - "no_us_transfer"
+            - "eu_only_storage"
+            - "gdpr_compliant_processors"
+        privacy:
+          cookie_consent: true
+          data_retention_days: 1095  # 3 years
+          right_to_erasure: true
+          data_portability: true
+          privacy_by_design: true
+      
+      # Germany - Strict Data Protection
+      eu-central-1:
+        provider: "aws"
+        region: "eu-central-1"
+        datacenter: "Frankfurt"
+        subdomain: "de.airis-epm.com"
+        timezone: "Europe/Berlin"
+        compliance:
+          - "GDPR"
+          - "BDSG"  # German Federal Data Protection Act
+          - "ISO27001"
+          - "BSI_C5"
+        resources:
+          compute:
+            instances: 2
+            type: "t3.medium"
+            auto_scaling:
+              min: 2
+              max: 6
+              target_cpu: 65
+          database:
+            engine: "postgresql"
+            version: "14"
+            instance_class: "db.t3.medium"
+            multi_az: true
+            backup_retention: 90
+            encryption: true
+          storage:
+            type: "gp3"
+            size_gb: 100
+            backup: true
+            encryption: true
+        networking:
+          vpc_cidr: "10.4.0.0/16"
+          subnets:
+            - "10.4.1.0/24"
+            - "10.4.2.0/24"
+        features:
+          cdn: true
+          waf: true
+          ddos_protection: true
+          ssl_certificates: true
+          data_anonymization: true
+          consent_management: true
+          audit_logging: true
+        data_residency:
+          enabled: true
+          restrictions:
+            - "germany_only"
+            - "no_cloud_act_providers"
+            - "certified_processors_only"
+        privacy:
+          cookie_consent: true
+          data_retention_days: 730  # 2 years
+          right_to_erasure: true
+          data_portability: true
+          privacy_by_design: true
+          pseudonymization: true
+      
+      # Asia Pacific - Japan
+      ap-northeast-1:
+        provider: "aws"
+        region: "ap-northeast-1"
+        datacenter: "Tokyo"
+        subdomain: "jp.airis-epm.com"
+        timezone: "Asia/Tokyo"
+        compliance:
+          - "APPI"  # Act on Protection of Personal Information
+          - "ISO27001"
+        resources:
+          compute:
+            instances: 2
+            type: "t3.medium"
+            auto_scaling:
+              min: 1
+              max: 6
+              target_cpu: 75
+          database:
+            engine: "postgresql"
+            version: "14"
+            instance_class: "db.t3.small"
+            multi_az: true
+            backup_retention: 30
+          storage:
+            type: "gp3"
+            size_gb: 50
+            backup: true
+        networking:
+          vpc_cidr: "10.5.0.0/16"
+          subnets:
+            - "10.5.1.0/24"
+            - "10.5.2.0/24"
+        features:
+          cdn: true
+          waf: true
+          ddos_protection: true
+          ssl_certificates: true
+        data_residency:
+          enabled: true
+          restrictions:
+            - "japan_only"
+        privacy:
+          data_retention_days: 1095  # 3 years
+      
+      # Asia Pacific - Korea
+      ap-northeast-2:
+        provider: "aws"
+        region: "ap-northeast-2"
+        datacenter: "Seoul"
+        subdomain: "kr.airis-epm.com"
+        timezone: "Asia/Seoul"
+        compliance:
+          - "PIPA"  # Personal Information Protection Act
+          - "K-ISMS"
+        resources:
+          compute:
+            instances: 2
+            type: "t3.medium"
+            auto_scaling:
+              min: 1
+              max: 5
+              target_cpu: 75
+          database:
+            engine: "postgresql"
+            version: "14"
+            instance_class: "db.t3.small"
+            multi_az: true
+            backup_retention: 30
+          storage:
+            type: "gp3"
+            size_gb: 50
+            backup: true
+        networking:
+          vpc_cidr: "10.6.0.0/16"
+          subnets:
+            - "10.6.1.0/24"
+            - "10.6.2.0/24"
+        features:
+          cdn: true
+          waf: true
+          ddos_protection: true
+          ssl_certificates: true
+        data_residency:
+          enabled: true
+          restrictions:
+            - "korea_only"
+        privacy:
+          data_retention_days: 1095  # 3 years
+          resident_id_protection: true
+      
+      # Asia Pacific - Singapore
+      ap-southeast-1:
+        provider: "aws"
+        region: "ap-southeast-1"
+        datacenter: "Singapore"
+        subdomain: "sg.airis-epm.com"
+        timezone: "Asia/Singapore"
+        compliance:
+          - "PDPA"  # Personal Data Protection Act
+          - "MAS_TRM"  # Monetary Authority of Singapore Technology Risk Management
+        resources:
+          compute:
+            instances: 2
+            type: "t3.medium"
+            auto_scaling:
+              min: 1
+              max: 5
+              target_cpu: 75
+          database:
+            engine: "postgresql"
+            version: "14"
+            instance_class: "db.t3.small"
+            multi_az: true
+            backup_retention: 30
+          storage:
+            type: "gp3"
+            size_gb: 50
+            backup: true
+        networking:
+          vpc_cidr: "10.7.0.0/16"
+          subnets:
+            - "10.7.1.0/24"
+            - "10.7.2.0/24"
+        features:
+          cdn: true
+          waf: true
+          ddos_protection: true
+          ssl_certificates: true
+        data_residency:
+          enabled: false
+          restrictions: []
+        privacy:
+          data_retention_days: 365
+      
+      # China - Special Deployment
+      cn-north-1:
+        provider: "alibaba_cloud"
+        region: "cn-beijing"
+        datacenter: "Beijing"
+        subdomain: "cn.airis-epm.com"
+        timezone: "Asia/Shanghai"
+        compliance:
+          - "PIPL"  # Personal Information Protection Law
+          - "CSL"   # Cybersecurity Law
+          - "DSL"   # Data Security Law
+        resources:
+          compute:
+            instances: 2
+            type: "ecs.t6-c1m1.large"
+            auto_scaling:
+              min: 1
+              max: 4
+              target_cpu: 80
+          database:
+            engine: "postgresql"
+            version: "13"
+            instance_class: "rds.pg.s2.large"
+            multi_az: true
+            backup_retention: 30
+          storage:
+            type: "enhanced_ssd"
+            size_gb: 50
+            backup: true
+            encryption: true
+        networking:
+          vpc_cidr: "10.8.0.0/16"
+          subnets:
+            - "10.8.1.0/24"
+            - "10.8.2.0/24"
+        features:
+          cdn: true
+          waf: true
+          ddos_protection: true
+          ssl_certificates: true
+          content_filtering: true
+        data_residency:
+          enabled: true
+          restrictions:
+            - "china_only"
+            - "government_approved_providers"
+            - "local_data_storage"
+        privacy:
+          data_retention_days: 730
+          government_access_compliance: true
+          content_moderation: true
+    
+    # Environment Configurations
+    environments:
+      development:
+        resource_scaling: 0.3
+        monitoring_level: "verbose"
+        debug_mode: true
+        ssl_validation: false
+        data_retention_days: 7
+      
+      staging:
+        resource_scaling: 0.6
+        monitoring_level: "standard"
+        debug_mode: false
+        ssl_validation: true
+        data_retention_days: 30
+      
+      production:
+        resource_scaling: 1.0
+        monitoring_level: "critical"
+        debug_mode: false
+        ssl_validation: true
+        data_retention_days: 90
+    
+    # Feature Flags by Region
+    feature_flags:
+      global:
+        ai_predictions: true
+        real_time_monitoring: true
+        advanced_analytics: true
+        mobile_app: true
+      
+      us-east-1:
+        beta_features: true
+        experimental_ml: true
+      
+      eu-west-1:
+        gdpr_ui: true
+        consent_banner: true
+        data_export_automation: true
+        anonymization_tools: true
+      
+      eu-central-1:
+        strict_privacy_mode: true
+        german_language_priority: true
+        local_support_integration: true
+      
+      cn-north-1:
+        content_localization: true
+        government_reporting: true
+        local_payment_methods: true
+    
+    # Compliance Requirements by Region
+    compliance_matrix:
+      GDPR:
+        applicable_regions:
+          - "eu-west-1"
+          - "eu-central-1"
+        requirements:
+          - "consent_management"
+          - "right_to_erasure"
+          - "data_portability"
+          - "privacy_by_design"
+          - "data_protection_officer"
+          - "breach_notification"
+        technical_measures:
+          - "encryption_at_rest"
+          - "encryption_in_transit"
+          - "pseudonymization"
+          - "access_controls"
+          - "audit_logging"
+      
+      CCPA:
+        applicable_regions:
+          - "us-east-1"
+          - "us-west-2"
+        requirements:
+          - "privacy_policy_disclosure"
+          - "opt_out_mechanism"
+          - "data_deletion"
+          - "non_discrimination"
+        technical_measures:
+          - "user_data_mapping"
+          - "automated_deletion"
+          - "opt_out_tracking"
+      
+      PIPL:
+        applicable_regions:
+          - "cn-north-1"
+        requirements:
+          - "consent_for_processing"
+          - "data_localization"
+          - "cross_border_restrictions"
+          - "security_assessments"
+        technical_measures:
+          - "local_data_storage"
+          - "government_approved_tools"
+          - "content_filtering"
+    
+    # Disaster Recovery Configuration
+    disaster_recovery:
+      strategy: "multi_region"
+      rto: 4  # hours
+      rpo: 1  # hour
+      
+      failover_pairs:
+        - primary: "us-east-1"
+          secondary: "us-west-2"
+        - primary: "eu-west-1"
+          secondary: "eu-central-1"
+        - primary: "ap-northeast-1"
+          secondary: "ap-southeast-1"
+      
+      backup_strategy:
+        frequency: "hourly"
+        retention: "30_days"
+        cross_region: true
+        encryption: true

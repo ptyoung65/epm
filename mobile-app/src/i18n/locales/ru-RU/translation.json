@@ -1,0 +1,452 @@
+{
+  "common": {
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "success": "Успех",
+    "warning": "Предупреждение",
+    "info": "Информация",
+    "confirm": "Подтвердить",
+    "cancel": "Отменить",
+    "save": "Сохранить",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "add": "Добавить",
+    "remove": "Удалить",
+    "update": "Обновить",
+    "refresh": "Обновить",
+    "search": "Поиск",
+    "filter": "Фильтр",
+    "sort": "Сортировать",
+    "reset": "Сброс",
+    "close": "Закрыть",
+    "back": "Назад",
+    "next": "Далее",
+    "previous": "Предыдущий",
+    "submit": "Отправить",
+    "download": "Скачать",
+    "upload": "Загрузить",
+    "export": "Экспортировать",
+    "import": "Импортировать",
+    "view": "Просмотр",
+    "details": "Детали",
+    "settings": "Настройки",
+    "help": "Помощь",
+    "about": "О программе",
+    "logout": "Выйти",
+    "login": "Войти",
+    "register": "Регистрация",
+    "profile": "Профиль",
+    "dashboard": "Панель управления",
+    "monitoring": "Мониторинг",
+    "incidents": "Инциденты",
+    "alerts": "Оповещения",
+    "reports": "Отчёты",
+    "analytics": "Аналитика",
+    "administration": "Администрирование",
+    "yes": "Да",
+    "no": "Нет",
+    "ok": "ОК",
+    "retry": "Повторить",
+    "skip": "Пропустить",
+    "continue": "Продолжить",
+    "finish": "Завершить",
+    "home": "Главная",
+    "menu": "Меню",
+    "actions": "Действия",
+    "options": "Опции",
+    "preferences": "Предпочтения",
+    "configuration": "Конфигурация",
+    "status": "Статус",
+    "type": "Тип",
+    "category": "Категория",
+    "priority": "Приоритет",
+    "severity": "Критичность",
+    "date": "Дата",
+    "time": "Время",
+    "duration": "Длительность",
+    "created": "Создано",
+    "updated": "Обновлено",
+    "modified": "Изменено",
+    "author": "Автор",
+    "user": "Пользователь",
+    "name": "Имя",
+    "title": "Заголовок",
+    "description": "Описание",
+    "message": "Сообщение",
+    "comment": "Комментарий",
+    "note": "Заметка",
+    "tag": "Тег",
+    "tags": "Теги",
+    "version": "Версия",
+    "build": "Сборка",
+    "release": "Релиз"
+  },
+  "navigation": {
+    "dashboard": "Панель управления",
+    "realtime_monitoring": "Мониторинг в реальном времени",
+    "j2ee_monitoring": "Мониторинг J2EE",
+    "was_monitoring": "Мониторинг WAS",
+    "exception_tracking": "Отслеживание исключений",
+    "service_topology": "Топология сервисов",
+    "alert_management": "Управление оповещениями",
+    "apm_monitoring": "APM мониторинг",
+    "system_health": "Состояние системы",
+    "performance_metrics": "Метрики производительности",
+    "log_analysis": "Анализ логов",
+    "trace_analysis": "Анализ трассировки",
+    "user_management": "Управление пользователями",
+    "configuration": "Конфигурация",
+    "ontology_system": "Система онтологий",
+    "session_replay": "Воспроизведение сеанса"
+  },
+  "dashboard": {
+    "title": "Панель AIRIS EPM",
+    "subtitle": "Мониторинг производительности предприятия",
+    "welcome": "Добро пожаловать в AIRIS EPM",
+    "overview": "Обзор системы",
+    "kpi": "Ключевые показатели эффективности",
+    "metrics": {
+      "response_time": "Время отклика",
+      "throughput": "Пропускная способность",
+      "error_rate": "Частота ошибок",
+      "availability": "Доступность",
+      "cpu_usage": "Использование CPU",
+      "memory_usage": "Использование памяти",
+      "disk_usage": "Использование диска",
+      "network_io": "Сетевой ввод/вывод",
+      "active_users": "Активные пользователи",
+      "transactions": "Транзакции",
+      "requests_per_minute": "Запросов в минуту",
+      "database_connections": "Соединения с БД"
+    },
+    "status": {
+      "healthy": "Исправно",
+      "warning": "Предупреждение",
+      "critical": "Критично",
+      "unknown": "Неизвестно",
+      "maintenance": "Обслуживание",
+      "offline": "Офлайн"
+    },
+    "charts": {
+      "performance_trend": "Тенденция производительности",
+      "error_distribution": "Распределение ошибок",
+      "traffic_pattern": "Схема трафика",
+      "resource_utilization": "Использование ресурсов"
+    },
+    "widgets": {
+      "system_health": "Состояние системы",
+      "recent_incidents": "Недавние инциденты",
+      "top_errors": "Основные ошибки",
+      "slow_transactions": "Медленные транзакции",
+      "database_performance": "Производительность БД",
+      "server_status": "Статус сервера"
+    }
+  },
+  "monitoring": {
+    "title": "Мониторинг в реальном времени",
+    "subtitle": "Производительность системы в режиме реального времени",
+    "refresh_rate": "Частота обновления",
+    "auto_refresh": "Автообновление",
+    "time_range": "Временной диапазон",
+    "last_updated": "Последнее обновление",
+    "filters": {
+      "all_servers": "Все серверы",
+      "production": "Продакшн",
+      "staging": "Тестовая среда",
+      "development": "Разработка",
+      "critical_only": "Только критичные"
+    },
+    "servers": {
+      "title": "Статус серверов",
+      "name": "Имя сервера",
+      "ip_address": "IP-адрес",
+      "status": "Статус",
+      "uptime": "Время работы",
+      "load": "Загрузка",
+      "connections": "Соединения"
+    },
+    "applications": {
+      "title": "Производительность приложений",
+      "name": "Приложение",
+      "version": "Версия",
+      "instances": "Экземпляры",
+      "health_score": "Оценка состояния"
+    },
+    "databases": {
+      "title": "Мониторинг базы данных",
+      "name": "База данных",
+      "type": "Тип",
+      "connections": "Соединения",
+      "query_time": "Среднее время запроса",
+      "locks": "Блокировки"
+    }
+  },
+  "incidents": {
+    "title": "Управление инцидентами",
+    "subtitle": "Отслеживание и решение проблем",
+    "create_incident": "Создать инцидент",
+    "incident_details": "Детали инцидента",
+    "incident_id": "ID инцидента",
+    "severity": {
+      "critical": "Критично",
+      "high": "Высокая",
+      "medium": "Средняя",
+      "low": "Низкая"
+    },
+    "status": {
+      "open": "Открыт",
+      "in_progress": "В работе",
+      "resolved": "Решён",
+      "closed": "Закрыт"
+    },
+    "priority": {
+      "urgent": "Срочно",
+      "high": "Высокий",
+      "normal": "Обычный",
+      "low": "Низкий"
+    },
+    "fields": {
+      "title": "Заголовок",
+      "description": "Описание",
+      "reporter": "Сообщивший",
+      "assignee": "Назначен",
+      "created_date": "Дата создания",
+      "updated_date": "Дата обновления",
+      "resolved_date": "Дата решения",
+      "affected_services": "Затронутые сервисы",
+      "resolution": "Решение",
+      "root_cause": "Причина"
+    },
+    "actions": {
+      "assign": "Назначить",
+      "reassign": "Переназначить",
+      "escalate": "Эскалировать",
+      "resolve": "Решить",
+      "close": "Закрыть",
+      "reopen": "Переоткрыть",
+      "add_comment": "Добавить комментарий",
+      "attach_file": "Прикрепить файл"
+    },
+    "comments": {
+      "title": "Комментарии",
+      "add_comment": "Добавить комментарий",
+      "no_comments": "Пока нет комментариев",
+      "comment_added": "Комментарий успешно добавлен"
+    },
+    "timeline": {
+      "title": "Временная шкала",
+      "created": "Инцидент создан",
+      "assigned": "Назначен {{assignee}}",
+      "status_changed": "Статус изменён на {{status}}",
+      "comment_added": "Добавлен комментарий",
+      "resolved": "Инцидент решён",
+      "closed": "Инцидент закрыт"
+    }
+  },
+  "alerts": {
+    "title": "Управление оповещениями",
+    "subtitle": "Системные уведомления и оповещения",
+    "create_alert": "Создать оповещение",
+    "alert_rules": "Правила оповещений",
+    "notifications": "Уведомления",
+    "channels": {
+      "email": "Email",
+      "sms": "SMS",
+      "slack": "Slack",
+      "webhook": "Webhook",
+      "push": "Push-уведомление"
+    },
+    "types": {
+      "threshold": "Пороговое оповещение",
+      "anomaly": "Обнаружение аномалий",
+      "composite": "Составное оповещение",
+      "heartbeat": "Heartbeat оповещение"
+    },
+    "conditions": {
+      "greater_than": "Больше чем",
+      "less_than": "Меньше чем",
+      "equals": "Равно",
+      "not_equals": "Не равно",
+      "contains": "Содержит",
+      "regex": "Регулярное выражение"
+    },
+    "settings": {
+      "title": "Настройки оповещений",
+      "enable_notifications": "Включить уведомления",
+      "quiet_hours": "Тихие часы",
+      "escalation_policy": "Политика эскалации",
+      "notification_channels": "Каналы уведомлений"
+    }
+  },
+  "settings": {
+    "title": "Настройки",
+    "subtitle": "Конфигурация системы",
+    "general": "Общие",
+    "users": "Пользователи",
+    "security": "Безопасность",
+    "integrations": "Интеграции",
+    "advanced": "Расширенные",
+    "language": "Язык",
+    "timezone": "Часовой пояс",
+    "theme": "Тема",
+    "notifications": "Уведомления",
+    "api_keys": "API ключи",
+    "backup": "Резервное копирование",
+    "restore": "Восстановление",
+    "maintenance": "Обслуживание"
+  },
+  "auth": {
+    "login": {
+      "title": "Вход в систему",
+      "subtitle": "Добро пожаловать обратно в AIRIS EPM",
+      "username": "Имя пользователя",
+      "email": "Email",
+      "password": "Пароль",
+      "remember_me": "Запомнить меня",
+      "forgot_password": "Забыли пароль?",
+      "sign_in": "Войти",
+      "sign_up": "Регистрация",
+      "demo_mode": "Демо режим",
+      "biometric_login": "Биометрический вход",
+      "or": "или"
+    },
+    "logout": {
+      "title": "Выход",
+      "message": "Вы уверены, что хотите выйти?",
+      "confirm": "Выйти",
+      "success": "Успешный выход из системы"
+    },
+    "errors": {
+      "invalid_credentials": "Неверное имя пользователя или пароль",
+      "account_locked": "Аккаунт временно заблокирован",
+      "network_error": "Ошибка сетевого соединения",
+      "server_error": "Ошибка сервера, попробуйте ещё раз",
+      "biometric_failed": "Биометрическая аутентификация неудачна",
+      "biometric_unavailable": "Биометрическая аутентификация недоступна"
+    }
+  },
+  "errors": {
+    "network": {
+      "offline": "Вы сейчас не в сети",
+      "connection_failed": "Соединение не удалось",
+      "timeout": "Тайм-аут запроса",
+      "server_error": "Ошибка сервера ({{status}})",
+      "not_found": "Ресурс не найден",
+      "unauthorized": "Несанкционированный доступ",
+      "forbidden": "Доступ запрещён"
+    },
+    "validation": {
+      "required": "Это поле обязательно",
+      "invalid_email": "Неверный формат email",
+      "invalid_url": "Неверный формат URL",
+      "min_length": "Необходимо минимум {{min}} символов",
+      "max_length": "Максимум {{max}} символов разрешено",
+      "numeric": "Должно быть числом",
+      "positive": "Должно быть положительным числом"
+    },
+    "system": {
+      "unexpected": "Произошла непредвиденная ошибка",
+      "maintenance": "Система находится на обслуживании",
+      "upgrade_required": "Требуется обновление системы",
+      "feature_unavailable": "Эта функция в настоящее время недоступна"
+    }
+  },
+  "messages": {
+    "success": {
+      "saved": "Успешно сохранено",
+      "updated": "Успешно обновлено",
+      "deleted": "Успешно удалено",
+      "created": "Успешно создано",
+      "sent": "Успешно отправлено",
+      "imported": "Успешно импортировано",
+      "exported": "Успешно экспортировано"
+    },
+    "confirm": {
+      "delete": "Вы уверены, что хотите удалить этот элемент?",
+      "logout": "Вы уверены, что хотите выйти?",
+      "reset": "Вы уверены, что хотите сбросить все настройки?",
+      "cancel": "Вы уверены, что хотите отменить изменения?"
+    },
+    "info": {
+      "no_data": "Нет доступных данных",
+      "loading": "Загрузка данных...",
+      "searching": "Поиск...",
+      "processing": "Обработка...",
+      "syncing": "Синхронизация данных...",
+      "backup_in_progress": "Резервное копирование в процессе..."
+    }
+  },
+  "dates": {
+    "today": "Сегодня",
+    "yesterday": "Вчера",
+    "tomorrow": "Завтра",
+    "this_week": "На этой неделе",
+    "last_week": "На прошлой неделе",
+    "this_month": "В этом месяце",
+    "last_month": "В прошлом месяце",
+    "this_year": "В этом году",
+    "last_year": "В прошлом году",
+    "formats": {
+      "short": "DD.MM",
+      "medium": "DD.MM.YYYY",
+      "long": "DD MMMM YYYY",
+      "full": "dddd, DD MMMM YYYY",
+      "time": "HH:mm",
+      "datetime": "DD.MM.YYYY HH:mm"
+    }
+  },
+  "units": {
+    "time": {
+      "second": "секунда",
+      "seconds": "секунды",
+      "minute": "минута",
+      "minutes": "минуты",
+      "hour": "час",
+      "hours": "часы",
+      "day": "день",
+      "days": "дни",
+      "week": "неделя",
+      "weeks": "недели",
+      "month": "месяц",
+      "months": "месяцы",
+      "year": "год",
+      "years": "годы"
+    },
+    "bytes": {
+      "byte": "Б",
+      "kilobyte": "КБ",
+      "megabyte": "МБ",
+      "gigabyte": "ГБ",
+      "terabyte": "ТБ",
+      "petabyte": "ПБ"
+    },
+    "rate": {
+      "per_second": "/сек",
+      "per_minute": "/мин",
+      "per_hour": "/час",
+      "per_day": "/день"
+    }
+  },
+  "tooltips": {
+    "refresh": "Обновить данные",
+    "settings": "Открыть настройки",
+    "help": "Показать помощь",
+    "export": "Экспортировать данные",
+    "filter": "Фильтровать результаты",
+    "search": "Искать элементы",
+    "sort": "Сортировать элементы",
+    "view_details": "Просмотреть детали",
+    "edit_item": "Редактировать элемент",
+    "delete_item": "Удалить элемент"
+  },
+  "placeholders": {
+    "search": "Поиск...",
+    "enter_text": "Введите текст...",
+    "select_option": "Выберите опцию...",
+    "choose_file": "Выберите файл...",
+    "enter_email": "Введите email адрес...",
+    "enter_password": "Введите пароль...",
+    "enter_url": "Введите URL...",
+    "add_comment": "Добавьте комментарий..."
+  }
+}

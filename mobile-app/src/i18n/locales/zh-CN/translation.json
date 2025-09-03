@@ -1,0 +1,452 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "warning": "警告",
+    "info": "信息",
+    "confirm": "确认",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "add": "添加",
+    "remove": "移除",
+    "update": "更新",
+    "refresh": "刷新",
+    "search": "搜索",
+    "filter": "筛选",
+    "sort": "排序",
+    "reset": "重置",
+    "close": "关闭",
+    "back": "返回",
+    "next": "下一页",
+    "previous": "上一页",
+    "submit": "提交",
+    "download": "下载",
+    "upload": "上传",
+    "export": "导出",
+    "import": "导入",
+    "view": "查看",
+    "details": "详情",
+    "settings": "设置",
+    "help": "帮助",
+    "about": "关于",
+    "logout": "退出",
+    "login": "登录",
+    "register": "注册",
+    "profile": "个人资料",
+    "dashboard": "仪表板",
+    "monitoring": "监控",
+    "incidents": "事件",
+    "alerts": "告警",
+    "reports": "报告",
+    "analytics": "分析",
+    "administration": "管理",
+    "yes": "是",
+    "no": "否",
+    "ok": "确定",
+    "retry": "重试",
+    "skip": "跳过",
+    "continue": "继续",
+    "finish": "完成",
+    "home": "首页",
+    "menu": "菜单",
+    "actions": "操作",
+    "options": "选项",
+    "preferences": "偏好",
+    "configuration": "配置",
+    "status": "状态",
+    "type": "类型",
+    "category": "分类",
+    "priority": "优先级",
+    "severity": "严重程度",
+    "date": "日期",
+    "time": "时间",
+    "duration": "持续时间",
+    "created": "创建时间",
+    "updated": "更新时间",
+    "modified": "修改时间",
+    "author": "作者",
+    "user": "用户",
+    "name": "名称",
+    "title": "标题",
+    "description": "描述",
+    "message": "消息",
+    "comment": "评论",
+    "note": "备注",
+    "tag": "标签",
+    "tags": "标签",
+    "version": "版本",
+    "build": "构建",
+    "release": "发布"
+  },
+  "navigation": {
+    "dashboard": "仪表板",
+    "realtime_monitoring": "实时监控",
+    "j2ee_monitoring": "J2EE 监控",
+    "was_monitoring": "WAS 监控",
+    "exception_tracking": "异常跟踪",
+    "service_topology": "服务拓扑",
+    "alert_management": "告警管理",
+    "apm_monitoring": "APM 监控",
+    "system_health": "系统健康",
+    "performance_metrics": "性能指标",
+    "log_analysis": "日志分析",
+    "trace_analysis": "链路追踪",
+    "user_management": "用户管理",
+    "configuration": "配置",
+    "ontology_system": "本体系统",
+    "session_replay": "会话回放"
+  },
+  "dashboard": {
+    "title": "AIRIS EPM 仪表板",
+    "subtitle": "企业性能监控",
+    "welcome": "欢迎使用 AIRIS EPM",
+    "overview": "系统概览",
+    "kpi": "关键性能指标",
+    "metrics": {
+      "response_time": "响应时间",
+      "throughput": "吞吐量",
+      "error_rate": "错误率",
+      "availability": "可用性",
+      "cpu_usage": "CPU 使用率",
+      "memory_usage": "内存使用率",
+      "disk_usage": "磁盘使用率",
+      "network_io": "网络 I/O",
+      "active_users": "活跃用户",
+      "transactions": "事务",
+      "requests_per_minute": "每分钟请求数",
+      "database_connections": "数据库连接数"
+    },
+    "status": {
+      "healthy": "健康",
+      "warning": "警告",
+      "critical": "严重",
+      "unknown": "未知",
+      "maintenance": "维护中",
+      "offline": "离线"
+    },
+    "charts": {
+      "performance_trend": "性能趋势",
+      "error_distribution": "错误分布",
+      "traffic_pattern": "流量模式",
+      "resource_utilization": "资源利用率"
+    },
+    "widgets": {
+      "system_health": "系统健康",
+      "recent_incidents": "最近事件",
+      "top_errors": "热门错误",
+      "slow_transactions": "慢事务",
+      "database_performance": "数据库性能",
+      "server_status": "服务器状态"
+    }
+  },
+  "monitoring": {
+    "title": "实时监控",
+    "subtitle": "实时系统性能",
+    "refresh_rate": "刷新频率",
+    "auto_refresh": "自动刷新",
+    "time_range": "时间范围",
+    "last_updated": "最后更新",
+    "filters": {
+      "all_servers": "所有服务器",
+      "production": "生产环境",
+      "staging": "预发布环境",
+      "development": "开发环境",
+      "critical_only": "仅严重"
+    },
+    "servers": {
+      "title": "服务器状态",
+      "name": "服务器名称",
+      "ip_address": "IP地址",
+      "status": "状态",
+      "uptime": "运行时间",
+      "load": "负载",
+      "connections": "连接数"
+    },
+    "applications": {
+      "title": "应用程序性能",
+      "name": "应用程序",
+      "version": "版本",
+      "instances": "实例",
+      "health_score": "健康评分"
+    },
+    "databases": {
+      "title": "数据库监控",
+      "name": "数据库",
+      "type": "类型",
+      "connections": "连接数",
+      "query_time": "平均查询时间",
+      "locks": "锁定数"
+    }
+  },
+  "incidents": {
+    "title": "事件管理",
+    "subtitle": "跟踪和解决问题",
+    "create_incident": "创建事件",
+    "incident_details": "事件详情",
+    "incident_id": "事件ID",
+    "severity": {
+      "critical": "严重",
+      "high": "高",
+      "medium": "中",
+      "low": "低"
+    },
+    "status": {
+      "open": "开放",
+      "in_progress": "进行中",
+      "resolved": "已解决",
+      "closed": "已关闭"
+    },
+    "priority": {
+      "urgent": "紧急",
+      "high": "高",
+      "normal": "正常",
+      "low": "低"
+    },
+    "fields": {
+      "title": "标题",
+      "description": "描述",
+      "reporter": "报告人",
+      "assignee": "负责人",
+      "created_date": "创建日期",
+      "updated_date": "更新日期",
+      "resolved_date": "解决日期",
+      "affected_services": "受影响的服务",
+      "resolution": "解决方案",
+      "root_cause": "根本原因"
+    },
+    "actions": {
+      "assign": "分配",
+      "reassign": "重新分配",
+      "escalate": "升级",
+      "resolve": "解决",
+      "close": "关闭",
+      "reopen": "重新打开",
+      "add_comment": "添加评论",
+      "attach_file": "附加文件"
+    },
+    "comments": {
+      "title": "评论",
+      "add_comment": "添加评论",
+      "no_comments": "暂无评论",
+      "comment_added": "评论添加成功"
+    },
+    "timeline": {
+      "title": "时间线",
+      "created": "事件已创建",
+      "assigned": "已分配给 {{assignee}}",
+      "status_changed": "状态已更改为 {{status}}",
+      "comment_added": "已添加评论",
+      "resolved": "事件已解决",
+      "closed": "事件已关闭"
+    }
+  },
+  "alerts": {
+    "title": "告警管理",
+    "subtitle": "系统通知和告警",
+    "create_alert": "创建告警",
+    "alert_rules": "告警规则",
+    "notifications": "通知",
+    "channels": {
+      "email": "邮件",
+      "sms": "短信",
+      "slack": "Slack",
+      "webhook": "Webhook",
+      "push": "推送通知"
+    },
+    "types": {
+      "threshold": "阈值告警",
+      "anomaly": "异常检测",
+      "composite": "复合告警",
+      "heartbeat": "心跳告警"
+    },
+    "conditions": {
+      "greater_than": "大于",
+      "less_than": "小于",
+      "equals": "等于",
+      "not_equals": "不等于",
+      "contains": "包含",
+      "regex": "正则表达式"
+    },
+    "settings": {
+      "title": "告警设置",
+      "enable_notifications": "启用通知",
+      "quiet_hours": "静默时间",
+      "escalation_policy": "升级策略",
+      "notification_channels": "通知渠道"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "subtitle": "系统配置",
+    "general": "通用",
+    "users": "用户",
+    "security": "安全",
+    "integrations": "集成",
+    "advanced": "高级",
+    "language": "语言",
+    "timezone": "时区",
+    "theme": "主题",
+    "notifications": "通知",
+    "api_keys": "API密钥",
+    "backup": "备份",
+    "restore": "恢复",
+    "maintenance": "维护"
+  },
+  "auth": {
+    "login": {
+      "title": "登录",
+      "subtitle": "欢迎回到 AIRIS EPM",
+      "username": "用户名",
+      "email": "邮箱",
+      "password": "密码",
+      "remember_me": "记住我",
+      "forgot_password": "忘记密码？",
+      "sign_in": "登录",
+      "sign_up": "注册",
+      "demo_mode": "演示模式",
+      "biometric_login": "生物识别登录",
+      "or": "或"
+    },
+    "logout": {
+      "title": "退出",
+      "message": "确定要退出吗？",
+      "confirm": "退出",
+      "success": "退出成功"
+    },
+    "errors": {
+      "invalid_credentials": "用户名或密码无效",
+      "account_locked": "账户已被临时锁定",
+      "network_error": "网络连接错误",
+      "server_error": "服务器错误，请重试",
+      "biometric_failed": "生物识别认证失败",
+      "biometric_unavailable": "生物识别认证不可用"
+    }
+  },
+  "errors": {
+    "network": {
+      "offline": "您当前处于离线状态",
+      "connection_failed": "连接失败",
+      "timeout": "请求超时",
+      "server_error": "服务器错误 ({{status}})",
+      "not_found": "资源未找到",
+      "unauthorized": "未授权访问",
+      "forbidden": "禁止访问"
+    },
+    "validation": {
+      "required": "此字段为必填项",
+      "invalid_email": "邮箱格式无效",
+      "invalid_url": "URL格式无效",
+      "min_length": "最少需要 {{min}} 个字符",
+      "max_length": "最多允许 {{max}} 个字符",
+      "numeric": "必须是数字",
+      "positive": "必须是正数"
+    },
+    "system": {
+      "unexpected": "发生意外错误",
+      "maintenance": "系统正在维护中",
+      "upgrade_required": "需要系统升级",
+      "feature_unavailable": "此功能当前不可用"
+    }
+  },
+  "messages": {
+    "success": {
+      "saved": "保存成功",
+      "updated": "更新成功",
+      "deleted": "删除成功",
+      "created": "创建成功",
+      "sent": "发送成功",
+      "imported": "导入成功",
+      "exported": "导出成功"
+    },
+    "confirm": {
+      "delete": "确定要删除此项目吗？",
+      "logout": "确定要退出吗？",
+      "reset": "确定要重置所有设置吗？",
+      "cancel": "确定要取消更改吗？"
+    },
+    "info": {
+      "no_data": "无数据",
+      "loading": "正在加载数据...",
+      "searching": "搜索中...",
+      "processing": "处理中...",
+      "syncing": "同步数据中...",
+      "backup_in_progress": "备份进行中..."
+    }
+  },
+  "dates": {
+    "today": "今天",
+    "yesterday": "昨天",
+    "tomorrow": "明天",
+    "this_week": "本周",
+    "last_week": "上周",
+    "this_month": "本月",
+    "last_month": "上月",
+    "this_year": "今年",
+    "last_year": "去年",
+    "formats": {
+      "short": "MM-DD",
+      "medium": "YYYY年MM月DD日",
+      "long": "YYYY年MM月DD日",
+      "full": "YYYY年MM月DD日 dddd",
+      "time": "HH:mm",
+      "datetime": "YYYY年MM月DD日 HH:mm"
+    }
+  },
+  "units": {
+    "time": {
+      "second": "秒",
+      "seconds": "秒",
+      "minute": "分钟",
+      "minutes": "分钟",
+      "hour": "小时",
+      "hours": "小时",
+      "day": "天",
+      "days": "天",
+      "week": "周",
+      "weeks": "周",
+      "month": "月",
+      "months": "月",
+      "year": "年",
+      "years": "年"
+    },
+    "bytes": {
+      "byte": "B",
+      "kilobyte": "KB",
+      "megabyte": "MB",
+      "gigabyte": "GB",
+      "terabyte": "TB",
+      "petabyte": "PB"
+    },
+    "rate": {
+      "per_second": "/秒",
+      "per_minute": "/分钟",
+      "per_hour": "/小时",
+      "per_day": "/天"
+    }
+  },
+  "tooltips": {
+    "refresh": "刷新数据",
+    "settings": "打开设置",
+    "help": "显示帮助",
+    "export": "导出数据",
+    "filter": "筛选结果",
+    "search": "搜索项目",
+    "sort": "排序项目",
+    "view_details": "查看详情",
+    "edit_item": "编辑项目",
+    "delete_item": "删除项目"
+  },
+  "placeholders": {
+    "search": "搜索...",
+    "enter_text": "输入文本...",
+    "select_option": "选择选项...",
+    "choose_file": "选择文件...",
+    "enter_email": "输入邮箱地址...",
+    "enter_password": "输入密码...",
+    "enter_url": "输入URL...",
+    "add_comment": "添加评论..."
+  }
+}
